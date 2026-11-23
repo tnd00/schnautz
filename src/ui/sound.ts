@@ -197,7 +197,7 @@ const SFX = {
     tone(a, 523, t + 0.25, 0.4, 'sawtooth', 0.05, o);
   },
   /** Zeitlupe: tiefer, fallender Ton */
-  slowmo: (a, t, o) => tone(a, 300, t, 0.8, 'sine', 0.06, o, 110),
+  slowmo: (a, t, o) => tone(a, 300, t, 1.6, 'sine', 0.06, o, 100),
   /** Traurige Posaune für den Shithead (Ersatz, solange die Aufnahme lädt) */
   trombone: (a, t, o) => void trombone(a, t, o),
   /** Krone funkelt */

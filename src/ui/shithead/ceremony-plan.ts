@@ -5,7 +5,7 @@
 import type { Card, LogEntry } from '../../game/types';
 
 /** Zusätzliche Flugzeit der entscheidenden Karte in Zeitlupe */
-export const ZER_SLOW_FLIGHT_MS = 740;
+export const ZER_SLOW_FLIGHT_MS = 1500;
 /** Abstand zwischen mehreren Karten eines Zugs */
 export const SEQ_CARD_GAP_MS = 110;
 /** So kurz steht die Fertig-Meldung direkt vor der Enthüllung */
