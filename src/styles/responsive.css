@@ -1,0 +1,191 @@
+/* Anpassungen für kleine Bildschirme */
+@media (max-width: 960px) {
+  .game {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    height: min(72dvh, 560px);
+    z-index: 30;
+    background: #0d261c;
+    border-left: 0;
+    border-top: 1px solid rgba(246, 239, 223, 0.14);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(105%);
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5);
+  }
+  body.logopen .side {
+    transform: none;
+  }
+  .side h3 button {
+    display: block;
+  }
+  .logfab {
+    display: grid;
+  }
+  body.logopen .logfab {
+    display: none;
+  }
+  .table {
+    padding-bottom: 84px;
+  }
+}
+@media (max-width: 820px) {
+  .start {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-top: 4px;
+  }
+  .hero {
+    text-align: left;
+  }
+  .fan {
+    height: 180px;
+    margin-bottom: 6px;
+  }
+  .lobby {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  body {
+    font-size: 14px;
+  }
+  .top {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .brand {
+    font-size: 21px;
+  }
+  .brand small {
+    display: none;
+  }
+  .chip.code-chip .lbl {
+    display: none;
+  }
+  #nettext {
+    display: none;
+  }
+  #netchip {
+    padding: 8px 9px;
+  }
+  .iconbtn {
+    width: 36px;
+    height: 36px;
+  }
+  .chip {
+    padding: 5px 9px;
+  }
+  .opp {
+    min-width: 0;
+    padding: 8px 10px;
+  }
+  .opp .ocards {
+    height: calc(44px * 1.4 + 6px);
+  }
+  .opp .ocards .card {
+    --cw: 44px;
+  }
+  .opp .ocards .card + .card {
+    margin-left: -20px;
+  }
+  .center {
+    padding: 14px 10px;
+    gap: 10px;
+  }
+  .verdict {
+    margin-left: 16px;
+  }
+  .scorebar {
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow: visible;
+    gap: 6px;
+  }
+  .sb-meta {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+    border-right: 0;
+    padding: 4px 6px;
+  }
+  .sb-meta b {
+    font-size: 14px;
+  }
+  .sb-p {
+    padding: 4px 9px;
+    gap: 5px;
+  }
+  .sb-p .coaster {
+    width: 11px;
+    height: 11px;
+  }
+  .sb-p .coaster::after {
+    inset: 3px;
+  }
+  .sb-w {
+    padding: 0 6px;
+  }
+  #announce {
+    top: 13%;
+  }
+  .tcards {
+    --tw: 36px;
+  }
+  .opp.sh {
+    min-width: 0;
+  }
+  .burned {
+    min-width: 40px;
+  }
+  .pile {
+    --mw: clamp(64px, 20vw, 88px);
+  }
+  .middle {
+    --mw: clamp(64px, 21vw, 92px);
+    gap: 7px;
+  }
+  .deck {
+    --mw: clamp(56px, 16vw, 80px);
+  }
+  .actions .btn {
+    min-width: 0;
+    flex: 1 1 40%;
+    padding: 0 10px;
+  }
+  .shme .actions .btn {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  .paper {
+    padding: 22px 16px 18px;
+  }
+  .paper h2,
+  .paper .lead,
+  .paper h3,
+  .paper p {
+    padding-left: 16px;
+  }
+  .paper {
+    background-image:
+      linear-gradient(90deg, transparent 22px, rgba(179, 49, 42, 0.22) 22px 23px, transparent 23px),
+      repeating-linear-gradient(transparent 0 29px, rgba(60, 90, 140, 0.1) 29px 30px);
+  }
+  .row {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .row .mini .card {
+    --cw: 30px;
+  }
+  .row .val {
+    font-size: 20px;
+    min-width: 40px;
+  }
+}

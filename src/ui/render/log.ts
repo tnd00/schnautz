@@ -1,0 +1,182 @@
+import type { LogEntry, View } from '../../game/types';
+import { App } from '../app';
+import { cardChip } from '../cards';
+import { $, esc, num } from '../dom';
+import { W, nameOf, vb } from '../helpers';
+import { SEQ } from '../shithead/sequence';
+
+/** Eine Zeile im Verlauf: CSS-Klasse und HTML (Namen und Texte sind escaped). */
+export function logLine(v: View, e: LogEntry): [cls: string, html: string] | null {
+  const p = e.p;
+  const who = () => W(v, p, e.name);
+  switch (e.k) {
+    case 'join':
+      return ['sys', who() + (e.bot ? ' (KI) setzt sich an den Tisch.' : ' sitzt jetzt mit am Tisch.')];
+    case 'quit':
+      return [
+        'big',
+        who() + vb(p, ' hast den Tisch verlassen und bist raus.', ' hat den Tisch verlassen und ist raus.'),
+      ];
+    case 'leave':
+      return ['sys', '<b>' + esc(e.name || 'Jemand') + '</b> ist gegangen.'];
+    case 'game':
+      return ['round', 'Partie ' + num(e.g) + ' beginnt' + (e.game === 'shithead' ? ' · Shithead' : '')];
+    case 'shdeal':
+      return ['sys', 'Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.'];
+    case 'shstart':
+      return [
+        '',
+        who() + vb(p, ' fängst an', ' fängt an') + (e.card ? ' (niedrigste Karte ' + cardChip(e.card) + ').' : '.'),
+      ];
+    case 'shplay':
+      return [
+        '',
+        who() +
+          vb(p, ' legst ', ' legt ') +
+          (e.cards || []).map(cardChip).join(' ') +
+          (e.src === 'up' ? ' vom Tisch' : e.src === 'down' ? ' blind' : '') +
+          '.',
+      ];
+    case 'shburn':
+      return [
+        'big',
+        (e.cut ? 'Bombe! ' : e.four ? 'Vier Gleiche! ' : '') +
+          who() +
+          vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.'),
+      ];
+    case 'shpickup':
+      return [
+        '',
+        who() +
+          vb(p, ' nimmst den Stapel auf (', ' nimmt den Stapel auf (') +
+          num(e.cnt) +
+          (num(e.cnt) === 1 ? ' Karte).' : ' Karten).'),
+      ];
+    case 'shblindfail':
+      return [
+        '',
+        who() +
+          vb(p, ' deckst blind ', ' deckt blind ') +
+          cardChip(e.card) +
+          ' auf. Die passt nicht. ' +
+          esc(vb(p, 'Du nimmst ', nameOf(v, p, e.name) + ' nimmt ')) +
+          num(e.cnt) +
+          (num(e.cnt) === 1 ? ' Karte auf.' : ' Karten auf.'),
+      ];
+    case 'shdone':
+      return ['big', who() + vb(p, ' bist fertig! Platz ', ' ist fertig! Platz ') + num(e.place) + '.'];
+    case 'shthrow':
+      return ['', who() + vb(p, ' wirfst ', ' wirft ') + (e.cards || []).map(cardChip).join(' ') + ' rein.'];
+    case 'shbomb':
+      return [
+        'big',
+        '💣 ' +
+          who() +
+          vb(p, ' wirfst ', ' wirft ') +
+          (e.cards || []).map(cardChip).join(' ') +
+          (e.out ? ' außer der Reihe' : '') +
+          ' zur Bombe ein.',
+      ];
+    case 'shwinend':
+      return ['sys', 'Die Zeit für die 4er ist um.'];
+    case 'emote':
+      return null;
+    case 'shend':
+      return [
+        'big',
+        e.p ? '💩 ' + who() + vb(p, ' bist der Shithead!', ' ist der Shithead!') : 'Die Partie ist vorbei.',
+      ];
+    case 'lobby':
+      return ['sys', 'Zurück in der Lobby.'];
+    case 'round':
+      return ['round', 'Runde ' + num(e.r) + ' · ' + esc(nameOf(v, p)) + vb(p, ' gibst', ' gibt')];
+    case 'keep':
+      return ['', who() + vb(p, ' behältst das eigene Blatt.', ' behält das eigene Blatt.')];
+    case 'take':
+      return ['', who() + vb(p, ' nimmst blind das zweite Blatt.', ' nimmt blind das zweite Blatt.')];
+    case 'swap':
+      return [
+        '',
+        who() +
+          vb(p, ' nimmst ', ' nimmt ') +
+          cardChip(e.take) +
+          vb(p, ' und legst ', ' und legt ') +
+          cardChip(e.give) +
+          ' hin.',
+      ];
+    case 'swapAll':
+      return ['', who() + vb(p, ' tauschst alle drei Karten.', ' tauscht alle drei Karten.')];
+    case 'pass':
+      return ['', who() + vb(p, ' schiebst.', ' schiebt.')];
+    case 'renew':
+      return ['sys', 'Alle haben geschoben. Drei neue Karten liegen aus.'];
+    case 'knock':
+      return [
+        'big',
+        who() + vb(p, ' klopfst! Alle anderen haben noch einen Zug.', ' klopft! Alle anderen haben noch einen Zug.'),
+      ];
+    case 'result': {
+      const parts: string[] = [];
+      if (e.reason === 'schnautz') parts.push('Schnautz! ' + who() + vb(p, ' hast 31.', ' hat 31.'));
+      else if (e.reason === 'feuer') parts.push('Feuer! ' + who() + vb(p, ' hast drei Asse.', ' hat drei Asse.'));
+      else parts.push('Aufgedeckt.');
+      if (e.tie) parts.push('Gleichstand, niemand verliert einen Bierdeckel.');
+      Object.keys(e.changes || {}).forEach((id) => {
+        const c = e.changes[id],
+          w = W(v, id, e.names?.[id]);
+        if (c.to === 'out') parts.push(w + vb(id, ' bist raus.', ' ist raus.'));
+        else if (c.to === 'swim') parts.push(w + vb(id, ' schwimmst jetzt.', ' schwimmt jetzt.'));
+        else
+          parts.push(w + vb(id, ' verlierst ', ' verliert ') + (c.n === 2 ? 'zwei Bierdeckel.' : 'einen Bierdeckel.'));
+      });
+      return ['big', parts.join(' ')];
+    }
+    case 'winner':
+      return [
+        'big',
+        e.p ? '🏆 ' + who() + vb(p, ' gewinnst die Partie!', ' gewinnt die Partie!') : 'Die Partie ist vorbei.',
+      ];
+    case 'chat':
+      return [
+        'chat' + (p === App.me ? ' mine' : ''),
+        (p === App.me ? '' : '<b>' + esc(nameOf(v, p)) + '</b>') + esc(e.text),
+      ];
+  }
+  return null;
+}
+
+let lastLogKey = '';
+let scrolledOnce = false;
+
+export function resetLog(): void {
+  lastLogKey = '';
+  scrolledOnce = false;
+}
+
+/** Verlauf und Chat. Während einer Shithead-Sequenz erscheinen Züge erst, wenn sie zu sehen waren. */
+export function renderLog(v: View): void {
+  const list = SEQ.busy
+    ? v.log.filter((e) => {
+        return e.n <= App.seenN || e.k === 'chat';
+      })
+    : v.log;
+  const key = (list.length ? list[list.length - 1].n : 0) + ':' + list.length + ':' + App.me;
+  const u = $('#unread');
+  u.hidden = !App.unread;
+  u.textContent = App.unread > 9 ? '9+' : String(App.unread);
+  if (key === lastLogKey) return;
+  lastLogKey = key;
+  const el = $('#log'),
+    near = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  el.innerHTML =
+    list
+      .map((e) => {
+        const l = logLine(v, e);
+        return l ? '<div class="e ' + l[0] + '">' + l[1] + '</div>' : '';
+      })
+      .join('') || '<div class="e sys">Hier erscheint, was am Tisch passiert. Ihr könnt auch schreiben.</div>';
+  if (near || !scrolledOnce) {
+    el.scrollTop = el.scrollHeight;
+    scrolledOnce = true;
+  }
+}

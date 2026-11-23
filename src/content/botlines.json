@@ -1,0 +1,145 @@
+{
+  "names": ["Kalle", "Uschi", "Manni", "Gitti", "Hotte", "Elfi", "Rudi", "Biggi", "Heinzi", "Trudi"],
+  "lines": {
+    "greet": [
+      "Na, wer mischt?",
+      "Moin zusammen. Ich hab Zeit mitgebracht.",
+      "Ist hier noch ein Platz frei?",
+      "So, jetzt wird's ernst. Also halb ernst.",
+      "Hallo in die Runde 👋",
+      "Ich bin nur zum Gewinnen hier.",
+      "Seid nett zu mir, ich bin eingerostet.",
+      "Karten her, ich bin bereit!"
+    ],
+    "knock": [
+      "Klopf, klopf. Letzte Runde!",
+      "Ich klopf mal. Viel Glück euch.",
+      "Mir reicht das so 😌",
+      "Zack, geklopft.",
+      "Noch eine Runde, dann wird abgerechnet.",
+      "Ich klopfe. Bitte nicht böse sein.",
+      "Tisch hält? Gut, dann klopf ich.",
+      "Mutig oder dumm? Gleich wissen wir's."
+    ],
+    "otherKnock": [
+      "Jetzt schon? Ich war noch nicht so weit.",
+      "Oha, da fühlt sich jemand sicher.",
+      "Na toll. Meine Hand sieht traurig aus.",
+      "Geklopft? Dann muss ich wohl zaubern.",
+      "Moment, ich brauch noch drei Runden!",
+      "Uff 😬",
+      "Ganz ruhig bleiben, alles im Griff.",
+      "Das war bestimmt nur ein Bluff."
+    ],
+    "schnautz": [
+      "Schnautz! Einunddreißig auf die Hand.",
+      "31. Ich sag nur Schnautz 😎",
+      "Schnautz! Karten auf den Tisch.",
+      "Bitte einmal alle staunen.",
+      "Einunddreißig. Besser geht's nicht.",
+      "Schnautz, meine Lieben!",
+      "Das nennt man Timing. Schnautz!"
+    ],
+    "feuer": [
+      "Feuer! Drei Asse 🔥",
+      "Drei Asse. Ich muss mich kurz setzen.",
+      "Es brennt am Tisch. Feuer!",
+      "Feuer! Bitte alle einen Deckel abgeben.",
+      "Asse, Asse, Asse. Mehr sag ich nicht.",
+      "Das passiert mir sonst nie. Feuer!",
+      "Holt den Feuerlöscher, ich hab drei Asse."
+    ],
+    "swapAll": [
+      "Alles neu, bitte.",
+      "Die drei können weg.",
+      "Einmal komplett tauschen, danke.",
+      "Schlimmer kann's nicht werden. Oder?",
+      "Neue Karten, neues Glück 🍀",
+      "Ich nehm den ganzen Tisch.",
+      "Weg mit dem Blatt, her mit der Mitte!"
+    ],
+    "roundWin": [
+      "Beste Hand. Ich bin selbst überrascht.",
+      "Diese Runde geht an mich 😇",
+      "Läuft bei mir.",
+      "Na also, geht doch!",
+      "Danke, danke, bitte keinen Applaus.",
+      "Glück? Reines Können.",
+      "So darf es gern weitergehen."
+    ],
+    "loseLife": [
+      "Autsch, ein Deckel weniger.",
+      "Den Bierdeckel hab ich eh nicht gemocht.",
+      "Okay, das war nichts.",
+      "Ein Deckel weg. Kein Drama.",
+      "Mist, das war mein Lieblingsdeckel 😢",
+      "Ich nenne das Aufwärmphase.",
+      "Wer hat meine Karten gemischt?",
+      "Na gut, der geht auf mich."
+    ],
+    "swim": [
+      "Ich schwimme. Das Wasser ist angenehm.",
+      "Deckel alle, ab jetzt wird gepaddelt 🏊",
+      "Hat jemand Schwimmflügel für mich?",
+      "Noch bin ich nicht untergegangen.",
+      "Schwimmen kann ich. Hoffe ich.",
+      "Ab jetzt ohne Netz und ohne Deckel.",
+      "Blubb."
+    ],
+    "out": [
+      "Das war's für mich. Macht's gut!",
+      "Raus bin ich. Schön war's trotzdem.",
+      "Ich schau euch dann mal zu 🍿",
+      "Untergegangen. Mit Würde, hoffe ich.",
+      "Beim nächsten Mal seid ihr dran.",
+      "Tja. Gluck gluck.",
+      "Ich geh dann mal die Chips holen."
+    ],
+    "winGame": [
+      "Gewonnen! Wer hätte das gedacht.",
+      "Sieg 🏆 Ich bedanke mich bei meinen Karten.",
+      "Revanche? Jederzeit.",
+      "Das war knapp. Na ja, eigentlich nicht.",
+      "Ich bleib bescheiden. Ab morgen.",
+      "Gutes Spiel, ihr wart starke Gegner.",
+      "Der Tisch gehört heute mir."
+    ],
+    "shBurn": [
+      "Zehn drauf. Stapel weg 🔥",
+      "Und weg ist der Stapel.",
+      "Verbrannt! Ich mag den Geruch.",
+      "Einmal aufräumen, bitte.",
+      "Puff, alles sauber.",
+      "Der Stapel hat mich eh genervt.",
+      "Feuer frei. Ich bin gleich nochmal dran."
+    ],
+    "shPickup": [
+      "Och nö. Der ganze Stapel?",
+      "Na super, jetzt hab ich Lesestoff.",
+      "Ich sammle halt gern Karten 🙃",
+      "Wer braucht schon eine freie Hand?",
+      "Das sind mehr Karten als Finger.",
+      "Okay, das tat weh.",
+      "Alles meins. Leider.",
+      "Ich nehm's sportlich."
+    ],
+    "shFinish": [
+      "Fertig! Ich lehn mich zurück.",
+      "Karten los, Sorgen los ✌️",
+      "Ich bin durch. Viel Spaß noch!",
+      "Hände leer, Gewissen rein.",
+      "Das ging ja flott.",
+      "So, ich bin raus aus der Nummer.",
+      "Fertig. Wer wird's denn nun?"
+    ],
+    "shShithead": [
+      "Okay, ich bin der Shithead. Glückwunsch.",
+      "Einer muss es ja machen.",
+      "Shithead, das bin dann wohl ich 🙈",
+      "Ich trage den Titel mit Stolz.",
+      "Nächste Runde wird alles anders.",
+      "Ich hab euch gewinnen lassen. Ehrlich.",
+      "Dafür misch ich jetzt, oder?"
+    ]
+  }
+}

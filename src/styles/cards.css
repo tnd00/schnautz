@@ -1,0 +1,245 @@
+/* Bierdeckel (Leben) und Spielkarten */
+.lives {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.coaster {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff7e0 0 18%, #ead19a 40%, #b98b3e 100%);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(110, 64, 18, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+.coaster::after {
+  content: '';
+  position: absolute;
+  inset: 3.5px;
+  border-radius: 50%;
+  border: 1px solid rgba(140, 40, 30, 0.55);
+}
+.coaster.lost {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgba(246, 239, 223, 0.22);
+}
+.coaster.lost::after {
+  display: none;
+}
+.swim {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--sea);
+  font-size: 12px;
+  font-weight: 600;
+}
+.swim svg {
+  width: 18px;
+  height: 10px;
+}
+
+/* cards */
+.card {
+  --cw: 96px;
+  --rot: 0deg;
+  --ty: 0px;
+  position: relative;
+  flex: none;
+  width: var(--cw);
+  height: calc(var(--cw) * 1.4);
+  border-radius: calc(var(--cw) * 0.085);
+  background: linear-gradient(155deg, #fffdf6 0%, #f6eedb 60%, #efe3c8 100%);
+  color: var(--ink);
+  font-size: calc(var(--cw) / 6.2);
+  box-shadow:
+    0 0 0 1px rgba(70, 45, 10, 0.2),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 7px 16px rgba(0, 0, 0, 0.33),
+    0 2px 3px rgba(0, 0, 0, 0.22);
+  transform: translateY(var(--ty)) rotate(var(--rot)) scale(var(--sc, 1));
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.card.red {
+  color: var(--red);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--cw) * 0.035);
+  border-radius: calc(var(--cw) * 0.06);
+  border: 1px solid rgba(120, 90, 40, 0.16);
+  pointer-events: none;
+}
+.card .ix {
+  position: absolute;
+  top: 0.3em;
+  left: 0.32em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.92;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.06em;
+  letter-spacing: -0.03em;
+}
+.card .ix i {
+  font-style: normal;
+  font-size: 0.82em;
+  margin-top: 0.08em;
+  font-family: var(--ui);
+}
+.card .ix.br {
+  top: auto;
+  left: auto;
+  bottom: 0.3em;
+  right: 0.32em;
+  transform: rotate(180deg);
+}
+.card .pip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 1.02em;
+  line-height: 1;
+}
+.card .pip.f {
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+.card .ace {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.card .ace b {
+  font-size: 3.1em;
+  line-height: 1;
+  font-weight: 400;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.08));
+}
+.card .ace::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.28;
+}
+.card .ace::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 52%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px dashed currentColor;
+  opacity: 0.22;
+}
+.card .face {
+  position: absolute;
+  inset: 19% 21%;
+  border: 1.5px solid currentColor;
+  border-radius: 0.32em;
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(135deg, rgba(120, 80, 20, 0.06) 0 3px, transparent 3px 6px);
+  overflow: hidden;
+}
+.card .face b {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 2.5em;
+  line-height: 1;
+}
+.card .face i {
+  position: absolute;
+  font-style: normal;
+  font-size: 0.9em;
+  line-height: 1;
+}
+.card .face i:nth-of-type(1) {
+  top: 0.18em;
+  left: 0.22em;
+}
+.card .face i:nth-of-type(2) {
+  bottom: 0.18em;
+  right: 0.22em;
+  transform: rotate(180deg);
+}
+.card.back {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(243, 205, 125, 0.32) 0 10%, transparent 10.5%),
+    repeating-linear-gradient(45deg, rgba(243, 205, 125, 0.2) 0 1.5px, transparent 1.5px 8px),
+    repeating-linear-gradient(-45deg, rgba(243, 205, 125, 0.2) 0 1.5px, transparent 1.5px 8px),
+    linear-gradient(155deg, #842a2f, #4a1418);
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.045) #f1e6cf,
+    inset 0 0 0 calc(var(--cw) * 0.06) var(--brass),
+    0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 7px 16px rgba(0, 0, 0, 0.33);
+}
+.card.back::before {
+  display: none;
+}
+.card.pick {
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .card.pick:hover {
+    --ty: -7px;
+  }
+}
+.card.sel {
+  --ty: -16px;
+  box-shadow:
+    0 0 0 3px var(--brass-hi),
+    0 0 26px rgba(243, 205, 125, 0.55),
+    0 14px 24px rgba(0, 0, 0, 0.4);
+}
+.card.ghost {
+  opacity: 0.35;
+}
+.card.deal {
+  animation: deal 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: var(--d, 0s);
+}
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translate(0, -60px) rotate(-18deg) scale(0.8);
+  }
+}
+.card.pop {
+  animation: pop 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes pop {
+  0% {
+    transform: translateY(-30px) scale(1.12);
+    box-shadow:
+      0 0 0 3px var(--brass-hi),
+      0 0 30px rgba(243, 205, 125, 0.7);
+  }
+  100% {
+  }
+}
+.card.sm {
+  --cw: 46px;
+}
+.card.xs {
+  --cw: 34px;
+}

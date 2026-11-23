@@ -1,0 +1,9 @@
+{
+  // Tests und Konfigurationsdateien laufen in Node
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src", "tests", "vite.config.ts", "vitest.sim.config.ts", "playwright.config.ts"]
+}
