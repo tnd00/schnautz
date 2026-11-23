@@ -797,13 +797,26 @@
   font-size: 22px;
   color: var(--cream);
 }
+/* „auf der Hand“: sonst sehen zwei Kartenrücken aus wie verdeckte Tischkarten */
+.bighand .bht {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--cream);
+}
 @media (max-width: 960px) {
+  /* Schmale Kacheln: Zahl über dem Text, dann passt es auch zu sechst auf kleine Handys */
   .bighand .bhn {
-    padding: 2px 7px 2px 9px;
+    flex-direction: column;
+    gap: 1px;
+    padding: 3px 8px 4px;
+    border-radius: 12px;
     font-size: 11px;
   }
   .bighand .bhn b {
-    font-size: 18px;
+    font-size: 17px;
+  }
+  .bighand .bht {
+    font-size: 9.5px;
   }
 }
 

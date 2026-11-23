@@ -111,19 +111,21 @@ function shTableHTML(v: View, P: ShPlayerView, mine: boolean, focus = false): st
 }
 
 /**
- * Handkarten eines Gegners ohne Tischkarten: ein Fächer mit der Anzahl groß in der Mitte.
+ * Handkarten eines Gegners ohne Tischkarten: ein gehaltener Fächer mit „auf der Hand“ in der Mitte.
+ * Ohne die Worte sähen zwei Kartenrücken aus wie verdeckte Tischkarten, die man nur einzeln aufdecken darf.
  * Höchstens vier Karten, damit es auch in schmale Kacheln passt.
  */
 function bigHandHTML(hn: number): string {
   let fan = '';
   const shown = Math.min(hn, 4);
   for (let i = 0; i < shown; i++) {
-    const rot = (i - (shown - 1) / 2) * 7;
+    const rot = (i - (shown - 1) / 2) * 14;
     fan += cardHTML(null, App.anim.deal ? 'deal' : '', `style="--rot:${rot}deg; --d:${i * 0.05}s"`);
   }
   return (
-    `<div class="bighand" title="Nur noch ${hn} ${hn === 1 ? 'Handkarte' : 'Handkarten'}"><span class="ohand bigfan">${fan}</span>` +
-    `<span class="bhn"><b>${hn}</b>${HAND_ICON}</span></div>`
+    `<div class="bighand" title="Keine Tischkarten mehr, nur noch ${hn} ${hn === 1 ? 'Handkarte' : 'Handkarten'}">` +
+    `<span class="ohand bigfan">${fan}</span>` +
+    `<span class="bhn"><b>${hn}</b><span class="bht">auf der Hand</span></span></div>`
   );
 }
 

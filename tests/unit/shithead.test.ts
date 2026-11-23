@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
 import { quitPlayer } from '../../src/game/flow';
 import { shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
-import { addPlayer, newState } from '../../src/game/state';
+import { addBot, addPlayer, newState } from '../../src/game/state';
 import type { Action, Card, ShRules, ShState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF, shCardsOk } from './helpers';
+import { playOut, rngF, shCardsOk } from './helpers';
 
 const rank = (c: Card) => c.slice(1);
 
@@ -366,6 +366,55 @@ describe('Shithead: 4er reinwerfen und Bombe', () => {
 
   it('hat 8 aussetzen standardmäßig an', () => {
     expect(newState('h', 'H').rules.sh.eight).toBe(true);
+  });
+});
+
+describe('Shithead: verdeckte Karten', () => {
+  it('weist zwei verdeckte Karten auf einmal ab, blind liegt immer genau eine', () => {
+    const { st, S } = shTable(['h', 'p1'], 3);
+    st.players.forEach((p) => act(st, p.id, { type: 'shready' }));
+    assert.equal(st.phase, 'play');
+    if (S.win?.lock) act(st, 'h', { type: 'shunlock', id: S.win.id });
+    st.turn = 0;
+    S.pile = [];
+    S.deck = [];
+    S.P.h.hand = [];
+    S.P.h.up = [];
+    S.P.h.down = ['HK', 'DK'];
+    expect(act(st, 'h', { type: 'shplay', from: 'hand', idx: [0, 1] })).toBe('Wähle zuerst eine Karte.');
+    expect(act(st, 'h', { type: 'shplay', from: 'up', idx: [0, 1] })).toBe('Wähle zuerst eine Karte.');
+    expect(act(st, 'h', { type: 'shblind', i: 0 })).toBeNull();
+    expect(S.P.h.down).toHaveLength(1);
+    expect(st.log.at(-1)).toMatchObject({ k: 'shplay', src: 'down', cards: ['HK'] });
+  });
+
+  it('auch die KI legt verdeckte Karten nur einzeln und wirft sie nie rein', () => {
+    let blind = 0;
+    for (let g = 0; g < 120; g++) {
+      const rng = rngF(9100 + g);
+      const st = newState('h', 'H');
+      act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+      act(st, 'h', { type: 'rules', rules: { turnSecs: 0 } }, rng);
+      for (let i = 0; i < 3; i++) addBot(st, rng);
+      act(st, 'h', { type: 'start' }, rng);
+      let seen = 0;
+      const scan = (s: State) => {
+        s.log
+          .filter((e) => e.n > seen)
+          .forEach((e) => {
+            if ((e.k === 'shplay' || e.k === 'shthrow' || e.k === 'shbomb') && e.src === 'down') {
+              blind++;
+              expect(e.k).toBe('shplay');
+              expect(e.cards).toHaveLength(1);
+            }
+          });
+        seen = s.n;
+        return false;
+      };
+      playOut(st, rng, scan);
+      scan(st);
+    }
+    expect(blind).toBeGreaterThan(100);
   });
 });
 

@@ -10,6 +10,39 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.3',
+    date: '2026-11-24',
+    title: 'Partieende mit Pauke',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Der Shithead bekommt eine Zeremonie: Die letzte Karte fliegt in Zeitlupe, dann wird der Tisch dunkel, ein brauner Ring zoomt als Spotlicht auf den Platz, ein Kackhaufen plumpst spritzend darauf, die traurige Posaune spielt und braunes Konfetti fällt. Antippen überspringt sie.',
+          'Revanche: Wer verloren hat, fordert im Ergebnisfenster den Sieger heraus. Am Ende der nächsten Partie steht fest, wer das Duell gewinnt. Die KIs fordern auch mal selbst.',
+          'Wer bei Shithead fertig ist, tippt, wer Shithead wird. Früh tippen bringt mehr Punkte, die Punkte stehen in der Bestenliste.',
+          'Trifft dich selbst ein Wurf, klatscht er groß auf deinen Platz, spritzt und färbt kurz den Bildschirmrand.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Shithead: Hat jemand keine Tischkarten mehr, steht an seinen Karten „auf der Hand“. So sehen Handkarten nicht mehr aus wie verdeckte Tischkarten, die man nur einzeln aufdecken darf.',
+          'Bis zur Enthüllung verraten Platz und Zähler nicht, wer Shithead geworden ist.',
+          'Wer am Gerät weniger Bewegung eingestellt hat, sieht kein Konfetti. Die Zeremonie läuft dann ruhig ohne Zeitlupe.',
+          'Am Handy steht im Ergebnisfenster kein kleines Tomatenzeichen mehr über den Punkten.',
+          'Unter Updates steht ganz unten die genaue Version.',
+        ],
+      },
+      {
+        h: 'Behoben',
+        items: [
+          'Am iPhone klingen die Töne jetzt auch, wenn der Lautlos-Schalter an ist. Ausschalten geht über den Ton-Knopf im Spiel.',
+          'Am Handy passen die Namen der Sounds im Ergebnisfenster ganz hinein.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.2',
     date: '2026-11-23',
     title: 'Werfen und Tröten',
@@ -31,10 +64,6 @@ export const CHANGELOG: readonly Release[] = [
           'Bist du raus und spielen nur noch KIs, kann der Host gleich zur Lobby oder eine neue Partie starten.',
           'Schnautz: Nach 10 Sekunden startet die nächste Runde von selbst, am Ende der Partie nicht.',
           'Ein Tipp auf „verbunden“ zeigt Details zur Verbindung und wer gerade da ist.',
-          'Der Shithead bekommt eine Zeremonie: Die letzte Karte fliegt in Zeitlupe, dann wird der Tisch dunkel, ein brauner Ring zoomt als Spotlicht auf den Platz, ein Kackhaufen plumpst spritzend darauf, die traurige Posaune spielt und braunes Konfetti fällt. Antippen überspringt sie.',
-          'Trifft dich selbst ein Wurf, klatscht er groß auf deinen Platz, spritzt und färbt kurz den Bildschirmrand.',
-          'Revanche: Wer verloren hat, fordert im Ergebnisfenster den Sieger heraus. Am Ende der nächsten Partie steht fest, wer das Duell gewinnt.',
-          'Wer bei Shithead fertig ist, tippt, wer Shithead wird. Früh tippen bringt mehr Punkte, die Punkte stehen in der Bestenliste.',
           'Ein Tipp auf den Raumcode oben öffnet die Einladung mit Code und Link zum Kopieren oder Teilen.',
           'Gibt es eine neue Version, erscheint oben ein Hinweis. Nach dem Neuladen geht es von selbst zurück an den Tisch. Spielt jemand noch mit altem Stand, sagt der Tisch Bescheid.',
         ],
@@ -52,14 +81,12 @@ export const CHANGELOG: readonly Release[] = [
         items: [
           'Mehr Töne: wenn du dran bist, bei Reaktionen, beim Austeilen und bei Meldungen.',
           'Wer dran ist, wird nur noch am Rand gelb, nicht mehr in der ganzen Fläche.',
-          'Wer am Gerät weniger Bewegung eingestellt hat, sieht kein Konfetti mehr. Die Zeremonie läuft dann ruhig ohne Zeitlupe.',
           'Schnautz: Die Zahl der Karten im Stapel steht am Stapel und macht die Tischmitte nicht mehr größer.',
           'Schnautz am Handy: Die Leiste oben zeigt alle mit ihren Leben als Zahl und passt immer in eine Zeile.',
           'Am Handy steht „schwimmt“ nur an deinem Platz ausgeschrieben, sonst reicht das Zeichen.',
           'Bei „Tisch ansehen“ nach einer Runde stehen unten Ergebnis und nächste Runde, am Ende der Partie für den Host auch „Zur Lobby“.',
           'Am PC ist mehr Luft zwischen Gegnern, Tischmitte und deinem Platz.',
           'Der Einladungscode steht überall in klarer Schrift.',
-          'Unter Updates steht ganz unten die genaue Version.',
           'Chat, Reaktionen und die laufende Uhr unterbrechen keine Animation und keine Kartenauswahl mehr.',
           'Am Handy geht der Ton zuverlässiger an, ein Tipp auf den Tisch reicht.',
           'Wackelnde Gegner springen im Karussell nicht mehr an den Rand.',
@@ -67,11 +94,7 @@ export const CHANGELOG: readonly Release[] = [
       },
       {
         h: 'Behoben',
-        items: [
-          'Meldungen aus dem Spiel legen sich nicht mehr über Regeln, Bestenliste, Verbindung oder Einladung.',
-          'Am iPhone klingen die Töne jetzt auch, wenn der Lautlos-Schalter an ist. Ausschalten geht über den Ton-Knopf im Spiel.',
-          'Am Handy passen die Namen der Sounds im Ergebnisfenster ganz hinein.',
-        ],
+        items: ['Meldungen aus dem Spiel legen sich nicht mehr über Regeln, Bestenliste, Verbindung oder Einladung.'],
       },
     ],
   },
