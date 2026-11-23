@@ -29,6 +29,7 @@ import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
 import { renderTurnNote } from './render/turnnote';
 import { inviteHTML } from './render/invite';
 import { netInfoHTML } from './render/netinfo';
+import { closeUpdate, reloadApp } from './update';
 import { updatesHTML } from './render/updates';
 import { resetTableUI } from './reset';
 import { copyLink, setNet, shareLink, showScreen, updateTitle } from './screens';
@@ -404,6 +405,12 @@ function onAction(a: string, t: HTMLElement): void {
     case 'updates':
       $('#menu').hidden = true;
       $('#modal').innerHTML = updatesHTML();
+      break;
+    case 'reloadapp':
+      reloadApp();
+      break;
+    case 'closeupd':
+      closeUpdate();
       break;
     case 'netinfo':
       $('#modal').innerHTML = netInfoHTML();

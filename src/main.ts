@@ -17,6 +17,7 @@ import { showScreen } from './ui/screens';
 import { SEQ } from './ui/shithead/sequence';
 import { renderSoundBtn } from './ui/sound';
 import { initStart } from './ui/start';
+import { autoResume, initUpdateCheck } from './ui/update';
 import { LS } from './ui/storage';
 
 declare global {
@@ -39,6 +40,9 @@ initEvents();
 renderSoundBtn();
 initStart();
 showScreen('start');
+initUpdateCheck();
+// Nach dem Neuladen wegen einer neuen Version gleich zurück an den Tisch
+autoResume();
 if (cleanCode(location.hash.slice(1)) && LS.get('name', '')) $('#btn-join').focus();
 // Zugang für die Ende-zu-Ende-Tests, nur beim Entwickeln oder mit lokalem PeerServer (Testparameter)
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('peerhost')) {

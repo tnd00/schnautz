@@ -65,7 +65,8 @@ async function myMove(page: Page, v: View, me: string): Promise<boolean> {
 }
 
 test('zwei Browser spielen Shithead bis zum Ende', async ({ browser }) => {
-  test.setTimeout(10 * 60_000);
+  // Zwei einfache Testspieler brauchen manchmal lange, bis einer verliert
+  test.setTimeout(15 * 60_000);
   const errors = new Errors();
   const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
   const guest = errors.watch(await (await phone(browser)).newPage(), 'gast');
@@ -100,7 +101,7 @@ test('zwei Browser spielen Shithead bis zum Ende', async ({ browser }) => {
   const ids = [await myId(host), await myId(guest)];
   const quick = { shthrow: 0, shbomb: 0 };
   await test.step('spielen bis einer Shithead ist', async () => {
-    for (let i = 0; i < 1500; i++) {
+    for (let i = 0; i < 3000; i++) {
       const v = await mustView(host);
       if (v.phase === 'over') break;
       let moved = false;

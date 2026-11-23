@@ -32,6 +32,7 @@ export const CHANGELOG: readonly Release[] = [
           'Schnautz: Nach 10 Sekunden startet die nächste Runde von selbst, am Ende der Partie nicht.',
           'Ein Tipp auf „verbunden“ zeigt Details zur Verbindung und wer gerade da ist.',
           'Ein Tipp auf den Raumcode oben öffnet die Einladung mit Code und Link zum Kopieren oder Teilen.',
+          'Gibt es eine neue Version, erscheint oben ein Hinweis. Nach dem Neuladen geht es von selbst zurück an den Tisch. Spielt jemand noch mit altem Stand, sagt der Tisch Bescheid.',
         ],
       },
       {

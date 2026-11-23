@@ -319,3 +319,43 @@ body.peeking #emotes {
 #modal .modal {
   z-index: 65;
 }
+
+/* Hinweis auf eine neue Version (src/ui/update.ts) */
+#updbar {
+  position: fixed;
+  /* Zentriert ohne transform, die Einblend-Animation nutzt transform */
+  left: 10px;
+  right: 10px;
+  margin: 0 auto;
+  top: max(10px, env(safe-area-inset-top));
+  z-index: 75;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 560px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 14px;
+  background: #0f2a20;
+  border: 1px solid rgba(243, 205, 125, 0.45);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  color: var(--cream);
+  font: 600 13.5px/1.35 var(--ui);
+  animation: rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#updbar .btn.small {
+  min-height: 34px;
+  padding: 0 12px;
+  flex: none;
+}
+#updbar .x {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cream);
+  font-size: 17px;
+  cursor: pointer;
+}

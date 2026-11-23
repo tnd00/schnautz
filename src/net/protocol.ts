@@ -3,11 +3,15 @@ import type { Action, State, View } from '../game/types';
 
 /** Gast → Gastgeber */
 export type GuestMessage =
-  { t: 'hello'; pid: string; key: string; name: string } | { t: 'ping' } | { t: 'act'; a: Action } | { t: 'bye' };
+  /** `v`: Version der Seite, fehlt bei älteren Ständen */
+  | { t: 'hello'; pid: string; key: string; name: string; v?: string }
+  | { t: 'ping' }
+  | { t: 'act'; a: Action }
+  | { t: 'bye' };
 
 /** Gastgeber → Gast */
 export type HostMessage =
-  | { t: 'welcome'; pid: string }
+  | { t: 'welcome'; pid: string; v?: string }
   | { t: 'state'; s: View }
   | { t: 'pong' }
   | { t: 'reject'; msg: string }

@@ -8,6 +8,8 @@ import { resetTableUI } from '../ui/reset';
 import { setNet, setWait, showScreen } from '../ui/screens';
 import { renderResume, showStartError } from '../ui/start';
 import { LS, SS } from '../ui/storage';
+import { noteHostVersion } from '../ui/update';
+import { APP_VERSION } from '../content/version';
 import { genId, PREFIX, peerOptions } from './ids';
 import { asMessage, isView, type GuestMessage, type HostMessage, type SavedGuest } from './protocol';
 import { keepSignal, safeClose, safeDestroy } from './signal';
@@ -154,7 +156,7 @@ function guestConnect(): void {
     if (G.conn !== conn) return;
     G.fails = 0;
     G.lastPong = Date.now();
-    sendToHost({ t: 'hello', pid: App.me, key: App.key, name: App.name });
+    sendToHost({ t: 'hello', pid: App.me, key: App.key, name: App.name, v: APP_VERSION });
   });
   conn.on('data', (m) => {
     if (G.conn === conn) guestMsg(m);
@@ -226,6 +228,7 @@ function guestMsg(raw: unknown): void {
       G.ever = true;
       // Nach dem Neuverbinden keine alten Würfe und Klänge nachspielen
       App.fxSync = true;
+      noteHostVersion(typeof m.v === 'string' ? m.v : undefined);
       G.lastPong = Date.now();
       setNet('online');
       if (typeof m.pid === 'string' && m.pid && m.pid !== App.me) {

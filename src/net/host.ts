@@ -23,6 +23,8 @@ import { seqMsOf } from '../ui/shithead/sequence';
 import { setNet, setWait, showScreen } from '../ui/screens';
 import { renderResume, showStartError } from '../ui/start';
 import { LS } from '../ui/storage';
+import { noteGuestVersion } from '../ui/update';
+import { APP_VERSION } from '../content/version';
 import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
 import { asMessage, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
 import { allowBurst, newRateBook, rateSound } from './rate';
@@ -284,7 +286,8 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
   p.online = true;
   delete p.offSince;
   delete p.gone;
-  hostSend(conn, { t: 'welcome', pid });
+  hostSend(conn, { t: 'welcome', pid, v: APP_VERSION });
+  noteGuestVersion(name, typeof m.v === 'string' ? m.v.slice(0, 20) : undefined);
   hostCommit();
 }
 
