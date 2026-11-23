@@ -12,7 +12,7 @@ import { checkReady, quitPlayer } from '../game/flow';
 import { isOwnLeftSeat, reclaimSeat, seatGuest, syncSeats, takeSeat } from '../game/seats';
 import { migrate, newState, pIdx, removePlayer } from '../game/state';
 import type { Action, LogEntry, State, View } from '../game/types';
-import { viewFor } from '../game/view';
+import { fitView, viewFor } from '../game/view';
 import { App } from '../ui/app';
 import { applyView } from '../ui/apply';
 import { num, type Timer } from '../ui/dom';
@@ -392,7 +392,8 @@ function hostView(st: State, pid: string, own = false): View {
     delete v.sh.win.until;
   }
   clockFor(v, own);
-  return v;
+  // Was übers Netz geht, muss in eine PeerJS-Nachricht passen
+  return own ? v : fitView(v);
 }
 
 function hostOwnView(st: State): View {

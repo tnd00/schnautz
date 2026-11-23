@@ -10,6 +10,19 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.1.1',
+    date: '2026-11-23',
+    title: 'Luft im Verlauf',
+    groups: [
+      {
+        h: 'Behoben',
+        items: [
+          'Viele lange Chatnachrichten an einem vollen Tisch konnten alle Gäste aus der Verbindung werfen. Wird es eng, zeigt der Verlauf jetzt einfach weniger alte Einträge.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.1',
     date: '2026-11-23',
     title: 'Platz für alle',
