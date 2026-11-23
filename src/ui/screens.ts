@@ -4,6 +4,7 @@ import { App, type NetState } from './app';
 import { $, $opt } from './dom';
 import { toast } from './feedback';
 import { dealerId, myTurn } from './helpers';
+import { dlog } from './devlog';
 
 export type Screen = 'start' | 'wait' | 'lobby' | 'game';
 
@@ -34,6 +35,7 @@ export function showScreen(name: Screen): void {
 }
 
 export function setNet(s: NetState): void {
+  if (App.net !== s) dlog('net', `Netz ${s}`);
   App.net = s;
   $('#netdot').className = `dot ${s}`;
   $('#nettext').textContent = s === 'online' ? 'verbunden' : s === 'off' ? 'getrennt' : 'verbinde…';

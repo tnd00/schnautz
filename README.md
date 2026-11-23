@@ -40,6 +40,10 @@ In VS Code schlägt das Projekt beim ersten Öffnen die passenden Erweiterungen 
 
 Für die Browser-Tests einmal `npx playwright install chromium` ausführen. Sie starten selbst einen lokalen PeerServer und brauchen deshalb kein Internet.
 
+### Dev-Menü
+
+Zum Testen am Tisch gibt es ein verstecktes Menü, auch auf der veröffentlichten Seite. Unter ⋯ → Updates fünfmal schnell auf die Versionszeile ganz unten tippen, danach steht „Dev-Menü“ im Menü ⋯. Der Host kann dort Partien im Zeitraffer bis kurz vor das Ende spulen (etwa für die Shithead-Zeremonie), die KI werfen lassen sowie Effekte und Klänge bei allen abspielen. Dazu kommen ein Protokoll mit Fehlern und Verbindungsereignissen, der rohe Verlauf und Infos zu Version, Verbindung, Gerät und Ton. Gäste sehen Infos und Logs, Effekte laufen bei ihnen nur selbst.
+
 ## Aufbau
 
 ```
@@ -47,6 +51,7 @@ src/
   main.ts          Einstieg mit Schriften, Styles, Ereignissen und Startbildschirm
   game/            Spielregeln ohne Browser: Zustand, Züge, Ansichten pro Person
   bots/            Entscheidungen der KI-Mitspieler
+  dev/             Verstecktes Dev-Menü, wird erst beim Öffnen geladen
   net/             Verbindung über PeerJS (Host, Gast, Nachrichten) und Taktung der KI am Tisch
   ui/              Oberfläche: Zeichnen, Animationen, Eingaben, Töne
     render/        Ein Modul pro Bildschirmbereich

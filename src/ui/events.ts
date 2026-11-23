@@ -116,6 +116,26 @@ export function confirmBox(text: string, ok: string, cb: () => void): void {
   };
 }
 
+/** Dev-Menü erst beim Öffnen nachladen, normale Gäste laden es nie. */
+function withDev(fn: (m: typeof import('../dev/menu')) => void): void {
+  import('../dev/menu').then(fn, () => toast('Das Dev-Menü ließ sich nicht laden.'));
+}
+
+/** Fünf schnelle Tipps auf die Versionszeile unter Updates schalten das Dev-Menü frei. */
+const DEVTAP = { n: 0, at: 0 };
+function devTap(): void {
+  const now = Date.now();
+  DEVTAP.n = now - DEVTAP.at < 1500 ? DEVTAP.n + 1 : 1;
+  DEVTAP.at = now;
+  if (DEVTAP.n < 5) return;
+  DEVTAP.n = 0;
+  if (!LS.get('dev', false)) {
+    LS.set('dev', true);
+    toast('Dev-Menü freigeschaltet, es steht jetzt im Menü ⋯.', 3500);
+  }
+  withDev((m) => m.openDev());
+}
+
 /** Ton an oder aus, aus der Kopfzeile oder mobil aus dem Menü. */
 function toggleSound(): void {
   App.muted = !App.muted;
@@ -412,6 +432,16 @@ function onAction(a: string, t: HTMLElement): void {
     case 'reloadapp':
       reloadApp();
       break;
+    case 'devtap':
+      devTap();
+      break;
+    case 'devopen':
+      $('#menu').hidden = true;
+      withDev((m) => m.openDev());
+      break;
+    case 'dev':
+      withDev((m) => m.devAct(t.dataset.dev ?? '', t));
+      break;
     case 'closeupd':
       closeUpdate();
       break;
@@ -654,6 +684,7 @@ export function initEvents(): void {
   };
   $('#btn-menu').onclick = () => {
     const m = $('#menu');
+    $('#menu-dev').hidden = !LS.get('dev', false);
     m.hidden = !m.hidden;
   };
   $('#codechip').onclick = () => {

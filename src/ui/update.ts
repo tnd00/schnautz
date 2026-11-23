@@ -8,10 +8,11 @@ import { App } from './app';
 import { $opt, esc } from './dom';
 import { toast } from './feedback';
 import { SS } from './storage';
+import { dlog } from './devlog';
 
 /** Kennung dieses Builds, setzt vite.config.ts. Beim Entwickeln gibt es keine. */
 declare const __BUILD_ID__: string | undefined;
-const BUILD = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : '';
+export const BUILD = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : '';
 
 const CHECK_MS = 5 * 60_000;
 let shown = false;
@@ -71,13 +72,15 @@ async function check(): Promise<void> {
     const r = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!r.ok) return;
     const j = (await r.json()) as { build?: unknown };
-    if (typeof j.build === 'string' && j.build !== BUILD)
+    if (typeof j.build === 'string' && j.build !== BUILD) {
+      dlog('net', `Neue Version auf dem Server: ${j.build}`);
       showUpdate(
         App.role === 'host'
           ? 'Neue Version verfügbar. Lade neu, der Tisch läuft danach weiter.'
           : 'Neue Version verfügbar. Lade neu, dein Platz bleibt.',
         true,
       );
+    }
   } catch {
     /* offline oder beim Entwickeln: kein Hinweis */
   }

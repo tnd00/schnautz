@@ -54,6 +54,13 @@ export function loadSamples(ac: AudioContext): void {
   });
 }
 
+/** Dev-Menü: Wie viele Aufnahmen sind geladen? */
+export const sampleStatus = (): { started: boolean; loaded: number; total: number } => ({
+  started,
+  loaded: BUF.size,
+  total: Object.keys(URLS).length,
+});
+
 /** Spielt eine Aufnahme. Gibt ihre Länge in Sekunden zurück oder null, wenn sie noch nicht geladen ist. */
 export function playSample(ac: AudioContext, name: SampleName, out: AudioNode, vol = 1, at = 0): number | null {
   return startSample(ac, name, out, vol, at)?.dur ?? null;

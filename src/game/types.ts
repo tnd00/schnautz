@@ -210,6 +210,9 @@ export type ShSource = 'hand' | 'up' | 'down';
 /** Was sich werfen lässt */
 export type TossItem = 'tomato' | 'egg' | 'poo' | 'crown' | 'heart' | 'bunny';
 
+/** Effekt aus dem Dev-Menü des Hosts, der bei allen am Tisch läuft (src/ui/devfx.ts) */
+export type DevFx = 'confetti' | 'poo' | 'ann' | 'toast' | 'updbar' | 'ceremony' | 'sfx';
+
 interface LogBase {
   n: number;
   p?: string;
@@ -265,6 +268,8 @@ export type LogEntry = LogBase &
     | { k: 'shbet'; on: string; onName: string; q: number }
     | { k: 'rematch'; to: string | null; tn?: string; c: number }
     | { k: 'rematchend'; to: string; tn: string; res: 'won' | 'lost' | 'tie'; c: number }
+    // Nur der Host schreibt ihn direkt, es gibt keine Aktion dafür. Der Verlauf zeigt ihn nicht
+    | { k: 'dev'; fx: DevFx; s?: string; to?: string }
   );
 
 export type LogKind = LogEntry['k'];

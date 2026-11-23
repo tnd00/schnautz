@@ -1,0 +1,160 @@
+/* Verstecktes Dev-Menü (src/dev/menu.ts) und die Versionszeile unter Updates, die es freischaltet */
+.devm .dsec {
+  margin-top: 8px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(246, 239, 223, 0.08);
+  padding: 0 10px;
+}
+.devm .dsec[open] {
+  padding-bottom: 10px;
+}
+.devm .dsec summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.devm .dsec summary::-webkit-details-marker {
+  display: none;
+}
+.devm .dsec summary::after {
+  content: '▾';
+  margin-left: auto;
+  font-size: 14px;
+  transition: transform 0.15s;
+}
+.devm .dsec:not([open]) summary::after {
+  transform: rotate(-90deg);
+}
+.devm .dsec > .dgrid + .dgrid {
+  margin-top: 6px;
+}
+.devm .dall {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.devm .dall input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brass);
+}
+.devm .dlog {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  max-height: 260px;
+  overflow: auto;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  font:
+    12px/1.35 ui-monospace,
+    'SF Mono',
+    Menlo,
+    Consolas,
+    monospace;
+}
+.devm .dlog li {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(246, 239, 223, 0.05);
+}
+.devm .dlog time {
+  color: var(--muted);
+}
+.devm .dlog i {
+  font-style: normal;
+  color: var(--brass-hi);
+}
+.devm .dlog span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.devm .dlog li.err i,
+.devm .dlog li.err span {
+  color: #ff8f84;
+}
+.devm .dlog li.warn i {
+  color: #ffc46b;
+}
+.devm .dgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.devm .dgrid.snd {
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+}
+.devm .dbtn {
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+}
+.devm .dgrid.snd .dbtn {
+  min-height: 32px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.devm .drows {
+  display: grid;
+  gap: 3px;
+  margin-top: 8px;
+}
+.devm .drow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(246, 239, 223, 0.06);
+  font-size: 13px;
+}
+.devm .drow span {
+  flex: none;
+  color: var(--muted);
+}
+.devm .drow b {
+  min-width: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.devm .dnote {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.devm .dfoot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.devm .dfoot .dbtn {
+  flex: 1;
+}
+.updates .relfoot {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}

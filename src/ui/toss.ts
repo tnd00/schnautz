@@ -229,14 +229,10 @@ function land(e: TossEntry): void {
     const box = $opt(`#opps .opp[data-pid="${CSS.escape(e.to)}"]`);
     if (box && !$opt('#overlay .modal')) shakeEl(box);
   }
+  if (hitMe) hitMeFx(e.item);
   if (hitMe && e.p && now - TOSS.hintAt >= 1500) {
     TOSS.hintAt = now;
     floatLabel(e.p, TOSS_TEXT[e.item].hit);
-    try {
-      navigator.vibrate?.(40);
-    } catch {
-      /* Vibrieren ist nur Zierde */
-    }
   }
   if (mine) {
     if (TOSS.back) clearTimeout(TOSS.back);
@@ -244,6 +240,79 @@ function land(e: TossEntry): void {
       TOSS.back = null;
       carouselRelease();
     }, 1500);
+  }
+}
+
+/** Farben der Spritzer, wenn es mich trifft */
+const HIT_COLORS: Readonly<Record<TossItem, readonly string[]>> = {
+  tomato: ['#e0362b', '#ff7a66', '#b21c16'],
+  egg: ['#ffcb2e', '#f8f3e4', '#f6a91d'],
+  poo: ['#7a4a1f', '#9c6b3a', '#5e3714'],
+  crown: ['#f3cd7d', '#ffe9a8', '#d6a24a'],
+  heart: ['#ff5a78', '#ff9db0', '#e0365a'],
+  bunny: ['#f6efdf', '#ffd1dc', '#e8dccb'],
+};
+
+/**
+ * Volltreffer auf mich: Das Ding klatscht groß auf den eigenen Platz, der Rand färbt sich, es spritzt und wackelt.
+ * Bei weniger Bewegung bleibt nur der farbige Rand.
+ */
+function hitMeFx(item: TossItem): void {
+  const flash = document.createElement('div');
+  flash.className = `hitflash ${item}`;
+  $('#fly').appendChild(flash);
+  setTimeout(() => flash.remove(), 1000);
+  try {
+    navigator.vibrate?.([50, 40, 90]);
+  } catch {
+    /* Vibrieren ist nur Zierde */
+  }
+  if (reduceMotion()) return;
+  const modal = $opt('#overlay .modal');
+  const anchor = modal ? tossAnchor(App.me)?.el : $opt('#me');
+  if (!anchor) return;
+  if (!modal) shakeEl(anchor);
+  const r = anchor.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top + Math.min(r.height / 2, 110);
+  const big = document.createElement('div');
+  big.className = `hitbig ${item}`;
+  big.textContent = TOSS_ICON[item];
+  big.style.left = `${x}px`;
+  big.style.top = `${y}px`;
+  $('#fly').appendChild(big);
+  big.animate(
+    [
+      { transform: 'translate(-50%, -50%) scale(2.8) rotate(-14deg)', opacity: 0 },
+      { transform: 'translate(-50%, -50%) scale(1.3) rotate(6deg)', opacity: 1, offset: 0.16 },
+      { transform: 'translate(-50%, -50%) scale(1.45, .8)', opacity: 1, offset: 0.24 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.4 },
+      { transform: 'translate(-50%, calc(-50% + 30px)) scale(.96)', opacity: 0 },
+    ],
+    { duration: 1500, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' },
+  ).onfinish = () => big.remove();
+  setTimeout(() => big.remove(), 1900);
+  const colors = HIT_COLORS[item];
+  for (let i = 0; i < 16; i++) {
+    const d = document.createElement('i');
+    d.className = 'hitdrop';
+    const size = 6 + Math.random() * 10;
+    d.style.cssText = `left:${x}px; top:${y}px; width:${size}px; height:${size}px; background:${colors[i % colors.length]}`;
+    $('#fly').appendChild(d);
+    const ang = (Math.PI * 2 * i) / 16 + Math.random() * 0.4;
+    const dist = 50 + Math.random() * 90;
+    d.animate(
+      [
+        { transform: 'translate(-50%, -50%) scale(.4)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.12 },
+        {
+          transform: `translate(calc(-50% + ${Math.cos(ang) * dist}px), calc(-50% + ${Math.sin(ang) * dist + 24}px)) scale(.6)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 800 + Math.random() * 300, delay: 160, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' },
+    ).onfinish = () => d.remove();
+    setTimeout(() => d.remove(), 1600);
   }
 }
 

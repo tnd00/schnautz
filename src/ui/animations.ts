@@ -4,9 +4,9 @@ import type { Card, LastMove, View } from '../game/types';
 import { App } from './app';
 import { cardHTML } from './cards';
 import { $, $opt, reduceMotion } from './dom';
-import { panelFor } from './feedback';
+import { panelFor, shakeEl } from './feedback';
 import { pById } from './helpers';
-import { sfxCalm } from './sound';
+import { sfx, sfxCalm } from './sound';
 
 const EASE = 'cubic-bezier(.3,.7,.2,1)';
 
@@ -234,30 +234,80 @@ export function confetti(o: ConfettiOptions = {}): void {
   );
 }
 
-/** Ein Zeichen fällt von oben auf ein Element und staucht sich beim Aufprall. */
-export function dropOn(el: HTMLElement, ch: string, onLand?: () => void): void {
+/** Brauner Spritzer rund um einen Punkt, für den landenden Haufen. */
+function splash(x: number, y: number, colors: readonly string[], n = 12): void {
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('i');
+    s.className = 'zersplash';
+    const size = 5 + Math.random() * 8;
+    s.style.cssText = `left:${x}px; top:${y}px; width:${size}px; height:${size}px; background:${colors[i % colors.length]}`;
+    $('#fly').appendChild(s);
+    const ang = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+    const dist = 34 + Math.random() * 56;
+    s.animate(
+      [
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+        {
+          transform: `translate(calc(-50% + ${Math.cos(ang) * dist}px), calc(-50% + ${Math.sin(ang) * dist * 0.7 + 14}px)) scale(.5)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 620 + Math.random() * 260, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' },
+    ).onfinish = () => s.remove();
+    setTimeout(() => s.remove(), 1200);
+  }
+}
+
+const POO_SPLASH = ['#7a4a1f', '#9c6b3a', '#5e3714', '#b07a42'];
+
+/**
+ * Ein Zeichen plumpst von oben mitten auf ein Element: staucht sich, spritzt, der Platz wackelt, es macht plopp.
+ * `stay`: so lange bleibt es liegen.
+ */
+export function dropOn(el: HTMLElement, ch: string, onLand?: () => void, stay = 3200): void {
   const r = el.getBoundingClientRect();
   const d = document.createElement('div');
   d.className = 'zerdrop';
   d.textContent = ch;
-  // Am eigenen Platz liegen rechts oben Knöpfe, dort landet der Haufen etwas weiter innen
-  const x = el.id === 'me' ? r.left + r.width / 2 + Math.min(90, r.width / 4) : r.right - 22;
-  const y = r.top + 6;
+  // Am eigenen Platz liegen rechts oben Knöpfe und unten die Karten, dort landet der Haufen auf der Namenszeile
+  const x = r.left + r.width / 2;
+  const y = el.id === 'me' ? r.top + Math.min(r.height * 0.18, 40) : r.top + r.height * 0.42;
   d.style.left = `${x}px`;
   d.style.top = `${y}px`;
   $('#fly').appendChild(d);
   const a = d.animate(
     [
-      { transform: 'translate(-50%, -120px) scale(1)', opacity: 0 },
-      { transform: 'translate(-50%, -30px) scale(1)', opacity: 1, offset: 0.6 },
-      { transform: 'translate(-50%, 0) scale(1.3, .7)', opacity: 1, offset: 0.85 },
-      { transform: 'translate(-50%, 0) scale(1)', opacity: 1 },
+      { transform: 'translate(-50%, calc(-50% - 260px)) scale(.8) rotate(-14deg)', opacity: 0 },
+      { transform: 'translate(-50%, calc(-50% - 60px)) scale(1) rotate(6deg)', opacity: 1, offset: 0.55 },
+      { transform: 'translate(-50%, -38%) scale(1.45, .6)', opacity: 1, offset: 0.78 },
+      { transform: 'translate(-50%, -54%) scale(.92, 1.12)', opacity: 1, offset: 0.9 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
     ],
-    { duration: 650, easing: 'cubic-bezier(.5,0,.8,.4)', fill: 'forwards' },
+    { duration: 820, easing: 'cubic-bezier(.45,0,.75,.5)', fill: 'forwards' },
   );
-  a.onfinish = () => {
+  let landed = false;
+  const land = () => {
+    if (landed) return;
+    landed = true;
+    sfx('plop');
+    splash(x, y + 10, POO_SPLASH);
+    shakeEl(el);
+    try {
+      navigator.vibrate?.([30, 40, 60]);
+    } catch {
+      /* Vibrieren ist nur Zierde */
+    }
     onLand?.();
-    setTimeout(() => d.remove(), 2400);
+  };
+  // Der Aufprall ist bei 78 Prozent, dort spritzt es
+  setTimeout(land, 820 * 0.78);
+  a.onfinish = () => {
+    land();
+    setTimeout(() => {
+      d.style.transition = 'opacity .4s';
+      d.style.opacity = '0';
+      setTimeout(() => d.remove(), 450);
+    }, stay);
   };
 }
 

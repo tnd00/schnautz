@@ -10,6 +10,7 @@ import { focusOpp, CAR_GLIDE_MS } from './carousel';
 import { $opt, esc, num, reduceMotion, type Timer } from './dom';
 import { announce, dropAnnouncements, holdForAnnouncements, holdOverlay, panelFor } from './feedback';
 import { nameOf, pById } from './helpers';
+import { render } from './render/index';
 import { renderLog } from './render/log';
 import { SEQ } from './shithead/sequence';
 import { ZER_REVEAL_MS } from './shithead/ceremony-plan';
@@ -38,6 +39,25 @@ const BROWN = ['#9c6b3a', '#b07a42', '#c08a50', '#d9a96b', '#e8c9a0'];
 
 function stage(): HTMLElement | null {
   return $opt('#zer');
+}
+
+/**
+ * Neue Ansicht mit frischem Partieende: Bis zur Enthüllung zeigen Platz und Zähler den Shithead noch nicht,
+ * auch nicht während die letzte Karte in Zeitlupe fliegt. Endet die Partie anders, räumt ceremonyGuard auf.
+ */
+export function hideShithead(v: View, fresh: readonly LogEntry[]): void {
+  if (v.game !== 'shithead' || v.phase !== 'over') return;
+  const e = fresh.find((x) => x.k === 'shend');
+  if (e?.k !== 'shend' || !e.p) return;
+  App.zerHide = e.p;
+  ZER.games = v.games;
+}
+
+/** Ab jetzt darf man es sehen. */
+function unhide(): void {
+  if (!App.zerHide) return;
+  App.zerHide = '';
+  if (App.view && App.role) render();
 }
 
 function releaseLog(): void {
@@ -77,8 +97,9 @@ function track(): void {
   z.classList.toggle('hole', visible);
   z.classList.toggle('nohole', !visible);
   if (visible && r) {
-    const t = `translate(${Math.round(r.left - 6)}px, ${Math.round(r.top - 6)}px)`;
-    if (ring.style.transform !== t) ring.style.transform = t;
+    // translate statt transform, damit das Heranzoomen über scale um die Mitte des Rings läuft
+    const t = `${Math.round(r.left - 6)}px ${Math.round(r.top - 6)}px`;
+    if (ring.style.translate !== t) ring.style.translate = t;
     const w = `${Math.round(r.width + 12)}px`;
     const h = `${Math.round(r.height + 12)}px`;
     if (ring.style.width !== w) ring.style.width = w;
@@ -92,6 +113,7 @@ function reveal(v: View, pid: string, gen: number): void {
   const cur = App.view;
   if (gen !== ZER.gen || !cur || cur.game !== 'shithead' || cur.phase !== 'over' || cur.games !== v.games) return;
   releaseLog();
+  unhide();
   if (document.hidden) return;
   const z = stage();
   if (!z) return;
@@ -113,7 +135,8 @@ function reveal(v: View, pid: string, gen: number): void {
       if (el && !calm && z.classList.contains('hole')) dropOn(el, '💩', () => ring?.classList.add('mark'));
       else ring?.classList.add('mark');
     },
-    moved ? CAR_GLIDE_MS : 150,
+    // Erst zoomt das Spotlicht heran, dann plumpst der Haufen
+    moved ? CAR_GLIDE_MS + 300 : 500,
   );
   if (!calm) {
     const loser = pid === App.me;
@@ -122,12 +145,12 @@ function reveal(v: View, pid: string, gen: number): void {
       if (gen !== ZER.gen || !ZER.on) return;
       confetti({
         colors: first ? [...BROWN, '#f3cd7d', '#f3cd7d'] : BROWN,
-        n: 44,
-        dur: [2800, 1200],
-        extra: loser ? [{ ch: '💩', n: 6 }] : [],
+        n: 80,
+        dur: [3200, 1400],
+        extra: [{ ch: '💩', n: loser ? 12 : 4 }],
         cls: 'zerc',
       });
-    }, 300);
+    }, 500);
   }
   if (ZER.t) clearTimeout(ZER.t);
   ZER.t = setTimeout(() => stopCeremony(true), ZER_REVEAL_MS + 5000);
@@ -141,6 +164,7 @@ export function stopCeremony(skipped: boolean): void {
   ZER.on = false;
   ZER.games = -1;
   releaseLog();
+  unhide();
   const z = stage();
   if (z) {
     z.classList.remove('reveal', 'hole', 'nohole', 'slow');
@@ -162,6 +186,7 @@ export function stopCeremony(skipped: boolean): void {
 /** Neuer Tisch, Verlassen, Fortsetzen: alles zurück. */
 export function resetCeremony(): void {
   ZER.gen++;
+  App.zerHide = '';
   stopCeremony(true);
 }
 
@@ -173,6 +198,8 @@ export function ceremonyGuard(v: View): void {
   if (ZER.games < 0) return;
   if (v.game === 'shithead' && v.phase === 'over' && v.games === ZER.games) return;
   ZER.gen++;
+  // Die neue Ansicht zeichnet gleich ohnehin alles neu
+  App.zerHide = '';
   dropAnnouncements('zer');
   stopCeremony(true);
 }
@@ -205,7 +232,10 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
   if (!pid) return;
   // Steht schon eine Ansicht aus einer anderen Partie an, lohnt sich nichts mehr
   const nx = SEQ.next;
-  if (nx && !(nx.game === 'shithead' && nx.phase === 'over' && nx.games === v.games)) return;
+  if (nx && !(nx.game === 'shithead' && nx.phase === 'over' && nx.games === v.games)) {
+    unhide();
+    return;
+  }
   ZER.games = v.games;
   const gen = ++ZER.gen;
   ZER.logN = e.n;
@@ -225,6 +255,19 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
   });
   holdForAnnouncements();
   holdOverlay();
+}
+
+/** Dev-Menü: Die Enthüllung der letzten Partie noch einmal zeigen, nur in diesem Browser. */
+export function replayCeremony(): boolean {
+  const v = App.view;
+  if (!v || v.game !== 'shithead' || v.phase !== 'over' || ZER.on) return false;
+  for (let i = v.log.length - 1; i >= 0; i--) {
+    const e = v.log[i];
+    if (e.k !== 'shend' || !e.p) continue;
+    shitheadCeremony(v, e);
+    return true;
+  }
+  return false;
 }
 
 /** Tippt jemand während der Enthüllung auf den Tisch, ist sie vorbei. */

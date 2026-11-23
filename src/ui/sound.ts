@@ -3,6 +3,7 @@ import { App } from './app';
 import { $ } from './dom';
 import { loadSamples, startSample, type SampleName } from './samples';
 import { trombone } from './soundboard';
+import { dlog } from './devlog';
 
 let AC: AudioContext | null = null;
 
@@ -22,7 +23,11 @@ export function unlockAudio(): void {
       const Ctx =
         window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       AC = new Ctx();
-    } catch {
+      const ac = AC;
+      dlog('audio', `Audio angelegt, ${ac.state}`);
+      ac.onstatechange = () => dlog('audio', `Audio ${ac.state}`);
+    } catch (er) {
+      dlog('err', `Audio ließ sich nicht anlegen: ${String(er)}`);
       return;
     }
   }
@@ -205,6 +210,8 @@ const SFX = {
 } satisfies Record<string, Sfx>;
 
 export type SoundName = keyof typeof SFX;
+/** Alle Klänge, fürs Dev-Menü */
+export const SOUND_NAMES = Object.keys(SFX) as SoundName[];
 
 /** Für diese Töne gibt es Aufnahmen, die erzeugten Klänge springen nur ein, solange sie noch laden. */
 const SAMPLE_OF: Partial<Record<SoundName, SampleName>> = {

@@ -14,7 +14,7 @@ import { SEQ, runSeq, shPlan, totalMs, type Step } from './shithead/sequence';
 import { syncWin } from './shithead/window';
 import { syncClock } from './clock';
 import { sfxCalm } from './sound';
-import { ceremonyGuard, ZER, zerSlow } from './ceremony';
+import { ceremonyGuard, hideShithead, ZER, zerSlow } from './ceremony';
 import { liveFx } from './livefx';
 import { syncNext } from './nextround';
 import { placePick } from './toss';
@@ -60,6 +60,8 @@ export function applyView(v: View): void {
     return;
   }
   const fresh = v.log.filter((e) => e.n > App.seenN);
+  // Nur wenn die Zeremonie auch läuft, also nicht nach Laden oder Neuverbinden
+  if (prev) hideShithead(v, fresh);
   App.lastSig = sig;
   App.view = v;
   App.busy = false;

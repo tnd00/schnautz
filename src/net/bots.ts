@@ -56,6 +56,8 @@ export const BOTS = {
   /** Geplante Revanche-Forderung einer KI */
   rematch: null as Timer | null,
   rematchKey: '',
+  /** Dev-Menü: Bis der gemerkte letzte Zug gespielt ist, planen die KIs nichts */
+  hold: false,
 };
 
 function clearBets(): void {
@@ -269,7 +271,7 @@ function botSwapRound(st: State): void {
 /** Der nächste reguläre Zug einer KI, mit Pause, damit es menschlich wirkt. */
 export function botTick(): void {
   const st = H.st;
-  if (App.role !== 'host' || !st) return;
+  if (App.role !== 'host' || !st || BOTS.hold) return;
   if (st.phase === 'lobby') {
     clearTurnTimer();
     clearBets();

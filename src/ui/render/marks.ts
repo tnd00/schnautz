@@ -5,7 +5,7 @@ import { esc } from '../dom';
 
 export function reignHTML(v: View, id: string): string {
   const rg = v.reign?.game === v.game ? v.reign : null;
-  if (rg?.sh === id) return '<span class="reign" title="Amtierender Shithead">💩</span>';
+  if (rg?.sh === id && App.zerHide !== id) return '<span class="reign" title="Amtierender Shithead">💩</span>';
   if (rg?.win === id) return '<span class="reign" title="Hat die letzte Partie gewonnen">👑</span>';
   return '';
 }

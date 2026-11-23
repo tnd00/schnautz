@@ -5,6 +5,7 @@ import { toast } from '../ui/feedback';
 import { unlockAudio } from '../ui/sound';
 import { sendToHost } from './guest';
 import { gateAct, H, hostCommit } from './host';
+import { dlog } from '../ui/devlog';
 
 /** Eigene Aktion ausführen: Der Gastgeber rechnet selbst, Gäste schicken sie an den Gastgeber. */
 export function doAct(a: Action): void {
@@ -14,6 +15,7 @@ export function doAct(a: Action): void {
     if (!g) return;
     const e = act(H.st, App.me, g);
     if (e) {
+      dlog('game', `${a.type} abgelehnt, ${e}`);
       toast(e);
       App.busy = false;
     } else hostCommit();

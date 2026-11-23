@@ -29,6 +29,7 @@ import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
 import { asMessage, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
 import { allowBurst, newRateBook, rateSound } from './rate';
 import { keepSignal, safeClose, safeDestroy } from './signal';
+import { dlog } from '../ui/devlog';
 
 const GUEST_ID = /^p-[0-9a-f]{12}$/;
 const HEARTBEAT_MS = 5000;
@@ -43,6 +44,8 @@ interface ConnInfo {
   chat: number;
   /** Absichtlich geschlossen (ersetzt oder verabschiedet), kein Verbindungsabbruch. */
   replaced: boolean;
+  /** Version des Gastes aus hello */
+  v?: string;
 }
 
 export const H = {
@@ -150,12 +153,14 @@ function hostOpen(resume: boolean): void {
   });
   peer.on('disconnected', () => {
     if (!cur() || peer.destroyed) return;
+    dlog('net', 'Signalserver getrennt, verbinde neu');
     setNet('reconnecting');
     keepSignal(peer, cur);
   });
   peer.on('error', (err) => {
     if (!cur()) return;
     const t = err?.type;
+    dlog('net', `Peer-Fehler ${t ?? String(err)}`);
     if (t === 'unavailable-id') {
       // Code belegt: neuer Tisch bekommt einfach einen neuen Code
       if (!resume && !opened && H.st?.phase === 'lobby' && H.st.players.length === 1) {
@@ -287,7 +292,9 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
   delete p.offSince;
   delete p.gone;
   hostSend(conn, { t: 'welcome', pid, v: APP_VERSION });
-  noteGuestVersion(name, typeof m.v === 'string' ? m.v.slice(0, 20) : undefined);
+  ci.v = typeof m.v === 'string' ? m.v.slice(0, 20) : undefined;
+  dlog('net', `${name} kommt an den Tisch, Version ${ci.v ?? 'unbekannt'}`);
+  noteGuestVersion(name, ci.v);
   hostCommit();
 }
 
@@ -329,8 +336,10 @@ function hostMsg(conn: DataConnection, raw: unknown): void {
       const g = gateAct(st, id, a as Action, now);
       if (!g) return;
       const e = act(st, id, g);
-      if (e) hostSend(conn, { t: 'err', msg: e });
-      else hostCommit();
+      if (e) {
+        dlog('game', `${st.players[pIdx(st, id)]?.name ?? id}: ${g.type} abgelehnt, ${e}`);
+        hostSend(conn, { t: 'err', msg: e });
+      } else hostCommit();
       return;
     }
     case 'bye':
@@ -360,9 +369,15 @@ export function gateAct(st: State, pid: string, a: Action, now = Date.now()): Ac
   return s;
 }
 
+/** Dev-Menü: offene Verbindungen mit letztem Lebenszeichen und Version. */
+export function hostConns(): { pid: string; open: boolean; seen: number; v?: string }[] {
+  return [...H.conns].map(([pid, c]) => ({ pid, open: c.open, seen: info(c).seen, v: info(c).v }));
+}
+
 function hostClosed(conn: DataConnection): void {
   const ci = info(conn);
   if (ci.replaced || !ci.pid || !H.st || H.conns.get(ci.pid) !== conn) return;
+  dlog('net', `Verbindung zu ${H.st.players[pIdx(H.st, ci.pid)]?.name ?? ci.pid} zu`);
   H.conns.delete(ci.pid);
   hostDrop(ci.pid);
 }
@@ -391,6 +406,7 @@ function hostHeartbeat(): void {
     const c = H.conns.get(p.id);
     const alive = !!(c && c.open && now - info(c).seen < GUEST_TIMEOUT_MS);
     if (!alive && p.online) {
+      dlog('net', `${p.name} antwortet nicht mehr`);
       changed = true;
       if (c) {
         info(c).replaced = true;

@@ -64,6 +64,8 @@ export const App = {
   /** Tipp-Fenster: gewählte Person und in welcher Partie es schon offen war (dann pulsiert der Knopf nicht mehr) */
   betSel: null as string | null,
   betSeen: -1,
+  /** Shithead der gerade beendeten Partie: Bis zur Enthüllung zeigen Platz und Zähler ihn noch nicht */
+  zerHide: '',
   /** Zähler für E2E-Tests: gezeigte Klänge und gespielte Clips */
   sbSeen: 0,
   sbHeard: 0,

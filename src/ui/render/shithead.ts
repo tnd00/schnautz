@@ -26,9 +26,11 @@ type OwnCards = { hand: Card[]; up: Card[]; down: Card[] | number };
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 const count = (x: Card[] | number): number => (typeof x === 'number' ? x : x.length);
 
-/** Wie oft jemand schon Shithead war. */
-export const shcHTML = (p: Pick<Player, 'shc'>): string =>
-  p.shc ? `<span class="shc" title="So oft Shithead gewesen">💩 ${num(p.shc)}</span>` : '';
+/** Wie oft jemand schon Shithead war. Das Mal der gerade beendeten Partie zählt erst nach der Enthüllung. */
+export function shcHTML(p: Pick<Player, 'shc' | 'id'>): string {
+  const n = num(p.shc) - (App.zerHide === p.id ? 1 : 0);
+  return n > 0 ? `<span class="shc" title="So oft Shithead gewesen">💩 ${n}</span>` : '';
+}
 
 /** Krone für den letzten Sieger, Haufen für den amtierenden Shithead. */
 export { reignHTML };

@@ -13,6 +13,7 @@ import { APP_VERSION } from '../content/version';
 import { genId, PREFIX, peerOptions } from './ids';
 import { asMessage, isView, type GuestMessage, type HostMessage, type SavedGuest } from './protocol';
 import { keepSignal, safeClose, safeDestroy } from './signal';
+import { dlog } from '../ui/devlog';
 
 const RETRY_MS = 2500;
 const CONNECT_TIMEOUT_MS = 15000;
@@ -91,6 +92,7 @@ function guestPeer(): void {
   peer.on('error', (err) => {
     if (!cur()) return;
     const t = err?.type;
+    dlog('net', `Peer-Fehler ${t ?? String(err)}`);
     if (t === 'peer-unavailable') {
       if (!G.ever && ++G.notFound >= 4) {
         guestFail(
@@ -166,6 +168,7 @@ function guestConnect(): void {
     G.pending = false;
     if (G.conn !== conn) return;
     G.conn = null;
+    dlog('net', 'Verbindung zum Gastgeber zu');
     if (!G.stopped) {
       setNet('reconnecting');
       guestRetry();
@@ -242,7 +245,10 @@ function guestMsg(raw: unknown): void {
     case 'state': {
       G.lastPong = Date.now();
       setNet('online');
-      if (!isView(m.s)) return;
+      if (!isView(m.s)) {
+        dlog('err', 'Ansicht vom Gastgeber war ungültig und wurde verworfen');
+        return;
+      }
       const win = m.s.sh?.win;
       // Restzeit in lokale Uhrzeit umrechnen, sofort beim Empfang
       if (win && win.left != null) win.at = Date.now() + num(win.left);
@@ -250,13 +256,16 @@ function guestMsg(raw: unknown): void {
       return;
     }
     case 'reject':
+      dlog('net', `Abgewiesen: ${m.msg ?? ''}`);
       guestFail(m.msg || 'Beitreten hat nicht geklappt.');
       return;
     case 'err':
+      dlog('game', `Gastgeber lehnt ab: ${m.msg}`);
       toast(m.msg);
       App.busy = false;
       return;
     case 'closed':
+      dlog('net', 'Tisch aufgelöst');
       LS.del('guest');
       guestFail('Der Gastgeber hat den Tisch aufgelöst.');
       return;

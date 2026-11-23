@@ -1,6 +1,8 @@
 /* Updates: alle Versionen mit ihren Änderungen, neueste zuerst. */
 import { CHANGELOG } from '../../content/changelog';
+import { APP_VERSION } from '../../content/version';
 import { esc } from '../dom';
+import { BUILD } from '../update';
 
 const DATE = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -28,6 +30,8 @@ export function updatesHTML(): string {
     '<div class="modal"><div class="paper sheet updates"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
     '<h2>Updates</h2><p class="lead">Was sich mit jeder Version am Tisch geändert hat.</p>' +
     rel +
+    // Fünf schnelle Tipps hier öffnen das versteckte Dev-Menü (src/ui/events.ts)
+    `<p class="relfoot" data-act="devtap">Version ${esc(APP_VERSION)}${BUILD ? ` · Build ${esc(BUILD)}` : ''}</p>` +
     '</div></div>'
   );
 }

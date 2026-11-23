@@ -11,7 +11,7 @@ export const SEQ_CARD_GAP_MS = 110;
 /** So kurz steht die Fertig-Meldung direkt vor der Enthüllung */
 export const ZER_SHDONE_MS = 1100;
 /** So lange läuft die Enthüllung */
-export const ZER_REVEAL_MS = 3000;
+export const ZER_REVEAL_MS = 3800;
 
 type PlayEntry = Extract<LogEntry, { k: 'shplay' | 'shthrow' | 'shbomb' }>;
 

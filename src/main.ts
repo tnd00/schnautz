@@ -21,6 +21,7 @@ import { renderSoundBtn } from './ui/sound';
 import { initStart } from './ui/start';
 import { autoResume, initUpdateCheck } from './ui/update';
 import { LS } from './ui/storage';
+import { initDevLog } from './ui/devlog';
 
 declare global {
   interface Window {
@@ -40,6 +41,8 @@ declare global {
   }
 }
 
+// Zuerst, damit auch Fehler beim Start im Dev-Menü landen
+initDevLog();
 initEvents();
 renderSoundBtn();
 initStart();

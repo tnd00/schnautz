@@ -55,6 +55,14 @@ export function clockFor(v: View, own: boolean): void {
   if (own) v.clock.at = CLOCK.until;
 }
 
+/** Dev-Menü: Die laufende Uhr sofort ablaufen lassen. Ohne Uhr false. */
+export function expireClock(): boolean {
+  if (!CLOCK.key) return false;
+  if (CLOCK.t) clearTimeout(CLOCK.t);
+  timeUp(CLOCK.key);
+  return true;
+}
+
 function timeUp(key: string): void {
   CLOCK.t = null;
   const st = H.st;

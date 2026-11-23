@@ -94,7 +94,10 @@ export function addLog(st: State, input: LogInput): void {
 
 /** Nur Chat, Reaktionen, Würfe oder Klänge: Am Spiel hat sich nichts geändert, die KI muss nicht neu planen. */
 export function cosmeticOnly(fresh: readonly LogEntry[]): boolean {
-  return fresh.length > 0 && fresh.every((e) => e.k === 'chat' || e.k === 'emote' || e.k === 'toss' || e.k === 'sound');
+  return (
+    fresh.length > 0 &&
+    fresh.every((e) => e.k === 'chat' || e.k === 'emote' || e.k === 'toss' || e.k === 'sound' || e.k === 'dev')
+  );
 }
 
 /** Höchstzahl über alle Spiele, so viele Plätze lassen sich einstellen. */

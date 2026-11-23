@@ -135,6 +135,8 @@ describe('Soundboard', () => {
     const e = (k: string) => ({ k, n: 1 }) as LogEntry;
     expect(cosmeticOnly([e('toss')])).toBe(true);
     expect(cosmeticOnly([e('emote'), e('chat'), e('sound')])).toBe(true);
+    // Effekte aus dem Dev-Menü ändern am Spiel nichts
+    expect(cosmeticOnly([e('dev')])).toBe(true);
     expect(cosmeticOnly([])).toBe(false);
     expect(cosmeticOnly([e('toss'), e('shplay')])).toBe(false);
   });
