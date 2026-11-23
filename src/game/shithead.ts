@@ -1,8 +1,8 @@
 /* Shithead (Palace, Karma) mit 52 Karten, Ass hoch. */
 import { rankOf, shDeck, shSort } from './cards';
-import { DEFAULT_RULES, SH_ORD } from './constants';
+import { DEFAULT_RULES, SH_ORD, SH_TWO_DECKS } from './constants';
 import { checkReady } from './flow';
-import { addLog, nextActive, pIdx } from './state';
+import { addLog, countGame, nextActive, pIdx, statsOf } from './state';
 import type {
   Action,
   ActResult,
@@ -66,6 +66,10 @@ function sh(st: State): ShState {
   return st.sh;
 }
 
+/** Ab sechs Leuten reicht ein Deck nicht mehr (9 Karten je Person), auf Wunsch schon ab fünf zwei. */
+export const shDecksFor = (n: number, R: ShRules): number =>
+  n >= SH_TWO_DECKS || (n === SH_TWO_DECKS - 1 && R.deck5) ? 2 : 1;
+
 export function shStart(st: State, rng?: Rng): ActResult {
   const keep = st.players.filter((p) => p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone));
   if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
@@ -83,19 +87,20 @@ export function shStart(st: State, rng?: Rng): ActResult {
   st.result = null;
   st.turn = -1;
   st.last = null;
-  const deck = shDeck(rng);
+  const decks = shDecksFor(st.players.length, shR(st));
+  const deck = shDeck(rng, decks);
   const P: Record<string, ShPlayerState> = {};
   st.players.forEach((p) => {
     P[p.id] = { down: deck.splice(0, 3), up: deck.splice(0, 3), hand: shSort(deck.splice(0, 3)) };
   });
-  st.sh = { deck, pile: [], burned: [], P, finished: [], shithead: null };
+  st.sh = { deck, pile: [], burned: [], P, finished: [], shithead: null, decks };
   st.phase = 'swap';
   addLog(st, { k: 'game', g: st.games, game: 'shithead' });
   addLog(st, { k: 'shdeal' });
   return null;
 }
 
-/** Nach der Tauschrunde: Wer anfängt, entscheidet die 4 (Regel) oder die niedrigste Handkarte. */
+/** Nach der Tauschrunde: Die niedrigste Handkarte fängt an (Sonderkarten zählen nicht). */
 export function shBegin(st: State): void {
   const S = sh(st);
   st.phase = 'play';
@@ -104,20 +109,6 @@ export function shBegin(st: State): void {
   });
   const n = st.players.length;
   const off = st.games % n;
-  if (shR(st).four) {
-    for (let q = 0; q < n; q++) {
-      const qi = (off + q) % n;
-      const qp = st.players[qi];
-      if (qp.out) continue;
-      const f4 = S.P[qp.id].hand.find((c) => rankOf(c) === '4');
-      if (f4) {
-        st.turn = qi;
-        addLog(st, { k: 'shstart', p: qp.id, card: f4 });
-        shOpenFours(st, qi);
-        return;
-      }
-    }
-  }
   let best = 99;
   let bi = -1;
   let bc: Card | null = null;
@@ -141,32 +132,22 @@ export function shBegin(st: State): void {
   }
   st.turn = bi;
   addLog(st, { k: 'shstart', p: st.players[bi].id, card: bc });
+  shSyncWin(st);
 }
 
-/** 4er-Start: Wer anfängt, legt seine 4er sofort. Danach haben alle anderen kurz Zeit, ihre 4er reinzuwerfen. */
-export function shOpenFours(st: State, bi: number): void {
-  const S = sh(st);
-  const pid = st.players[bi].id;
-  const P = S.P[pid];
-  const cards = P.hand.filter((c) => rankOf(c) === '4');
-  if (!cards.length) return;
-  P.hand = P.hand.filter((c) => rankOf(c) !== '4');
-  S.pile.push(...cards);
-  shDraw(st, P);
-  addLog(st, { k: 'shplay', p: pid, cards, src: 'hand', open: true });
-  S.win = { r: '4', start: bi, by: [pid], id: st.n };
-  st.last = { k: 'shplay', p: pid, n: st.n, cards, src: 'hand', open: true };
-}
-
-/** Das 4er-Fenster ist abgelaufen: Weiter geht es nach dem Startspieler. */
-export function shCloseWin(st: State): void {
+/**
+ * Neuer Stapel: Ist der Stapel leer, öffnet sich das 4er-Fenster (falls die Regel an ist).
+ * Es bleibt offen, bis die Person am Zug ihre erste Karte legt.
+ */
+export function shSyncWin(st: State): void {
   const S = st.sh;
-  if (!S?.win) return;
-  const w = S.win;
-  S.win = null;
-  st.turn = shNextIdx(st, w.start);
-  addLog(st, { k: 'shwinend', cnt: w.by.length });
-  st.last = { k: 'shwinend', n: st.n };
+  if (!S) return;
+  if (st.phase !== 'play' || !shR(st).four) {
+    S.win = null;
+    return;
+  }
+  if (S.pile.length || S.win) return;
+  S.win = { r: '4', by: [], id: st.n, lock: true };
 }
 
 /** Wert und Anzahl der gleichen Karten ganz oben auf dem Stapel. */
@@ -211,22 +192,32 @@ export function shCanBomb(st: Table, pid: string): BombOption | null {
   own[src].forEach((c, i) => {
     if (rankOf(c) === t.r) idx.push(i);
   });
-  if (idx.length !== 4 - t.k) return null;
-  return { src, idx, r: t.r };
+  // Mit zwei Decks kann man mehr gleiche haben als fehlen, eingeworfen werden genau die fehlenden
+  if (idx.length < 4 - t.k) return null;
+  return { src, idx: idx.slice(0, 4 - t.k), r: t.r };
 }
 
-/** Indizes der eigenen 4er, solange das 4er-Fenster offen ist. */
-export function shCanThrow(st: Table, pid: string): number[] | null {
+export interface ThrowOption {
+  src: 'hand' | 'up';
+  idx: number[];
+}
+
+/**
+ * Eigene 4er, solange das Fenster offen ist. Das gilt auch für die Person am Zug, sie spielt danach ganz normal.
+ * Wie bei der Bombe zählen erst die Handkarten, bei leerer Hand die offenen Tischkarten.
+ */
+export function shCanThrow(st: Table, pid: string): ThrowOption | null {
   const S = st.sh;
-  if (!S?.win || st.phase !== 'play' || !canAct(st, pid) || S.win.by.includes(pid)) return null;
+  if (!S?.win || st.phase !== 'play' || !canAct(st, pid)) return null;
   const own = ownCards(st, pid);
   if (!own) return null;
-  const r = S.win.r;
+  const src = own.hand.length ? 'hand' : own.up.length ? 'up' : null;
+  if (!src) return null;
   const idx: number[] = [];
-  own.hand.forEach((c, i) => {
-    if (rankOf(c) === r) idx.push(i);
+  own[src].forEach((c, i) => {
+    if (rankOf(c) === S.win?.r) idx.push(i);
   });
-  return idx.length ? idx : null;
+  return idx.length ? { src, idx } : null;
 }
 
 export function shBurnNow(st: State, pid: string, cut: boolean): void {
@@ -283,6 +274,12 @@ export function shEnd(st: State, loser: string | null, quitter?: string): void {
     const wp = st.players[pIdx(st, st.winner)];
     if (wp) wp.wins = (wp.wins || 0) + 1;
   }
+  countGame(st, 'shithead', st.winner);
+  st.players.forEach((p) => {
+    if (p.gone || !p.place) return;
+    const ps = statsOf(p, 'shithead');
+    ps.places = (ps.places ?? 0) + p.place;
+  });
   st.players.forEach((p) => {
     p.ready = false;
   });
@@ -291,8 +288,11 @@ export function shEnd(st: State, loser: string | null, quitter?: string): void {
 
 const stillPlaying = (st: State): Player[] => st.players.filter((x) => !x.out && !sh(st).finished.includes(x.id));
 
-/** Hat der Spieler keine Karten mehr, ist er fertig. Bleibt nur einer übrig, ist das der Shithead. */
-export function shFinishCheck(st: State, pid: string, skip: number): boolean {
+/**
+ * Hat der Spieler keine Karten mehr, ist er fertig. Bleibt nur einer übrig, ist das der Shithead.
+ * War er dran, geht es beim Nächsten weiter (`advance`).
+ */
+export function shFinishCheck(st: State, pid: string, skip: number, advance = true): boolean {
   const S = sh(st);
   const P = S.P[pid];
   if (P.hand.length || P.up.length || P.down.length) return false;
@@ -305,7 +305,7 @@ export function shFinishCheck(st: State, pid: string, skip: number): boolean {
     shEnd(st, left[0]?.id ?? null);
     return true;
   }
-  shAdvance(st, skip);
+  if (advance) shAdvance(st, skip);
   return true;
 }
 
@@ -333,41 +333,6 @@ export function shAfterPlay(st: State, pid: string, cards: Card[], src: ShSource
   return null;
 }
 
-export function shQuit(st: State, i: number, pid: string, rng?: Rng): void {
-  const S = st.sh;
-  const p = st.players[i];
-  if (p.out) return;
-  p.out = true;
-  p.ready = false;
-  addLog(st, { k: 'quit', p: pid });
-  if (!S || st.phase === 'over') {
-    checkReady(st, rng);
-    return;
-  }
-  const P = S.P[pid];
-  if (P) {
-    S.burned.push(...P.hand, ...P.up, ...P.down);
-    P.hand = [];
-    P.up = [];
-    P.down = [];
-  }
-  if (S.finished.includes(pid)) return;
-  const left = stillPlaying(st);
-  if (left.length <= 1) {
-    left.forEach((x) => {
-      S.finished.push(x.id);
-      x.place = S.finished.length;
-    });
-    shEnd(st, null, pid);
-    return;
-  }
-  if (st.phase === 'swap') {
-    checkReady(st, rng);
-    return;
-  }
-  if (st.turn === i) shAdvance(st, 0);
-}
-
 /** Spielt einen einfachen Zug für jemanden, der offline ist. */
 export function shAuto(st: State, pid: string, rng?: Rng): ActResult {
   const S = sh(st);
@@ -378,7 +343,7 @@ export function shAuto(st: State, pid: string, rng?: Rng): ActResult {
     checkReady(st, rng);
     return null;
   }
-  if (st.phase !== 'play' || st.turn !== pi || S.win) return null;
+  if (st.phase !== 'play' || st.turn !== pi || S.win?.lock) return null;
   const src = P.hand.length ? 'hand' : P.up.length ? 'up' : null;
   if (!src) return shAct(st, pid, pi, { type: 'shblind', i: 0 }, rng);
   let best = -1;
@@ -426,29 +391,34 @@ export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       return null;
   }
   if (st.phase !== 'play') return 'Das geht gerade nicht.';
+  const err = shPlayAct(st, S, P, pid, pi, a);
+  if (!err) shSyncWin(st);
+  return err;
+}
+
+/** Züge während der Partie. Danach prüft shAct, ob ein neuer Stapel beginnt. */
+function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: number, a: Action): ActResult {
   switch (a.type) {
-    case 'shwinend':
-      if (pid !== st.host || !S.win || a.id !== S.win.id) return null;
-      shCloseWin(st);
+    case 'shunlock':
+      if (pid === st.host && S.win && a.id === S.win.id) S.win.lock = false;
       return null;
     case 'shthrow': {
-      if (!S.win) return 'Zu spät, die Runde läuft schon.';
-      if (S.finished.includes(pid)) return null;
-      if (S.win.by.includes(pid)) return 'Deine 4er liegen schon drin.';
-      const ti = shCanThrow(st, pid);
-      if (!ti) return 'Du hast keine 4 auf der Hand.';
-      const cards = takeAt(P.hand, ti);
+      const t = shCanThrow(st, pid);
+      if (!t) return S.win ? 'Du hast keine 4.' : 'Zu spät, die erste Karte liegt schon.';
+      const cards = takeAt(P[t.src], t.idx);
       S.pile.push(...cards);
-      S.win.by.push(pid);
+      if (!S.win?.by.includes(pid)) S.win?.by.push(pid);
       shDraw(st, P);
-      addLog(st, { k: 'shthrow', p: pid, cards });
-      st.last = { k: 'shplay', p: pid, n: st.n, cards, src: 'hand', thrown: true };
+      addLog(st, { k: 'shthrow', p: pid, cards, src: t.src });
+      st.last = { k: 'shplay', p: pid, n: st.n, cards, src: t.src, thrown: true };
       if (shFour(st)) {
+        // Die vierte 4 ist eine Bombe: Wer sie reinwirft, ist dran
         S.win = null;
         shBurnNow(st, pid, true);
         st.turn = pi;
         shFinishCheck(st, pid, 0);
-      }
+        // Ohne Bombe bleibt die Reihenfolge. Nur wer am Zug war und jetzt fertig ist, gibt weiter
+      } else shFinishCheck(st, pid, 0, pi === st.turn);
       return null;
     }
     case 'shbomb': {
@@ -466,8 +436,8 @@ export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       return null;
     }
   }
-  if (S.win) return 'Moment, die 4er werden noch reingeworfen.';
   if (pi !== st.turn) return 'Du bist gerade nicht dran.';
+  if (S.win?.lock) return 'Kurz warten, erst dürfen alle ihre 4er reinwerfen.';
   switch (a.type) {
     case 'shplay': {
       const src = a.from === 'up' ? 'up' : 'hand';
@@ -482,10 +452,13 @@ export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       const r = rankOf(arr[idx[0]]);
       if (!idx.every((i) => rankOf(arr[i]) === r)) return 'Zusammen geht nur mit gleichem Wert.';
       if (!shCanPlay(st, r)) return 'Die Karte passt nicht auf den Stapel.';
+      // Die erste Karte schließt das 4er-Fenster
+      S.win = null;
       return shAfterPlay(st, pid, takeAt(arr, idx), src);
     }
     case 'shpickup': {
       if (!S.pile.length) return 'Der Stapel ist leer. Leg einfach eine Karte.';
+      S.win = null;
       const cnt = S.pile.length;
       P.hand.push(...S.pile);
       S.pile = [];
@@ -499,6 +472,7 @@ export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       if (P.hand.length || P.up.length) return 'Erst Hand und offene Karten spielen.';
       const bi = a.i | 0;
       if (bi < 0 || bi >= P.down.length) return 'Ungültige Karte.';
+      S.win = null;
       const [c] = P.down.splice(bi, 1);
       if (shCanPlay(st, rankOf(c))) return shAfterPlay(st, pid, [c], 'down');
       const cnt = S.pile.length + 1;

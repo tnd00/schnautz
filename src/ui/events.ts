@@ -1,6 +1,8 @@
 /* Eingaben: Klicks auf Karten und Knöpfe (über data-act), Tastatur, Formulare. */
 import { rankOf } from '../game/cards';
 import { shCanBomb, shCanThrow } from '../game/shithead';
+import { seatLimit } from '../game/state';
+import { TURN_SECS } from '../game/constants';
 import type { Action, GameKind } from '../game/types';
 import { doAct } from '../net/dispatch';
 import { guestLeave, guestStart, guestStop, guestWake } from '../net/guest';
@@ -8,16 +10,21 @@ import { hostCancel, hostClose, hostNew, hostResume } from '../net/host';
 import { cleanCode, genId } from '../net/ids';
 import { asSavedGuest, asSavedHost, HOST_RESUME_MS } from '../net/protocol';
 import { App } from './app';
+import { initCarousel, layoutOpps } from './carousel';
 import { $, esc } from './dom';
 import { shakeEl, toast } from './feedback';
 import { myTurn, pById } from './helpers';
+import { boardHTML } from './render/board';
 import { renderEmotes } from './render/emotes';
 import { render } from './render/index';
 import { legendOn, renderLegend } from './render/legend';
+import { renderLobby, turnLabel } from './render/lobby';
 import { renderLog } from './render/log';
 import { rulesHTML } from './render/rules';
 import { renderGame } from './render/schnautz';
-import { renderSh, shMine, shSrc } from './render/shithead';
+import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
+import { renderTurnNote } from './render/turnnote';
+import { updatesHTML } from './render/updates';
 import { resetTableUI } from './reset';
 import { copyLink, setNet, shareLink, showScreen, updateTitle } from './screens';
 import { fitHand, grabRects } from './shithead/hand';
@@ -43,10 +50,12 @@ function shTap(kind: 'h' | 'u', i: number): void {
       doAct(a);
       return;
     }
+    // Nur die Auswahl ändert sich, die Karten sollen nicht noch einmal hereinfliegen
+    App.anim = {};
     renderSh(v);
     return;
   }
-  if (!myTurn(v) || v.sh?.win) return;
+  if (!myTurn(v)) return;
   const src = kind === 'h' ? 'hand' : 'up';
   const arr = P[src];
   if (!arr[i] || shSrc(v) !== src) return;
@@ -88,13 +97,24 @@ function selCard(kind: 'h' | 'm', i: number): void {
 
 export function confirmBox(text: string, ok: string, cb: () => void): void {
   $('#modal').innerHTML =
-    `<div class="modal"><div class="paper" style="max-width:420px"><h2 style="font-size:26px">${esc(text)}</h2>` +
+    `<div class="modal"><div class="paper sheet" style="max-width:420px"><h2 style="font-size:26px">${esc(text)}</h2>` +
     '<div class="foot" style="margin-top:14px"><button class="btn ghost" data-act="closemodal">Abbrechen</button>' +
     `<button class="btn primary" id="cfm-ok">${esc(ok)}</button></div></div></div>`;
   $('#cfm-ok').onclick = () => {
     $('#modal').innerHTML = '';
     cb();
   };
+}
+
+/** Ton an oder aus, aus der Kopfzeile oder mobil aus dem Menü. */
+function toggleSound(): void {
+  App.muted = !App.muted;
+  LS.set('muted', App.muted);
+  renderSoundBtn();
+  if (!App.muted) {
+    unlockAudio();
+    sfx('card');
+  }
 }
 
 function leaveTable(): void {
@@ -159,7 +179,7 @@ function onAction(a: string, t: HTMLElement): void {
       if (!v || !quickLock()) break;
       sfx('card');
       const ti = shCanThrow(v, App.me);
-      if (ti) grabRects('hand', ti);
+      if (ti) grabRects(ti.src, ti.idx);
       doAct({ type: 'shthrow' });
       break;
     }
@@ -187,7 +207,11 @@ function onAction(a: string, t: HTMLElement): void {
       if (v) renderLegend(v, true);
       break;
     }
+    case 'emotes':
+      document.body.classList.toggle('emoopen');
+      break;
     case 'emote':
+      document.body.classList.remove('emoopen');
       if (App.emoBlock || !v) break;
       App.emoBlock = true;
       renderEmotes();
@@ -242,6 +266,13 @@ function onAction(a: string, t: HTMLElement): void {
     case 'lives':
       if (v) doAct({ type: 'rules', rules: { lives: v.rules.lives + Number(t.dataset.d) } });
       break;
+    case 'seats':
+      if (v) doAct({ type: 'rules', rules: { seats: seatLimit(v) + Number(t.dataset.d) } });
+      break;
+    case 'ltab':
+      App.ltab = t.dataset.t === 'game' ? 'game' : 'table';
+      if (v?.phase === 'lobby') renderLobby(v);
+      break;
     case 'peek':
       App.peek = true;
       render();
@@ -254,6 +285,10 @@ function onAction(a: string, t: HTMLElement): void {
       $('#menu').hidden = true;
       copyLink();
       break;
+    case 'sound':
+      $('#menu').hidden = true;
+      toggleSound();
+      break;
     case 'share':
       navigator
         .share?.({ title: 'Kartentisch', text: 'Komm an meinen Kartentisch!', url: shareLink() })
@@ -262,6 +297,7 @@ function onAction(a: string, t: HTMLElement): void {
     case 'openlog':
       document.body.classList.add('logopen');
       App.unread = 0;
+      renderTurnNote();
       if (v) renderLog(v);
       setTimeout(() => {
         const l = $('#log');
@@ -270,9 +306,22 @@ function onAction(a: string, t: HTMLElement): void {
       break;
     case 'closelog':
       document.body.classList.remove('logopen');
+      renderTurnNote();
       break;
     case 'closemodal':
       $('#modal').innerHTML = '';
+      break;
+    case 'play':
+      // Am Handy öffnet "Spielen" das Popup mit Name, Tisch eröffnen und Beitreten
+      document.body.classList.add('startform');
+      $<HTMLInputElement>('#name').focus();
+      break;
+    case 'startclose':
+      document.body.classList.remove('startform');
+      break;
+    case 'updates':
+      $('#menu').hidden = true;
+      $('#modal').innerHTML = updatesHTML();
       break;
     case 'tolobby':
       $('#menu').hidden = true;
@@ -356,18 +405,25 @@ function cancelConnect(): void {
 
 /** Alle Ereignis-Listener einmal beim Start registrieren. */
 export function initEvents(): void {
+  initCarousel();
   document.addEventListener('visibilitychange', () => {
     updateTitle();
     if (!document.hidden) guestWake();
   });
   window.addEventListener('resize', () => {
     const v = App.view;
-    if (v?.game === 'shithead' && v.phase !== 'lobby') fitHand();
+    if (v?.game === 'shithead' && v.phase !== 'lobby') {
+      fitHand();
+      layoutSwapOpps(v);
+    }
+    if (v && v.phase !== 'lobby') layoutOpps(v);
+    if (v && v.phase !== 'lobby') renderLegend(v);
   });
   document.addEventListener('click', (e) => {
     const target = e.target as Element;
     const menu = $('#menu');
     if (!menu.hidden && !target.closest('#menu') && !target.closest('#btn-menu')) menu.hidden = true;
+    if (!target.closest('#emotes') && !target.closest('#emofab')) document.body.classList.remove('emoopen');
     const t = target.closest<HTMLElement>('[data-act]');
     if (t?.dataset.act) onAction(t.dataset.act, t);
   });
@@ -375,7 +431,7 @@ export function initEvents(): void {
     if (e.key === 'Escape') {
       $('#modal').innerHTML = '';
       $('#menu').hidden = true;
-      document.body.classList.remove('logopen');
+      document.body.classList.remove('logopen', 'emoopen', 'startform');
     }
     // Karten sind per Tastatur bedienbar
     const t = e.target as HTMLElement;
@@ -391,6 +447,15 @@ export function initEvents(): void {
       return;
     }
     if (t.dataset?.rule) doAct({ type: 'rules', rules: { [t.dataset.rule]: t.checked } });
+    if (t.dataset?.range === 'turnSecs') doAct({ type: 'rules', rules: { turnSecs: TURN_SECS[Number(t.value)] ?? 0 } });
+  });
+  // Regler: Wert schon beim Ziehen anzeigen, gesendet wird beim Loslassen
+  document.addEventListener('input', (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.dataset?.range !== 'turnSecs') return;
+    const s = TURN_SECS[Number(t.value)] ?? 0;
+    const val = document.querySelector('#tval');
+    if (val) val.textContent = turnLabel(s);
   });
   $('#btn-host').onclick = startHost;
   $('#btn-join').onclick = startJoin;
@@ -413,14 +478,9 @@ export function initEvents(): void {
   $('#modal').addEventListener('click', (e) => {
     if ((e.target as Element).classList.contains('modal')) $('#modal').innerHTML = '';
   });
-  $('#btn-sound').onclick = () => {
-    App.muted = !App.muted;
-    LS.set('muted', App.muted);
-    renderSoundBtn();
-    if (!App.muted) {
-      unlockAudio();
-      sfx('card');
-    }
+  $('#btn-sound').onclick = toggleSound;
+  $('#btn-board').onclick = () => {
+    if (App.view) $('#modal').innerHTML = boardHTML(App.view);
   };
   $('#btn-menu').onclick = () => {
     const m = $('#menu');

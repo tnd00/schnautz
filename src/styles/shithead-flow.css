@@ -230,18 +230,6 @@
   font-size: 12.5px;
   line-height: 1.3;
 }
-.legend-m {
-  display: none;
-  width: min(760px, 100%);
-}
-.legend-m .legend-h {
-  justify-content: center;
-}
-.legend-m .lg {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 16px;
-  padding: 12px 14px;
-}
 .emotes {
   display: flex;
   gap: 7px;
@@ -334,20 +322,7 @@
   margin-right: 4px;
   animation: wob 1.4s ease-in-out infinite;
 }
-@media (max-width: 960px) {
-  .side .legend {
-    display: none;
-  }
-  .legend-m {
-    display: block;
-  }
-}
 @media (max-width: 520px) {
-  .emotes button {
-    width: 38px;
-    height: 38px;
-    font-size: 19px;
-  }
   .btn.bomb,
   .btn.big {
     font-size: 16px;
@@ -360,4 +335,691 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* 4er reinwerfen: gleicher Auftritt wie die Bombe, nur in Messing */
+.btn.throw {
+  color: #2a1a05;
+  background: linear-gradient(180deg, #ffe7a8, var(--brass));
+  border: 1px solid #ffeec2;
+  min-height: 54px;
+  font-size: 18px;
+  padding: 0 24px;
+  box-shadow:
+    0 0 0 3px rgba(243, 205, 125, 0.3),
+    0 0 36px rgba(243, 205, 125, 0.5);
+}
+.tag.four {
+  background: rgba(243, 205, 125, 0.18);
+  color: var(--brass-hi);
+}
+
+/* Tauschrunde: eigene Karten groß, das leere Spielfeld wird noch nicht gebraucht */
+.table.swap .center,
+.table.swap .status {
+  display: none;
+}
+.me.swapping {
+  width: min(560px, 100%);
+  gap: 12px;
+  padding: 18px 16px 16px;
+  border-color: rgba(243, 205, 125, 0.45);
+  background: linear-gradient(180deg, rgba(10, 34, 25, 0.82), rgba(6, 22, 16, 0.9));
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 24px 60px rgba(0, 0, 0, 0.45);
+  animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.swhead {
+  text-align: center;
+  padding: 0 40px;
+}
+.swhead b {
+  display: block;
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: clamp(24px, 6vw, 30px);
+  line-height: 1.1;
+  color: var(--brass-hi);
+}
+.swhead > span {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.swrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.swlbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.me.swapping .tcards {
+  --tw: clamp(62px, 19vw, 88px);
+  gap: 14px;
+}
+.me.swapping .shhand {
+  --hw: clamp(62px, 19vw, 88px);
+  padding: 16px 0 0;
+}
+.me.swapping .shhand .card + .card {
+  margin-left: 14px;
+}
+.me.swapping .shhand .card:nth-child(1) {
+  --rot: -3deg;
+}
+.me.swapping .shhand .card:nth-child(3) {
+  --rot: 3deg;
+}
+.me.swapping .actions .btn {
+  min-width: 200px;
+}
+
+/* Reaktionen: am Desktop eine Leiste unter dem eigenen Platz */
+.emotes {
+  z-index: 9;
+}
+
+/* Regeln: Buch mit Beschriftung, oben im Fenster die Karten auf einen Blick */
+.iconbtn.rulesbtn {
+  width: auto;
+  padding: 0 12px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.paper .glance {
+  margin-top: 4px;
+}
+.paper .lg {
+  margin: 8px 0 14px 22px;
+}
+.paper .lg .t b {
+  color: #2a241b;
+}
+.paper .lg .t span {
+  color: #6a5f4c;
+}
+.paper .lg .rk.e {
+  background: rgba(42, 36, 27, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(42, 36, 27, 0.2);
+  color: #2a241b;
+}
+
+/* Hinweis oben im Chat-Fenster (nur mobil sichtbar) */
+.turnnote {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(246, 239, 223, 0.08);
+  text-align: center;
+}
+.turnnote > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brass-hi);
+}
+.turnnote .btn {
+  width: 100%;
+}
+
+/* Ton-Schalter im Menü gibt es nur auf schmalen Handys */
+.menu .m-only {
+  display: none;
+}
+
+/* Bestenliste */
+.paper.board {
+  width: min(520px, 100%);
+}
+.btable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 4px 22px;
+}
+.brow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) repeat(4, 54px);
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(60, 40, 10, 0.1);
+}
+.brow.bhead {
+  background: none;
+  border: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.brow.top {
+  background: rgba(214, 162, 74, 0.16);
+  border-color: rgba(214, 162, 74, 0.55);
+}
+.brow.mine .bn {
+  color: #8a6424;
+}
+.bp {
+  font-family: var(--display);
+  font-weight: 800;
+  color: #6a5f4c;
+}
+.bn {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.bv {
+  text-align: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+}
+.bhead .bv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 15px;
+  line-height: 1.1;
+}
+.bhead .bv small {
+  font-family: var(--ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #6a5f4c;
+  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .paper .lg {
+    margin-left: 16px;
+  }
+  .btable {
+    margin-left: 0;
+  }
+  .brow {
+    grid-template-columns: 18px minmax(0, 1fr) repeat(4, 42px);
+    padding: 7px 6px;
+    gap: 2px;
+  }
+  .bv {
+    font-size: 16px;
+  }
+  .bhead .bv small {
+    font-size: 8.5px;
+  }
+}
+
+/* Handkarten-Zeichen: drei gefächerte Karten */
+.hico {
+  flex: none;
+  width: 1.4em;
+  height: 1.02em;
+  vertical-align: -0.16em;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+.hcount {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ometa .botb {
+  flex: none;
+}
+
+/* Regeln und Bestenliste: dunkles Tuch wie am Tisch statt Schulheft */
+.paper.sheet {
+  width: min(600px, 100%);
+  color: var(--cream);
+  background-color: var(--felt-lo);
+  background-image:
+    radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), transparent 72%),
+    linear-gradient(180deg, #10301f, #07170f);
+  border: 1px solid rgba(243, 205, 125, 0.32);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 30px 80px rgba(0, 0, 0, 0.6);
+  padding: 22px 18px 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 205, 125, 0.3) transparent;
+}
+.paper.sheet.board {
+  width: min(540px, 100%);
+}
+/* Fenster: klar und serifenlos. Karten behalten ihre Schrift wie am Tisch */
+.paper.sheet {
+  --display: var(--ui);
+}
+.paper.sheet .card {
+  --display: var(--serif);
+}
+.paper.sheet h2,
+.paper.sheet .taunt {
+  font-style: normal;
+  letter-spacing: -0.025em;
+}
+.paper.sheet h2,
+.paper.sheet .lead,
+.paper.sheet h3,
+.paper.sheet p {
+  padding-left: 0;
+}
+.paper.sheet h2 {
+  padding: 4px 44px 0;
+  text-align: center;
+  color: var(--cream);
+  font-size: clamp(26px, 6.4vw, 34px);
+}
+.paper.sheet h2 .r {
+  color: var(--brass-hi);
+}
+.paper.sheet .lead {
+  margin: 2px auto 14px;
+  max-width: 420px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.paper.sheet .x {
+  background: rgba(246, 239, 223, 0.08);
+  border: 1px solid rgba(246, 239, 223, 0.14);
+  color: var(--cream);
+}
+.paper.sheet .gamesel {
+  margin: 0 46px 14px 0;
+}
+.rsec {
+  margin-top: 10px;
+  padding: 12px 14px 13px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(246, 239, 223, 0.07);
+}
+.paper.sheet .rsec h3 {
+  margin: 0 0 6px;
+  font-size: 16.5px;
+  color: var(--brass-hi);
+}
+.paper.sheet .rsec p {
+  margin: 0 0 7px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: rgba(246, 239, 223, 0.86);
+}
+.paper.sheet .rsec p:last-child {
+  margin-bottom: 0;
+}
+.paper.sheet .rsec.glance {
+  border-color: rgba(243, 205, 125, 0.22);
+  background: rgba(243, 205, 125, 0.06);
+}
+.paper.sheet .lg {
+  margin: 10px 0 0;
+  gap: 9px 12px;
+}
+.paper.sheet .lg .t b {
+  color: var(--cream);
+  font-size: 14px;
+}
+.paper.sheet .lg .t span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.paper.sheet .lg .rk.e {
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(246, 239, 223, 0.16);
+  color: var(--cream);
+}
+.paper.sheet .btable {
+  margin: 4px 0 2px;
+}
+.paper.sheet .brow {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(246, 239, 223, 0.08);
+}
+.paper.sheet .brow.bhead {
+  background: none;
+  border-color: transparent;
+}
+.paper.sheet .brow.top {
+  background: rgba(243, 205, 125, 0.13);
+  border-color: rgba(243, 205, 125, 0.5);
+}
+.paper.sheet .brow.mine .bn {
+  color: var(--brass-hi);
+}
+.paper.sheet .bp {
+  color: var(--muted);
+  text-align: center;
+  font-size: 17px;
+}
+.paper.sheet .bhead .bv small {
+  color: var(--muted);
+}
+.paper.sheet .shc {
+  background: rgba(0, 0, 0, 0.25);
+}
+/* Ergebnis und Abfragen im selben Look */
+.paper.sheet .trophy {
+  margin-top: 2px;
+}
+.paper.sheet .verdict {
+  margin: 0 0 14px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--cream);
+}
+.paper.sheet .verdict.bad {
+  background: rgba(224, 103, 93, 0.14);
+  color: #f6b3aa;
+  box-shadow: inset 0 0 0 1.5px rgba(224, 103, 93, 0.45);
+}
+.paper.sheet .verdict.good {
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass));
+  color: #2a1a05;
+  box-shadow: none;
+}
+.paper.sheet .taunt {
+  padding-left: 0;
+  text-align: center;
+  color: #f0a59c;
+}
+.paper.sheet .taunt.good {
+  color: var(--brass-hi);
+}
+.paper.sheet .row {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(246, 239, 223, 0.08);
+}
+.paper.sheet .row.lose {
+  background: rgba(224, 103, 93, 0.12);
+  border-color: rgba(224, 103, 93, 0.45);
+}
+.paper.sheet .row.win {
+  background: rgba(243, 205, 125, 0.13);
+  border-color: rgba(243, 205, 125, 0.5);
+}
+.paper.sheet .row .who > span,
+.paper.sheet .mini .more,
+.paper.sheet .foot .waittxt {
+  color: var(--muted);
+}
+.paper.sheet .conseq {
+  color: #f0a59c;
+}
+.paper.sheet .conseq.swim {
+  color: var(--sea);
+}
+.paper.sheet .conseq.good,
+.paper.sheet .row.win .val {
+  color: var(--brass-hi);
+}
+.paper.sheet .row .mini .card {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 2px 5px rgba(0, 0, 0, 0.35);
+}
+.paper.sheet .lives .coaster.lost {
+  box-shadow: inset 0 0 0 1.5px rgba(246, 239, 223, 0.25);
+}
+.paper.sheet .btn.ghost {
+  color: var(--cream);
+  border-color: rgba(246, 239, 223, 0.28);
+  background: rgba(0, 0, 0, 0.15);
+}
+@media (max-width: 520px) {
+  .paper.sheet {
+    padding: 18px 12px 14px;
+  }
+  .paper.sheet .rsec {
+    padding: 11px 12px 12px;
+  }
+  .paper.sheet .rsec p {
+    font-size: 14px;
+  }
+  .paper.sheet .lg {
+    margin-left: 0;
+  }
+  .paper.sheet .brow {
+    grid-template-columns: 24px minmax(0, 1fr) repeat(4, 46px);
+  }
+  .paper.sheet .bhead .bv small {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.1;
+  }
+}
+
+/* Menü: Einträge, die es nur am Tisch gibt */
+body:not(.intable) .menu .t-only {
+  display: none;
+}
+
+/* Updates: eine Karte pro Version */
+.paper.sheet.updates .rel {
+  padding-top: 14px;
+}
+.relh {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+}
+.paper.sheet .relh h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--cream);
+}
+.relv {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  color: #2a1a05;
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass));
+}
+.relnow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass-hi);
+}
+.reld {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.relg + .relg {
+  margin-top: 10px;
+}
+.relg h4 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.relg ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.relg li {
+  margin: 3px 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(246, 239, 223, 0.88);
+}
+.relg li::marker {
+  color: var(--brass);
+}
+
+/* Zeitlimit: Balken bei Gegnern, kleine Uhr am eigenen Platz (src/ui/clock.ts) */
+.opp > .clk {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.opp > .clk::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--brass-hi);
+  transform-origin: left;
+  transform: scaleX(var(--p, 1));
+  transition: transform 0.25s linear;
+}
+.opp > .clk.low::before {
+  background: #e0675d;
+}
+.clk.mine {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(243, 205, 125, 0.5);
+  background: #0f2a20;
+  color: var(--brass-hi);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.clk.mine i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: conic-gradient(currentColor calc(var(--p, 1) * 360deg), rgba(246, 239, 223, 0.15) 0);
+}
+.clk.mine.low {
+  color: #f6b3aa;
+  border-color: rgba(224, 103, 93, 0.75);
+  animation: clkPulse 1s ease-in-out infinite;
+}
+@keyframes clkPulse {
+  50% {
+    box-shadow: 0 0 0 4px rgba(224, 103, 93, 0.25);
+  }
+}
+.clkn {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+/*
+ * Zeitlimit am eigenen Platz: Je weniger Zeit bleibt, desto heller und schneller pulsiert der Rand.
+ * Stufe 3 entspricht genau der Hervorhebung von Gegnern am Zug, heller wird es nie.
+ */
+.me[data-urg] {
+  animation: urgPulse var(--urg-t) ease-in-out infinite;
+}
+.me[data-urg='1'] {
+  --urg-t: 2s;
+  --urg-b: 0.75;
+  --urg-r: 1px;
+  --urg-g: 28px;
+  --urg-a: 0.22;
+}
+.me[data-urg='2'] {
+  --urg-t: 1.3s;
+  --urg-b: 0.9;
+  --urg-r: 2px;
+  --urg-g: 38px;
+  --urg-a: 0.33;
+}
+.me[data-urg='3'] {
+  --urg-t: 0.8s;
+  --urg-b: 1;
+  --urg-r: 3px;
+  --urg-g: 46px;
+  --urg-a: 0.45;
+}
+@keyframes urgPulse {
+  50% {
+    border-color: rgba(243, 205, 125, var(--urg-b));
+    box-shadow:
+      0 0 0 var(--urg-r) rgba(243, 205, 125, var(--urg-a)),
+      0 0 var(--urg-g) rgba(243, 205, 125, var(--urg-a));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me[data-urg] {
+    animation: none;
+    border-color: rgba(243, 205, 125, var(--urg-b));
+  }
+}
+
+/* Sprüche und Hinweise mittig in der Spielfläche (fixedLabel) */
+.tauntlbl.mid,
+.nopelbl.mid {
+  transform: translateX(-50%);
+}
+.tauntlbl.mid {
+  max-width: min(calc(100vw - 24px), 440px);
+}
+.nopelbl.mid {
+  padding: 3px 13px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+/* Zeichen vor dem Namen (marksHTML): am Desktop nebeneinander */
+.ometa .marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.botb.sq {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 4px;
+  font-size: 8px;
+  letter-spacing: 0.02em;
+}
+/* Keine Tischkarten mehr: so hoch wie ein Kartenstapel, mittig, höchstens zwei Zeilen */
+.opp .tcards .tnone {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: calc(var(--tw) * 1.4 + 12px);
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
 }

@@ -1,6 +1,6 @@
 # Schnautz Online
 
-Schnautz (Schwimmen, 31) und Shithead im Browser für zwei bis vier Leute. Einer eröffnet einen Tisch und schickt den Link, die anderen sitzen sofort mit am Tisch. Freie Plätze lassen sich mit KI-Mitspielern füllen.
+Schnautz (Schwimmen, 31) und Shithead im Browser, Schnautz mit bis zu acht und Shithead mit bis zu zehn Leuten. Einer eröffnet einen Tisch und schickt den Link, die anderen sitzen sofort mit am Tisch. Freie Plätze lassen sich mit KI-Mitspielern füllen, wer später kommt, übernimmt einen KI-Platz.
 
 Live unter <https://tnd00.github.io/schnautz/>.
 

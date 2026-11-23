@@ -103,4 +103,5 @@ const ICON_SOUND =
 
 export function renderSoundBtn(): void {
   $('#btn-sound').innerHTML = App.muted ? ICON_MUTED : ICON_SOUND;
+  $('#menu-sound').textContent = App.muted ? 'Ton einschalten' : 'Ton ausschalten';
 }

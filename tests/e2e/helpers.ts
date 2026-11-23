@@ -70,11 +70,20 @@ export async function waitForPhase(page: Page, phases: string[], timeout = 20_00
 /** Tisch eröffnen und den Code zurückgeben. */
 export async function hostTable(page: Page, name: string): Promise<string> {
   await page.goto(START);
+  // Am Handy liegen Name und Knöpfe im Popup hinter "Spielen"
+  if (await page.locator('.playbtn').isVisible()) await page.click('.playbtn');
   await page.fill('#name', name);
   await page.click('#btn-host');
   await expect(page.locator('#scr-lobby')).toBeVisible();
   const code = await page.evaluate(() => window.__schnautz?.App.code ?? '');
   expect(code).toMatch(/^[A-Z0-9]{5}$/);
+  // Ohne Zeitlimit: Die Tests warten manchmal länger, als ein Zug dauern darf
+  if (await page.locator('#lobby-tabs').isVisible()) await page.click('[data-act=ltab][data-t=table]');
+  await page.locator('[data-range=turnSecs]').evaluate((el: HTMLInputElement) => {
+    el.value = '0';
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await expect.poll(() => page.evaluate(() => window.__schnautz?.App.view?.rules.turnSecs)).toBe(0);
   return code;
 }
 

@@ -3,7 +3,19 @@ import { EMOTES } from './constants';
 import { beginGame, checkReady, toLobby } from './flow';
 import { checkInstant, endTurn, renewMiddle, startRound } from './schnautz';
 import { shAct, shAuto, shBegin } from './shithead';
-import { activeList, addBot, addLog, migrate, nextActive, pIdx, removePlayer, sanitizeRules } from './state';
+import { syncSeats } from './seats';
+import {
+  activeList,
+  addBot,
+  addLog,
+  maxSeats,
+  migrate,
+  nextActive,
+  pIdx,
+  removePlayer,
+  sanitizeRules,
+  seatLimit,
+} from './state';
 import type { Action, ActResult, Rng, State } from './types';
 
 const MAX_EMOTES_IN_LOG = 6;
@@ -47,15 +59,25 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       st.players.forEach((p) => {
         p.lives = st.rules.lives;
       });
+      syncSeats(st, rng);
       return null;
-    case 'game':
+    case 'game': {
       if (!isHost) return 'Nur der Gastgeber wählt das Spiel.';
       if (st.phase !== 'lobby') return 'Das Spiel lässt sich nur in der Lobby wechseln.';
-      st.game = a.game === 'shithead' ? 'shithead' : 'schnautz';
+      const game = a.game === 'shithead' ? 'shithead' : 'schnautz';
+      const humans = st.players.filter((p) => !p.bot).length;
+      if (humans > maxSeats(game)) {
+        return `${game === 'shithead' ? 'Shithead' : 'Schnautz'} geht mit höchstens ${maxSeats(game)} Leuten.`;
+      }
+      st.game = game;
+      syncSeats(st, rng);
       return null;
+    }
     case 'start':
       if (!isHost) return 'Nur der Gastgeber startet die Partie.';
       if (st.phase !== 'lobby') return 'Die Partie läuft schon.';
+      if (st.players.length > maxSeats(st.game))
+        return `Mehr als ${maxSeats(st.game)} Leute gehen bei diesem Spiel nicht.`;
       return beginGame(st, rng);
     case 'addbot':
       if (!isHost) return 'Nur der Gastgeber kann KIs hinzufügen.';
@@ -64,7 +86,11 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       if (!isHost) return HOST_ONLY;
       if (st.phase !== 'lobby') return 'KIs lassen sich nur in der Lobby entfernen.';
       const bi = pIdx(st, String(a.id || ''));
-      if (bi >= 0 && st.players[bi].bot) removePlayer(st, st.players[bi].id);
+      if (bi < 0 || !st.players[bi].bot) return null;
+      removePlayer(st, st.players[bi].id);
+      // Beim Auffüllen käme sofort eine neue KI, also fällt der Platz weg
+      if (st.rules.fill) st.rules.seats = seatLimit(st) - 1;
+      syncSeats(st, rng);
       return null;
     }
     case 'tolobby':
@@ -94,7 +120,7 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
 /** Der Gastgeber spielt einen einfachen Zug für jemanden, der gerade offline ist. */
 function skipOffline(st: State, rng?: Rng): ActResult {
   if (st.game === 'shithead') {
-    if (st.phase !== 'play' || st.sh?.win) return null;
+    if (st.phase !== 'play' || st.sh?.win?.lock) return null;
     const who = st.players[st.turn];
     if (!who) return null;
     if (who.online) return `${who.name} ist wieder da.`;

@@ -13,7 +13,7 @@ import {
 } from './feedback';
 import { myTurn, nameOf, roundBest, turnId, vb } from './helpers';
 import { updateTitle } from './screens';
-import { burnAnn, openAnn } from './shithead/sequence';
+import { burnAnn } from './shithead/sequence';
 import { sfx } from './sound';
 import { taunt } from './taunts';
 
@@ -58,19 +58,18 @@ export function effects(prev: View, v: View, seqd = false): void {
     }
     if (!seqd) {
       if (e.k === 'shburn') {
-        sfx(e.cut ? 'bomb' : 'burn');
+        sfx(e.four ? 'bomb' : 'burn');
         announce(burnAnn(v, e));
       }
       if ((e.k === 'shplay' || e.k === 'shpickup' || e.k === 'shblindfail' || e.k === 'shthrow') && !mine) sfx('card');
       if (e.k === 'shpickup' && num(e.cnt) >= 5)
         setTimeout(() => {
-          floatLabel(e.p, '+' + num(e.cnt) + ' Karten');
+          floatLabel(e.p, `nimmt ${num(e.cnt)} Karten`, `nimmst ${num(e.cnt)} Karten`);
         }, 60);
       if (e.k === 'shthrow')
         setTimeout(() => {
-          floatLabel(e.p, '4er rein!');
+          floatLabel(e.p, 'wirft 4er rein', 'wirfst 4er rein');
         }, 60);
-      if (e.k === 'shplay' && e.open) announce(openAnn(v, e));
     }
     if (e.k === 'shdone')
       announce({
@@ -178,8 +177,8 @@ export function effects(prev: View, v: View, seqd = false): void {
       if (mine) setTimeout(confetti, 600);
     }
   });
-  const was = prev.phase === 'play' && turnId(prev) === App.me && !(prev.sh && prev.sh.win);
-  if (myTurn(v) && !(v.sh && v.sh.win) && !was) {
+  const was = prev.phase === 'play' && turnId(prev) === App.me && !prev.sh?.win?.lock;
+  if (myTurn(v) && !v.sh?.win?.lock && !was) {
     sfx('turn');
     try {
       navigator.vibrate?.(60);

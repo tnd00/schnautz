@@ -82,7 +82,8 @@ const PIPS: Readonly<Record<string, readonly Pip[]>> = {
   ],
 };
 
-export const CARD_RE = /^[CSHD](2|3|4|5|6|7|8|9|10|B|D|K|A)$/;
+/** Zweites Deck trägt hinten `:2` (siehe DECK2 in game/cards). */
+export const CARD_RE = /^[CSHD](2|3|4|5|6|7|8|9|10|B|D|K|A)(:2)?$/;
 
 const SUIT_NAME: Record<Suit, string> = { C: 'Kreuz', S: 'Pik', H: 'Herz', D: 'Karo' };
 const RANK_NAME: Record<Rank, string> = {
@@ -144,6 +145,17 @@ export function valHTML(hv: HandValue | null | undefined): string {
   if (hv.kind === 'schnautz') return '31 · Schnautz';
   return `${num(hv.v)} <span class="${isRed(hv.suit) ? 'r' : ''}">${hv.suit ? SUIT_SYM[hv.suit] : ''}</span>`;
 }
+
+/** Kennzeichen für KI-Mitspieler neben dem Namen. */
+export const BOT_TAG = '<i class="botb" title="KI-Mitspieler">KI</i>';
+
+/** Drei gefächerte Karten: Zeichen für Handkarten, gut lesbar auch in Pillengröße. */
+export const HAND_ICON =
+  '<svg class="hico" viewBox="0 0 26 19" aria-hidden="true"><g stroke="#1c1b18" stroke-opacity=".7" stroke-width="1.1">' +
+  '<rect x="8.5" y="2" width="9" height="13" rx="1.8" fill="#d8ccb2" transform="rotate(-24 13 22)"/>' +
+  '<rect x="8.5" y="2" width="9" height="13" rx="1.8" fill="#ebe2cd"/>' +
+  '<g transform="rotate(24 13 22)"><rect x="8.5" y="2" width="9" height="13" rx="1.8" fill="#fffdf6"/>' +
+  '<path d="M13 5.6l2 2.9-2 2.9-2-2.9z" fill="#b3312a" stroke="none"/></g></g></svg>';
 
 const SWIM_ICON =
   '<svg viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 7c4-4 7 4 11 0s7 4 11 0 7 4 10 0"/><path d="M2 15c4-4 7 4 11 0s7 4 11 0 7 4 10 0"/></svg>';

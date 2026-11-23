@@ -54,8 +54,11 @@ export function botShithead(v: View, rng: Rng | undefined, lvl: BotLevel = 'norm
   const hand = P.hand;
   if (v.phase === 'swap') return v.players[pi].ready ? null : botSwap(v, hand, P.up, rng);
   if (v.phase !== 'play') return null;
-  // 4er-Fenster: schnell die eigenen 4er reinwerfen
-  if (S.win) return shCanThrow(v, me) ? { type: 'shthrow' } : null;
+  // Neuer Stapel: Alle werfen schnell die eigenen 4er rein. Wer dran ist, tut das während der Sperre und spielt danach
+  if (S.win) {
+    if (v.turn !== pi) return shCanThrow(v, me) ? { type: 'shthrow' } : null;
+    if (S.win.lock) return shCanThrow(v, me) ? { type: 'shthrow' } : null;
+  }
   // Außer der Reihe nur, um vier gleiche vollzumachen
   if (v.turn !== pi) return shCanBomb(v, me) ? { type: 'shbomb' } : null;
   const src = hand.length ? 'hand' : P.up.length ? 'up' : null;

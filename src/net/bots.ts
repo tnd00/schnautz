@@ -35,10 +35,14 @@ export const BOTS = {
   scanN: -1,
   recent: [] as string[],
   react: {} as Record<string, Reaction>,
-  /** Menschen, die beim 4er-Fenster zu langsam waren (nur beim Gastgeber bekannt). */
-  slow: null as string[] | null,
-  slowOk: false,
+  /** Tauschrunde: eine Denkpause pro KI, alle tauschen gleichzeitig */
+  swap: {} as Record<string, Timer>,
 };
+
+function clearSwaps(): void {
+  Object.values(BOTS.swap).forEach((t) => clearTimeout(t));
+  BOTS.swap = {};
+}
 
 const isReaction = (a: Action | null): a is Extract<Action, { type: 'shthrow' | 'shbomb' }> =>
   !!a && (a.type === 'shthrow' || a.type === 'shbomb');
@@ -59,6 +63,7 @@ function clearTurnTimer(): void {
 export function resetBots(): void {
   clearTurnTimer();
   clearReactions();
+  clearSwaps();
   BOTS.scanN = -1;
   BOTS.recent = [];
 }
@@ -66,7 +71,13 @@ export function resetBots(): void {
 /** Reaktionen außer der Reihe (4er reinwerfen, Bombe einwerfen) laufen für jede KI parallel. */
 function botReact(st: State): void {
   st.players.forEach((p) => {
-    if (!p.bot || p.out) return;
+    if (!p.bot || p.out) {
+      // Hat ein Mensch den Platz übernommen, darf keine geplante Reaktion mehr feuern
+      const old = BOTS.react[p.id];
+      if (old?.t) clearTimeout(old.t);
+      delete BOTS.react[p.id];
+      return;
+    }
     const a = botDecide(viewFor(st, p.id), undefined, 'normal');
     if (!isReaction(a)) {
       const old = BOTS.react[p.id];
@@ -74,7 +85,12 @@ function botReact(st: State): void {
       delete BOTS.react[p.id];
       return;
     }
-    const key = `${a.type}|${st.games}|${a.type === 'shthrow' ? st.sh?.win?.id : (st.last?.n ?? 0)}`;
+    // Wer eine 4 reinwirft und wieder eine 4 zieht, darf nochmal: Die eigenen Karten gehören zum Schlüssel
+    const own = st.sh?.P[p.id];
+    const key =
+      a.type === 'shthrow'
+        ? `${a.type}|${st.games}|${st.sh?.win?.id}|${own?.hand.join()}|${own?.up.length}`
+        : `${a.type}|${st.games}|${st.last?.n ?? 0}`;
     const old = BOTS.react[p.id];
     if (old?.key === key) return;
     if (old?.t) clearTimeout(old.t);
@@ -82,10 +98,12 @@ function botReact(st: State): void {
     BOTS.react[p.id] = R;
     // Manchmal bemerkt die KI die Gelegenheit nicht, fest pro Gelegenheit
     if (hashStr(p.id + key) % 100 >= (a.type === 'shthrow' ? NOTICE_THROW : NOTICE_BOMB)) return;
-    const d = a.type === 'shthrow' ? 900 + Math.random() * 3300 : 700 + Math.random() * 1600 + seqLeft();
+    // Bei einem neuen Stapel muss es schnell gehen, die Person am Zug wartet nur kurz
+    const d = (a.type === 'shthrow' ? 500 + Math.random() * 1900 : 700 + Math.random() * 1600) + seqLeft();
     R.t = setTimeout(() => {
       R.t = null;
       if (App.role !== 'host' || !H.st) return;
+      if (!H.st.players[pIdx(H.st, p.id)]?.bot) return;
       const a2 = botDecide(viewFor(H.st, p.id), undefined, 'normal');
       if (a2?.type !== a.type) return;
       if (!act(H.st, p.id, a2)) hostCommit();
@@ -124,6 +142,33 @@ function thinkTime(st: State, who: Player, a: Action): number {
   return d;
 }
 
+/**
+ * Tauschrunde: Alle KIs tauschen gleichzeitig, jede mit eigener Denkpause. Nacheinander dauerte das
+ * bei neun KIs eine halbe Minute.
+ */
+function botSwapRound(st: State): void {
+  clearTurnTimer();
+  st.players.forEach((p) => {
+    if (!p.bot || p.out || p.ready || BOTS.swap[p.id]) return;
+    const a = botDecide(viewFor(st, p.id), undefined, 'normal');
+    if (!a) return;
+    BOTS.swap[p.id] = setTimeout(
+      () => {
+        delete BOTS.swap[p.id];
+        const s = H.st;
+        if (App.role !== 'host' || !s || s.phase !== 'swap') return;
+        const me = s.players[pIdx(s, p.id)];
+        if (!me?.bot || me.ready) return;
+        const a2 = botDecide(viewFor(s, p.id), undefined, 'normal');
+        // Klappt ein Tausch nicht, macht die KI einfach fertig, damit niemand wartet
+        if (a2 && act(s, p.id, a2)) act(s, p.id, { type: 'shready' });
+        hostCommit();
+      },
+      thinkTime(st, p, a) + Math.random() * 900,
+    );
+  });
+}
+
 /** Der nächste reguläre Zug einer KI, mit Pause, damit es menschlich wirkt. */
 export function botTick(): void {
   const st = H.st;
@@ -134,6 +179,11 @@ export function botTick(): void {
   }
   if (st.game === 'shithead' && st.phase === 'play') botReact(st);
   else clearReactions();
+  if (st.game === 'shithead' && st.phase === 'swap') {
+    botSwapRound(st);
+    return;
+  }
+  clearSwaps();
   // KIs warten auf Menschen, statt sie mit "bereit" zu drängeln
   const humansNeeded = st.players.some((p) => !p.bot && p.online && (st.phase === 'over' || !p.out));
   let who: Player | null = null;
@@ -162,6 +212,11 @@ export function botTick(): void {
       BOTS.key = null;
       const s = H.st;
       if (App.role !== 'host' || !s) return;
+      // Inzwischen von einem Menschen übernommen: nichts tun, der nächste Tick plant neu
+      if (!s.players[pIdx(s, botId)]?.bot) {
+        botTick();
+        return;
+      }
       const a = botDecide(viewFor(s, botId), undefined, 'normal');
       if (!a || isReaction(a)) {
         botTick();
@@ -258,11 +313,6 @@ export function botChatter(): void {
         break;
       case 'shthrow':
         say(bot(e.p), 'throw4', 0.35);
-        break;
-      case 'shwinend':
-        // Nur wenn genau ein Mensch am Tisch sitzt, sonst würde der Spruch verraten, wer eine 4 hat
-        if (BOTS.slowOk && BOTS.slow?.length) say(anyBot(), 'slow4', 0.6);
-        BOTS.slow = null;
         break;
       case 'shblindfail':
         if (!bot(e.p)) say(anyBot(), 'mockBlindFail', 0.3);

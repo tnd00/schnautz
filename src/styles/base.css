@@ -12,7 +12,8 @@
   --muted: #9fb8ab;
   --sea: #8fd3e8;
   --ox: #5e1b1f;
-  --display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  --serif: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  --display: var(--serif);
   --ui: 'Bricolage Grotesque Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
   --side: 320px;
 }

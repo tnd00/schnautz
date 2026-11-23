@@ -32,8 +32,8 @@ function partie(levels: BotLevel[], seed: number, game: GameKind): number | null
       if (!err) moved = true;
       if (a.type !== 'ready') break;
     }
-    if (!moved && st.sh?.win) {
-      act(st, 'p0', { type: 'shwinend', id: st.sh.win.id }, rng);
+    if (!moved && st.sh?.win?.lock) {
+      act(st, 'p0', { type: 'shunlock', id: st.sh.win.id }, rng);
       moved = true;
     }
     if (!moved) throw new Error(`Kein Zug möglich in Phase ${st.phase}`);

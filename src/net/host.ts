@@ -4,19 +4,20 @@
  * weitermachen kann.
  */
 import { type DataConnection, Peer } from 'peerjs';
-import { BOTS, botChatter, botTick } from './bots';
+import { botChatter, botTick } from './bots';
+import { clockFor, hostClock, resetClock } from './clock';
 import { act } from '../game/actions';
-import { rankOf } from '../game/cards';
 import { SH_WIN_MS } from '../game/constants';
 import { checkReady, quitPlayer } from '../game/flow';
-import { shCloseWin } from '../game/shithead';
-import { addPlayer, migrate, newState, pIdx, removePlayer } from '../game/state';
-import type { Action, State, View } from '../game/types';
+import { isOwnLeftSeat, reclaimSeat, seatGuest, syncSeats, takeSeat } from '../game/seats';
+import { migrate, newState, pIdx, removePlayer } from '../game/state';
+import type { Action, LogEntry, State, View } from '../game/types';
 import { viewFor } from '../game/view';
 import { App } from '../ui/app';
 import { applyView } from '../ui/apply';
 import { num, type Timer } from '../ui/dom';
 import { resetTableUI } from '../ui/reset';
+import { seqMsOf } from '../ui/shithead/sequence';
 import { setNet, setWait, showScreen } from '../ui/screens';
 import { renderResume, showStartError } from '../ui/start';
 import { LS } from '../ui/storage';
@@ -28,7 +29,7 @@ const GUEST_ID = /^p-[0-9a-f]{12}$/;
 const HEARTBEAT_MS = 5000;
 const GUEST_TIMEOUT_MS = 16000;
 const LOBBY_DROP_MS = 75000;
-const RESUME_WINDOW_MS = 12000;
+const RESUME_WINDOW_MS = 8000;
 
 /** Was der Gastgeber pro Verbindung wissen muss. */
 interface ConnInfo {
@@ -53,6 +54,8 @@ export const H = {
   hb: null as ReturnType<typeof setInterval> | null,
   winT: null as Timer | null,
   winId: null as number | null,
+  /** Stand des Verlaufs beim letzten Versand. */
+  commitN: 0,
 };
 
 function info(conn: DataConnection): ConnInfo {
@@ -69,6 +72,7 @@ function resetHost(): void {
   H.alias = Object.create(null);
   H.keys = Object.create(null);
   H.retries = 0;
+  H.commitN = 0;
   App.view = null;
   App.seenN = 0;
 }
@@ -100,8 +104,8 @@ export function hostResume(saved: SavedHost): void {
   });
   resetTableUI();
   migrate(st);
-  // Die Gäste brauchen einen Moment zum Neuverbinden, bevor das 4er-Fenster abläuft
-  if (st.sh?.win) st.sh.win.until = Date.now() + RESUME_WINDOW_MS;
+  // Die Gäste brauchen einen Moment zum Neuverbinden, bevor die 4er-Sperre endet
+  if (st.sh?.win?.lock) st.sh.win.until = Date.now() + RESUME_WINDOW_MS;
   hostCommit();
   hostOpen(true);
 }
@@ -212,16 +216,30 @@ function rejectConn(conn: DataConnection, msg: string): void {
   safeClose(conn, 600);
 }
 
-/** Ein Gast meldet sich an: neuer Platz, Wiederkehr oder Übernahme eines verwaisten Platzes. */
+/**
+ * Ein Gast meldet sich an: neuer Platz, Wiederkehr, Übernahme eines verwaisten Platzes oder eines KI-Platzes.
+ * Ein übernommener Platz behält seine ID, der Gast bekommt sie mit `welcome` und meldet sich künftig damit.
+ */
 function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t: 'hello' }>): void {
   const ci = info(conn);
   let pid = String(m.pid || '');
   const key = String(m.key || '').slice(0, 40);
   const name = cleanName(m.name) || 'Gast';
-  if (!GUEST_ID.test(pid) || !key || ci.pid) return;
+  // Eigene Gast-ID oder ein Platz, den dieser Gast mit seinem Schlüssel schon hatte
+  const ownSeat = !!key && H.keys[pid] === key && pIdx(st, pid) >= 0;
+  if (!key || ci.pid) return;
+  // Eine Platz-ID, die nicht mehr diesem Gast gehört (übernommen oder weg): wie ein frischer Beitritt
+  if (!GUEST_ID.test(pid) && !ownSeat) pid = genId('p');
   let takeover = false;
-  if (H.alias[pid]) pid = H.alias[pid];
+  // Umleitungen nur für IDs, die selbst kein Platz sind, sonst landet der echte Besitzer woanders
+  if (H.alias[pid] && pIdx(st, pid) < 0) pid = H.alias[pid];
   let p = st.players[pIdx(st, pid)];
+  if (p?.bot) {
+    // Mit dem eigenen Schlüssel ist es die Person, die gegangen war, sonst eine Übernahme
+    if (H.keys[pid] === key || isOwnLeftSeat(p, name)) reclaimSeat(st, pid);
+    else takeSeat(st, pid, name);
+    takeover = true;
+  }
   if (!p && st.phase !== 'lobby') {
     // Wer mit neuem Browser zurückkommt, bekommt seinen alten Platz über den Namen
     const lower = name.toLowerCase();
@@ -238,10 +256,14 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
     return;
   }
   if (!p) {
-    const err = addPlayer(st, pid, name);
-    if (err) {
-      rejectConn(conn, err);
+    const r = seatGuest(st, pid, name);
+    if ('err' in r) {
+      rejectConn(conn, r.err);
       return;
+    }
+    if (r.id !== pid) {
+      H.alias[pid] = r.id;
+      pid = r.id;
     }
     p = st.players[pIdx(st, pid)];
   }
@@ -356,36 +378,41 @@ function hostHeartbeat(): void {
     if (!p.online && st.phase === 'lobby' && p.offSince && now - p.offSince > LOBBY_DROP_MS) {
       changed = true;
       removePlayer(st, p.id);
+      syncSeats(st);
     }
   });
   if (changed) hostCommit();
 }
 
-/** Ansicht für einen Platz, mit Restzeit des 4er-Fensters statt absoluter Uhrzeit. */
-function hostView(st: State, pid: string): View {
+/** Ansicht für einen Platz, mit Restzeit der 4er-Sperre statt absoluter Uhrzeit. */
+function hostView(st: State, pid: string, own = false): View {
   const v = viewFor(st, pid);
   if (v.sh?.win) {
     v.sh.win.left = Math.max(0, num(v.sh.win.until) - Date.now());
     delete v.sh.win.until;
   }
+  clockFor(v, own);
   return v;
 }
 
 function hostOwnView(st: State): View {
-  const v = hostView(st, App.me);
+  const v = hostView(st, App.me, true);
   if (v.sh?.win) v.sh.win.at = num(st.sh?.win?.until);
   return v;
 }
 
-/** Startet den Timer, der das 4er-Fenster schließt. */
-function hostWin(st: State): void {
+/**
+ * Neuer Stapel: Die Person am Zug wartet kurz, damit alle ihre 4er reinwerfen können.
+ * Die Sperre beginnt erst nach der Animation, die alle gerade sehen.
+ */
+function hostWin(st: State, fresh: LogEntry[]): void {
   const w = st.game === 'shithead' && st.phase === 'play' ? st.sh?.win : null;
-  if (!w) {
+  if (!w?.lock) {
     resetHostTimers();
     return;
   }
   if (H.winId === w.id) return;
-  if (!w.until || w.until < Date.now() + 1500) w.until = Date.now() + SH_WIN_MS;
+  if (!w.until || w.until < Date.now()) w.until = Date.now() + seqMsOf(fresh) + SH_WIN_MS;
   H.winId = w.id;
   if (H.winT) clearTimeout(H.winT);
   H.winT = setTimeout(
@@ -393,15 +420,8 @@ function hostWin(st: State): void {
       H.winT = null;
       const s2 = H.st;
       const win = s2?.sh?.win;
-      if (!s2?.sh || !win || win.id !== w.id) return;
-      // Für die KI-Sprüche: Wer war zu langsam? Bleibt beim Gastgeber, geht nicht an Gäste
-      const humans = s2.players.filter((p) => !p.bot && !p.out);
-      const P = s2.sh.P;
-      BOTS.slow = humans
-        .filter((p) => !win.by.includes(p.id) && P[p.id]?.hand.some((c) => rankOf(c) === '4'))
-        .map((p) => p.id);
-      BOTS.slowOk = humans.length === 1;
-      shCloseWin(s2);
+      if (!s2 || !win?.lock || win.id !== w.id) return;
+      act(s2, App.me, { type: 'shunlock', id: w.id });
       hostCommit();
     },
     Math.max(0, w.until - Date.now()),
@@ -414,11 +434,22 @@ export function resetHostTimers(): void {
   H.winId = null;
 }
 
+/** Alles, was beim Host im Hintergrund läuft, anhalten (Tisch zu oder neu). */
+export function stopHostClocks(): void {
+  resetHostTimers();
+  resetClock();
+}
+
 /** Nach jeder Änderung: speichern, an alle senden, selbst anzeigen, KI anstoßen. */
 export function hostCommit(): void {
   const st = H.st;
   if (!st) return;
-  hostWin(st);
+  const fresh = st.log.filter((e) => e.n > H.commitN);
+  H.commitN = st.n;
+  hostWin(st, fresh);
+  // Die Uhr fürs Zeitlimit steht, solange die Animation oder die 4er-Sperre läuft
+  const win = st.game === 'shithead' ? st.sh?.win : null;
+  hostClock(st, Math.max(seqMsOf(fresh), win?.lock ? num(win.until) - Date.now() : 0));
   botChatter();
   hostSave();
   H.conns.forEach((conn, pid) => hostSend(conn, { t: 'state', s: hostView(st, pid) }));

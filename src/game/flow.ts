@@ -1,8 +1,9 @@
 /* Spielübergreifender Ablauf: bereit melden, neue Partie, Spieler verlässt den Tisch, zurück zur Lobby. */
-import { checkInstant, declareWinner, finishRound, handValue, startGame, startRound } from './schnautz';
-import { shBegin, shQuit, shStart } from './shithead';
-import { activeList, addLog, nextActive, pIdx, removePlayer } from './state';
-import type { ActResult, Card, HandValue, Rng, State } from './types';
+import { startGame, startRound } from './schnautz';
+import { syncSeats } from './seats';
+import { shBegin, shStart } from './shithead';
+import { addLog, pIdx, removePlayer } from './state';
+import type { ActResult, Rng, State } from './types';
 
 export function checkReady(st: State, rng?: Rng): ActResult {
   if (st.phase === 'swap') {
@@ -25,83 +26,34 @@ export function checkReady(st: State, rng?: Rng): ActResult {
 export const beginGame = (st: State, rng?: Rng): ActResult =>
   st.game === 'shithead' ? shStart(st, rng) : startGame(st, rng);
 
+/**
+ * Jemand verlässt den Tisch. In der Lobby wird der Platz frei (und bei Bedarf mit KI gefüllt),
+ * mitten in der Partie spielt die KI unter demselben Namen weiter.
+ */
 export function quitPlayer(st: State, pid: string, rng?: Rng): void {
   const i = pIdx(st, pid);
   if (i < 0) return;
-  const p = st.players[i];
-  p.online = false;
   if (st.phase === 'lobby') {
+    st.players[i].online = false;
     removePlayer(st, pid);
+    syncSeats(st, rng);
     return;
   }
-  p.gone = true;
-  p.ready = false;
-  if (st.game === 'shithead') {
-    shQuit(st, i, pid, rng);
-    return;
-  }
-  if (st.phase === 'over') {
-    if (!p.out) addLog(st, { k: 'quit', p: pid });
-    p.out = true;
-    checkReady(st, rng);
-    return;
-  }
-  if (p.out) {
-    checkReady(st, rng);
-    return;
-  }
-  p.out = true;
-  p.lives = 0;
-  addLog(st, { k: 'quit', p: pid });
-  if (st.hands[pid] && (st.phase === 'choose' || st.phase === 'play')) {
-    st.discard.push(...st.hands[pid]);
-    delete st.hands[pid];
-  }
-  const alive = activeList(st);
-  if (alive.length <= 1) {
-    if (st.phase !== 'end' || !st.result) {
-      const hands: Record<string, Card[]> = {};
-      const vals: Record<string, HandValue> = {};
-      alive.forEach((a) => {
-        if (st.hands[a.id]) {
-          hands[a.id] = st.hands[a.id].slice();
-          vals[a.id] = handValue(hands[a.id], st.rules);
-        }
-      });
-      st.result = { reason: 'quit', by: pid, knocker: null, hands, vals, losers: [], changes: {}, round: st.round };
-    }
-    declareWinner(st, alive[0] ?? null);
-    return;
-  }
-  if (st.phase === 'choose' && st.dealer === i) {
-    st.middle = st.spare ?? [];
-    st.spare = null;
-    st.phase = 'play';
-    st.turn = nextActive(st, i);
-    checkInstant(st);
-    return;
-  }
-  if (st.phase === 'play') {
-    if (st.knocker === pid) {
-      st.knocker = null;
-      st.afterKnock = 0;
-    }
-    if (st.turn === i) st.turn = nextActive(st, i);
-    if (st.knocker) {
-      // Wie viele Züge bleiben noch bis zum Klopfer?
-      let c = 0;
-      let j = st.turn;
-      let guard = 0;
-      while (st.players[j].id !== st.knocker && guard++ < st.players.length) {
-        c++;
-        j = nextActive(st, j);
-      }
-      st.afterKnock = c;
-      if (c <= 0) finishRound(st, 'knock', st.knocker);
-    }
-    return;
-  }
-  if (st.phase === 'end') checkReady(st, rng);
+  toBot(st, pid, rng);
+}
+
+/** Aus einem Menschen wird eine KI: Platz, Karten, Name und Bilanz bleiben, nur das KI-Zeichen kommt dazu. */
+export function toBot(st: State, pid: string, rng?: Rng): void {
+  const p = st.players[pIdx(st, pid)];
+  if (!p || p.bot || pid === st.host) return;
+  p.bot = true;
+  p.left = true;
+  p.online = true;
+  delete p.offSince;
+  delete p.gone;
+  addLog(st, { k: 'tobot', p: pid });
+  // War die Person die Letzte, auf die alle gewartet haben, geht es jetzt weiter
+  if (st.phase === 'end' || st.phase === 'over' || st.phase === 'swap') checkReady(st, rng);
 }
 
 export function toLobby(st: State): void {
@@ -131,4 +83,5 @@ export function toLobby(st: State): void {
     sh: null,
   } satisfies Partial<State>);
   addLog(st, { k: 'lobby' });
+  syncSeats(st);
 }

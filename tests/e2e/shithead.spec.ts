@@ -1,6 +1,6 @@
 /*
  * Shithead mit zwei echten Browsern bis zum Ende: Tauschrunde, normale Züge, Aufnehmen, blinde Karten,
- * 4er im Zeitfenster und Bomben. Die Züge wählt der Test mit derselben Spiellogik, die das Spiel nutzt.
+ * 4er bei neuen Stapeln und Bomben. Die Züge wählt der Test mit derselben Spiellogik, die das Spiel nutzt.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { rankOf } from '../../src/game/cards';
@@ -38,7 +38,7 @@ async function quickMove(page: Page): Promise<'shthrow' | 'shbomb' | null> {
 /** Ein regulärer Zug über die Oberfläche, wenn man dran ist. Nimmt meist die niedrigste passende Karte. */
 async function myMove(page: Page, v: View, me: string): Promise<boolean> {
   const S = v.sh;
-  if (!S || v.phase !== 'play' || S.win || v.players[v.turn].id !== me) return false;
+  if (!S || v.phase !== 'play' || S.win?.lock || v.players[v.turn].id !== me) return false;
   const P = S.P[me];
   const hand = Array.isArray(P.hand) ? P.hand : [];
   if (!hand.length && !P.up.length) {
@@ -55,7 +55,8 @@ async function myMove(page: Page, v: View, me: string): Promise<boolean> {
     await page.click('[data-act=shpickup]');
     return true;
   }
-  const pick = Math.random() < 0.85 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
+  // Oft die niedrigste Karte, sonst eine zufällige. Stur die niedrigste führt im Endspiel zu endlosem Pingpong
+  const pick = Math.random() < 0.6 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
   await page.click(`.shme [data-act=${src === 'hand' ? 'shh' : 'shu'}][data-i="${pick.i}"]`, {
     position: { x: 8, y: 18 },
   });
@@ -74,9 +75,12 @@ test('zwei Browser spielen Shithead bis zum Ende', async ({ browser }) => {
   await test.step('Spiel und Regeln wählen', async () => {
     await host.click('[data-act=game][data-g=shithead]');
     await expect.poll(async () => (await view(guest))?.game).toBe('shithead');
+    // 8 aussetzen ist vorausgewählt
+    expect((await mustView(guest)).rules.sh.eight).toBe(true);
+    await host.click('[data-shrule=eight]');
+    await expect.poll(async () => (await view(guest))?.rules.sh.eight).toBe(false);
     await host.click('[data-shrule=eight]');
     await expect.poll(async () => (await view(guest))?.rules.sh.eight).toBe(true);
-    await host.click('[data-shrule=eight]');
     await host.click('[data-act=start]');
     await expect(guest.locator('#scr-game')).toBeVisible();
   });

@@ -1,0 +1,442 @@
+/*
+ * Lobby: am Desktop zwei Spalten (Tisch, Spiel und Regeln), am Handy zwei Reiter mit fester Startleiste.
+ * Startseite, Warten und Lobby sind serifenlos, nur das Logo und die Karten behalten ihre Schrift.
+ */
+#scr-start,
+#scr-wait,
+#scr-lobby {
+  --display: var(--ui);
+}
+#scr-start .card {
+  --display: var(--serif);
+}
+#scr-start .hero h1,
+#scr-start .hero h1 em {
+  font-style: normal;
+  letter-spacing: -0.03em;
+}
+
+.ltabs {
+  display: none;
+}
+.codehead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.seathead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 10px;
+}
+.seathead .seat-title {
+  margin: 0;
+}
+.seats .nm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.seats .nmt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seats .you,
+.seats .offt {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.seats .offt {
+  color: #f0a59c;
+}
+.seats .botb {
+  flex: none;
+}
+.seats li.empty .avatar {
+  background: transparent;
+  border: 1px dashed rgba(246, 239, 223, 0.3);
+  color: var(--muted);
+}
+.seats li.empty .btn.small {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+#seat-opts .toggle {
+  margin-top: 6px;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 820px) {
+  /* Wie am Tisch: ein Bildschirm, nichts scrollt */
+  body.inlobby {
+    overflow: hidden;
+  }
+  body.inlobby #app {
+    height: 100dvh;
+    min-height: 0;
+  }
+  .lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-height: 0;
+    overflow: hidden;
+    padding: 2px 12px max(10px, env(safe-area-inset-bottom));
+  }
+  .ltabs {
+    display: flex;
+    flex: none;
+    margin: 0;
+  }
+  .ltabs button {
+    padding: 9px 8px;
+  }
+  .lpane {
+    display: none;
+  }
+  .lpane.on {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 1 auto;
+    min-height: 0;
+    /* Nur als Notbehelf auf sehr kleinen Bildschirmen mit vielen Plätzen */
+    overflow-y: auto;
+    padding: 14px 14px 12px;
+    border-radius: 18px;
+  }
+  .lfoot {
+    flex: none;
+  }
+  .lfoot .btn {
+    min-height: 50px;
+  }
+  .lfoot .note {
+    margin-top: 6px;
+  }
+  .codehead {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .codehead .note {
+    max-width: 190px;
+    font-size: 12px;
+    text-align: right;
+  }
+  .bigcode {
+    font-size: 40px;
+    margin: 4px 0 0;
+  }
+  .seats {
+    gap: 6px;
+  }
+  .seats li {
+    gap: 10px;
+    padding: 7px 10px;
+  }
+  .seats .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+  /* Ab fünf Plätzen zwei Spalten */
+  .seats.many {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seats.many li {
+    gap: 7px;
+    padding: 6px 8px;
+  }
+  .seats.many .badge,
+  .seats.many .you {
+    display: none;
+  }
+  .seats.many li.empty .nm {
+    font-size: 13px;
+  }
+  .rules-list .toggle {
+    padding: 6px 2px;
+  }
+  .rules-list .toggle span small {
+    font-size: 11.5px;
+    line-height: 1.3;
+  }
+  /* Die Erklärung zu vier Gleichen steht im Regelfenster */
+  .rules-list > .note {
+    display: none;
+  }
+  .rules-note {
+    margin-top: 2px;
+  }
+}
+
+/* Kurze Handys: Erklärzeilen weg, Plätze und Schalter in zwei Spalten. Der Tischcode steht oben im Kopf */
+@media (max-width: 820px) and (max-height: 720px) {
+  .lpane .toggle span small,
+  .codehead {
+    display: none;
+  }
+  #seat-opts .toggle {
+    padding-top: 4px;
+  }
+  .seats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seats li {
+    gap: 7px;
+    padding: 6px 8px;
+  }
+  .seats .badge,
+  .seats .you {
+    display: none;
+  }
+  .rules-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .rules-list .gamesel {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+  }
+  .rules-list .toggle {
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid rgba(246, 239, 223, 0.08);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.14);
+  }
+  .rules-list .toggle span {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+  .rules-list .stepper {
+    gap: 4px;
+  }
+  .rules-list .stepper button {
+    width: 28px;
+    height: 28px;
+  }
+  .rules-title,
+  .rules-note {
+    display: none;
+  }
+  #seat-opts .tslider {
+    flex-wrap: nowrap;
+  }
+  #seat-opts .tslider .range {
+    order: 0;
+    flex: 1 1 80px;
+    min-width: 0;
+    margin: 0;
+  }
+  /* Viele Plätze: drei Spalten ohne Avatar */
+  .seats.many {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .seats.many li {
+    gap: 4px;
+    padding: 5px 6px;
+    min-height: 34px;
+  }
+  .seats.many .avatar {
+    display: none;
+  }
+  .seats.many .nm {
+    font-size: 13px;
+  }
+  /* Weniger Plätze gehen über den Minus-Knopf, das KI-Zeichen wird schmal */
+  .seats.many .xbtn {
+    display: none;
+  }
+  .seats.many .botb {
+    font-size: 7.5px;
+    padding: 1px 3px;
+  }
+  .seats.many li.empty .btn.small {
+    min-height: 24px;
+    padding: 0 7px;
+    font-size: 12px;
+  }
+  .bigcode {
+    font-size: 34px;
+  }
+  .lpane.on {
+    gap: 10px;
+    padding: 12px;
+  }
+}
+
+/* Zeit pro Zug: Regler unter der Angabe, auf kurzen Handys in derselben Zeile */
+#seat-opts .tslider {
+  flex-wrap: wrap;
+  margin-top: 4px;
+  cursor: default;
+}
+.tslider .range {
+  order: 3;
+  flex: 1 1 100%;
+}
+.tval {
+  flex: none;
+  min-width: 44px;
+  text-align: right;
+  font-weight: 800;
+  color: var(--brass-hi);
+}
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  margin: 2px 0 0;
+  background: transparent;
+  cursor: pointer;
+}
+.range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(246, 239, 223, 0.15);
+}
+.range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(246, 239, 223, 0.15);
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Startseite: "Spielen" öffnet am Handy ein Popup mit Name, Tisch eröffnen und Beitreten. Am Desktop steht beides nebeneinander */
+.playbtn,
+.startx,
+.startdim {
+  display: none;
+}
+@media (max-width: 820px) {
+  body.onstart {
+    overflow: hidden;
+  }
+  body.onstart #app {
+    height: 100dvh;
+    min-height: 0;
+  }
+  .start {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    align-content: center;
+    padding: 0 20px max(16px, env(safe-area-inset-bottom));
+  }
+  .fan {
+    height: min(180px, 25dvh);
+    margin-bottom: min(26px, 2.5dvh);
+  }
+  .fan .card {
+    --cw: min(96px, 15dvh);
+  }
+  .fan .score {
+    left: calc(min(96px, 15dvh) * 2.55);
+    top: min(52px, 7dvh);
+    font-size: min(52px, 8dvh);
+  }
+  .hero h1 {
+    font-size: min(clamp(46px, 13vw, 64px), 8.6dvh);
+  }
+  .hero p.tagline {
+    font-size: min(17px, 2.9dvh);
+  }
+  .playbtn {
+    display: flex;
+    width: 100%;
+    max-width: 380px;
+    min-height: 54px;
+    margin-top: min(26px, 3dvh);
+    font-size: 18px;
+  }
+  .startpanel {
+    display: none;
+  }
+  body.startform .startdim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(3, 12, 8, 0.62);
+    backdrop-filter: blur(3px);
+    animation: fade 0.2s;
+  }
+  body.startform .startpanel {
+    display: flex;
+    position: fixed;
+    z-index: 61;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    max-width: 460px;
+    max-height: calc(100dvh - 24px);
+    margin: 0 auto;
+    overflow-y: auto;
+    padding: 24px 18px 18px;
+    background: linear-gradient(180deg, #0f2d21, #081a12);
+    transform: translateY(-50%);
+    animation: startPop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  body.startform .startx {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(246, 239, 223, 0.14);
+    background: rgba(246, 239, 223, 0.08);
+    color: var(--cream);
+    font-size: 20px;
+    line-height: 1;
+  }
+}
+@keyframes startPop {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-50% + 16px));
+  }
+}

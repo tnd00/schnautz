@@ -11,15 +11,23 @@ export function showScreen(name: Screen): void {
   (['start', 'wait', 'lobby', 'game'] as const).forEach((s) => {
     $(`#scr-${s}`).hidden = s !== name;
   });
+  // Am Tisch passt mobil alles auf einen Bildschirm, ohne Scrollen
+  document.body.classList.toggle('ingame', name === 'game');
+  document.body.classList.toggle('inlobby', name === 'lobby');
+  document.body.classList.toggle('onstart', name === 'start');
+  if (name !== 'start') document.body.classList.remove('startform');
+  $('#btn-board').hidden = name !== 'game';
+  document.body.classList.toggle('intable', name === 'lobby' || name === 'game');
   const inTable = name === 'lobby' || name === 'game';
   $('#codechip').hidden = !inTable;
-  $('#btn-menu').hidden = !inTable;
+  // Das Menü gibt es überall, außerhalb des Tisches nur mit den Updates
+  $('#btn-menu').hidden = name === 'wait';
   $('#netchip').hidden = name === 'start';
   if (!inTable) {
     $('#brand-name').textContent = 'Schnautz';
     $('#brand-badge').hidden = false;
     $('#menu').hidden = true;
-    document.body.classList.remove('logopen');
+    document.body.classList.remove('logopen', 'emoopen');
     $('#overlay').innerHTML = '';
     App.unread = 0;
   }

@@ -19,6 +19,17 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
       ];
     case 'leave':
       return ['sys', '<b>' + esc(e.name || 'Jemand') + '</b> ist gegangen.'];
+    case 'takeover':
+      return [
+        'big',
+        who() + vb(p, ' übernimmst', ' übernimmt') + ' den Platz von <b>' + esc(e.from) + '</b> samt Karten.',
+      ];
+    case 'tobot':
+      return ['big', who() + ' ist gegangen. Ab jetzt spielt die KI für ' + who() + ' weiter.'];
+    case 'timeout':
+      return ['big', '⏱ Zeit um! Für ' + (p === App.me ? 'dich' : who()) + ' zieht jetzt die KI.'];
+    case 'back':
+      return ['big', who() + vb(p, ' bist zurück und spielst wieder selbst.', ' ist zurück und spielt wieder selbst.')];
     case 'game':
       return ['round', 'Partie ' + num(e.g) + ' beginnt' + (e.game === 'shithead' ? ' · Shithead' : '')];
     case 'shdeal':
@@ -38,12 +49,7 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
           '.',
       ];
     case 'shburn':
-      return [
-        'big',
-        (e.cut ? 'Bombe! ' : e.four ? 'Vier Gleiche! ' : '') +
-          who() +
-          vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.'),
-      ];
+      return ['big', (e.four ? 'Bombe! ' : '') + who() + vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.')];
     case 'shpickup':
       return [
         '',
@@ -66,7 +72,14 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
     case 'shdone':
       return ['big', who() + vb(p, ' bist fertig! Platz ', ' ist fertig! Platz ') + num(e.place) + '.'];
     case 'shthrow':
-      return ['', who() + vb(p, ' wirfst ', ' wirft ') + (e.cards || []).map(cardChip).join(' ') + ' rein.'];
+      return [
+        '',
+        who() +
+          vb(p, ' wirfst ', ' wirft ') +
+          (e.cards || []).map(cardChip).join(' ') +
+          (e.src === 'up' ? ' vom Tisch' : '') +
+          ' rein.',
+      ];
     case 'shbomb':
       return [
         'big',
@@ -77,8 +90,6 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
           (e.out ? ' außer der Reihe' : '') +
           ' zur Bombe ein.',
       ];
-    case 'shwinend':
-      return ['sys', 'Die Zeit für die 4er ist um.'];
     case 'emote':
       return null;
     case 'shend':
@@ -89,7 +100,17 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
     case 'lobby':
       return ['sys', 'Zurück in der Lobby.'];
     case 'round':
-      return ['round', 'Runde ' + num(e.r) + ' · ' + esc(nameOf(v, p)) + vb(p, ' gibst', ' gibt')];
+      return [
+        'round',
+        'Runde ' +
+          num(e.r) +
+          ' · ' +
+          esc(nameOf(v, p)) +
+          vb(p, ' gibst', ' gibt') +
+          (e.start
+            ? ', ' + esc(e.start === App.me ? 'du' : nameOf(v, e.start)) + vb(e.start, ' fängst an', ' fängt an')
+            : ''),
+      ];
     case 'keep':
       return ['', who() + vb(p, ' behältst das eigene Blatt.', ' behält das eigene Blatt.')];
     case 'take':

@@ -35,6 +35,8 @@ export const App = {
   ss: { src: null as 'hand' | 'up' | null, idx: [] as number[] },
   /** Tauschrunde bei Shithead. */
   sw: { h: null as number | null, u: null as number | null },
+  /** Lobby am Handy: welcher Reiter offen ist. */
+  ltab: 'table' as 'table' | 'game',
   seenN: 0,
   unread: 0,
   peek: false,

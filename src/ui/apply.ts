@@ -12,6 +12,7 @@ import { render } from './render/index';
 import { renderLog } from './render/log';
 import { SEQ, runSeq, shPlan, totalMs, type Step } from './shithead/sequence';
 import { syncWin } from './shithead/window';
+import { syncClock } from './clock';
 
 /** Fingerabdruck der Ansicht ohne Verlauf: Ändert sich nur der Chat, wird nicht alles neu gezeichnet. */
 function viewSig(v: View): string {
@@ -54,6 +55,7 @@ export function applyView(v: View): void {
   App.view = v;
   App.busy = false;
   syncWin(v);
+  syncClock(v);
   resetSelection(prev, v);
   setAnimations(prev, v);
 

@@ -14,7 +14,7 @@ function statusOf(v: View, p: Player): string {
   if (v.sh?.finished.includes(p.id)) return `<span class="sb-c">Platz ${num(p.place)}</span>`;
   const P = v.sh?.P[p.id];
   const n = P ? cardsLeft(P) : 0;
-  return `<span class="sb-c">${n} ${n === 1 ? 'Karte' : 'Karten'}</span>`;
+  return `<span class="sb-c" title="Karten insgesamt">${n}<span class="sb-l"> ${n === 1 ? 'Karte' : 'Karten'}</span></span>`;
 }
 
 export function renderScore(v: View): void {
@@ -22,7 +22,9 @@ export function renderScore(v: View): void {
   const sh = v.game === 'shithead';
   const tId = turnId(v);
   const dId = dealerId(v);
-  const anyWin = v.players.some((p) => num(p.wins) > 0);
+  // Siege zählen pro Spiel, wie in der Bestenliste
+  const winsOf = (p: Player) => num(p.stats?.[v.game]?.wins);
+  const anyWin = v.players.some((p) => winsOf(p) > 0);
   const rg = v.reign?.game === v.game ? v.reign : null;
   let h = `<div class="sb-meta"><b>${sh ? 'Shithead' : `Runde ${num(v.round)}`}</b><small>Partie ${num(v.games)}</small></div>`;
   v.players.forEach((p) => {
@@ -40,9 +42,11 @@ export function renderScore(v: View): void {
       (p.bot ? '<i class="botb">KI</i>' : '') +
       (!sh && v.knocker === p.id ? ' <span title="hat geklopft">✊</span>' : '') +
       `</span>${statusOf(v, p)}` +
-      (anyWin ? `<span class="sb-w" title="Gewonnene Partien">🏆 ${num(p.wins)}</span>` : '') +
+      (anyWin ? `<span class="sb-w" title="Gewonnene Partien">🏆 ${winsOf(p)}</span>` : '') +
       (sh && p.shc ? `<span class="sb-w" title="So oft Shithead">💩 ${num(p.shc)}</span>` : '') +
       '</div>';
   });
   el.innerHTML = h;
+  // Bei vielen Leuten ist die Leiste am Handy zu voll, dort zeigt das Karussell alle
+  el.classList.toggle('many', v.players.length > 4);
 }

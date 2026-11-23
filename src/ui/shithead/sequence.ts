@@ -66,22 +66,22 @@ export function burnAnn(v: View, e: Entry<'shburn'>): Announcement {
     const t = e.p === App.me ? taunt('bombSelf', null, e.n) : taunt('bombOther', { name: nm }, e.n);
     return { icon: '💣', tone: 'red', title: 'Bombe!', sub: `<span class="tt">${esc(t)}</span>`, ms: 2000 };
   }
+  // Vier Gleiche heißen auch im eigenen Zug Bombe
+  if (e.four) {
+    return {
+      icon: '💣',
+      tone: 'red',
+      title: 'Bombe!',
+      sub: `${esc(nm)}${vb(e.p, ' machst', ' macht')} die vier voll. Der Stapel ist weg.`,
+      ms: 1500,
+    };
+  }
   return {
     icon: '🔥',
     tone: 'red',
-    title: e.four ? 'Vier Gleiche!' : 'Verbrannt!',
+    title: 'Verbrannt!',
     sub: `${esc(nm)}${vb(e.p, ' verbrennst', ' verbrennt')} den Stapel.`,
     ms: 1300,
-  };
-}
-
-export function openAnn(v: View, e: { p?: string; name?: string }): Announcement {
-  return {
-    icon: '⏱️',
-    tone: 'gold',
-    title: '4er reinwerfen!',
-    sub: `${esc(nameOf(v, e.p, e.name))}${vb(e.p, ' fängst', ' fängt')} mit der 4 an. Wer noch eine hat, muss schnell sein.`,
-    ms: 1700,
   };
 }
 
@@ -133,6 +133,31 @@ export function stepMs(s: Step): number {
 }
 
 export const totalMs = (steps: Step[]): number => steps.reduce((t, s) => t + stepMs(s), 0);
+
+/**
+ * Wie lange die Sequenz zu diesen Log-Einträgen etwa läuft. Der Gastgeber startet die 4er-Sperre
+ * erst danach, damit alle den leeren Stapel wirklich sehen.
+ */
+export function seqMsOf(entries: LogEntry[]): number {
+  let n = 0;
+  let ms = 0;
+  for (const e of entries) {
+    if (e.k === 'shplay' || e.k === 'shthrow' || e.k === 'shbomb') {
+      n++;
+      ms += e.k === 'shthrow' ? 650 : e.src === 'down' ? 1350 : 760;
+    } else if (e.k === 'shburn') {
+      n++;
+      ms += e.cut ? 1250 : 1000;
+    } else if (e.k === 'shpickup') {
+      n++;
+      ms += 850;
+    } else if (e.k === 'shblindfail') {
+      n += 2;
+      ms += 2850;
+    }
+  }
+  return n > MAX_STEPS || ms > MAX_TOTAL_MS ? 0 : ms;
+}
 
 export function runSeq(steps: Step[], v: View, done: () => void): void {
   let i = 0;
@@ -226,9 +251,8 @@ function runStep(s: Step, v: View): void {
         });
       }
       if (!mine || s.src !== 'hand') sfx('card');
-      if (s.e.k === 'shthrow') floatLabel(e.p, '4er rein!');
-      if (s.e.k === 'shbomb') floatLabel(e.p, 'wirft ein!');
-      if (s.e.k === 'shplay' && s.e.open) announce(openAnn(v, s.e));
+      if (s.e.k === 'shthrow') floatLabel(e.p, 'wirft 4er rein', 'wirfst 4er rein');
+      if (s.e.k === 'shbomb') floatLabel(e.p, 'wirft eine Bombe ein', 'wirfst eine Bombe ein');
       if (s.src === 'down') {
         later(() => {
           const text = mine ? 'Blind gelegt, passt!' : `${nm} legt blind, passt!`;
@@ -242,8 +266,8 @@ function runStep(s: Step, v: View): void {
         c.style.setProperty('--bd', `${k * 0.05}s`);
         c.classList.add('burning');
       });
-      boomFx(s.e.cut ? '💣' : '🔥', $opt('#center .pile'));
-      sfx(s.e.cut ? 'bomb' : 'burn');
+      boomFx(s.e.four ? '💣' : '🔥', $opt('#center .pile'));
+      sfx(s.e.four ? 'bomb' : 'burn');
       announce(burnAnn(v, s.e));
       later(() => {
         if (!SEQ.ov) return;
@@ -306,7 +330,15 @@ function runStep(s: Step, v: View): void {
         }, 520);
       }
       const cnt = num(s.e.cnt);
-      later(() => floatLabel(e.p, `+${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`), 200);
+      later(
+        () =>
+          floatLabel(
+            e.p,
+            `nimmt ${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`,
+            `nimmst ${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`,
+          ),
+        200,
+      );
       if (!s.fail && cnt >= 6) {
         tauntLabel(mine ? taunt('pickupSelf', { n: cnt }, e.n) : taunt('pickupOther', { name: nm, n: cnt }, e.n), 2600);
       }

@@ -140,18 +140,25 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await host.click('[data-act=unpeek]');
   });
 
-  await test.step('Gast verlässt die laufende Partie und kommt zurück', async () => {
+  await test.step('Gast verlässt die laufende Partie, die KI spielt weiter, dann kommt der Gast zurück', async () => {
     await bothReady(host, guest, ['choose', 'play']);
+    const seat = await myId(guest);
+    const isBot = async () => (await view(host))?.players.find((p) => p.id === seat)?.bot ?? false;
     await menuConfirm(guest, '#menu-leave');
-    await waitForPhase(host, ['over']);
+    await expect.poll(isBot).toBe(true);
+    expect((await mustView(host)).phase).not.toBe('over');
+    // Am Handy liegen Name und Code im Popup hinter "Spielen"
+    if (await guest.locator('.playbtn').isVisible()) await guest.click('.playbtn');
     await guest.fill('#name', 'Lena');
     await guest.fill('#joincode', code);
     await guest.click('#btn-join');
     await expect(guest.locator('#scr-game')).toBeVisible();
+    await expect.poll(isBot).toBe(false);
+    expect(await myId(guest)).toBe(seat);
   });
 
   await test.step('zurück in die Lobby, dann löst der Host den Tisch auf', async () => {
-    await host.click('[data-act=peek]');
+    if (await host.locator('[data-act=peek]').count()) await host.click('[data-act=peek]');
     await menuConfirm(host, '#menu-lobby');
     await expect(host.locator('#scr-lobby')).toBeVisible();
     await expect(guest.locator('#scr-lobby')).toBeVisible();

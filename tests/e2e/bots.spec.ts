@@ -58,7 +58,8 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
   await waitForPhase(host, ['play'], 30_000);
   const me = await myId(host);
 
-  for (let i = 0; i < 2000; i++) {
+  // Gezählt werden nur eigene Züge. Warten (Animation, 4er-Sperre, KI denkt) läuft über die Zeitgrenze des Tests
+  for (let moves = 0; moves < 600;) {
     const v = await mustView(host);
     if (v.phase === 'over') break;
     if (await seqBusy(host)) {
@@ -72,17 +73,20 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
       continue;
     }
     const S = v.sh;
-    if (!S || S.win || v.players[v.turn].id !== me) {
+    if (!S || S.win?.lock || v.players[v.turn].id !== me) {
       await host.waitForTimeout(250);
       continue;
     }
+    moves++;
     const P = S.P[me];
     const hand = Array.isArray(P.hand) ? P.hand : [];
     if (!hand.length && !P.up.length)
       await host.click('.shme .card[data-act=shd] >> nth=0', { position: { x: 10, y: 20 } });
     else {
       const arr = hand.length ? hand : P.up;
-      const i0 = arr.findIndex((c) => shCanPlay(v, rankOf(c)));
+      const ok = arr.flatMap((c, k) => (shCanPlay(v, rankOf(c)) ? [k] : []));
+      // Meist die niedrigste Karte, ab und zu eine andere, sonst spielen Mensch und KI im Endspiel endlos Pingpong
+      const i0 = !ok.length ? -1 : Math.random() < 0.7 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
       if (i0 < 0) await host.click('[data-act=shpickup]');
       else {
         await host.click(`.shme [data-act=${hand.length ? 'shh' : 'shu'}][data-i="${i0}"]`, {

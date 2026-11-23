@@ -15,14 +15,15 @@ export function schnautzResult(st: State): SchnautzResult {
   return st.result as SchnautzResult;
 }
 
-/** Alle 52 Shithead-Karten genau einmal im Spiel? */
+/** Alle Shithead-Karten (52 je Deck) genau einmal im Spiel? */
 export function shCardsOk(st: State): void {
   const S = st.sh;
   assert.ok(S);
+  const want = 52 * (S.decks ?? 1);
   const all: Card[] = [...S.deck, ...S.pile, ...S.burned];
   Object.values(S.P).forEach((P) => all.push(...P.hand, ...P.up, ...P.down));
-  assert.equal(all.length, 52, `Kartenzahl ${all.length}`);
-  assert.equal(new Set(all).size, 52, 'doppelte Karten');
+  assert.equal(all.length, want, `Kartenzahl ${all.length}`);
+  assert.equal(new Set(all).size, want, 'doppelte Karten');
 }
 
 export const action = (a: Action): Action => a;

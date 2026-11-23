@@ -1,8 +1,8 @@
 /* Schnautz (Schwimmen, 31) mit 32 Karten. */
 import { newDeck, rankOf, rnd, shuffle, suitOf } from './cards';
 import { RANK_VAL, SUITS } from './constants';
-import { activeList, addLog, nextActive, pIdx } from './state';
-import type { ActResult, Card, HandValue, LifeChange, Rng, Rules, SchnautzReason, State, Suit } from './types';
+import { activeList, addLog, countGame, nextActive, pIdx, prevActive, statsOf } from './state';
+import type { ActResult, Card, HandValue, LifeChange, Player, Rng, Rules, SchnautzReason, State, Suit } from './types';
 
 /** Wert einer Hand: Summe der stärksten Farbe, drei Gleiche 30,5, drei Asse (Feuer) 33. */
 export function handValue(cards: readonly Card[] | number | undefined, rules?: Pick<Rules, 'feuer'>): HandValue {
@@ -44,9 +44,19 @@ export function startGame(st: State, rng?: Rng): ActResult {
   return null;
 }
 
+/** Wer zuletzt verloren hat, fängt an. Ist er inzwischen raus, fängt der Nächste nach ihm an. */
+function loserSeat(st: State): number {
+  const i = pIdx(st, st.loser);
+  if (i < 0) return -1;
+  return st.players[i].out ? nextActive(st, i) : i;
+}
+
 export function startRound(st: State, rng: Rng | undefined, first: boolean): void {
   st.round++;
-  if (!first || st.players[st.dealer].out) st.dealer = nextActive(st, st.dealer);
+  const start = loserSeat(st);
+  // Gegeben wird vom Platz davor, damit der letzte Verlierer den ersten Zug hat
+  if (start >= 0) st.dealer = prevActive(st, start);
+  else if (!first || st.players[st.dealer].out) st.dealer = nextActive(st, st.dealer);
   st.deck = newDeck(rng);
   st.discard = [];
   st.hands = {};
@@ -64,7 +74,8 @@ export function startRound(st: State, rng: Rng | undefined, first: boolean): voi
   activeList(st).forEach((p) => {
     st.hands[p.id] = st.deck.splice(0, 3);
   });
-  addLog(st, { k: 'round', r: st.round, p: st.players[st.dealer].id });
+  const starter = st.players[nextActive(st, st.dealer)] as Player | undefined;
+  addLog(st, { k: 'round', r: st.round, p: st.players[st.dealer].id, start: starter?.id });
   if (st.rules.dealerChoice) {
     st.spare = st.deck.splice(0, 3);
     st.phase = 'choose';
@@ -145,6 +156,12 @@ export function finishRound(st: State, reason: SchnautzReason, by: string | null
     losers = active.filter((p) => vals[p.id].v === min).map((p) => p.id);
     if (losers.length === active.length) losers = [];
   }
+  // Die nächste Runde fängt an, wer verloren hat. Bei mehreren der Erste nach dem Geber
+  if (losers.length) {
+    const n = st.players.length;
+    const ord = (id: string) => (pIdx(st, id) - st.dealer - 1 + n * 2) % n;
+    st.loser = losers.slice().sort((a, b) => ord(a) - ord(b))[0];
+  } else st.loser = null;
   const changes: Record<string, LifeChange> = {};
   losers.forEach((id) => {
     const p = st.players[pIdx(st, id)];
@@ -154,7 +171,16 @@ export function finishRound(st: State, reason: SchnautzReason, by: string | null
       else p.out = true;
     }
     changes[id] = { n, to: p.out ? 'out' : p.lives === 0 ? 'swim' : 'life' };
+    const ps = statsOf(p, 'schnautz');
+    ps.coasters = (ps.coasters ?? 0) + n;
   });
+  if ((reason === 'schnautz' || reason === 'feuer') && by) {
+    const bp = st.players[pIdx(st, by)];
+    if (bp) {
+      const ps = statsOf(bp, 'schnautz');
+      ps.hot = (ps.hot ?? 0) + 1;
+    }
+  }
   const hands: Record<string, Card[]> = {};
   active.forEach((p) => {
     hands[p.id] = st.hands[p.id].slice();
@@ -178,6 +204,7 @@ export function declareWinner(st: State, winner: { id: string; wins: number } | 
   st.turn = -1;
   st.winner = winner ? winner.id : null;
   if (winner) winner.wins = (winner.wins || 0) + 1;
+  countGame(st, 'schnautz', st.winner);
   st.players.forEach((p) => {
     p.ready = false;
   });

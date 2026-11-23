@@ -60,9 +60,19 @@
   font-weight: 650;
 }
 .opp.turn {
-  border-color: rgba(243, 205, 125, 0.55);
-  background: rgba(243, 205, 125, 0.07);
-  box-shadow: 0 0 40px rgba(243, 205, 125, 0.12);
+  border-color: var(--brass-hi);
+  background: rgba(243, 205, 125, 0.13);
+  box-shadow:
+    0 0 0 1px rgba(243, 205, 125, 0.35),
+    0 0 34px rgba(243, 205, 125, 0.3);
+  animation: turnGlow 1.8s ease-in-out infinite;
+}
+@keyframes turnGlow {
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(243, 205, 125, 0.45),
+      0 0 46px rgba(243, 205, 125, 0.45);
+  }
 }
 .opp.out {
   opacity: 0.5;
@@ -126,9 +136,10 @@
 
 .center {
   display: flex;
-  align-items: center;
+  /* Alle Stapel stehen auf einer Linie, ihre Beschriftungen darunter ebenfalls */
+  align-items: flex-end;
   gap: clamp(14px, 3vw, 34px);
-  padding: 16px clamp(14px, 3vw, 30px);
+  padding: 18px clamp(14px, 3vw, 30px) 38px;
   border-radius: 28px;
   background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12));
   border: 1px solid rgba(246, 239, 223, 0.07);
@@ -154,15 +165,21 @@
   left: 6px;
   top: -6px;
 }
-.deck .cnt {
+.center .cnt {
   position: absolute;
-  bottom: -22px;
+  bottom: -27px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
   text-align: center;
   font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
   color: var(--muted);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 9px;
+  border-radius: 999px;
+  z-index: 2;
 }
 .middle {
   display: flex;
@@ -224,6 +241,14 @@
   font-style: italic;
 }
 
+.seat {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.8vh, 18px);
+}
 .me {
   display: flex;
   flex-direction: column;
@@ -432,23 +457,31 @@
   min-height: 42px;
   padding: 0 14px;
 }
-.logfab {
+/* Runde Knöpfe am eigenen Platz (mobil): Reaktionen links, Verlauf und Chat rechts */
+.fab {
   display: none;
-  position: fixed;
-  right: 14px;
-  bottom: max(14px, env(safe-area-inset-bottom));
-  z-index: 25;
-  width: 52px;
-  height: 52px;
+  position: absolute;
+  top: 5px;
+  z-index: 8;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid rgba(246, 239, 223, 0.2);
   background: #0f2a20;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  color: var(--cream);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   place-items: center;
+  padding: 0;
 }
-.logfab svg {
-  width: 22px;
-  height: 22px;
+.fab svg {
+  width: 21px;
+  height: 21px;
+}
+.emofab {
+  left: 5px;
+}
+.logfab {
+  right: 5px;
 }
 .logfab .n {
   position: absolute;

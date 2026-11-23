@@ -27,6 +27,9 @@ export const listJoin = (a: string[]): string =>
 
 export const reduceMotion = (): boolean => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
+/** Gleiche Grenze wie im CSS: Darunter ist der Verlauf ein Fenster zum Hochschieben und der Tisch passt ohne Scrollen. */
+export const isMobile = (): boolean => !!window.matchMedia?.('(max-width: 960px)').matches;
+
 /** Einfacher, stabiler Hash für zufällig wirkende, aber reproduzierbare Werte. */
 export function hashStr(s: string): number {
   let h = 7;

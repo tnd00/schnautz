@@ -1,4 +1,4 @@
-/* Shithead: Countdown des 4er-Fensters am Anfang der Partie. */
+/* Shithead: Countdown der kurzen Sperre bei einem neuen Stapel (nur für die Person am Zug sichtbar). */
 import { SH_WIN_MS } from '../../game/constants';
 import type { View } from '../../game/types';
 import { $opt, num } from '../dom';
@@ -17,7 +17,7 @@ function stopTicker(): void {
 /** Übernimmt Fenster und Restzeit aus der Ansicht und startet die Anzeige. */
 export function syncWin(v: View | null): void {
   const w = v?.game === 'shithead' && v.phase === 'play' ? v.sh?.win : null;
-  if (!w) {
+  if (!w?.lock) {
     WIN.id = null;
     stopTicker();
     return;
@@ -29,6 +29,9 @@ export function syncWin(v: View | null): void {
 }
 
 export const winLeft = (): number => Math.max(0, WIN.until - Date.now());
+
+/** Angezeigte Sekunden: Während die Animation noch läuft, bleibt die Uhr voll stehen. */
+export const winSecs = (left: number): number => Math.ceil(Math.min(left, SH_WIN_MS) / 1000);
 
 export function resetWin(): void {
   WIN.id = null;
@@ -43,7 +46,7 @@ function tickWin(): void {
   const el = $opt('#wincd');
   if (!el) return;
   const left = winLeft();
-  el.style.setProperty('--p', (left / SH_WIN_MS).toFixed(3));
+  el.style.setProperty('--p', Math.min(1, left / SH_WIN_MS).toFixed(3));
   const b = el.querySelector('b');
-  if (b) b.textContent = String(Math.ceil(left / 1000));
+  if (b) b.textContent = String(winSecs(left));
 }

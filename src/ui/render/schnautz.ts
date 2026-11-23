@@ -3,6 +3,9 @@ import type { Card, Player, SchnautzResult, View } from '../../game/types';
 import { activeList } from '../../game/state';
 import { App } from '../app';
 import { cardHTML, fmtVal, livesHTML, valHTML } from '../cards';
+import { layoutOpps } from '../carousel';
+import { marksHTML } from './marks';
+import { markClocks } from '../clock';
 import { $, esc, listJoin, num } from '../dom';
 import { holdOverlay } from '../feedback';
 import { W, dealerId, myTurn, nameOf, pById, roundBest, schnautzResult, seatOrder, turnId, vb } from '../helpers';
@@ -50,9 +53,10 @@ export function renderGame(v: View): void {
       '">' +
       '<div class="ocards">' +
       cards +
-      '</div><div class="ometa"><span class="nm">' +
+      '</div><div class="ometa">' +
+      marksHTML(v, p) +
+      '<span class="nm">' +
       esc(p.name) +
-      (p.bot ? '<i class="botb">KI</i>' : '') +
       '</span>' +
       livesHTML(p, v.rules) +
       '</div>' +
@@ -60,6 +64,7 @@ export function renderGame(v: View): void {
       '</div>';
   });
   $('#opps').innerHTML = oh;
+  layoutOpps(v);
 
   // Mitte
   const me = pById(v, App.me);
@@ -117,7 +122,7 @@ export function renderGame(v: View): void {
   } else if (v.phase === 'play') {
     if (playing) {
       main = knocked ? W(v, v.knocker) + ' hat geklopft. <em>Dein letzter Zug!</em>' : '<em>Du bist dran.</em>';
-      sub = 'Tippe eine Karte aus deiner Hand und eine aus der Mitte an, dann tauschen.';
+      sub = 'Tippe eine Handkarte und eine Karte aus der Mitte an.';
     } else {
       main = knocked
         ? (v.knocker === App.me ? 'Du hast geklopft. ' : W(v, v.knocker) + ' hat geklopft. ') +
@@ -161,9 +166,7 @@ export function renderGame(v: View): void {
   const isOn = playing || (v.phase === 'choose' && dId === App.me);
   if (!me || me.out) {
     mh =
-      '<div class="mehead"><span class="nm">' +
-      esc(App.name) +
-      '</span>' +
+      '<div class="mehead"><span class="nm">Du</span>' +
       (me ? livesHTML(me, v.rules) : '') +
       '</div><div class="outmsg">Du bist raus und schaust zu.</div>';
   } else {
@@ -177,9 +180,7 @@ export function renderGame(v: View): void {
           ? '<span class="tag">du gibst</span>'
           : '';
     mh +=
-      '<div class="mehead"><span class="nm">' +
-      esc(me.name) +
-      '</span>' +
+      '<div class="mehead"><span class="nm">Du</span>' +
       livesHTML(me, v.rules) +
       tagMe +
       (handCards ? '<span class="pill' + (hv.v >= 30.5 ? ' hot' : '') + '">' + valHTML(hv) + '</span>' : '') +
@@ -248,6 +249,7 @@ export function renderGame(v: View): void {
   meEl.className = 'me' + (isOn ? ' turn' : '') + mcls;
   meEl.setAttribute('data-pid', App.me);
   meEl.innerHTML = mh;
+  markClocks();
 }
 
 function resultTitle(v: View): string {
@@ -387,7 +389,7 @@ export function renderOverlay(v: View): void {
   });
   const foot = overlayFoot(v, me);
   ov.innerHTML =
-    '<div class="modal"><div class="paper">' +
+    '<div class="modal"><div class="paper sheet result">' +
     (v.phase === 'over' ? '<div class="trophy">🏆</div>' : '') +
     '<h2>' +
     resultTitle(v) +

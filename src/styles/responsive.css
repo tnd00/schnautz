@@ -25,14 +25,9 @@
   .side h3 button {
     display: block;
   }
-  .logfab {
-    display: grid;
-  }
-  body.logopen .logfab {
+  /* Die Kartenübersicht steht mobil im Regelfenster, nicht im Chat */
+  .side .legend {
     display: none;
-  }
-  .table {
-    padding-bottom: 84px;
   }
 }
 @media (max-width: 820px) {
@@ -82,86 +77,11 @@
   .chip {
     padding: 5px 9px;
   }
-  .opp {
-    min-width: 0;
-    padding: 8px 10px;
-  }
-  .opp .ocards {
-    height: calc(44px * 1.4 + 6px);
-  }
-  .opp .ocards .card {
-    --cw: 44px;
-  }
-  .opp .ocards .card + .card {
-    margin-left: -20px;
-  }
-  .center {
-    padding: 14px 10px;
-    gap: 10px;
-  }
   .verdict {
     margin-left: 16px;
   }
-  .scorebar {
-    flex-wrap: wrap;
-    justify-content: center;
-    overflow: visible;
-    gap: 6px;
-  }
-  .sb-meta {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 6px;
-    border-right: 0;
-    padding: 4px 6px;
-  }
-  .sb-meta b {
-    font-size: 14px;
-  }
-  .sb-p {
-    padding: 4px 9px;
-    gap: 5px;
-  }
-  .sb-p .coaster {
-    width: 11px;
-    height: 11px;
-  }
-  .sb-p .coaster::after {
-    inset: 3px;
-  }
-  .sb-w {
-    padding: 0 6px;
-  }
   #announce {
     top: 13%;
-  }
-  .tcards {
-    --tw: 36px;
-  }
-  .opp.sh {
-    min-width: 0;
-  }
-  .burned {
-    min-width: 40px;
-  }
-  .pile {
-    --mw: clamp(64px, 20vw, 88px);
-  }
-  .middle {
-    --mw: clamp(64px, 21vw, 92px);
-    gap: 7px;
-  }
-  .deck {
-    --mw: clamp(56px, 16vw, 80px);
-  }
-  .actions .btn {
-    min-width: 0;
-    flex: 1 1 40%;
-    padding: 0 10px;
-  }
-  .shme .actions .btn {
-    font-size: 14px;
-    padding: 0 8px;
   }
   .paper {
     padding: 22px 16px 18px;
@@ -171,6 +91,25 @@
   .paper h3,
   .paper p {
     padding-left: 16px;
+  }
+  /* Am Tisch ist die Kopfzeile knapp: Der Ton-Schalter wandert ins Menü */
+  body.intable #btn-sound {
+    display: none;
+  }
+  body.intable .menu .m-only {
+    display: block;
+  }
+  .top {
+    gap: 6px;
+  }
+  /* Neben dem Code-Feld in der Lobby reicht das Buch */
+  body:not(.ingame) .rulesbtn span {
+    display: none;
+  }
+  body:not(.ingame) .iconbtn.rulesbtn {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
   }
   .paper {
     background-image:

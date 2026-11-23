@@ -1,0 +1,97 @@
+/* Plätze am Tisch: mit KI auffüllen, Gäste setzen und KI-Plätze an Menschen übergeben. */
+import { MIN_SEATS } from './constants';
+import { addBot, addLog, addPlayer, MAX_SEATS_ALL, pIdx, seatLimit, uniqueName } from './state';
+import type { Player, Rng, State } from './types';
+
+export type SeatResult = { id: string } | { err: string };
+
+/**
+ * Lobby: Platzzahl in gültige Grenzen bringen, überzählige KIs abräumen und freie Plätze füllen, falls eingestellt.
+ * Weniger Plätze als Menschen am Tisch gibt es nicht.
+ */
+export function syncSeats(st: State, rng?: Rng): void {
+  if (st.phase !== 'lobby') return;
+  const humans = st.players.filter((p) => !p.bot).length;
+  // Die Einstellung gilt für beide Spiele, gekürzt wird erst beim Anwenden (seatLimit)
+  st.rules.seats = Math.max(MIN_SEATS, humans, Math.min(st.rules.seats || MIN_SEATS, MAX_SEATS_ALL));
+  const limit = Math.max(humans, seatLimit(st));
+  while (st.players.length > limit) {
+    const bi = st.players.map((p) => !!p.bot).lastIndexOf(true);
+    if (bi < 0) break;
+    const [b] = st.players.splice(bi, 1);
+    addLog(st, { k: 'leave', p: b.id, name: b.name });
+  }
+  if (st.rules.fill) while (st.players.length < seatLimit(st) && !addBot(st, rng));
+}
+
+/** Welchen KI-Platz bekommt jemand? Gleicher Name zuerst, dann Plätze, die noch im Spiel sind, sonst der letzte. */
+function botSeatFor(st: State, name: string): Player | null {
+  const bots = st.players.filter((p) => p.bot);
+  if (!bots.length) return null;
+  const lower = name.toLowerCase();
+  const same = bots.find((p) => p.name.toLowerCase() === lower);
+  if (same) return same;
+  const playing = bots.filter((p) => !p.out && !st.sh?.finished.includes(p.id));
+  return (playing.length ? playing : bots)[(playing.length ? playing : bots).length - 1];
+}
+
+/**
+ * Ein Mensch übernimmt einen KI-Platz mit allem, was dazugehört: Karten, Platz in der Reihenfolge, Leben.
+ * Er heißt dann wie er selbst und startet in der Bestenliste bei null.
+ */
+export function takeSeat(st: State, seatId: string, name: string): void {
+  const p = st.players[pIdx(st, seatId)];
+  if (!p) return;
+  const from = p.name;
+  delete p.bot;
+  delete p.left;
+  p.name = uniqueName(st, name, p.id);
+  p.online = true;
+  delete p.offSince;
+  delete p.gone;
+  p.stats = {};
+  p.wins = 0;
+  p.shc = 0;
+  // Krone oder Shithead-Titel der KI gehen nicht auf den Menschen über
+  if (st.reign) {
+    if (st.reign.win === p.id) st.reign.win = null;
+    if (st.reign.sh === p.id) st.reign.sh = null;
+  }
+  addLog(st, { k: 'takeover', p: p.id, name: p.name, from });
+}
+
+/** KI-Platz, den eine Person mit diesem Namen verlassen hat. */
+export const isOwnLeftSeat = (p: Player, name: string): boolean =>
+  !!p.bot && !!p.left && p.name.toLowerCase() === name.toLowerCase();
+
+/** Wer gegangen war, holt sich den eigenen Platz von der KI zurück. Name und Bilanz bleiben. */
+export function reclaimSeat(st: State, seatId: string): void {
+  const p = st.players[pIdx(st, seatId)];
+  if (!p?.bot) return;
+  delete p.bot;
+  delete p.left;
+  p.online = true;
+  delete p.offSince;
+  addLog(st, { k: 'back', p: p.id });
+}
+
+/**
+ * Platz für einen Gast: In der Lobby ein freier Platz, sonst ein KI-Platz. Läuft schon eine Partie,
+ * geht nur ein KI-Platz, den der Gast dann mitten im Spiel übernimmt.
+ */
+export function seatGuest(st: State, pid: string, name: string): SeatResult {
+  if (st.phase === 'lobby' && st.players.length < seatLimit(st)) {
+    const err = addPlayer(st, pid, name);
+    return err ? { err } : { id: pid };
+  }
+  const seat = botSeatFor(st, name);
+  if (seat) {
+    // Gleicher Name auf dem Platz, den ein Mensch verlassen hat: Das ist die Person selbst
+    if (isOwnLeftSeat(seat, name)) reclaimSeat(st, seat.id);
+    else takeSeat(st, seat.id, name);
+    return { id: seat.id };
+  }
+  return {
+    err: st.phase === 'lobby' ? 'Der Tisch ist voll.' : 'Die Partie läuft schon und alle Plätze sind besetzt.',
+  };
+}

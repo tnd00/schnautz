@@ -10,6 +10,8 @@ export function showStartError(msg: string): void {
   const e = $('#start-err');
   e.textContent = msg;
   e.hidden = !msg;
+  // Eine Fehlermeldung steht im Popup, also muss es offen sein
+  if (msg) document.body.classList.add('startform');
 }
 
 /** Bietet an, einen gespeicherten Tisch fortzusetzen oder an einen Tisch zurückzukehren. */
@@ -64,4 +66,6 @@ export function initStart(): void {
   $('#fan').innerHTML =
     `${cardHTML('HA')}${cardHTML('HK')}${cardHTML('H10')}<div class="score">31<small>Schnautz</small></div>`;
   renderResume();
+  // Einladungslink oder ein Tisch zum Fortsetzen: Das Popup gleich öffnen, darum geht es ja
+  document.body.classList.toggle('startform', !!code || !$('#resume').hidden);
 }

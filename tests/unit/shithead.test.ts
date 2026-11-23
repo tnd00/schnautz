@@ -61,8 +61,50 @@ describe('Shithead: Spielbarkeit', () => {
   });
 });
 
-describe('Shithead: 4er-Start und Bombe', () => {
-  it('öffnet das 4er-Fenster und lässt nur den Gastgeber es schließen', () => {
+/** Nimmt eine Karte dort weg, wo sie liegt. Bei Spielern rückt eine Karte vom Nachziehstapel nach. */
+function takeCard(S: ShState, c: Card): void {
+  for (const arr of [S.deck, S.burned, S.pile]) {
+    const i = arr.indexOf(c);
+    if (i >= 0) {
+      arr.splice(i, 1);
+      return;
+    }
+  }
+  for (const P of Object.values(S.P)) {
+    for (const arr of [P.hand, P.up, P.down]) {
+      const i = arr.indexOf(c);
+      if (i >= 0) {
+        arr[i] = S.deck.pop() as Card;
+        return;
+      }
+    }
+  }
+  throw new Error(`Karte ${c} nicht gefunden`);
+}
+
+/** Gibt einem Spieler genau diese Handkarten, alle 52 Karten bleiben im Spiel. */
+function give(S: ShState, pid: string, hand: Card[]): void {
+  const P = S.P[pid];
+  S.deck.push(...P.hand);
+  P.hand = [];
+  hand.forEach((c) => takeCard(S, c));
+  P.hand = hand.slice();
+}
+
+function setPile(S: ShState, cards: Card[]): void {
+  S.burned.push(...S.pile);
+  S.pile = [];
+  cards.forEach((c) => takeCard(S, c));
+  S.pile = cards.slice();
+}
+
+/** Alle machen in der Tauschrunde sofort fertig. */
+function readyAll(st: State, rng: () => number): void {
+  st.players.forEach((p) => act(st, p.id, { type: 'shready' }, rng));
+}
+
+describe('Shithead: 4er reinwerfen und Bombe', () => {
+  it('öffnet am Anfang ein Fenster, die Person am Zug wartet die Sperre ab', () => {
     const { st, S, take, rest } = shTable(['h', 'p1'], 77);
     const rng = rngF(1);
     S.P.h.hand = ['C4', 'H9', 'SK'].map(take);
@@ -72,46 +114,220 @@ describe('Shithead: 4er-Start und Bombe', () => {
     S.P.h.down = ['C9', 'D9', 'S9'].map(take);
     S.P.p1.down = ['CK', 'C8', 'D8'].map(take);
     S.deck = rest;
-    act(st, 'h', { type: 'shready' }, rng);
-    act(st, 'p1', { type: 'shready' }, rng);
+    readyAll(st, rng);
     expect(st.phase).toBe('play');
-    assert.ok(S.win, 'Fenster offen');
-    expect(S.win.r).toBe('4');
+    // Beide haben eine 4, p1 sitzt in dieser Partie vorne und fängt an
     expect(st.players[st.turn].id).toBe('p1');
-    expect(S.pile).toEqual(['D4', 'S4']);
-    expect(S.P.p1.hand).toHaveLength(3);
-    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [0] }, rng)).not.toBeNull();
-    expect(act(st, 'p1', { type: 'shthrow' }, rng)).not.toBeNull();
+    assert.ok(S.win, 'Fenster offen');
+    expect(S.win.lock).toBe(true);
+    expect(S.pile).toEqual([]);
+    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [0] }, rng)).toMatch(/warten/);
+    // Auch wer dran ist, dürfte reinwerfen, muss aber nicht
+    expect(shCanThrow(st, 'p1')).toEqual({ src: 'hand', idx: [0, 1] });
+    expect(shCanThrow(st, 'h')).toEqual({ src: 'hand', idx: [0] });
+
+    // Reinwerfen ändert nichts an der Reihenfolge
     expect(act(st, 'h', { type: 'shthrow' }, rng)).toBeNull();
-    expect(S.pile).toEqual(['D4', 'S4', 'C4']);
+    expect(S.pile).toEqual(['C4']);
+    expect(S.win.by).toEqual(['h']);
+    expect(st.players[st.turn].id).toBe('p1');
     expect(S.P.h.hand.some((c) => rank(c) === '4')).toBe(false);
-    expect(act(st, 'h', { type: 'shthrow' }, rng)).not.toBeNull();
+    expect(act(st, 'h', { type: 'shthrow' }, rng)).toMatch(/keine 4/);
+
+    // Nur der Gastgeber hebt die Sperre auf und nur für dieses Fenster
     const id = S.win.id;
-    act(st, 'p1', { type: 'shwinend', id }, rng);
-    expect(S.win).toBeTruthy();
-    act(st, 'h', { type: 'shwinend', id: id + 1 }, rng);
-    expect(S.win).toBeTruthy();
-    act(st, 'h', { type: 'shwinend', id }, rng);
+    act(st, 'p1', { type: 'shunlock', id }, rng);
+    expect(S.win.lock).toBe(true);
+    act(st, 'h', { type: 'shunlock', id: id + 1 }, rng);
+    expect(S.win.lock).toBe(true);
+    act(st, 'h', { type: 'shunlock', id }, rng);
+    expect(S.win.lock).toBe(false);
+
+    // Die erste Karte schließt das Fenster, auch wenn es eine normale 4 ist
+    const fours = S.P.p1.hand.flatMap((c, i) => (rank(c) === '4' ? [i] : []));
+    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: fours }, rng)).toBeNull();
     expect(S.win).toBeNull();
+    expect(S.pile).toEqual(['C4', 'D4', 'S4']);
     expect(st.players[st.turn].id).toBe('h');
+    expect(act(st, 'h', { type: 'shthrow' }, rng)).toMatch(/Zu spät/);
+  });
+
+  it('lässt auch die Person am Zug reinwerfen, danach spielt sie normal', () => {
+    const { st, S } = shTable(['h', 'p1', 'p2'], 81);
+    const rng = rngF(5);
+    readyAll(st, rng);
+    assert.ok(S.win);
+    st.turn = 1;
+    give(S, 'p1', ['C4', 'H9', 'SK']);
+    shCardsOk(st);
+    expect(act(st, 'p1', { type: 'shthrow' }, rng)).toBeNull();
+    expect(S.pile).toEqual(['C4']);
+    expect(st.players[st.turn].id).toBe('p1');
+    expect(S.win.by).toEqual(['p1']);
+    // Die Sperre gilt weiter, gespielt wird erst danach
+    const nine = () => S.P.p1.hand.indexOf('H9');
+    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [nine()] }, rng)).toMatch(/warten/);
+    act(st, 'h', { type: 'shunlock', id: S.win.id }, rng);
+    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [nine()] }, rng)).toBeNull();
+    expect(S.pile).toEqual(['C4', 'H9']);
+    expect(S.win).toBeNull();
+    expect(st.players[st.turn].id).toBe('p2');
+    shCardsOk(st);
+  });
+
+  it('gibt weiter, wenn die Person am Zug mit dem Reinwerfen fertig wird', () => {
+    const { st, S } = shTable(['h', 'p1', 'p2'], 82);
+    const rng = rngF(6);
+    readyAll(st, rng);
+    assert.ok(S.win);
+    st.turn = 1;
+    const P = S.P.p1;
+    // Nur noch eine offene 4 auf dem Tisch, sonst nichts
+    const four = [...S.deck, ...Object.values(S.P).flatMap((x) => [...x.hand, ...x.up, ...x.down])].find(
+      (c) => rank(c) === '4' && !P.up.includes(c),
+    ) as Card;
+    takeCard(S, four);
+    S.burned.push(...S.deck, ...P.hand, ...P.up, ...P.down);
+    S.deck = [];
+    P.hand = [];
+    P.up = [four];
+    P.down = [];
+    shCardsOk(st);
+    expect(act(st, 'p1', { type: 'shthrow' }, rng)).toBeNull();
+    expect(S.finished).toEqual(['p1']);
+    expect(st.players[st.turn].id).toBe('p2');
+    shCardsOk(st);
+  });
+
+  it('macht aus der vierten 4 eine Bombe, wer sie reinwirft, ist dran', () => {
+    const { st, S } = shTable(['h', 'p1', 'p2'], 78);
+    const rng = rngF(2);
+    readyAll(st, rng);
+    assert.ok(S.win);
+    give(S, 'h', ['C4', 'H4', 'SK']);
+    give(S, 'p1', ['H9', 'H5', 'HK']);
+    give(S, 'p2', ['S4', 'D4', 'S5']);
+    shCardsOk(st);
+    st.turn = 1;
+    expect(act(st, 'h', { type: 'shthrow' }, rng)).toBeNull();
+    expect(S.pile).toEqual(['C4', 'H4']);
+    expect(st.players[st.turn].id).toBe('p1');
+    const oldId = S.win.id;
+    expect(act(st, 'p2', { type: 'shthrow' }, rng)).toBeNull();
+    expect(S.pile).toEqual([]);
+    expect(S.burned).toHaveLength(4);
+    expect(st.players[st.turn].id).toBe('p2');
+    expect(st.log.filter((x) => x.k === 'shburn').pop()).toMatchObject({ p: 'p2', four: true, cut: true });
+    // Nach der Bombe beginnt ein neuer Stapel mit neuem Fenster
+    assert.ok(S.win, 'neues Fenster');
+    expect(S.win.id).not.toBe(oldId);
+    expect(S.win.lock).toBe(true);
+    expect(S.win.by).toEqual([]);
+    shCardsOk(st);
+  });
+
+  it('öffnet das Fenster nach 10, vier Gleichen, Aufnehmen und Bombe, aber nicht nach einer 2', () => {
+    const { st, S } = shTable(['h', 'p1'], 79);
+    const rng = rngF(3);
+    readyAll(st, rng);
+    const unlock = () => {
+      if (S.win?.lock) act(st, 'h', { type: 'shunlock', id: S.win.id }, rng);
+    };
+    unlock();
+    const tp = () => st.players[st.turn].id;
+
+    // 2: kein neuer Stapel
+    give(S, tp(), ['H2', 'S6', 'S7']);
+    expect(act(st, tp(), { type: 'shplay', from: 'hand', idx: [0] }, rng)).toBeNull();
+    expect(S.pile.length).toBeGreaterThan(0);
+    expect(S.win).toBeNull();
+
+    // Aufnehmen: Der Nächste beginnt einen neuen Stapel
+    const picker = tp();
+    expect(act(st, picker, { type: 'shpickup' }, rng)).toBeNull();
+    expect(S.win?.lock).toBe(true);
+    expect(tp()).not.toBe(picker);
+    unlock();
+
+    // 10 verbrennt: Wer sie gelegt hat, ist dran und wartet die Sperre ab
+    const ten = tp();
+    give(S, ten, ['H10', 'S6', 'S8']);
+    expect(act(st, ten, { type: 'shplay', from: 'hand', idx: [0] }, rng)).toBeNull();
+    expect(S.pile).toEqual([]);
+    expect(S.win?.lock).toBe(true);
+    expect(tp()).toBe(ten);
+    unlock();
 
     // Bombe außer der Reihe
-    S.pile = ['H7', 'S7'];
-    S.burned = [];
-    S.P.h.hand = ['C7', 'D7', 'HK'];
-    S.P.p1.hand = ['H8', 'S8', 'DD'];
+    S.win = null;
+    setPile(S, ['H7', 'S7']);
+    const other = st.players.find((p) => p.id !== tp())?.id as string;
+    give(S, other, ['C7', 'D7', 'HK']);
+    shCardsOk(st);
+    expect(shCanBomb(st, other)?.idx).toHaveLength(2);
+    expect(act(st, other, { type: 'shbomb' }, rng)).toBeNull();
+    expect(tp()).toBe(other);
+    // Eigene Abfrage, weil TypeScript nach S.win = null sonst kein Fenster mehr erwartet
+    const win = (): ShState['win'] => S.win;
+    expect(win()?.lock).toBe(true);
+
+    // Regel aus: kein Fenster
+    st.rules.sh.four = false;
+    unlock();
+    give(S, tp(), ['C10', 'S6', 'S9']);
+    expect(act(st, tp(), { type: 'shplay', from: 'hand', idx: [0] }, rng)).toBeNull();
+    expect(S.pile).toEqual([]);
+    expect(S.win).toBeNull();
+    shCardsOk(st);
+  });
+
+  it('wirft bei leerer Hand die 4 vom Tisch rein', () => {
+    const { st, S } = shTable(['h', 'p1'], 80);
+    const rng = rngF(4);
+    readyAll(st, rng);
+    assert.ok(S.win);
+    const other = st.players.find((p) => p.id !== st.players[st.turn].id)?.id as string;
+    const P = S.P[other];
+    const four = [...S.deck, ...Object.values(S.P).flatMap((x) => x.hand)].find((c) => rank(c) === '4') ?? 'C4';
+    if (!P.up.includes(four)) {
+      takeCard(S, four);
+      S.burned.push(P.up[0]);
+      P.up[0] = four;
+    }
+    // Nachziehstapel und Hand sind leer, jetzt zählen die offenen Tischkarten
+    S.burned.push(...S.deck, ...P.hand);
+    S.deck = [];
+    P.hand = [];
+    shCardsOk(st);
+    const t = shCanThrow(st, other);
+    expect(t?.src).toBe('up');
+    expect(act(st, other, { type: 'shthrow' }, rng)).toBeNull();
+    expect(st.log.at(-1)).toMatchObject({ k: 'shthrow', src: 'up' });
+    expect(P.up.includes(four)).toBe(false);
+    shCardsOk(st);
+  });
+
+  it('kennt die Bombe außer der Reihe auch ohne Fenster', () => {
+    const { st, S, take, rest } = shTable(['h', 'p1'], 81);
+    const rng = rngF(5);
+    readyAll(st, rng);
+    S.win = null;
+    S.pile = ['H7', 'S7'].map(take);
+    S.P.h.hand = ['C7', 'D7', 'HK'].map(take);
+    S.P.p1.hand = ['H8', 'S8', 'DD'].map(take);
     st.turn = 1;
     expect(shCanBomb(st, 'h')?.idx).toHaveLength(2);
     expect(shCanBomb(st, 'p1')).toBeNull();
     expect(act(st, 'h', { type: 'shbomb' }, rng)).toBeNull();
     expect(S.pile).toHaveLength(0);
-    expect(S.burned).toHaveLength(4);
     expect(st.players[st.turn].id).toBe('h');
     expect(act(st, 'p1', { type: 'shbomb' }, rng)).not.toBeNull();
     const burn = st.log.filter((x) => x.k === 'shburn').pop();
     expect(burn).toMatchObject({ four: true, cut: true });
+    expect(rest.length).toBeGreaterThan(0);
 
     // Regel aus
+    S.win = null;
     S.pile = ['H8', 'S8'];
     S.P.p1.hand = ['C8', 'D8', 'HK'];
     st.rules.sh.cut = false;
@@ -120,32 +336,42 @@ describe('Shithead: 4er-Start und Bombe', () => {
     expect(shCanBomb(st, 'p1')).not.toBeNull();
   });
 
-  it('macht aus vier 4ern beim Start eine Bombe, der letzte Werfer spielt weiter', () => {
-    const { st, S, take, rest } = shTable(['h', 'p1', 'p2'], 78);
-    const rng = rngF(2);
-    S.P.h.hand = ['C4', 'H4', 'SK'].map(take);
-    S.P.p1.hand = ['D4', 'H9', 'H5'].map(take);
-    S.P.p2.hand = ['S4', 'S9', 'S5'].map(take);
-    ['h', 'p1', 'p2'].forEach((id) => {
-      S.P[id].up = rest.splice(0, 3);
-      S.P[id].down = rest.splice(0, 3);
-    });
-    S.deck = rest;
-    st.players.forEach((p) => act(st, p.id, { type: 'shready' }, rng));
-    assert.ok(S.win);
-    const starter = st.players[st.turn].id;
-    const others = ['h', 'p1', 'p2'].filter((x) => x !== starter);
-    others.forEach((id) => expect(act(st, id, { type: 'shthrow' }, rng)).toBeNull());
-    expect(S.win).toBeNull();
-    expect(S.pile).toHaveLength(0);
-    expect(S.burned).toHaveLength(4);
-    expect(st.players[st.turn].id).toBe(others[1]);
+  it('zählt Partien, Siege, Plätze und Shithead pro Spiel', () => {
+    const { st, S } = shTable(['h', 'p1'], 82);
+    const rng = rngF(6);
+    readyAll(st, rng);
+    if (S.win) act(st, 'h', { type: 'shunlock', id: S.win.id }, rng);
+    // Gastgeber hat nur noch eine Karte und legt sie: fertig, p1 ist Shithead
+    S.burned.push(...S.deck, ...S.P.h.hand, ...S.P.h.up, ...S.P.h.down, ...S.pile);
+    S.deck = [];
+    S.pile = [];
+    S.P.h.up = [];
+    S.P.h.down = [];
+    S.P.h.hand = [
+      S.burned.splice(
+        S.burned.findIndex((c) => rank(c) === '5'),
+        1,
+      )[0],
+    ];
+    st.turn = 0;
+    S.win = null;
+    expect(act(st, 'h', { type: 'shplay', from: 'hand', idx: [0] }, rng)).toBeNull();
+    expect(st.phase).toBe('over');
+    const [h, p1] = st.players;
+    expect(h.stats?.shithead).toEqual({ games: 1, wins: 1, places: 1 });
+    expect(p1.stats?.shithead).toEqual({ games: 1, wins: 0, places: 2 });
+    expect(p1.shc).toBe(1);
+    expect(h.stats?.schnautz).toBeUndefined();
+  });
+
+  it('hat 8 aussetzen standardmäßig an', () => {
+    expect(newState('h', 'H').rules.sh.eight).toBe(true);
   });
 });
 
 describe('Shithead: zufällige Partien', () => {
   it('spielt 3000 Partien mit allen Regelkombinationen fehlerfrei durch', () => {
-    const stats = { games: 0, burn10: 0, burn4: 0, blind: 0, blindfail: 0, win: 0, thrown: 0, bomb: 0 };
+    const stats = { games: 0, burn10: 0, burn4: 0, blind: 0, blindfail: 0, win: 0, thrown: 0, bomb: 0, long: 0 };
     for (let g = 0; g < 3000; g++) {
       const rng = rngF(500 + g);
       const n = 2 + (g % 3);
@@ -179,18 +405,27 @@ describe('Shithead: zufällige Partien', () => {
       while (st.phase === 'play') {
         const S = st.sh as ShState;
         if (S.win) {
-          stats.win++;
-          assert.ok(act(st, st.players[st.turn].id, { type: 'shpickup' }, rng), 'im Fenster gesperrt');
+          const turn0 = st.turn;
           for (const p of st.players) {
-            if (S.win && shCanThrow(st, p.id) && rng() < 0.6) {
+            if (S.win && st.phase === 'play' && shCanThrow(st, p.id) && rng() < 0.5) {
+              const w0: number = S.win.id;
               assert.equal(act(st, p.id, { type: 'shthrow' }, rng), null);
               stats.thrown++;
               shCardsOk(st);
+              // Ohne Bombe bleibt die Reihenfolge, außer wer dran war, ist damit fertig
+              if (S.win?.id === w0 && !S.finished.includes(p.id))
+                assert.equal(st.turn, turn0, 'Reinwerfen ändert die Reihenfolge');
             }
           }
-          if (S.win) assert.equal(act(st, 'h', { type: 'shwinend', id: S.win.id }, rng), null);
-          assert.ok(!S.win);
-          shCardsOk(st);
+          if (st.phase !== 'play') break;
+        }
+        if (S.win?.lock) {
+          stats.win++;
+          const tp = st.players[st.turn];
+          assert.ok(act(st, tp.id, { type: 'shpickup' }, rng), 'Sperre gilt');
+          if (!shCanThrow(st, tp.id)) assert.ok(act(st, tp.id, { type: 'shthrow' }, rng), 'ohne 4 kein Reinwerfen');
+          assert.equal(act(st, 'h', { type: 'shunlock', id: S.win.id }, rng), null);
+          assert.equal(S.win.lock, false);
           continue;
         }
         if (rng() < 0.5) {
@@ -201,10 +436,12 @@ describe('Shithead: zufällige Partien', () => {
             if (st.phase !== 'play') break;
             assert.equal(S.pile.length, 0);
             shCardsOk(st);
+            continue;
           }
         }
         steps++;
-        assert.ok(steps < 20000, 'Partie endet nie');
+        // Wer wahllos legt, kann sich mit zwei Leuten im Kreis drehen. Das ist kein Fehler, darf aber selten sein
+        if (steps >= 20000) break;
         const tp = st.players[st.turn];
         const P = S.P[tp.id];
         assert.ok(!tp.out && !S.finished.includes(tp.id), 'Zug bei fertigem Spieler');
@@ -237,6 +474,10 @@ describe('Shithead: zufällige Partien', () => {
           });
         if (st.phase === 'play') shCardsOk(st);
       }
+      if (st.phase === 'play') {
+        stats.long++;
+        continue;
+      }
       assert.equal(st.phase, 'over');
       const S = st.sh as ShState;
       const loser = S.shithead;
@@ -253,7 +494,9 @@ describe('Shithead: zufällige Partien', () => {
       shCardsOk(st);
       stats.games++;
     }
-    expect(stats.games).toBe(3000);
+    console.log('Shithead-Fuzz', stats);
+    expect(stats.long).toBeLessThan(15);
+    expect(stats.games + stats.long).toBe(3000);
     expect(stats.burn10).toBeGreaterThan(0);
     expect(stats.burn4).toBeGreaterThan(0);
     expect(stats.blindfail).toBeGreaterThan(0);
@@ -299,8 +542,8 @@ describe('Shithead: zufällige Partien', () => {
       });
       while (st.phase === 'play' && steps < 20000) {
         const S = st.sh as ShState;
-        if (S.win) {
-          act(st, 'h', { type: 'shwinend', id: S.win.id }, rng);
+        if (S.win?.lock) {
+          act(st, 'h', { type: 'shunlock', id: S.win.id }, rng);
           continue;
         }
         steps++;

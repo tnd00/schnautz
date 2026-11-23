@@ -1,8 +1,10 @@
 import { RANKS, SH_ORD, SH_RANKS, SUIT_ORD, SUITS } from './constants';
 import type { Card, Rank, Rng, Suit } from './types';
 
+/** Karten aus dem zweiten Deck tragen hinten `:2`, damit jede Karte eindeutig bleibt. */
+export const DECK2 = ':2';
 export const suitOf = (c: Card): Suit => c[0] as Suit;
-export const rankOf = (c: Card): Rank => c.slice(1);
+export const rankOf = (c: Card): Rank => (c.endsWith(DECK2) ? c.slice(1, -DECK2.length) : c.slice(1));
 
 /** Zufallszahl in [0, 1). Mit `rng` reproduzierbar (Tests), sonst kryptografisch. */
 export function rnd(rng?: Rng): number {
@@ -25,7 +27,13 @@ export function shuffle<T>(a: T[], rng?: Rng): T[] {
 const buildDeck = (ranks: readonly Rank[]): Card[] => SUITS.flatMap((s) => ranks.map((r) => s + r));
 
 export const newDeck = (rng?: Rng): Card[] => shuffle(buildDeck(RANKS), rng);
-export const shDeck = (rng?: Rng): Card[] => shuffle(buildDeck(SH_RANKS), rng);
+/** Shithead-Stapel aus einem oder mehreren Decks, gut gemischt. */
+export function shDeck(rng?: Rng, decks = 1): Card[] {
+  const one = buildDeck(SH_RANKS);
+  const all = [...one];
+  for (let d = 2; d <= decks; d++) all.push(...one.map((c) => (d === 2 ? c + DECK2 : `${c}:${d}`)));
+  return shuffle(all, rng);
+}
 
 /** Sortiert Shithead-Karten nach Wert, bei gleichem Wert nach Farbe. */
 export function shSort(a: Card[]): Card[] {

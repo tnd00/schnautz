@@ -252,13 +252,12 @@
 .me {
   position: relative;
 }
+/* Sprechblasen liegen fest über dem Tisch, Position und Zipfel setzt chatBubble */
 .bubble {
-  position: absolute;
-  left: 50%;
-  top: -6px;
+  position: fixed;
   transform: translate(-50%, -100%);
-  z-index: 6;
-  max-width: 220px;
+  z-index: 46;
+  max-width: min(240px, calc(100vw - 16px));
   width: max-content;
   background: #fbf6e8;
   color: #2a241b;
@@ -275,7 +274,7 @@
 .bubble::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: calc(50% + var(--ax, 0px));
   bottom: -6px;
   transform: translateX(-50%) rotate(45deg);
   width: 12px;
@@ -291,6 +290,35 @@
     opacity: 0;
     transform: translate(-50%, -80%) scale(0.8);
   }
+}
+.bubble.down {
+  transform: translate(-50%, 0);
+  animation-name: bubDown;
+}
+.bubble.down::after {
+  bottom: auto;
+  top: -6px;
+}
+@keyframes bubDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.8);
+  }
+}
+/* Ausgewichene Blase: Der Zipfel würde auf die andere Blase zeigen */
+.bubble.stacked::after {
+  display: none;
+}
+@media (max-width: 960px) {
+  .bubble {
+    max-width: min(200px, calc(100vw - 16px));
+    font-size: 12.5px;
+    padding: 6px 10px;
+  }
+}
+/* Ist der Chat offen, steht die Nachricht ohnehin dort */
+body.logopen #fly .bubble {
+  display: none;
 }
 .floatlbl.center {
   top: -6px;
@@ -383,4 +411,67 @@
   width: 100%;
   min-height: 44px;
   border-style: dashed;
+}
+
+/* Meldungen über der Spielfläche (placeInField): mittig und nie größer als der freie Platz */
+#announce.field {
+  overflow: hidden;
+}
+#announce.field .ann {
+  max-height: calc(100% - 8px);
+  max-width: min(calc(100% - 16px), 520px);
+  overflow: hidden;
+}
+#announce.tight .ann {
+  padding: 12px 18px 11px;
+  min-width: min(80%, 280px);
+}
+#announce.tight .ann-ic {
+  display: none;
+}
+#announce.tight .ann-t {
+  font-size: clamp(22px, 5.4vw, 30px);
+}
+#announce.tight .ann-s {
+  margin-top: 4px;
+  font-size: 13px;
+}
+.banner.field div {
+  font-size: clamp(40px, 12vw, 96px);
+}
+/* Kurze Hinweise oben in der Spielfläche (floatLabel), nie über den Gegnern */
+.fieldlbl {
+  position: fixed;
+  z-index: 47;
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1.25;
+  padding: 3px 13px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  animation: fieldPop 1.8s ease-out forwards;
+}
+@keyframes fieldPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.85);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

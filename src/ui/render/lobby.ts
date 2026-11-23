@@ -1,8 +1,9 @@
-/* Lobby: Plätze am Tisch, Spielauswahl und Regeln. */
-import { DEFAULT_RULES, MAX_PLAYERS, SH_WIN_MS } from '../../game/constants';
+/* Lobby: Plätze am Tisch, Spielauswahl und Regeln. Am Handy als zwei Reiter, damit nichts scrollt. */
+import { DEFAULT_RULES, MIN_SEATS, SH_WIN_MS, TURN_SECS } from '../../game/constants';
+import { maxSeats, seatLimit } from '../../game/state';
 import type { Player, Rules, ShRules, View } from '../../game/types';
 import { App } from '../app';
-import { livesHTML } from '../cards';
+import { BOT_TAG } from '../cards';
 import { $, esc, num } from '../dom';
 import { pById } from '../helpers';
 import { shareLink } from '../screens';
@@ -13,25 +14,59 @@ const ICON_MINUS =
 const ICON_PLUS =
   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 12h12M12 6v12"/></svg>';
 
-const EMPTY_SEAT =
-  '<li class="empty"><span class="avatar" style="background:transparent;border:1px dashed rgba(246,239,223,.3);color:var(--muted)">?</span><span class="nm">Freier Platz</span></li>';
+/** Freier Platz. Der Gastgeber kann ihn ohne Auffüllen per Knopf mit einer KI besetzen. */
+function emptySeat(host: boolean, fill: boolean, many: boolean): string {
+  return (
+    `<li class="empty"><span class="avatar">?</span><span class="nm">${many ? 'Frei' : 'Freier Platz'}</span>` +
+    (host && !fill ? '<button class="btn ghost small" data-act="addbot" aria-label="KI dazuholen">+ KI</button>' : '') +
+    '</li>'
+  );
+}
 
 function seatHTML(v: View, p: Player): string {
   const host = App.role === 'host';
   return (
     `<li${p.online ? '' : ' class="off"'}>` +
     `<span class="avatar">${esc(p.name.charAt(0).toUpperCase())}</span>` +
-    `<span class="nm">${esc(p.name)}` +
-    (p.id === App.me ? ' <span style="color:var(--muted);font-weight:400">(du)</span>' : '') +
-    (p.online ? '' : ' <span style="color:#f0a59c;font-weight:400">offline</span>') +
+    `<span class="nm"><span class="nmt">${esc(p.name)}</span>` +
+    (p.id === App.me ? '<span class="you">du</span>' : '') +
+    (p.online ? '' : '<span class="offt">offline</span>') +
+    (p.bot ? BOT_TAG : '') +
     '</span>' +
     (p.id === v.host ? '<span class="badge">Gastgeber</span>' : '') +
-    (p.bot ? '<span class="badge kib">KI</span>' : '') +
-    (v.game === 'shithead' ? shcHTML(p) : livesHTML({ lives: v.rules.lives, out: false }, v.rules)) +
+    (v.game === 'shithead' ? shcHTML(p) : '') +
     (p.bot && host
       ? `<button class="xbtn" data-act="rmbot" data-id="${esc(p.id)}" aria-label="KI entfernen">×</button>`
       : '') +
     '</li>'
+  );
+}
+
+/** Zeit pro Zug als Regler (Gastgeber) oder als Angabe (Gäste). */
+export const turnLabel = (s: number): string => (s ? `${s} s` : 'aus');
+const turnSub = (s: number): string =>
+  s ? `Danach zieht die KI einen Zug, in der Tauschrunde nach ${s * 2} s` : 'Niemand wird gehetzt';
+
+function timeControl(v: View, host: boolean): string {
+  const s = v.rules.turnSecs;
+  const i = Math.max(0, TURN_SECS.indexOf(s));
+  // Der Regler steht in derselben Zeile, auf kurzen Handys passt so alles ohne Scrollen
+  const range = host
+    ? `<input type="range" class="range" min="0" max="${TURN_SECS.length - 1}" step="1" value="${i}" data-range="turnSecs" aria-label="Zeit pro Zug">`
+    : '';
+  return `<div class="toggle tslider"><span>Zeit pro Zug<small id="tsub">${turnSub(s)}</small></span>${range}<b class="tval" id="tval">${turnLabel(s)}</b></div>`;
+}
+
+/** Platzzahl für den Gastgeber: nie weniger als die Menschen am Tisch, nie mehr als das Spiel erlaubt. */
+function seatControl(v: View): string {
+  const n = seatLimit(v);
+  const lo = Math.max(MIN_SEATS, v.players.filter((p) => !p.bot).length);
+  const hi = maxSeats(v.game);
+  return (
+    '<div class="stepper" title="Plätze am Tisch">' +
+    `<button data-act="seats" data-d="-1" aria-label="ein Platz weniger"${n <= lo ? ' disabled' : ''}>${ICON_MINUS}</button>` +
+    `<b>${num(n)}</b>` +
+    `<button data-act="seats" data-d="1" aria-label="ein Platz mehr"${n >= hi ? ' disabled' : ''}>${ICON_PLUS}</button></div>`
   );
 }
 
@@ -65,11 +100,12 @@ function shitheadRules(sr: ShRules, dis: boolean): string {
     t('eight', '8 lässt aussetzen', 'Jede 8 überspringt einen Spieler') +
     t(
       'four',
-      '4er am Anfang reinwerfen',
-      `Wer eine 4 hat, fängt an. Die anderen haben ${Math.round(SH_WIN_MS / 1000)} Sekunden für ihre 4er`,
+      '4er reinwerfen',
+      `Bei jedem neuen Stapel dürfen alle, auch wer dran ist. Gespielt wird nach bis zu ${Math.round(SH_WIN_MS / 1000)} Sekunden`,
     ) +
     t('cut', 'Bombe einwerfen', 'Wer die fehlenden Karten zu vier gleichen hat, darf jederzeit reinwerfen') +
-    '<p class="note" style="margin-top:8px">Vier gleiche Karten hintereinander verbrennen den Stapel immer. Wer sie vollmacht, legt gleich nochmal.</p>'
+    t('deck5', 'Zwei Decks schon ab 5', 'Ab 6 Leuten wird immer mit zwei Decks gespielt') +
+    '<p class="note" style="margin-top:8px">Vier gleiche Karten hintereinander sind immer eine Bombe und verbrennen den Stapel. Wer sie vollmacht, legt gleich nochmal.</p>'
   );
 }
 
@@ -90,18 +126,37 @@ function schnautzRules(r: Rules, host: boolean): string {
 
 export function renderLobby(v: View): void {
   const host = App.role === 'host';
+  const limit = seatLimit(v);
   $('#lobby-code').textContent = App.code;
   $('#lobby-link').textContent = shareLink();
   $('#btn-share').hidden = !('share' in navigator);
-  $('#seat-title').textContent = `Am Tisch (${v.players.length} von ${MAX_PLAYERS})`;
+  $('#seat-title').textContent = `Am Tisch (${v.players.length} von ${limit})`;
+  $('#seat-ctl').innerHTML = host ? seatControl(v) : '';
 
   let seats = v.players.map((p) => seatHTML(v, p)).join('');
-  const shown = Math.max(2, v.players.length + (v.players.length < MAX_PLAYERS ? 1 : 0));
-  for (let i = v.players.length; i < shown; i++) seats += EMPTY_SEAT;
-  if (host && v.players.length < MAX_PLAYERS) {
-    seats += '<li class="addbot"><button class="btn ghost" data-act="addbot">🤖 KI-Mitspieler dazuholen</button></li>';
-  }
-  $('#seats').innerHTML = seats;
+  for (let i = v.players.length; i < limit; i++) seats += emptySeat(host, v.rules.fill, limit > 4);
+  const seatsEl = $('#seats');
+  seatsEl.innerHTML = seats;
+  seatsEl.classList.toggle('many', limit > 4);
+  $('#seat-opts').innerHTML =
+    (host
+      ? toggle(
+          'rule',
+          'fill',
+          v.rules.fill,
+          'Leere Plätze mit KI füllen',
+          'Wer später kommt, übernimmt einen KI-Platz',
+          false,
+        )
+      : '') + timeControl(v, host);
+
+  // Reiter am Handy, am Desktop stehen beide Bereiche nebeneinander
+  document.querySelectorAll<HTMLElement>('#lobby-tabs [data-t]').forEach((b) => {
+    b.classList.toggle('on', b.dataset.t === App.ltab);
+  });
+  document.querySelectorAll<HTMLElement>('#scr-lobby .lpane').forEach((el) => {
+    el.classList.toggle('on', el.dataset.pane === App.ltab);
+  });
 
   const rules =
     v.game === 'shithead' ? shitheadRules(v.rules.sh ?? DEFAULT_RULES.sh, !host) : schnautzRules(v.rules, host);
@@ -114,7 +169,7 @@ export function renderLobby(v: View): void {
     $('#lobby-start').innerHTML =
       v.players.length >= 2
         ? '<button class="btn primary pulse" data-act="start" style="width:100%">Partie starten</button>'
-        : '<button class="btn primary" disabled style="width:100%">Partie starten</button><p class="note" style="margin-top:8px;text-align:center">Sobald jemand beitritt, kann es losgehen.</p>';
+        : '<button class="btn primary" disabled style="width:100%">Partie starten</button><p class="note" style="margin-top:8px;text-align:center">Sobald jemand beitritt oder du eine KI dazuholst, kann es losgehen.</p>';
   } else {
     const hostName = pById(v, v.host)?.name ?? 'Der Gastgeber';
     $('#lobby-start').innerHTML =

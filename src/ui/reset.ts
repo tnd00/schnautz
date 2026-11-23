@@ -1,11 +1,12 @@
 import { resetBots } from '../net/bots';
-import { resetHostTimers } from '../net/host';
+import { stopHostClocks } from '../net/host';
 import { App } from './app';
 import { resetAnnouncements } from './feedback';
 import { resetLegend } from './render/legend';
 import { resetLog } from './render/log';
 import { resetSeq } from './shithead/sequence';
 import { resetWin } from './shithead/window';
+import { resetClockUI } from './clock';
 
 /** Alles zurücksetzen, was zu einem Tisch gehört (Verlassen, neuer Tisch, Fortsetzen). */
 export function resetTableUI(): void {
@@ -17,9 +18,10 @@ export function resetTableUI(): void {
   App.playRects = null;
   resetSeq();
   resetWin();
+  resetClockUI();
   resetLegend();
   resetLog();
-  resetHostTimers();
+  stopHostClocks();
   resetBots();
   resetAnnouncements();
 }

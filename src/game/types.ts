@@ -22,15 +22,35 @@ export interface ShRules {
   eight: boolean;
   four: boolean;
   cut: boolean;
+  /** Zweites Deck schon ab 5 Leuten (ab 6 immer) */
+  deck5: boolean;
 }
 
 export interface Rules {
+  /** Plätze am Tisch, die Höchstzahl hängt vom Spiel ab (`maxSeats`) */
+  seats: number;
+  /** Freie Plätze in der Lobby mit KI füllen */
+  fill: boolean;
+  /** Zeit pro Zug in Sekunden (0 = aus, Standard 20), in der Tauschrunde immer doppelt. Danach zieht die KI einmal */
+  turnSecs: number;
   lives: number;
   feuer: boolean;
   dealerChoice: boolean;
   knockFirst: boolean;
   knockDouble: boolean;
   sh: ShRules;
+}
+
+/** Bilanz in einem Spiel, seit der Tisch offen ist. Wie oft jemand Shithead war, steht in `Player.shc`. */
+export interface PlayerStats {
+  games: number;
+  wins: number;
+  /** Schnautz: verlorene Bierdeckel */
+  coasters?: number;
+  /** Schnautz: Runden, die man mit 31 oder Feuer beendet hat */
+  hot?: number;
+  /** Shithead: Summe der Plätze, für den Schnitt */
+  places?: number;
 }
 
 export interface Player {
@@ -42,10 +62,13 @@ export interface Player {
   online: boolean;
   wins: number;
   bot?: boolean;
+  /** KI-Platz, auf dem vorher ein Mensch saß (er kann ihn unter seinem Namen zurückholen) */
+  left?: boolean;
   gone?: boolean;
   offSince?: number;
   place?: number;
   shc?: number;
+  stats?: Partial<Record<GameKind, PlayerStats>>;
 }
 
 export type HandKind = 'none' | 'feuer' | 'drei' | 'schnautz' | 'normal';
@@ -83,17 +106,22 @@ export interface ShitheadResult {
 
 export type Result = SchnautzResult | ShitheadResult;
 
-/** Zeitfenster am Anfang einer Shithead-Partie, in dem alle ihre 4er reinwerfen dürfen. */
+/**
+ * Neuer Stapel bei Shithead: Ist der Stapel leer, dürfen alle außer der Person am Zug ihre 4er
+ * reinwerfen. Die Person am Zug wartet kurz (`lock`), danach schließt ihre erste Karte das Fenster.
+ */
 export interface ShWindow {
   r: Rank;
-  start: number;
+  /** Wer in diesem Fenster schon etwas reingeworfen hat. */
   by: string[];
   id: number;
-  /** Ablaufzeit beim Gastgeber (nur im Zustand des Gastgebers). */
+  /** Solange gesperrt, darf die Person am Zug noch nicht legen. */
+  lock: boolean;
+  /** Ende der Sperre beim Gastgeber (nur im Zustand des Gastgebers). */
   until?: number;
-  /** Restzeit in ms zum Zeitpunkt des Versands (nur in Ansichten). */
+  /** Restzeit der Sperre in ms zum Zeitpunkt des Versands (nur in Ansichten). */
   left?: number;
-  /** Lokale Ablaufzeit beim Empfänger (nur in Ansichten). */
+  /** Lokales Ende der Sperre beim Empfänger (nur in Ansichten). */
   at?: number;
 }
 
@@ -111,6 +139,8 @@ export interface ShState {
   finished: string[];
   shithead: string | null;
   win?: ShWindow | null;
+  /** Mit wie vielen Decks gespielt wird (52 Karten je Deck), fehlt bei älteren Partien */
+  decks?: number;
 }
 
 export interface Reign {
@@ -132,7 +162,6 @@ export interface LastMove {
   cards?: Card[];
   src?: ShSource;
   cnt?: number;
-  open?: boolean;
   thrown?: boolean;
 }
 
@@ -149,8 +178,16 @@ export type LogEntry = LogBase &
     | { k: 'join'; bot?: boolean }
     | { k: 'leave' }
     | { k: 'quit' }
+    /** Ein Mensch übernimmt einen KI-Platz, `from` ist der alte Name */
+    | { k: 'takeover'; from: string }
+    /** Jemand geht mitten in der Partie, die KI spielt unter dem Namen weiter */
+    | { k: 'tobot' }
+    /** Wer gegangen war, übernimmt den eigenen Platz wieder von der KI */
+    | { k: 'back' }
+    /** Zeit abgelaufen, die KI hat einen Zug für die Person gemacht */
+    | { k: 'timeout' }
     | { k: 'game'; g: number; game?: GameKind }
-    | { k: 'round'; r: number }
+    | { k: 'round'; r: number; start?: string }
     | { k: 'keep' }
     | { k: 'take' }
     | { k: 'swap'; take: Card; give: Card }
@@ -172,15 +209,14 @@ export type LogEntry = LogBase &
     | { k: 'emote'; e: string }
     | { k: 'shdeal' }
     | { k: 'shstart'; card: Card | null }
-    | { k: 'shplay'; cards: Card[]; src: ShSource; open?: boolean }
-    | { k: 'shthrow'; cards: Card[] }
+    | { k: 'shplay'; cards: Card[]; src: ShSource }
+    | { k: 'shthrow'; cards: Card[]; src?: ShSource }
     | { k: 'shbomb'; cards: Card[]; src: ShSource; out: boolean }
     | { k: 'shburn'; four: boolean; cut: boolean }
     | { k: 'shpickup'; cnt: number }
     | { k: 'shblindfail'; card: Card; cnt: number }
     | { k: 'shdone'; place: number }
     | { k: 'shend' }
-    | { k: 'shwinend'; cnt: number }
   );
 
 export type LogKind = LogEntry['k'];
@@ -213,6 +249,8 @@ export interface State {
   n: number;
   games: number;
   reign?: Reign;
+  /** Wer bei Schnautz zuletzt verloren hat und deshalb die nächste Runde anfängt. */
+  loser?: string | null;
 }
 
 /** Shithead-Spieler aus Sicht eines Mitspielers: fremde Hand und verdeckte Karten nur als Anzahl. */
@@ -235,6 +273,8 @@ export interface View extends Omit<State, 'deck' | 'discard' | 'spare' | 'hands'
   hands: Record<string, Card[] | number>;
   sh: ShView | null;
   me: string;
+  /** Zeitlimit: wer gerade die Uhr hat, Restzeit und volle Zeit in ms (beim Host auch das Ende als `at`) */
+  clock?: { ids: string[]; left: number; total: number; at?: number } | null;
 }
 
 /** Alles, was sowohl im vollen Zustand als auch in einer Ansicht vorkommt. */
@@ -265,7 +305,7 @@ export type Action =
   | { type: 'shblind'; i: number }
   | { type: 'shthrow' }
   | { type: 'shbomb' }
-  | { type: 'shwinend'; id: number };
+  | { type: 'shunlock'; id: number };
 
 export type ActionType = Action['type'];
 

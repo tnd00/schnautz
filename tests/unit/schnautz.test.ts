@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
 import { quitPlayer } from '../../src/game/flow';
-import { handValue } from '../../src/game/schnautz';
+import { finishRound, handValue, startRound } from '../../src/game/schnautz';
 import { activeList, addPlayer, newState } from '../../src/game/state';
 import type { Action, Card, Rules, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
@@ -200,6 +200,94 @@ describe('Schnautz', () => {
       else if (act(st, 'h', { type: 'knock' }, rng)) assert.equal(act(st, 'h', { type: 'pass' }, rng), null);
     }
     expect(['end', 'over']).toContain(st.phase);
+  });
+
+  it('lässt den letzten Verlierer anfangen, auch in der nächsten Partie', () => {
+    const rng = rngF(41);
+    const st = newState('h', 'H');
+    addPlayer(st, 'p1', 'A');
+    addPlayer(st, 'p2', 'B');
+    act(st, 'h', { type: 'rules', rules: { dealerChoice: false, lives: 1 } }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    const turnId = () => st.players[st.turn].id;
+
+    // p1 hat am wenigsten und fängt die nächste Runde an
+    st.hands = { h: ['HA', 'HK', 'H9'], p1: ['C7', 'S8', 'D9'], p2: ['SA', 'SK', 'S7'] };
+    finishRound(st, 'knock', 'h');
+    expect(schnautzResult(st).losers).toEqual(['p1']);
+    startRound(st, rng, false);
+    expect(turnId()).toBe('p1');
+    expect(st.players[st.dealer].id).toBe('h');
+    expect(st.log.at(-1)).toMatchObject({ k: 'round', p: 'h', start: 'p1' });
+
+    // Mit zweitem Blatt gibt der Platz davor und der Verlierer ist nach der Wahl dran
+    st.rules.dealerChoice = true;
+    st.hands = { h: ['C7', 'S8', 'D9'], p1: ['HA', 'HK', 'H9'], p2: ['SA', 'SK', 'S7'] };
+    finishRound(st, 'knock', 'p1');
+    startRound(st, rng, false);
+    expect(st.phase).toBe('choose');
+    expect(st.players[st.dealer].id).toBe('p2');
+    act(st, 'p2', { type: 'keep' }, rng);
+    expect(turnId()).toBe('h');
+
+    // Gleichstand: niemand hat verloren, es geht reihum weiter
+    st.rules.dealerChoice = false;
+    st.hands = { h: ['C7', 'S8', 'D9'], p1: ['H7', 'S9', 'D8'], p2: ['S7', 'C8', 'H9'] };
+    const dealer = st.dealer;
+    finishRound(st, 'knock', 'p1');
+    expect(schnautzResult(st).losers).toEqual([]);
+    startRound(st, rng, false);
+    expect(st.dealer).toBe((dealer + 1) % 3);
+
+    // Ist der Verlierer raus, fängt der Nächste nach ihm an
+    st.hands = { h: ['HA', 'HK', 'H9'], p1: ['SA', 'SK', 'S7'], p2: ['C7', 'S8', 'D9'] };
+    st.players[2].lives = 0;
+    finishRound(st, 'knock', 'h');
+    expect(st.players[2].out).toBe(true);
+    startRound(st, rng, false);
+    expect(turnId()).toBe('h');
+
+    // Neue Partie: Wer zuletzt verloren hat, fängt wieder an
+    st.hands = { h: ['HA', 'HK', 'H9'], p1: ['C7', 'S8', 'D9'] };
+    st.players[1].lives = 0;
+    finishRound(st, 'knock', 'h');
+    expect(st.phase).toBe('over');
+    st.players.forEach((p) => act(st, p.id, { type: 'ready' }, rng));
+    expect(st.phase).toBe('play');
+    expect(turnId()).toBe('p1');
+  });
+
+  it('zählt Partien, Siege, verlorene Bierdeckel und 31 pro Spiel', () => {
+    const rng = rngF(43);
+    const st = newState('h', 'H');
+    addPlayer(st, 'p1', 'A');
+    act(st, 'h', { type: 'rules', rules: { dealerChoice: false, lives: 1 } }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    st.hands = { h: ['C7', 'S8', 'D9'], p1: ['HA', 'HK', 'H10'] };
+    finishRound(st, 'schnautz', 'p1');
+    st.players.forEach((p) => act(st, p.id, { type: 'ready' }, rng));
+    st.hands = { h: ['C7', 'S8', 'D9'], p1: ['HA', 'HK', 'H9'] };
+    finishRound(st, 'knock', 'p1');
+    expect(st.phase).toBe('over');
+    const [h, p1] = st.players;
+    expect(h.stats?.schnautz).toEqual({ games: 1, wins: 0, coasters: 2 });
+    expect(p1.stats?.schnautz).toEqual({ games: 1, wins: 1, hot: 1 });
+    expect(h.stats?.shithead).toBeUndefined();
+
+    // Wer mitten in der Partie geht, wird zur KI. Sie spielt unter dem Namen weiter und führt die Bilanz fort
+    st.players.forEach((p) => act(st, p.id, { type: 'ready' }, rng));
+    quitPlayer(st, 'p1', rng);
+    expect(p1.bot).toBe(true);
+    expect(p1.name).toBe('A');
+    expect(st.phase).not.toBe('over');
+    st.hands = { h: ['C7', 'S8', 'D9'], p1: ['HA', 'HK', 'H10'] };
+    finishRound(st, 'schnautz', 'p1');
+    st.players.forEach((p) => act(st, p.id, { type: 'ready' }, rng));
+    st.hands = { h: ['C7', 'S8', 'D9'], p1: ['HA', 'HK', 'H9'] };
+    finishRound(st, 'knock', 'p1');
+    expect(st.phase).toBe('over');
+    expect(h.stats?.schnautz).toMatchObject({ games: 2, wins: 0 });
+    expect(p1.stats?.schnautz).toMatchObject({ games: 2, wins: 2 });
   });
 
   it('hängt bei doppelten Namen eine Zahl an', () => {
