@@ -21,6 +21,7 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
 body{
   margin:0; color:var(--cream); font-family:var(--ui); font-size:15px; line-height:1.45;
   background:
@@ -284,8 +285,8 @@ button.chip:hover{border-color:rgba(243,205,125,.5)}
 .row.lose{background:rgba(179,49,42,.08); border-color:rgba(179,49,42,.3)}
 .row.win{background:rgba(214,162,74,.16); border-color:rgba(214,162,74,.55)}
 .row .who{flex:1; min-width:0}
-.row .who b{display:block; font-size:15px}
-.row .who span{font-size:13px; color:#6a5f4c}
+.row .who > b{display:block; font-size:15px}
+.row .who > span{font-size:13px; color:#6a5f4c}
 .row .mini{display:flex; gap:4px}
 .row .mini .card{--cw:38px; box-shadow:0 0 0 1px rgba(70,45,10,.25), 0 2px 4px rgba(0,0,0,.18)}
 .row .val{font-family:var(--display); font-weight:800; font-size:24px; min-width:52px; text-align:right}
@@ -306,6 +307,54 @@ body.logopen .peek{display:none}
 .banner{position:fixed; inset:0; z-index:45; display:grid; place-items:center; pointer-events:none}
 .banner div{font-family:var(--display); font-style:italic; font-weight:800; font-size:clamp(44px, 10vw, 110px); color:var(--brass-hi); text-shadow:0 6px 0 rgba(0,0,0,.3), 0 0 60px rgba(243,205,125,.35); animation:bang 1.6s cubic-bezier(.2,.8,.2,1) forwards; letter-spacing:-.03em}
 @keyframes bang{0%{opacity:0; transform:scale(.6) rotate(-8deg)}18%{opacity:1; transform:scale(1.06) rotate(-3deg)}70%{opacity:1; transform:scale(1) rotate(-3deg)}100%{opacity:0; transform:scale(1.04) rotate(-3deg)}}
+
+/* ---------- Spielauswahl ---------- */
+.gamesel{display:flex; gap:4px; background:rgba(0,0,0,.28); padding:4px; border-radius:14px; margin:0 0 12px}
+.gamesel button{flex:1; border:0; background:none; padding:10px 8px; border-radius:10px; font-weight:700; color:var(--muted); font-size:15px}
+.gamesel button.on{background:linear-gradient(180deg,var(--brass-hi),var(--brass)); color:#2a1a05; box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.gamesel button:disabled{cursor:default}
+.gamesel.light{background:rgba(42,36,27,.08); margin:0 46px 14px 22px}
+.gamesel.light button{color:#6a5f4c}
+.shc{font-size:12px; font-weight:700; padding:2px 8px; border-radius:999px; background:rgba(0,0,0,.25); white-space:nowrap}
+.paper .shc{background:rgba(42,36,27,.08)}
+
+/* ---------- Shithead ---------- */
+.opp.sh{min-width:150px; gap:6px}
+.ohand{display:inline-flex; align-items:center; margin-left:2px}
+.ohand .card{--cw:20px; box-shadow:0 0 0 1px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.3)}
+.ohand .card + .card{margin-left:-14px}
+.hcount{margin-left:6px; font-size:12px; font-weight:800; background:rgba(0,0,0,.35); border-radius:999px; padding:2px 8px}
+.hcount.zero{opacity:.5}
+.tcards{display:flex; gap:7px; --tw:44px; justify-content:center}
+.tslot{position:relative; width:var(--tw); height:calc(var(--tw)*1.4 + 12px)}
+.tslot > .card{position:absolute; left:0; top:0; --cw:var(--tw)}
+.tslot .upc{position:absolute; left:3px; top:12px}
+.tslot .upc .card{--cw:var(--tw)}
+.tnone{font-size:12px; color:var(--muted); font-style:italic; padding:10px 0}
+.shme .tcards{--tw:clamp(52px, 13vw, 68px)}
+.card.blindc{box-shadow:0 0 0 3px var(--brass-hi), 0 0 22px rgba(243,205,125,.5), 0 7px 16px rgba(0,0,0,.33)}
+.card.dim{filter:brightness(.62) saturate(.5)}
+.pile{position:relative; width:var(--mw); height:calc(var(--mw)*1.4); --mw:clamp(78px, 20vw, 106px)}
+.pile .card{position:absolute; --cw:var(--mw)}
+.pile .cnt{position:absolute; bottom:-24px; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:12px; font-weight:700; color:var(--cream); background:rgba(0,0,0,.3); padding:2px 9px; border-radius:999px; z-index:2}
+.pile .cnt.warn{background:#8a4b2a; color:#fff3dc}
+.pcount{position:absolute; top:-9px; right:-9px; z-index:3; background:var(--cream); color:var(--ink); font-size:11px; font-weight:800; min-width:22px; height:22px; border-radius:999px; display:grid; place-items:center; padding:0 5px; box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.emptyslot{position:absolute; inset:0; border:1.5px dashed rgba(246,239,223,.22); border-radius:9px; display:grid; place-items:center; color:var(--muted); font-size:12px}
+.deck .emptyslot{width:100%; height:100%}
+.burned{display:flex; flex-direction:column; align-items:center; gap:1px; color:var(--muted); font-size:11px; min-width:52px}
+.burned .flame{font-size:24px; line-height:1; filter:saturate(.8)}
+.burned b{font-family:var(--display); font-size:20px; color:var(--cream)}
+.shhand{display:flex; justify-content:safe center; max-width:100%; overflow-x:auto; padding:18px 12px 6px; --hw:clamp(64px, 17vw, 96px); scrollbar-width:thin}
+.shrow{display:flex; flex-direction:column; align-items:center; gap:2px; max-width:100%}
+@media (min-width: 700px){ .shrow{flex-direction:row; align-items:flex-end; gap:26px} .shrow .shhand{padding-bottom:0} }
+.shme{width:min(760px, 100%)}
+.shme .actions .btn{white-space:nowrap}
+.mini.shleft{margin-top:6px; flex-wrap:wrap}
+.mini.shleft .card{--cw:30px}
+.mini .more{align-self:center; font-weight:700; font-size:13px; color:#6a5f4c; margin-left:2px}
+.shhand .card{--cw:var(--hw)}
+.shhand .card + .card{margin-left:calc(var(--hw) * var(--ov, -.06))}
+.shme{gap:10px}
 
 /* ---------- responsive ---------- */
 @media (max-width: 960px){
@@ -338,9 +387,14 @@ body.logopen .peek{display:none}
   .opp .ocards .card{--cw:44px}
   .opp .ocards .card + .card{margin-left:-20px}
   .center{padding:14px 10px; gap:10px}
+  .tcards{--tw:36px}
+  .opp.sh{min-width:0}
+  .burned{min-width:40px}
+  .pile{--mw:clamp(64px, 20vw, 88px)}
   .middle{--mw:clamp(64px, 21vw, 92px); gap:7px}
   .deck{--mw:clamp(56px, 16vw, 80px)}
   .actions .btn{min-width:0; flex:1 1 40%; padding:0 10px}
+  .shme .actions .btn{font-size:14px; padding:0 8px}
   .paper{padding:22px 16px 18px}
   .paper h2,.paper .lead,.paper h3,.paper p{padding-left:16px}
   .paper{background-image:linear-gradient(90deg, transparent 22px, rgba(179,49,42,.22) 22px 23px, transparent 23px), repeating-linear-gradient(transparent 0 29px, rgba(60,90,140,.1) 29px 30px)}
@@ -354,7 +408,7 @@ body.logopen .peek{display:none}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand">Schnautz <small>31</small></div>
+    <div class="brand"><span id="brand-name">Schnautz</span> <small id="brand-badge">31</small></div>
     <div class="grow"></div>
     <button class="chip code-chip" id="codechip" hidden title="Einladungslink kopieren"><span class="lbl">Tisch</span> <b id="codechip-code"></b></button>
     <span class="chip" id="netchip" hidden><span class="dot" id="netdot"></span><span id="nettext">getrennt</span></span>
@@ -373,7 +427,7 @@ body.logopen .peek{display:none}
     <div class="hero">
       <div class="fan" id="fan"></div>
       <h1>Schwimmen,<br><em>ganz egal,</em><br>wie weit weg.</h1>
-      <p class="tagline">Schnautz, 31, Knack. Tisch eröffnen, Link schicken und los geht's.</p>
+      <p class="tagline">Schnautz und Shithead für zwei bis vier. Tisch eröffnen, Link schicken und los geht's.</p>
     </div>
     <div class="panel stack">
       <div id="start-err" class="err" hidden></div>
@@ -417,7 +471,7 @@ body.logopen .peek{display:none}
       <div id="lobby-start"></div>
     </div>
     <div class="panel">
-      <div class="eyebrow" style="margin-bottom:6px">Regeln für diese Partie</div>
+      <div class="eyebrow" style="margin-bottom:10px">Spiel und Regeln</div>
       <div class="rules-list" id="rules-form"></div>
       <p class="note" id="rules-note" style="margin-top:10px"></p>
     </div>
@@ -466,7 +520,7 @@ var SUITS = ['C','S','H','D'];
 var SUIT_SYM = {C:'♣', S:'♠', H:'♥', D:'♦'};
 var RANKS = ['7','8','9','10','B','D','K','A'];
 var RANK_VAL = {'7':7,'8':8,'9':9,'10':10,'B':10,'D':10,'K':10,'A':11};
-var DEFAULT_RULES = {lives:3, feuer:true, dealerChoice:true, knockFirst:false, knockDouble:false};
+var DEFAULT_RULES = {lives:3, feuer:true, dealerChoice:true, knockFirst:false, knockDouble:false, sh:{two:true, three:true, seven:true, ten:true, eight:false}};
 var MAX_PLAYERS = 4;
 
 function suitOf(c){ return c[0]; }
@@ -497,7 +551,7 @@ function handValue(cards, rules){
 
 function mkPlayer(id, name, lives){ return {id:id, name:name, lives:lives||3, out:false, ready:false, online:true}; }
 function newState(hostId, hostName){
-  return {phase:'lobby', host:hostId, rules:JSON.parse(JSON.stringify(DEFAULT_RULES)), players:[mkPlayer(hostId, hostName)],
+  return {phase:'lobby', game:'schnautz', sh:null, host:hostId, rules:JSON.parse(JSON.stringify(DEFAULT_RULES)), players:[mkPlayer(hostId, hostName)],
     round:0, dealer:-1, turn:-1, deck:[], discard:[], hands:{}, middle:[], spare:null, knocker:null, afterKnock:0,
     passes:0, turns:0, last:null, result:null, winner:null, log:[], n:0, games:0};
 }
@@ -527,14 +581,16 @@ function sanitizeRules(r, old){
   if (!r || typeof r !== 'object') return o;
   if (r.lives != null){ var l = parseInt(r.lives, 10); if (!isNaN(l)) o.lives = Math.max(1, Math.min(6, l)); }
   ['feuer','dealerChoice','knockFirst','knockDouble'].forEach(function(k){ if (k in r) o[k] = !!r[k]; });
+  if (!o.sh) o.sh = JSON.parse(JSON.stringify(DEFAULT_RULES.sh));
+  if (r.sh && typeof r.sh === 'object') ['two','three','seven','ten','eight'].forEach(function(k){ if (k in r.sh) o.sh[k] = !!r.sh[k]; });
   return o;
 }
 
 function startGame(st, rng){
-  var keep = st.phase === 'lobby' ? st.players.filter(function(p){ return p.online || p.id === st.host; }) : st.players.slice();
+  var keep = st.players.filter(function(p){ return p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone); });
   if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
   st.players = keep;
-  st.players.forEach(function(p){ p.lives = st.rules.lives; p.out = false; p.ready = false; });
+  st.players.forEach(function(p){ p.lives = st.rules.lives; p.out = false; p.ready = false; delete p.gone; });
   st.games++; st.round = 0; st.winner = null; st.result = null;
   st.dealer = Math.floor(rnd(rng) * st.players.length);
   addLog(st, {k:'game', g:st.games});
@@ -617,19 +673,32 @@ function finishRound(st, reason, by){
   } else st.phase = 'end';
 }
 function checkReady(st, rng){
+  if (st.phase === 'swap'){
+    var needS = st.players.filter(function(p){ return !p.out; });
+    if (needS.length && needS.every(function(p){ return p.ready; })) shBegin(st);
+    return null;
+  }
   if (st.phase !== 'end' && st.phase !== 'over') return null;
   if (!st.players.some(function(p){ return p.ready; })) return null;
   var need = st.players.filter(function(p){ return p.online && (st.phase === 'over' || !p.out); });
   if (need.some(function(p){ return !p.ready; })) return null;
-  if (st.phase === 'over') return startGame(st, rng);
+  if (st.phase === 'over') return beginGame(st, rng);
   startRound(st, rng, false);
   return null;
+}
+function beginGame(st, rng){ return st.game === 'shithead' ? shStart(st, rng) : startGame(st, rng); }
+function migrate(st){
+  if (!st.game) st.game = 'schnautz';
+  if (!st.rules.sh) st.rules.sh = JSON.parse(JSON.stringify(DEFAULT_RULES.sh));
 }
 function quitPlayer(st, pid, rng){
   var i = pIdx(st, pid); if (i < 0) return;
   var p = st.players[i]; p.online = false;
   if (st.phase === 'lobby'){ removePlayer(st, pid); return; }
-  if (p.out) return;
+  p.gone = true; p.ready = false;
+  if (st.game === 'shithead'){ shQuit(st, i, pid, rng); return; }
+  if (st.phase === 'over'){ if (!p.out) addLog(st, {k:'quit', p:pid}); p.out = true; checkReady(st, rng); return; }
+  if (p.out){ checkReady(st, rng); return; }
   p.out = true; p.lives = 0; p.ready = false;
   addLog(st, {k:'quit', p:pid});
   if (st.hands[pid] && (st.phase === 'choose' || st.phase === 'play')){ st.discard.push.apply(st.discard, st.hands[pid]); delete st.hands[pid]; }
@@ -668,11 +737,187 @@ function toLobby(st){
   st.players.forEach(function(p){ p.lives = st.rules.lives; p.out = false; p.ready = false; });
   st.hands = {}; st.middle = []; st.deck = []; st.discard = []; st.spare = null; st.knocker = null;
   st.turn = -1; st.dealer = -1; st.result = null; st.winner = null; st.round = 0; st.last = null; st.passes = 0; st.turns = 0;
+  st.sh = null; st.players.forEach(function(p){ p.place = 0; });
   addLog(st, {k:'lobby'});
+}
+
+/* ---------- Shithead ---------- */
+var SH_RANKS = ['2','3','4','5','6','7','8','9','10','B','D','K','A'];
+var SH_ORD = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'B':11,'D':12,'K':13,'A':14};
+var SUIT_ORD = {C:0, S:1, H:2, D:3};
+function shDeck(rng){ var d=[]; SUITS.forEach(function(s){ SH_RANKS.forEach(function(r){ d.push(s+r); }); }); return shuffle(d, rng); }
+function shSort(a){ a.sort(function(x, y){ return (SH_ORD[rankOf(x)] - SH_ORD[rankOf(y)]) || (SUIT_ORD[suitOf(x)] - SUIT_ORD[suitOf(y)]); }); return a; }
+function shR(st){ return (st.rules && st.rules.sh) || DEFAULT_RULES.sh; }
+function shAlways(st, r){ var R = shR(st); return (r === '2' && R.two) || (r === '10' && R.ten) || (r === '3' && R.three); }
+function shTop(st){ var R = shR(st), p = st.sh.pile; for (var i=p.length-1;i>=0;i--){ var r = rankOf(p[i]); if (r === '3' && R.three) continue; return r; } return null; }
+function shCanPlay(st, r){
+  if (shAlways(st, r)) return true;
+  var R = shR(st), t = shTop(st);
+  if (!t) return true;
+  if (t === '2' && R.two) return true;
+  if (t === '7' && R.seven) return SH_ORD[r] <= 7;
+  return SH_ORD[r] >= SH_ORD[t];
+}
+function shFour(st){
+  var p = st.sh.pile; if (p.length < 4) return false;
+  var r = rankOf(p[p.length-1]);
+  for (var i=2;i<=4;i++) if (rankOf(p[p.length-i]) !== r) return false;
+  return true;
+}
+function shStart(st, rng){
+  var keep = st.players.filter(function(p){ return p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone); });
+  if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
+  st.players = keep;
+  st.players.forEach(function(p){ p.out = false; p.ready = false; p.place = 0; delete p.gone; if (p.shc == null) p.shc = 0; });
+  st.games++; st.round = 1; st.winner = null; st.result = null; st.turn = -1; st.last = null;
+  var deck = shDeck(rng), P = {};
+  st.players.forEach(function(p){ P[p.id] = {down:deck.splice(0, 3), up:deck.splice(0, 3), hand:shSort(deck.splice(0, 3))}; });
+  st.sh = {deck:deck, pile:[], burned:[], P:P, finished:[], shithead:null};
+  st.phase = 'swap';
+  addLog(st, {k:'game', g:st.games, game:'shithead'});
+  addLog(st, {k:'shdeal'});
+  return null;
+}
+function shBegin(st){
+  st.phase = 'play';
+  st.players.forEach(function(p){ p.ready = false; });
+  var n = st.players.length, off = st.games % n, best = 99, bi = -1, bc = null;
+  for (var k=0;k<n;k++){
+    var i = (off + k) % n, p = st.players[i];
+    if (p.out) continue;
+    st.sh.P[p.id].hand.forEach(function(c){
+      var r = rankOf(c); if (shAlways(st, r)) return;
+      if (SH_ORD[r] < best){ best = SH_ORD[r]; bi = i; bc = c; }
+    });
+  }
+  if (bi < 0){ bi = st.players[off].out ? nextActive(st, off) : off; bc = null; }
+  st.turn = bi;
+  addLog(st, {k:'shstart', p:st.players[bi].id, card:bc});
+}
+function shNextIdx(st, i){
+  var n = st.players.length;
+  for (var k=1;k<=n;k++){ var j = (i + k) % n, p = st.players[j]; if (!p.out && st.sh.finished.indexOf(p.id) < 0) return j; }
+  return i;
+}
+function shAdvance(st, skip){ var j = st.turn; for (var s=0;s<=skip;s++) j = shNextIdx(st, j); st.turn = j; }
+function shDraw(st, P){ while (P.hand.length < 3 && st.sh.deck.length) P.hand.push(st.sh.deck.shift()); shSort(P.hand); }
+function shEnd(st, loser, quitter){
+  var S = st.sh; S.shithead = loser;
+  if (loser){ var lp = st.players[pIdx(st, loser)]; if (lp){ lp.shc = (lp.shc || 0) + 1; lp.place = S.finished.length + 1; } }
+  var names = {}; st.players.forEach(function(p){ names[p.id] = p.name; });
+  st.result = {reason:'shithead', ranking:S.finished.slice(), shithead:loser, quit:quitter || null, names:names};
+  st.phase = 'over'; st.turn = -1; st.winner = S.finished[0] || null;
+  st.players.forEach(function(p){ p.ready = false; });
+  addLog(st, {k:'shend', p:loser});
+}
+function shFinishCheck(st, pid, skip){
+  var S = st.sh, P = S.P[pid];
+  if (P.hand.length || P.up.length || P.down.length) return false;
+  S.finished.push(pid);
+  var p = st.players[pIdx(st, pid)]; p.place = S.finished.length;
+  addLog(st, {k:'shdone', p:pid, place:p.place});
+  var left = st.players.filter(function(x){ return !x.out && S.finished.indexOf(x.id) < 0; });
+  if (left.length <= 1){ shEnd(st, left[0] ? left[0].id : null); return true; }
+  shAdvance(st, skip || 0);
+  return true;
+}
+function shAfterPlay(st, pid, cards, src){
+  var S = st.sh, P = S.P[pid], R = shR(st), r = rankOf(cards[0]);
+  S.pile.push.apply(S.pile, cards);
+  addLog(st, {k:'shplay', p:pid, cards:cards, src:src}); st.last = {k:'shplay', p:pid, n:st.n};
+  shDraw(st, P);
+  var burn = (r === '10' && R.ten), four = !burn && shFour(st);
+  if (burn || four){
+    S.burned.push.apply(S.burned, S.pile); S.pile = [];
+    addLog(st, {k:'shburn', p:pid, four:four}); st.last = {k:'shburn', p:pid, n:st.n};
+  }
+  var skip = (r === '8' && R.eight && !burn && !four) ? cards.length : 0;
+  if (shFinishCheck(st, pid, skip)) return null;
+  if (burn || four) return null;
+  shAdvance(st, skip);
+  return null;
+}
+function shQuit(st, i, pid, rng){
+  var S = st.sh, p = st.players[i];
+  if (p.out) return;
+  p.out = true; p.ready = false;
+  addLog(st, {k:'quit', p:pid});
+  if (!S || st.phase === 'over'){ checkReady(st, rng); return; }
+  var P = S.P[pid];
+  if (P){ S.burned.push.apply(S.burned, P.hand.concat(P.up, P.down)); P.hand = []; P.up = []; P.down = []; }
+  if (S.finished.indexOf(pid) >= 0) return;
+  var left = st.players.filter(function(x){ return !x.out && S.finished.indexOf(x.id) < 0; });
+  if (left.length <= 1){
+    left.forEach(function(x){ S.finished.push(x.id); x.place = S.finished.length; });
+    shEnd(st, null, pid); return;
+  }
+  if (st.phase === 'swap'){ checkReady(st, rng); return; }
+  if (st.turn === i) shAdvance(st, 0);
+}
+function shAuto(st, pid, rng){
+  var S = st.sh, P = S.P[pid], pi = pIdx(st, pid);
+  if (st.phase === 'swap'){ st.players[pi].ready = true; checkReady(st, rng); return null; }
+  if (st.phase !== 'play' || st.turn !== pi) return null;
+  var src = P.hand.length ? 'hand' : (P.up.length ? 'up' : null);
+  if (!src) return shAct(st, pid, pi, {type:'shblind', i:0}, rng);
+  var arr = P[src], best = -1, bo = 99;
+  arr.forEach(function(c, i){ var r = rankOf(c); if (!shCanPlay(st, r)) return; var o = shAlways(st, r) ? 50 + SH_ORD[r] : SH_ORD[r]; if (o < bo){ bo = o; best = i; } });
+  if (best < 0) return shAct(st, pid, pi, {type:'shpickup'}, rng);
+  return shAct(st, pid, pi, {type:'shplay', from:src, idx:[best]}, rng);
+}
+function shAct(st, pid, pi, a, rng){
+  var S = st.sh, t = a.type;
+  if (!S) return 'Das geht gerade nicht.';
+  var P = S.P[pid];
+  if (!P || st.players[pi].out) return 'Du spielst diese Partie nicht mit.';
+  if (t === 'shswap'){
+    if (st.phase !== 'swap') return 'Tauschen geht nur vor dem Start.';
+    if (st.players[pi].ready) return 'Du hast schon auf Fertig gedrückt.';
+    var h = a.h|0, u = a.u|0;
+    if (h < 0 || h >= P.hand.length || u < 0 || u >= P.up.length) return 'Ungültige Karte.';
+    var x = P.hand[h]; P.hand[h] = P.up[u]; P.up[u] = x; shSort(P.hand);
+    return null;
+  }
+  if (t === 'shready'){
+    if (st.phase !== 'swap') return null;
+    st.players[pi].ready = true; checkReady(st, rng); return null;
+  }
+  if (st.phase !== 'play') return 'Das geht gerade nicht.';
+  if (pi !== st.turn) return 'Du bist gerade nicht dran.';
+  if (t === 'shplay'){
+    var src = a.from === 'up' ? 'up' : 'hand';
+    if (src === 'up' && P.hand.length) return 'Erst die Handkarten ausspielen.';
+    var arr = P[src], idx = [];
+    (Array.isArray(a.idx) ? a.idx.slice(0, 60) : []).forEach(function(i){ i = i|0; if (i >= 0 && i < arr.length && idx.indexOf(i) < 0) idx.push(i); });
+    if (!idx.length) return 'Wähle zuerst eine Karte.';
+    var cards = idx.map(function(i){ return arr[i]; }), r = rankOf(cards[0]);
+    if (!cards.every(function(c){ return rankOf(c) === r; })) return 'Zusammen geht nur mit gleichem Wert.';
+    if (!shCanPlay(st, r)) return 'Die Karte passt nicht auf den Stapel.';
+    idx.sort(function(x, y){ return y - x; }).forEach(function(i){ arr.splice(i, 1); });
+    return shAfterPlay(st, pid, cards, src);
+  }
+  if (t === 'shpickup'){
+    if (!S.pile.length) return 'Der Stapel ist leer. Leg einfach eine Karte.';
+    var cnt = S.pile.length; P.hand.push.apply(P.hand, S.pile); S.pile = []; shSort(P.hand);
+    addLog(st, {k:'shpickup', p:pid, cnt:cnt}); st.last = {k:'shpickup', p:pid, n:st.n};
+    shAdvance(st, 0); return null;
+  }
+  if (t === 'shblind'){
+    if (P.hand.length || P.up.length) return 'Erst Hand und offene Karten spielen.';
+    var bi = a.i|0; if (bi < 0 || bi >= P.down.length) return 'Ungültige Karte.';
+    var c = P.down.splice(bi, 1)[0];
+    if (shCanPlay(st, rankOf(c))) return shAfterPlay(st, pid, [c], 'down');
+    var n2 = S.pile.length + 1;
+    P.hand.push.apply(P.hand, S.pile); P.hand.push(c); S.pile = []; shSort(P.hand);
+    addLog(st, {k:'shblindfail', p:pid, card:c, cnt:n2}); st.last = {k:'shpickup', p:pid, n:st.n};
+    shAdvance(st, 0); return null;
+  }
+  return 'Unbekannte Aktion.';
 }
 
 function act(st, pid, a, rng){
   if (!a || typeof a.type !== 'string') return 'Unbekannte Aktion.';
+  migrate(st);
   var pi = pIdx(st, pid);
   if (pi < 0) return 'Du sitzt nicht an diesem Tisch.';
   var me = st.players[pi];
@@ -689,14 +934,27 @@ function act(st, pid, a, rng){
     st.players.forEach(function(p){ p.lives = st.rules.lives; });
     return null;
   }
+  if (t === 'game'){
+    if (pid !== st.host) return 'Nur der Gastgeber wählt das Spiel.';
+    if (st.phase !== 'lobby') return 'Das Spiel lässt sich nur in der Lobby wechseln.';
+    st.game = a.game === 'shithead' ? 'shithead' : 'schnautz';
+    return null;
+  }
   if (t === 'start'){
     if (pid !== st.host) return 'Nur der Gastgeber startet die Partie.';
     if (st.phase !== 'lobby') return 'Die Partie läuft schon.';
-    return startGame(st, rng);
+    return beginGame(st, rng);
   }
   if (t === 'tolobby'){
     if (pid !== st.host) return 'Nur der Gastgeber kann das.';
     toLobby(st); return null;
+  }
+  if (t === 'skip' && st.game === 'shithead'){
+    if (pid !== st.host) return 'Nur der Gastgeber kann das.';
+    if (st.phase !== 'play') return null;
+    var shw = st.players[st.turn];
+    if (!shw || shw.online) return shw ? shw.name + ' ist wieder da.' : null;
+    return shAuto(st, shw.id, rng);
   }
   if (t === 'skip'){
     if (pid !== st.host) return 'Nur der Gastgeber kann das.';
@@ -708,9 +966,12 @@ function act(st, pid, a, rng){
   if (t === 'force'){
     if (pid !== st.host) return 'Nur der Gastgeber kann das.';
     if (st.phase === 'end'){ startRound(st, rng, false); return null; }
-    if (st.phase === 'over') return startGame(st, rng);
+    if (st.phase === 'swap'){ shBegin(st); return null; }
+    if (st.phase === 'over') return beginGame(st, rng);
     return null;
   }
+  if (st.game === 'shithead' && /^sh/.test(t)) return shAct(st, pid, pi, a, rng);
+  if (st.game === 'shithead' && t !== 'ready') return 'Das geht gerade nicht.';
   if (t === 'keep' || t === 'take'){
     if (st.phase !== 'choose') return 'Das geht gerade nicht.';
     if (pi !== st.dealer) return 'Das entscheidet, wer gibt.';
@@ -766,6 +1027,17 @@ function viewFor(st, pid){
   var v = JSON.parse(JSON.stringify(st));
   v.deck = st.deck.length; v.discard = st.discard.length; v.spare = st.spare ? st.spare.length : 0;
   Object.keys(v.hands).forEach(function(id){ if (id !== pid) v.hands[id] = v.hands[id].length; });
+  if (st.sh){
+    v.sh.deck = st.sh.deck.length; v.sh.burned = st.sh.burned.length;
+    Object.keys(v.sh.P).forEach(function(id){
+      var P = v.sh.P[id];
+      if (st.phase === 'over') return;
+      P.down = P.down.length;
+      if (id !== pid) P.hand = P.hand.length;
+    });
+  }
+  if (!v.game) v.game = 'schnautz';
+  if (!v.rules.sh) v.rules.sh = JSON.parse(JSON.stringify(DEFAULT_RULES.sh));
   v.log = v.log.slice(-90);
   v.me = pid;
   return v;
@@ -804,7 +1076,7 @@ function peerOptions(){
   return o;
 }
 
-var App = {role:null, me:null, name:'', code:'', view:null, sel:{h:null, m:null}, net:'off', seenN:0, unread:0, peek:false, anim:{}, muted: LS.get('muted', false)};
+var App = {role:null, me:null, name:'', code:'', view:null, sel:{h:null, m:null}, ss:{src:null, idx:[]}, sw:{h:null, u:null}, net:'off', seenN:0, unread:0, peek:false, anim:{}, muted: LS.get('muted', false)};
 var H = {st:null, peer:null, conns:new Map(), alias:{}, retries:0, hb:null};
 var G = {peer:null, conn:null, reTimer:null, lastPong:0, stopped:true, hb:null, ever:false, notFound:0};
 
@@ -823,6 +1095,7 @@ function showScreen(name){
   ['start','wait','lobby','game'].forEach(function(s){ $('#scr-' + s).hidden = (s !== name); });
   var inTable = name === 'lobby' || name === 'game';
   $('#codechip').hidden = !inTable; $('#btn-menu').hidden = !inTable; $('#netchip').hidden = name === 'start';
+  if (!inTable){ $('#brand-name').textContent = 'Schnautz'; $('#brand-badge').hidden = false; }
   if (!inTable){ $('#menu').hidden = true; document.body.classList.remove('logopen'); $('#overlay').innerHTML = ''; App.unread = 0; }
 }
 function setNet(s){
@@ -873,12 +1146,17 @@ function renderSoundBtn(){
 
 /* ---------- Karten zeichnen ---------- */
 var PIPS = {
+  '2': [[50,0],[50,100]],
+  '3': [[50,0],[50,50],[50,100]],
+  '4': [[33,0],[67,0],[33,100],[67,100]],
+  '5': [[33,0],[67,0],[50,50],[33,100],[67,100]],
+  '6': [[33,0],[67,0],[33,50],[67,50],[33,100],[67,100]],
   '7': [[33,0],[67,0],[50,25],[33,50],[67,50],[33,100],[67,100]],
   '8': [[33,0],[67,0],[50,25],[33,50],[67,50],[50,75],[33,100],[67,100]],
   '9': [[33,0],[67,0],[33,33.3],[67,33.3],[50,50],[33,66.7],[67,66.7],[33,100],[67,100]],
   '10':[[33,0],[67,0],[50,16.7],[33,33.3],[67,33.3],[33,66.7],[67,66.7],[50,83.3],[33,100],[67,100]]
 };
-var CARD_RE = /^[CSHD](7|8|9|10|B|D|K|A)$/;
+var CARD_RE = /^[CSHD](2|3|4|5|6|7|8|9|10|B|D|K|A)$/;
 function num(x){ x = Number(x); return isFinite(x) ? x : 0; }
 function cardHTML(c, cls, attrs){
   cls = cls || ''; attrs = attrs || '';
@@ -897,7 +1175,7 @@ function cardHTML(c, cls, attrs){
   return '<div class="card ' + (red ? 'red ' : '') + cls + '" ' + attrs + ' aria-label="' + cardName(c) + '">' + ix + body + '</div>';
 }
 var SUIT_NAME = {C:'Kreuz', S:'Pik', H:'Herz', D:'Karo'};
-var RANK_NAME = {'7':'Sieben','8':'Acht','9':'Neun','10':'Zehn','B':'Bube','D':'Dame','K':'König','A':'Ass'};
+var RANK_NAME = {'2':'Zwei','3':'Drei','4':'Vier','5':'Fünf','6':'Sechs','7':'Sieben','8':'Acht','9':'Neun','10':'Zehn','B':'Bube','D':'Dame','K':'König','A':'Ass'};
 function cardName(c){ return SUIT_NAME[suitOf(c)] + ' ' + RANK_NAME[rankOf(c)]; }
 function cardChip(c){ if (!CARD_RE.test(String(c))) return '?'; var s = suitOf(c); return '<span class="cs' + (s === 'H' || s === 'D' ? ' r' : '') + '">' + SUIT_SYM[s] + rankOf(c) + '</span>'; }
 function fmtVal(v){ return String(v).replace('.', ','); }
@@ -1011,7 +1289,7 @@ function hostMsg(conn, m){
     H.keys[pid] = key;
     var old = H.conns.get(pid);
     if (old && old !== conn){ old._replaced = true; hostSend(old, {t:'replaced'}); setTimeout(function(){ try { old.close(); } catch (e) {} }, 300); }
-    H.conns.set(pid, conn); conn._pid = pid; p.online = true; delete p.offSince;
+    H.conns.set(pid, conn); conn._pid = pid; p.online = true; delete p.offSince; delete p.gone;
     hostSend(conn, {t:'welcome', pid:pid});
     hostCommit();
     return;
@@ -1144,7 +1422,7 @@ function guestMsg(m){
   }
   if (m.t === 'state'){ G.lastPong = Date.now(); setNet('online'); applyView(m.s); return; }
   if (m.t === 'reject'){ guestFail(m.msg || 'Beitreten hat nicht geklappt.'); return; }
-  if (m.t === 'err'){ toast(m.msg); return; }
+  if (m.t === 'err'){ toast(m.msg); App.busy = false; return; }
   if (m.t === 'closed'){ LS.del('guest'); guestFail('Der Gastgeber hat den Tisch aufgelöst.'); return; }
   if (m.t === 'replaced'){ guestFail('Du sitzt jetzt in einem anderen Tab oder auf einem anderen Gerät am Tisch.'); return; }
 }
@@ -1159,15 +1437,17 @@ function guestFail(msg){ guestStop(); App.role = null; $('#netbar').hidden = tru
 /* ---------- Aktionen ---------- */
 function doAct(a){
   unlockAudio();
-  if (App.role === 'host'){ var e = act(H.st, App.me, a); if (e) toast(e); else hostCommit(); }
+  if (App.role === 'host'){ var e = act(H.st, App.me, a); if (e){ toast(e); App.busy = false; } else hostCommit(); }
   else if (App.role === 'guest' && G.conn && G.conn.open){ try { G.conn.send({t:'act', a:a}); } catch (er) { toast('Senden hat nicht geklappt.'); } }
   else toast('Gerade keine Verbindung. Einen Moment…');
+  setTimeout(function(){ App.busy = false; }, 2500);
 }
 
 /* ---------- Ansicht anwenden ---------- */
 function applyView(v){
-  var prev = App.view; App.view = v;
-  if (!prev || prev.turn !== v.turn || prev.phase !== v.phase || prev.round !== v.round) App.sel = {h:null, m:null};
+  var prev = App.view; App.view = v; App.busy = false;
+  if (!prev || prev.turn !== v.turn || prev.phase !== v.phase || prev.round !== v.round || (prev.last && prev.last.n) !== (v.last && v.last.n)){ App.ss = {src:null, idx:[]}; }
+  if (!prev || prev.turn !== v.turn || prev.phase !== v.phase || prev.round !== v.round){ App.sel = {h:null, m:null}; App.sw = {h:null, u:null}; }
   if (!prev || prev.phase !== v.phase) App.peek = false;
   App.anim = {};
   if (prev && v.round !== prev.round && (v.phase === 'choose' || v.phase === 'play')) App.anim.deal = true;
@@ -1178,7 +1458,9 @@ function applyView(v){
     if (v.last.k === 'swap' && v.last.p !== App.me) App.anim.pop = v.last.m;
     if (v.last.k === 'swapAll' && v.last.p !== App.me) App.anim.popAll = true;
     if (v.last.k === 'renew') App.anim.popAll = true;
+    if (v.last.k === 'shplay' && v.last.p !== App.me) App.anim.pilePop = true;
   }
+  if (v.game === 'shithead' && v.phase === 'swap' && (!prev || prev.phase !== 'swap')) App.anim.deal = true;
   if (prev) effects(prev, v);
   var maxN = App.seenN;
   v.log.forEach(function(e){ if (e.n > maxN) maxN = e.n; });
@@ -1191,6 +1473,9 @@ function effects(prev, v){
     if (e.k === 'knock' && e.p !== App.me){ sfx('knock'); banner('Klopf, klopf!'); }
     if ((e.k === 'swap' || e.k === 'swapAll') && e.p !== App.me) sfx('card');
     if (e.k === 'chat' && e.p !== App.me && !document.body.classList.contains('logopen')){ App.unread++; }
+    if (e.k === 'shburn'){ banner(e.four ? 'Vier gleiche!' : 'Verbrannt!'); sfx('knock'); }
+    if ((e.k === 'shplay' || e.k === 'shpickup' || e.k === 'shblindfail') && e.p !== App.me) sfx('card');
+    if (e.k === 'shend' && e.p){ banner('Shithead!'); setTimeout(function(){ sfx(e.p === App.me ? 'lose' : 'win'); }, 300); }
     if (e.k === 'result'){
       if (e.reason === 'schnautz') banner('Schnautz!');
       if (e.reason === 'feuer') banner('Feuer!');
@@ -1207,7 +1492,7 @@ function effects(prev, v){
 }
 function updateTitle(){
   var v = App.view;
-  document.title = (v && (myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me)) && document.hidden ? '● Du bist dran · ' : '') + 'Schnautz · Online';
+  document.title = (v && (myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me)) && document.hidden ? '● Du bist dran · ' : '') + (v && v.game === 'shithead' ? 'Shithead' : 'Schnautz') + ' · Online';
 }
 document.addEventListener('visibilitychange', function(){
   updateTitle();
@@ -1220,10 +1505,12 @@ function render(){
   $('#codechip-code').textContent = App.code;
   $('#menu-lobby').hidden = !(App.role === 'host' && v.phase !== 'lobby');
   $('#menu-leave').textContent = App.role === 'host' ? 'Tisch auflösen' : 'Tisch verlassen';
+  var sh = v.game === 'shithead';
   if (v.phase === 'lobby'){ showScreen('lobby'); renderLobby(v); }
-  else { showScreen('game'); renderGame(v); }
+  else { showScreen('game'); if (sh) renderSh(v); else renderGame(v); }
+  $('#brand-name').textContent = sh ? 'Shithead' : 'Schnautz'; $('#brand-badge').hidden = sh;
   renderLog(v);
-  renderOverlay(v);
+  if (sh) renderShOverlay(v); else renderOverlay(v);
 }
 
 function renderLobby(v){
@@ -1234,7 +1521,7 @@ function renderLobby(v){
   var h = '';
   v.players.forEach(function(p){
     h += '<li' + (p.online ? '' : ' class="off"') + '><span class="avatar">' + esc(p.name.charAt(0).toUpperCase()) + '</span><span class="nm">' + esc(p.name) + (p.id === App.me ? ' <span style="color:var(--muted);font-weight:400">(du)</span>' : '') + (p.online ? '' : ' <span style="color:#f0a59c;font-weight:400">offline</span>') + '</span>' +
-      (p.id === v.host ? '<span class="badge">Gastgeber</span>' : '') + livesHTML({lives:v.rules.lives, out:false}, v.rules) + '</li>';
+      (p.id === v.host ? '<span class="badge">Gastgeber</span>' : '') + (v.game === 'shithead' ? shcHTML(p) : livesHTML({lives:v.rules.lives, out:false}, v.rules)) + '</li>';
   });
   for (var i=v.players.length; i<Math.max(2, v.players.length + (v.players.length < MAX_PLAYERS ? 1 : 0)); i++){
     h += '<li class="empty"><span class="avatar" style="background:transparent;border:1px dashed rgba(246,239,223,.3);color:var(--muted)">?</span><span class="nm">Freier Platz</span></li>';
@@ -1242,7 +1529,19 @@ function renderLobby(v){
   $('#seats').innerHTML = h;
   var host = App.role === 'host', r = v.rules, dis = host ? '' : ' disabled';
   var tg = function(k, label, sub){ return '<label class="toggle"><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="checkbox" class="switch" data-rule="' + k + '"' + (r[k] ? ' checked' : '') + dis + '></label>'; };
-  $('#rules-form').innerHTML =
+  var gsel = '<div class="gamesel">' + ['schnautz', 'shithead'].map(function(g){ return '<button data-act="game" data-g="' + g + '" class="' + (v.game === g ? 'on' : '') + '"' + (host ? '' : ' disabled') + '>' + (g === 'shithead' ? 'Shithead' : 'Schnautz') + '</button>'; }).join('') + '</div>';
+  if (v.game === 'shithead'){
+    var sr = v.rules.sh || DEFAULT_RULES.sh;
+    var st2 = function(k, label, sub){ return '<label class="toggle"><span>' + label + '<small>' + sub + '</small></span><input type="checkbox" class="switch" data-shrule="' + k + '"' + (sr[k] ? ' checked' : '') + dis + '></label>'; };
+    $('#rules-form').innerHTML = gsel +
+      st2('two', '2 setzt zurück', 'Geht immer, danach ist wieder alles erlaubt') +
+      st2('ten', '10 verbrennt', 'Geht immer, der Stapel ist weg und du legst gleich nochmal') +
+      st2('seven', '7 heißt drunter', 'Der Nächste muss 7 oder niedriger legen') +
+      st2('three', '3 ist durchsichtig', 'Geht immer, es zählt die Karte darunter') +
+      st2('eight', '8 lässt aussetzen', 'Jede 8 überspringt einen Spieler') +
+      '<p class="note" style="margin-top:8px">Vier gleiche Karten hintereinander verbrennen den Stapel immer. Wer sie vollmacht, legt gleich nochmal.</p>';
+  } else
+  $('#rules-form').innerHTML = gsel +
     '<div class="toggle" style="cursor:default"><span>Leben pro Person<small>Danach schwimmt man</small></span>' +
       (host ? '<div class="stepper"><button data-act="lives" data-d="-1" aria-label="weniger">' + ICON_MINUS + '</button><b>' + num(r.lives) + '</b><button data-act="lives" data-d="1" aria-label="mehr">' + ICON_PLUS + '</button></div>' : '<b style="font-family:var(--display);font-size:18px">' + num(r.lives) + '</b>') + '</div>' +
     tg('feuer', 'Drei Asse sind Feuer', 'Zählt 33, alle anderen verlieren ein Leben') +
@@ -1368,7 +1667,15 @@ function logLine(v, e){
     case 'join': return ['sys', who() + ' sitzt jetzt mit am Tisch.'];
     case 'quit': return ['big', who() + vb(p, ' hast den Tisch verlassen und bist raus.', ' hat den Tisch verlassen und ist raus.')];
     case 'leave': return ['sys', '<b>' + esc(e.name || 'Jemand') + '</b> ist gegangen.'];
-    case 'game': return ['round', 'Partie ' + num(e.g) + ' beginnt'];
+    case 'game': return ['round', 'Partie ' + num(e.g) + ' beginnt' + (e.game === 'shithead' ? ' · Shithead' : '')];
+    case 'shdeal': return ['sys', 'Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.'];
+    case 'shstart': return ['', who() + vb(p, ' fängst an', ' fängt an') + (e.card ? ' (niedrigste Karte ' + cardChip(e.card) + ').' : '.')];
+    case 'shplay': return ['', who() + vb(p, ' legst ', ' legt ') + (e.cards || []).map(cardChip).join(' ') + (e.src === 'up' ? ' vom Tisch' : (e.src === 'down' ? ' blind' : '')) + '.'];
+    case 'shburn': return ['big', (e.four ? 'Vier gleiche! ' : '') + who() + vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.')];
+    case 'shpickup': return ['', who() + vb(p, ' nimmst den Stapel auf (', ' nimmt den Stapel auf (') + num(e.cnt) + (num(e.cnt) === 1 ? ' Karte).' : ' Karten).')];
+    case 'shblindfail': return ['', who() + vb(p, ' deckst blind ', ' deckt blind ') + cardChip(e.card) + ' auf. Die passt nicht. ' + esc(vb(p, 'Du nimmst ', nameOf(v, p, e.name) + ' nimmt ')) + num(e.cnt) + (num(e.cnt) === 1 ? ' Karte auf.' : ' Karten auf.')];
+    case 'shdone': return ['big', who() + vb(p, ' bist fertig! Platz ', ' ist fertig! Platz ') + num(e.place) + '.'];
+    case 'shend': return ['big', e.p ? '💩 ' + who() + vb(p, ' bist der Shithead!', ' ist der Shithead!') : 'Die Partie ist vorbei.'];
     case 'lobby': return ['sys', 'Zurück in der Lobby.'];
     case 'round': return ['round', 'Runde ' + num(e.r) + ' · ' + esc(nameOf(v, p)) + vb(p, ' gibst', ' gibt')];
     case 'keep': return ['', who() + vb(p, ' behältst das eigene Blatt.', ' behält das eigene Blatt.')];
@@ -1438,15 +1745,198 @@ function renderOverlay(v){
       '<div class="who"><b>' + esc(p.name) + (p.id === App.me ? ' (du)' : '') + '</b><span>' + (cons || livesHTML(p, v.rules)) + '</span></div>' +
       '<div class="val">' + (hv.kind === 'feuer' ? '33' : fmtVal(num(hv.v))) + '</div></div>';
   });
+  var foot = overlayFoot(v, me);
+  ov.innerHTML = '<div class="modal"><div class="paper">' + (v.phase === 'over' ? '<div class="trophy">🏆</div>' : '') + '<h2>' + resultTitle(v) + '</h2><p class="lead">' + lead + '</p><div class="rows">' + rows + '</div>' + foot + '</div></div>';
+}
+
+function listJoin(a){ return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' und ' + a[a.length-1]; }
+function overlayFoot(v, me){
   var waiting = v.players.filter(function(p){ return p.online && !p.ready && p.id !== App.me && (v.phase === 'over' || !p.out); }).map(function(p){ return p.name; });
   var ready = me && me.ready;
-  var listJoin = function(a){ return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' und ' + a[a.length-1]; };
   var btnLabel = v.phase === 'over' ? 'Neue Partie' : 'Nächste Runde';
-  var foot = '<div class="foot"><span class="waittxt">' + (ready ? (waiting.length ? 'Warte auf ' + esc(listJoin(waiting)) + '…' : 'Los geht\'s…') : '') + '</span>' +
+  return '<div class="foot"><span class="waittxt">' + (ready ? (waiting.length ? 'Warte auf ' + esc(listJoin(waiting)) + '…' : 'Los geht\'s…') : '') + '</span>' +
     (App.role === 'host' && ready && waiting.length ? '<button class="btn ghost" data-act="force">Nicht warten</button>' : '') +
     '<button class="btn ghost" data-act="peek">Tisch ansehen</button>' +
     (ready ? '' : '<button class="btn primary" data-act="ready">' + btnLabel + '</button>') + '</div>';
-  ov.innerHTML = '<div class="modal"><div class="paper">' + (v.phase === 'over' ? '<div class="trophy">🏆</div>' : '') + '<h2>' + resultTitle(v) + '</h2><p class="lead">' + lead + '</p><div class="rows">' + rows + '</div>' + foot + '</div></div>';
+}
+
+/* ---------- Shithead: Tisch ---------- */
+function shcHTML(p){ return p.shc ? '<span class="shc" title="So oft Shithead gewesen">💩 ' + num(p.shc) + '</span>' : ''; }
+function shMine(v){ return v.sh && v.sh.P ? v.sh.P[App.me] : null; }
+function shSrc(v){
+  var P = shMine(v); if (!P || !Array.isArray(P.hand)) return null;
+  if (P.hand.length) return 'hand';
+  if (P.up.length) return 'up';
+  var d = typeof P.down === 'number' ? P.down : P.down.length;
+  return d ? 'down' : null;
+}
+function shRankLabel(r){ return {B:'Bube', D:'Dame', K:'König', A:'Ass'}[r] || r; }
+function shPileInfo(v){
+  var R = v.rules.sh || DEFAULT_RULES.sh, pile = v.sh.pile;
+  if (!pile.length) return 'Leer, alles geht';
+  var t = shTop(v), through = R.three && rankOf(pile[pile.length-1]) === '3';
+  if (!t) return 'Nur Dreier, alles geht';
+  var txt = (t === '2' && R.two) ? 'Nach der 2 geht alles' : ((t === '7' && R.seven) ? '7 oder niedriger' : shRankLabel(t) + ' oder höher');
+  return txt + (through ? ' (durch die 3)' : '');
+}
+function hashStr(s){ var h = 7; for (var i=0;i<s.length;i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+function shTableHTML(v, P, mine){
+  var down = typeof P.down === 'number' ? P.down : P.down.length, up = P.up || [], slots = Math.max(down, up.length);
+  var src = mine ? shSrc(v) : null, playing = mine && myTurn(v), meP = pById(v, App.me);
+  var swapping = mine && v.phase === 'swap' && meP && !meP.ready;
+  if (!slots) return '<div class="tcards"><div class="tnone">keine Tischkarten</div></div>';
+  var h = '<div class="tcards">';
+  for (var i=0;i<slots;i++){
+    h += '<div class="tslot">';
+    if (i < down){
+      var dc = Array.isArray(P.down) ? P.down[i] : null;
+      var blind = playing && src === 'down';
+      h += cardHTML(dc, (blind ? 'pick blindc' : '') + (App.anim.deal ? ' deal' : ''), (blind ? 'data-act="shd" data-i="' + i + '" role="button" tabindex="0" ' : '') + 'style="--d:' + (0.05 + i*0.05) + 's"');
+    }
+    if (i < up.length){
+      var c = up[i], cls = '';
+      var selectable = swapping || (playing && src === 'up');
+      if (selectable) cls += ' pick';
+      if ((swapping && App.sw.u === i) || (App.ss.src === 'up' && App.ss.idx.indexOf(i) >= 0)) cls += ' sel';
+      if (playing && src === 'up' && !shCanPlay(v, rankOf(c))) cls += ' dim';
+      if (App.anim.deal) cls += ' deal';
+      h += '<div class="upc">' + cardHTML(c, cls, (selectable ? 'data-act="shu" data-i="' + i + '" role="button" tabindex="0" ' : '') + 'style="--d:' + (0.2 + i*0.05) + 's"') + '</div>';
+    }
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+function renderSh(v){
+  var S = v.sh; if (!S) return;
+  var R = v.rules.sh || DEFAULT_RULES.sh, tId = turnId(v), playing = myTurn(v), over = v.phase === 'over';
+  var me = pById(v, App.me), mine = shMine(v), src = shSrc(v);
+  // Gegner
+  var oh = '';
+  seatOrder(v).forEach(function(p){
+    var P = S.P[p.id]; if (!P) return;
+    var hn = typeof P.hand === 'number' ? P.hand : P.hand.length, hand = '';
+    if (Array.isArray(P.hand) && over) hand = P.hand.slice(0, 8).map(function(c){ return cardHTML(c); }).join('');
+    else for (var i=0;i<Math.min(hn, 5);i++) hand += cardHTML(null, App.anim.deal ? 'deal' : '', 'style="--d:' + (i*0.05) + 's"');
+    var done = S.finished.indexOf(p.id) >= 0, tag = '';
+    if (p.out) tag = '<span class="tag outt">raus</span>';
+    else if (done) tag = '<span class="tag">Platz ' + num(p.place) + '</span>';
+    else if (over && S.shithead === p.id) tag = '<span class="tag outt">Shithead</span>';
+    else if (v.phase === 'swap') tag = p.ready ? '<span class="tag">fertig</span>' : '<span class="tag turn">tauscht<span class="thinking"><i></i><i></i><i></i></span></span>';
+    else if (v.phase === 'play' && tId === p.id) tag = '<span class="tag turn">ist dran<span class="thinking"><i></i><i></i><i></i></span></span>';
+    var on = v.phase === 'play' && tId === p.id;
+    oh += '<div class="opp sh' + (on ? ' turn' : '') + (p.out || done ? ' out' : '') + (!p.online ? ' offline' : '') + '">' +
+      shTableHTML(v, P, false) +
+      '<div class="ometa"><span class="nm">' + esc(p.name) + '</span><span class="ohand" title="Karten auf der Hand">' + hand + '<span class="hcount' + (hn ? '' : ' zero') + '">' + hn + '</span></span>' + shcHTML(p) + '</div>' + (tag || '<span class="tag" style="visibility:hidden">.</span>') + '</div>';
+  });
+  $('#opps').innerHTML = oh;
+
+  // Mitte
+  var ch = '<span class="cap">Stapel</span>';
+  var dn = num(S.deck);
+  ch += '<div class="deck" title="Nachziehstapel">' + (dn ? cardHTML(null) + (dn > 1 ? cardHTML(null) : '') + (dn > 2 ? cardHTML(null) : '') : '<div class="emptyslot"></div>') + (dn ? '<span class="pcount" title="Karten zum Nachziehen">' + dn + '</span>' : '') + '<span class="cnt">' + (dn ? 'ziehen' : 'leer') + '</span></div>';
+  var pile = S.pile || [], startI = Math.max(0, pile.length - 5), ph = '';
+  for (var k=startI;k<pile.length;k++){
+    var hh = hashStr(pile[k] + ':' + k), rot = (hh % 25) - 12, dx = (hh % 11) - 5, dy = ((hh >> 3) % 9) - 4, isTop = k === pile.length - 1;
+    ph += cardHTML(pile[k], (isTop && App.anim.pilePop ? 'pop' : ''), 'style="--rot:' + rot + 'deg; left:' + dx + 'px; top:' + dy + 'px"');
+  }
+  if (!pile.length) ph = '<div class="emptyslot">leer</div>';
+  ch += '<div class="pile">' + ph + '<span class="cnt' + (R.seven && shTop(v) === '7' ? ' warn' : '') + '">' + esc(shPileInfo(v)) + '</span>' + (pile.length > 5 ? '<span class="pcount">' + pile.length + '</span>' : '') + '</div>';
+  ch += '<div class="burned" title="Verbrannte Karten"><span class="flame">🔥</span><b>' + num(S.burned) + '</b><span>verbrannt</span></div>';
+  $('#center').innerHTML = ch;
+
+  // Status
+  var main = '', sub = '', canAny = false;
+  if (mine && Array.isArray(mine.hand) && (src === 'hand' || src === 'up')) canAny = mine[src].some(function(c){ return shCanPlay(v, rankOf(c)); });
+  var meDone = S.finished.indexOf(App.me) >= 0;
+  if (v.phase === 'swap'){
+    if (me && !me.ready){ main = '<em>Tauschrunde.</em>'; sub = 'Tippe eine Handkarte und dann eine offene Tischkarte an, um sie zu tauschen. Starke Karten lohnen sich auf dem Tisch.'; }
+    else {
+      var wn = v.players.filter(function(p){ return !p.ready && !p.out; }).map(function(p){ return p.name; });
+      main = wn.length ? 'Warte auf ' + esc(listJoin(wn)) + '…' : 'Gleich geht es los.';
+      if (wn.length && App.role === 'host') sub = '<button class="btn ghost small" data-act="force">Nicht warten, jetzt starten</button>';
+    }
+  } else if (v.phase === 'play'){
+    if (meDone){ main = 'Du bist fertig!'; sub = 'Platz ' + num(me.place) + '. Jetzt in Ruhe zuschauen.'; }
+    if (playing){
+      main = src === 'down' ? '<em>Jetzt blind!</em>' : '<em>Du bist dran.</em>';
+      if (src === 'down') sub = 'Tippe eine verdeckte Karte an. Passt sie nicht, nimmst du den Stapel auf.';
+      else if (!canAny) sub = 'Keine Karte passt. Du musst den Stapel aufnehmen.';
+      else if (src === 'up') sub = 'Deine Hand ist leer. Jetzt sind die offenen Tischkarten dran.';
+      else sub = 'Tippe gleiche Karten an und leg sie ab.';
+    } else if (!meDone) main = W(v, tId) + ' ist dran.';
+  } else if (over) main = 'Partie vorbei.';
+  var actor = v.phase === 'play' && tId ? pById(v, tId) : null;
+  if (actor && actor.id !== App.me && !actor.online){
+    sub = esc(actor.name) + ' ist gerade offline.' + (App.role === 'host' ? ' <button class="btn ghost small" data-act="skip">Für ' + esc(actor.name) + ' spielen</button>' : ' Das Spiel wartet.');
+  }
+  var stEl = $('#status'); stEl.className = 'status';
+  stEl.innerHTML = '<div class="main">' + main + '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '');
+
+  // Eigener Platz
+  var mh = '';
+  if (!me || !mine){
+    mh = '<div class="outmsg">Du spielst diese Partie nicht mit.</div>';
+  } else {
+    var hand = Array.isArray(mine.hand) ? mine.hand : [];
+    var swapping = v.phase === 'swap' && !me.ready;
+    mh += '<div class="mehead"><span class="nm">' + esc(me.name) + '</span>' + shcHTML(me) + (meDone ? '<span class="tag">Platz ' + num(me.place) + '</span>' : '') + '<span class="pill">' + hand.length + (hand.length === 1 ? ' Karte' : ' Karten') + '</span></div>';
+    mh += '<div class="shrow">' + shTableHTML(v, mine, true);
+    var n = hand.length, ovl = n <= 5 ? -0.06 : (n <= 8 ? -0.36 : -0.5);
+    mh += '<div class="shhand" style="--ov:' + ovl + '">';
+    hand.forEach(function(c, i){
+      var selectable = swapping || (playing && src === 'hand');
+      var cls = (selectable ? 'pick' : '') + ((swapping && App.sw.h === i) || (App.ss.src === 'hand' && App.ss.idx.indexOf(i) >= 0) ? ' sel' : '') +
+        (playing && src === 'hand' && !shCanPlay(v, rankOf(c)) ? ' dim' : '') + (App.anim.deal ? ' deal' : '');
+      mh += cardHTML(c, cls, (selectable ? 'data-act="shh" data-i="' + i + '" role="button" tabindex="0" ' : '') + 'style="--d:' + (0.3 + Math.min(i, 8)*0.06) + 's"');
+    });
+    mh += '</div></div><div class="actions">';
+    if (swapping){
+      mh += '<button class="btn primary" data-act="shready">Fertig getauscht</button>';
+    } else if (playing && src !== 'down'){
+      var arr = mine[src] || [], selIdx = App.ss.src === src ? App.ss.idx : [], label = 'Ausspielen';
+      if (selIdx.length) label = (selIdx.length > 1 ? selIdx.length + '× ' : '') + shRankLabel(rankOf(arr[selIdx[0]])) + ' ausspielen';
+      var okSel = selIdx.length && shCanPlay(v, rankOf(arr[selIdx[0]]));
+      mh += '<button class="btn primary' + (okSel ? ' pulse' : '') + '" data-act="shplay"' + (okSel ? '' : ' disabled') + '>' + esc(label) + '</button>';
+      mh += '<button class="btn ' + (canAny ? 'ghost' : 'wood pulse') + '" data-act="shpickup"' + (S.pile.length ? '' : ' disabled') + '>Aufnehmen (' + S.pile.length + ')</button>';
+    }
+    mh += '</div>';
+  }
+  var meEl = $('#me'); meEl.className = 'me shme' + ((playing || (v.phase === 'swap' && me && !me.ready)) ? ' turn' : ''); meEl.innerHTML = mh;
+}
+function renderShOverlay(v){
+  var ov = $('#overlay');
+  if (v.phase !== 'over' || !v.result || v.result.reason !== 'shithead'){ ov.innerHTML = ''; return; }
+  if (App.peek){ ov.innerHTML = '<button class="btn primary peek" data-act="unpeek">Ergebnis zeigen</button>'; return; }
+  var r = v.result, me = pById(v, App.me), loser = r.shithead, names = r.names || {};
+  var nm = function(id){ return esc(nameOf(v, id, names[id])); };
+  var title = loser === App.me ? 'Du bist der <span class="r">Shithead!</span>' : (loser ? nm(loser) + ' ist der <span class="r">Shithead!</span>' : 'Partie vorbei');
+  var lead = r.quit ? nm(r.quit) + vb(r.quit, ' hast', ' hat') + ' den Tisch verlassen.' : (r.ranking.length ? (r.ranking[0] === App.me ? 'Du warst zuerst fertig.' : nm(r.ranking[0]) + ' war zuerst fertig.') : '');
+  var rows = '', order = r.ranking.concat(loser ? [loser] : []);
+  order.forEach(function(id, i){
+    var p = pById(v, id), isL = id === loser, P = v.sh && v.sh.P[id], left = [];
+    if (isL && P) left = [].concat(Array.isArray(P.hand) ? P.hand : [], P.up || [], Array.isArray(P.down) ? P.down : []);
+    rows += '<div class="row' + (isL ? ' lose' : (i === 0 ? ' win' : '')) + '"><div class="val" style="min-width:34px;text-align:left">' + (i + 1) + '.</div>' +
+      '<div class="who"><b>' + nm(id) + '</b><span>' + (isL ? left.length + (left.length === 1 ? ' Karte übrig' : ' Karten übrig') : (i === 0 ? 'zuerst fertig' : 'fertig')) + (p && p.shc ? ' · ' + num(p.shc) + '× Shithead' : '') + '</span>' +
+      (isL && left.length ? '<div class="mini shleft">' + left.slice(0, 8).map(function(c){ return cardHTML(c); }).join('') + (left.length > 8 ? '<span class="more">+' + (left.length - 8) + '</span>' : '') + '</div>' : '') + '</div></div>';
+  });
+  ov.innerHTML = '<div class="modal"><div class="paper"><div class="trophy">' + (loser === App.me ? '💩' : (loser ? '🏆' : '👋')) + '</div><h2>' + title + '</h2><p class="lead">' + lead + '</p><div class="rows">' + rows + '</div>' + overlayFoot(v, me) + '</div></div>';
+}
+function shTap(kind, i){
+  var v = App.view; if (!v || v.game !== 'shithead') return;
+  unlockAudio();
+  var me = pById(v, App.me), P = shMine(v); if (!P || !me) return;
+  if (v.phase === 'swap' && !me.ready){
+    if (kind === 'h') App.sw.h = App.sw.h === i ? null : i; else App.sw.u = App.sw.u === i ? null : i;
+    if (App.sw.h != null && App.sw.u != null){ var a = {type:'shswap', h:App.sw.h, u:App.sw.u}; App.sw = {h:null, u:null}; sfx('card'); doAct(a); return; }
+    renderSh(v); return;
+  }
+  if (!myTurn(v)) return;
+  var src = kind === 'h' ? 'hand' : 'up', arr = P[src]; if (!arr || !arr[i]) return;
+  if (shSrc(v) !== src) return;
+  var cur = App.ss;
+  if (cur.src !== src || !cur.idx.length || rankOf(arr[cur.idx[0]]) !== rankOf(arr[i])) App.ss = {src:src, idx:[i]};
+  else { var k = cur.idx.indexOf(i); if (k >= 0) cur.idx.splice(k, 1); else cur.idx.push(i); }
+  App.anim = {}; renderSh(v);
 }
 
 /* ---------- Start-Bildschirm ---------- */
@@ -1456,7 +1946,7 @@ function renderResume(){
   var hs = LS.get('host', null), gs = LS.get('guest', null);
   if (hs && hs.st && now - hs.ts < 36e5*24){
     var n = hs.st.players.length;
-    h += '<div class="resume"><p>Dein Tisch <b>' + esc(hs.code) + '</b> mit ' + n + (n === 1 ? ' Person' : ' Leuten') + (hs.st.phase !== 'lobby' ? ' läuft noch (Runde ' + hs.st.round + ').' : ' wartet noch.') + '</p><button class="btn primary" data-act="resumehost">Fortsetzen</button><button class="btn ghost" data-act="dropresume" data-k="host">Verwerfen</button></div>';
+    h += '<div class="resume"><p>Dein Tisch <b>' + esc(hs.code) + '</b> mit ' + n + (n === 1 ? ' Person' : ' Leuten') + (hs.st.phase !== 'lobby' ? (hs.st.game === 'shithead' ? ' läuft noch (Shithead).' : ' läuft noch (Runde ' + num(hs.st.round) + ').') : ' wartet noch.') + '</p><button class="btn primary" data-act="resumehost">Fortsetzen</button><button class="btn ghost" data-act="dropresume" data-k="host">Verwerfen</button></div>';
   }
   if (gs && gs.code && now - gs.ts < 36e5*12){
     h += '<div class="resume"><p>Zurück an Tisch <b>' + esc(gs.code) + '</b> als ' + esc(gs.name) + '?</p><button class="btn primary" data-act="resumeguest">Zurück an den Tisch</button><button class="btn ghost" data-act="dropresume" data-k="guest">Nein</button></div>';
@@ -1478,11 +1968,31 @@ function initStart(){
 }
 
 /* ---------- Regeln ---------- */
-function rulesHTML(r){
-  r = r || (App.view ? App.view.rules : DEFAULT_RULES);
+function rulesHTML(game){
+  var v = App.view, g = game || (v && v.game) || 'schnautz', r = v ? v.rules : DEFAULT_RULES;
+  var tabs = '<div class="gamesel light">' + ['schnautz', 'shithead'].map(function(x){ return '<button data-act="rulestab" data-g="' + x + '" class="' + (g === x ? 'on' : '') + '">' + (x === 'shithead' ? 'Shithead' : 'Schnautz') + '</button>'; }).join('') + '</div>';
+  return '<div class="modal"><div class="paper"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' + tabs +
+    (g === 'shithead' ? rulesSh(r.sh || DEFAULT_RULES.sh) : rulesSchnautz(r)) + '</div></div>';
+}
+function rulesSh(R){
+  var p = function(t){ return '<p>' + t + '</p>'; }, sp = [];
+  if (R.two) sp.push('Die 2 geht immer. Danach ist wieder alles erlaubt.');
+  if (R.three) sp.push('Die 3 ist durchsichtig. Sie geht immer und für den Nächsten zählt die Karte darunter.');
+  if (R.seven) sp.push('Nach einer 7 muss der Nächste 7 oder niedriger legen.');
+  if (R.eight) sp.push('Jede 8 lässt einen Spieler aussetzen.');
+  if (R.ten) sp.push('Die 10 geht immer und verbrennt den Stapel. Wer sie legt, ist gleich nochmal dran.');
+  sp.push('Vier gleiche Karten hintereinander verbrennen den Stapel ebenfalls. Wer die vierte legt, ist gleich nochmal dran.');
+  return '<h2>So geht <span class="r">Shithead</span></h2><p class="lead">Auch bekannt als Palace oder Karma. Gespielt wird mit 52 Karten, das Ass ist am höchsten.</p>' +
+    '<h3>Worum es geht</h3>' + p('Werde alle deine Karten los. Wer am Ende als Letzter noch Karten hat, ist der Shithead.') +
+    '<h3>Aufbau</h3>' + p('Jeder bekommt drei verdeckte Karten, darauf drei offene und dazu drei auf die Hand. Vor dem Start darfst du Handkarten mit deinen offenen Tischkarten tauschen.') +
+    '<h3>Ablauf</h3>' + p('Wer die niedrigste Handkarte hat, fängt an. Sonderkarten zählen dabei nicht. Du legst eine oder mehrere Karten mit gleichem Wert auf den Stapel. Sie müssen gleich hoch oder höher sein als die oberste Karte. Danach ziehst du wieder auf drei Handkarten nach, solange der Nachziehstapel reicht.') +
+    p('Kannst oder willst du nicht legen, nimmst du den ganzen Stapel auf.') +
+    '<h3>Tischkarten</h3>' + p('Sind Nachziehstapel und Hand leer, spielst du deine offenen Tischkarten. Danach kommen die verdeckten, blind und eine nach der anderen. Passt die aufgedeckte Karte nicht, nimmst du den Stapel samt dieser Karte auf.') +
+    '<h3>Sonderkarten</h3>' + sp.map(p).join('');
+}
+function rulesSchnautz(r){
   var p = function(t){ return '<p>' + t + '</p>'; };
-  return '<div class="modal"><div class="paper"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    '<h2>So geht <span class="r">Schnautz</span></h2><p class="lead">Auch bekannt als Schwimmen, 31 oder Knack.</p>' +
+  return '<h2>So geht <span class="r">Schnautz</span></h2><p class="lead">Auch bekannt als Schwimmen, 31 oder Knack.</p>' +
     '<h3>Worum es geht</h3>' + p('Jeder hat drei Karten. Gezählt werden nur Karten derselben Farbe. Das Höchste ist 31. Wer am Ende einer Runde am wenigsten hat, verliert ein Leben.') +
     '<h3>Kartenwerte</h3>' + p('Das Ass zählt 11. König, Dame, Bube und Zehn zählen 10. Neun, Acht und Sieben zählen so viel, wie draufsteht.') +
     p('Drei gleiche Karten (etwa drei Buben) zählen 30,5.' + (r.feuer ? ' Drei Asse sind Feuer und zählen 33.' : '')) +
@@ -1492,8 +2002,7 @@ function rulesHTML(r){
     '<h3>Klopfen</h3>' + p('Wer mit dem eigenen Blatt zufrieden ist, klopft. Alle anderen haben danach noch genau einen Zug. Dann wird aufgedeckt.' + (r.knockFirst ? '' : ' Klopfen geht erst, wenn jeder einmal dran war.') + (r.knockDouble ? ' Wer klopft und am Ende am wenigsten hat, verliert zwei Leben.' : '')) +
     '<h3>Schnautz' + (r.feuer ? ' und Feuer' : '') + '</h3>' + p('Wer 31 auf der Hand hat, deckt sofort auf und die Runde ist vorbei. Das Spiel merkt das automatisch.' + (r.feuer ? ' Bei Feuer verlieren alle anderen ein Leben.' : '')) +
     '<h3>Leben und Schwimmen</h3>' + p('Jeder startet mit ' + num(r.lives) + ' Leben, hier als Bierdeckel. Wer den letzten verliert, schwimmt und darf weiterspielen. Wer schwimmend noch einmal verliert, ist raus. Wer als Letzter übrig bleibt, gewinnt.') +
-    p('Haben alle gleich viel, verliert niemand. Bei Gleichstand am unteren Ende verlieren alle mit dem niedrigsten Wert.') +
-    '</div></div>';
+    p('Haben alle gleich viel, verliert niemand. Bei Gleichstand am unteren Ende verlieren alle mit dem niedrigsten Wert.');
 }
 function confirmBox(text, ok, cb){
   $('#modal').innerHTML = '<div class="modal"><div class="paper" style="max-width:420px"><h2 style="font-size:26px">' + esc(text) + '</h2><div class="foot" style="margin-top:14px"><button class="btn ghost" data-act="closemodal">Abbrechen</button><button class="btn primary" id="cfm-ok">' + esc(ok) + '</button></div></div></div>';
@@ -1521,6 +2030,14 @@ document.addEventListener('click', function(e){
   var a = t.dataset.act, v = App.view;
   switch (a){
     case 'hand': selCard('h', +t.dataset.i); break;
+    case 'shh': shTap('h', +t.dataset.i); break;
+    case 'shu': shTap('u', +t.dataset.i); break;
+    case 'shd': if (App.busy) break; App.busy = true; sfx('card'); doAct({type:'shblind', i:+t.dataset.i}); break;
+    case 'shplay': if (App.busy || !App.ss.idx.length) break; App.busy = true; sfx('card'); var pa = {type:'shplay', from:App.ss.src, idx:App.ss.idx.slice()}; App.ss = {src:null, idx:[]}; doAct(pa); break;
+    case 'shpickup': if (App.busy) break; App.busy = true; doAct({type:'shpickup'}); break;
+    case 'shready': doAct({type:'shready'}); break;
+    case 'game': doAct({type:'game', game:t.dataset.g}); break;
+    case 'rulestab': $('#modal').innerHTML = rulesHTML(t.dataset.g); break;
     case 'mid': selCard('m', +t.dataset.i); break;
     case 'swap': if (App.sel.h != null && App.sel.m != null){ sfx('card'); doAct({type:'swap', h:App.sel.h, m:App.sel.m}); } break;
     case 'swapAll': sfx('card'); doAct({type:'swapAll'}); break;
@@ -1533,10 +2050,10 @@ document.addEventListener('click', function(e){
     case 'skip': doAct({type:'skip'}); break;
     case 'start': doAct({type:'start'}); break;
     case 'lives': if (v) doAct({type:'rules', rules:{lives: v.rules.lives + (+t.dataset.d)}}); break;
-    case 'peek': App.peek = true; renderOverlay(v); break;
-    case 'unpeek': App.peek = false; renderOverlay(v); break;
+    case 'peek': App.peek = true; render(); break;
+    case 'unpeek': App.peek = false; render(); break;
     case 'copylink': $('#menu').hidden = true; copyLink(); break;
-    case 'share': navigator.share({title:'Schnautz', text:'Komm an meinen Schnautz-Tisch!', url:shareLink()}).catch(function(){}); break;
+    case 'share': navigator.share({title:'Kartentisch', text:'Komm an meinen Kartentisch!', url:shareLink()}).catch(function(){}); break;
     case 'openlog': document.body.classList.add('logopen'); App.unread = 0; renderLog(v); setTimeout(function(){ var l = $('#log'); l.scrollTop = l.scrollHeight; }, 50); break;
     case 'closelog': document.body.classList.remove('logopen'); break;
     case 'closemodal': $('#modal').innerHTML = ''; break;
@@ -1553,7 +2070,9 @@ document.addEventListener('keydown', function(e){
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.card[data-act]')){ e.preventDefault(); e.target.click(); }
 });
 document.addEventListener('change', function(e){
-  var t = e.target; if (!t.dataset || !t.dataset.rule) return;
+  var t = e.target; if (!t.dataset) return;
+  if (t.dataset.shrule){ var sr = {}; sr[t.dataset.shrule] = t.checked; doAct({type:'rules', rules:{sh:sr}}); return; }
+  if (!t.dataset.rule) return;
   var r = {}; r[t.dataset.rule] = t.checked; doAct({type:'rules', rules:r});
 });
 $('#btn-host').onclick = function(){
