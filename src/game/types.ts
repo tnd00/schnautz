@@ -167,6 +167,9 @@ export interface LastMove {
 
 export type ShSource = 'hand' | 'up' | 'down';
 
+/** Was sich werfen lässt */
+export type TossItem = 'tomato' | 'egg' | 'poo' | 'crown' | 'heart' | 'bunny';
+
 interface LogBase {
   n: number;
   p?: string;
@@ -207,6 +210,8 @@ export type LogEntry = LogBase &
     | { k: 'lobby' }
     | { k: 'chat'; text: string; bot?: boolean }
     | { k: 'emote'; e: string }
+    | { k: 'toss'; item: TossItem; to: string }
+    | { k: 'sound'; s: string; quiet?: boolean }
     | { k: 'shdeal' }
     | { k: 'shstart'; card: Card | null }
     | { k: 'shplay'; cards: Card[]; src: ShSource }
@@ -275,6 +280,8 @@ export interface View extends Omit<State, 'deck' | 'discard' | 'spare' | 'hands'
   me: string;
   /** Zeitlimit: wer gerade die Uhr hat, Restzeit und volle Zeit in ms (beim Host auch das Ende als `at`) */
   clock?: { ids: string[]; left: number; total: number; at?: number } | null;
+  /** Schnautz: Millisekunden, bis der Host die nächste Runde von selbst startet */
+  next?: number | null;
 }
 
 /** Alles, was sowohl im vollen Zustand als auch in einer Ansicht vorkommt. */
@@ -283,12 +290,18 @@ export type Table = State | View;
 export type Action =
   | { type: 'chat'; text: string; bot?: boolean }
   | { type: 'emote'; e: string; bot?: boolean }
+  /** Gegenstand auf jemanden werfen, reine Stichelei ohne Einfluss aufs Spiel */
+  | { type: 'toss'; item: TossItem; to: string; bot?: boolean }
+  /** Klang vom Soundboard für alle am Tisch. `quiet` setzt nur der Host, wenn am Tisch gerade zu viel los ist */
+  | { type: 'sound'; s: string; bot?: boolean; quiet?: boolean }
   | { type: 'rules'; rules: Partial<Omit<Rules, 'sh'>> & { sh?: Partial<ShRules> } }
   | { type: 'game'; game: GameKind }
   | { type: 'start' }
   | { type: 'addbot' }
   | { type: 'rmbot'; id: string }
   | { type: 'tolobby' }
+  /** Host: laufende Partie beenden und sofort eine neue starten (etwa wenn nur noch KIs spielen) */
+  | { type: 'restart' }
   | { type: 'skip' }
   | { type: 'force' }
   | { type: 'ready' }

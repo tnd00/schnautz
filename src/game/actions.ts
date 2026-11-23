@@ -1,5 +1,5 @@
 /* Einziger Einstiegspunkt für alle Spielzüge. Der Gastgeber ruft act() für eigene Züge, Gäste und KIs auf. */
-import { EMOTES } from './constants';
+import { EMOTES, SOUNDS, TOSS_ITEMS } from './constants';
 import { beginGame, checkReady, toLobby } from './flow';
 import { checkInstant, endTurn, renewMiddle, startRound } from './schnautz';
 import { shAct, shAuto, shBegin } from './shithead';
@@ -16,10 +16,25 @@ import {
   sanitizeRules,
   seatLimit,
 } from './state';
-import type { Action, ActResult, Rng, State } from './types';
+import type { Action, ActResult, LogEntry, Rng, State } from './types';
 
 const MAX_EMOTES_IN_LOG = 6;
+const MAX_TOSSES_IN_LOG = 6;
+const MAX_SOUNDS_IN_LOG = 4;
 const HOST_ONLY = 'Nur der Gastgeber kann das.';
+
+/** Reaktionen, Würfe und Klänge haben je einen eigenen Deckel im Verlauf und verdrängen keine Spielzüge. */
+function capLog(st: State, k: LogEntry['k'], max: number): void {
+  const olds = st.log.filter((x) => x.k === k);
+  while (olds.length >= max) st.log.splice(st.log.indexOf(olds.shift()!), 1);
+}
+
+/** Darf dieser Platz gerade diesen Klang schicken? Ohne Uhr, die Zeitsperren liegen beim Host. */
+export function soundOk(st: State, pid: string, a: Action): boolean {
+  if (a?.type !== 'sound' || !SOUNDS.includes(a.s) || st.phase === 'lobby') return false;
+  const me = st.players[pIdx(st, pid)];
+  return !!me && !!a.bot === !!me.bot;
+}
 
 /**
  * Führt eine Aktion aus. Gibt `null` zurück, wenn sie geklappt hat, sonst einen Hinweis für die Person.
@@ -46,10 +61,25 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
     case 'emote': {
       if (!EMOTES.includes(a.e) || st.phase === 'lobby') return null;
       if (me.bot && !a.bot) return null;
-      // Reaktionen sollen den Verlauf nicht verdrängen
-      const olds = st.log.filter((x) => x.k === 'emote');
-      if (olds.length >= MAX_EMOTES_IN_LOG) st.log.splice(st.log.indexOf(olds[0]), 1);
+      capLog(st, 'emote', MAX_EMOTES_IN_LOG);
       addLog(st, { k: 'emote', p: pid, e: a.e });
+      return null;
+    }
+    case 'toss': {
+      // Werfen dürfen alle mit Platz, auch wer fertig oder raus ist. Zug und Uhr bleiben unberührt.
+      if (!TOSS_ITEMS.includes(a.item) || st.phase === 'lobby') return null;
+      if (me.bot && !a.bot) return null;
+      const to = String(a.to || '');
+      if (to === pid) return null;
+      if (pIdx(st, to) < 0) return 'Die Person sitzt nicht mehr am Tisch.';
+      capLog(st, 'toss', MAX_TOSSES_IN_LOG);
+      addLog(st, { k: 'toss', p: pid, to, item: a.item });
+      return null;
+    }
+    case 'sound': {
+      if (!soundOk(st, pid, a)) return null;
+      capLog(st, 'sound', MAX_SOUNDS_IN_LOG);
+      addLog(st, a.quiet ? { k: 'sound', p: pid, s: a.s, quiet: true } : { k: 'sound', p: pid, s: a.s });
       return null;
     }
     case 'rules':
@@ -97,6 +127,11 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       if (!isHost) return HOST_ONLY;
       toLobby(st);
       return null;
+    case 'restart':
+      if (!isHost) return 'Nur der Gastgeber startet eine neue Partie.';
+      if (st.phase === 'lobby') return 'Die Partie hat noch gar nicht angefangen.';
+      toLobby(st);
+      return beginGame(st, rng);
     case 'skip':
       if (!isHost) return HOST_ONLY;
       return skipOffline(st, rng);

@@ -16,12 +16,12 @@
       <header class="top">
         <div class="brand"><span id="brand-name">Schnautz</span> <small id="brand-badge">31</small></div>
         <div class="grow"></div>
-        <button class="chip code-chip" id="codechip" hidden title="Einladungslink kopieren">
+        <button class="chip code-chip" id="codechip" hidden title="Freunde einladen">
           <span class="lbl">Tisch</span> <b id="codechip-code"></b>
         </button>
-        <span class="chip" id="netchip" hidden
-          ><span class="dot" id="netdot"></span><span id="nettext">getrennt</span></span
-        >
+        <button class="chip" id="netchip" data-act="netinfo" title="Details zur Verbindung" hidden>
+          <span class="dot" id="netdot"></span><span id="nettext">getrennt</span>
+        </button>
         <button class="iconbtn rulesbtn" id="btn-rules" title="Regeln und Sonderkarten" aria-label="Regeln">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" />
@@ -55,6 +55,7 @@
         <button data-act="updates" id="menu-updates">Updates</button>
         <button data-act="copylink" class="t-only">Einladungslink kopieren</button>
         <button data-act="sound" class="m-only" id="menu-sound">Ton ausschalten</button>
+        <button data-act="sbtoggle" id="menu-sb">Soundboard ausschalten</button>
         <button data-act="tolobby" class="t-only" id="menu-lobby">Partie abbrechen, zurück zur Lobby</button>
         <button data-act="leave" class="danger t-only" id="menu-leave">Tisch verlassen</button>
       </div>

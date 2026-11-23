@@ -2,6 +2,7 @@
 import { App } from './app';
 import { $, $opt, esc, type Timer } from './dom';
 import { render } from './render/index';
+import { sfxCalm } from './sound';
 
 const ms = (x: number | undefined, d: number) => x || d;
 
@@ -24,6 +25,14 @@ export function toast(msg: string, duration?: number): void {
  * Freie Spielfläche zwischen Gegnern und eigenem Platz. Meldungen liegen nur dort,
  * damit sie weder die eigenen Karten noch die Gegner verdecken. Ohne Platz (etwa in der Tauschrunde) `null`.
  */
+/** Oberkante des offenen Reaktionsfensters am Handy, Meldungen sollen es nicht verdecken. */
+function emotesTop(): number {
+  if (!document.body.classList.contains('emoopen')) return Infinity;
+  const e = $opt('#emotes');
+  const r = e?.getBoundingClientRect();
+  return r && r.height ? r.top : Infinity;
+}
+
 function fieldRect(min = 90): { left: number; top: number; width: number; height: number } | null {
   if (!document.body.classList.contains('ingame')) return null;
   const table = $opt('#table');
@@ -32,7 +41,7 @@ function fieldRect(min = 90): { left: number; top: number; width: number; height
   if (!table || !opps || !me) return null;
   const t = table.getBoundingClientRect();
   const top = Math.max(t.top, opps.getBoundingClientRect().bottom) + 6;
-  const bottom = Math.min(t.bottom, me.getBoundingClientRect().top) - 6;
+  const bottom = Math.min(t.bottom, me.getBoundingClientRect().top, emotesTop()) - 6;
   if (bottom - top < min) return null;
   return { left: t.left, top, width: t.width, height: bottom - top };
 }
@@ -64,6 +73,9 @@ function placeMessage(el: HTMLElement, mode: 'cap' | 'center'): boolean {
     .map((o) => o.getBoundingClientRect())
     .sort((p, q) => p.top - q.top);
   for (const o of taken) if (top < o.bottom + 4 && top + h > o.top - 4) top = o.bottom + 4;
+  // Ist das Reaktionsfenster offen, rückt die Meldung darüber
+  const limit = emotesTop() - 6;
+  if (top + h > limit) top = Math.max(oppsBottom, limit - h);
   el.style.top = `${Math.round(top)}px`;
   return true;
 }
@@ -90,6 +102,7 @@ function placeInField(el: HTMLElement | null): void {
 
 let bannerTimer: Timer | undefined;
 export function banner(text: string): void {
+  sfxCalm('msg', 500);
   const b = $('#banner');
   b.innerHTML = `<div class="banner"><div>${esc(text)}</div></div>`;
   placeInField(b.firstElementChild as HTMLElement | null);
@@ -162,6 +175,7 @@ function annNext(): void {
   $('#announce').appendChild(el);
   ANN.el = el;
   ANN.t = setTimeout(annClose, ms(o.ms, 1700));
+  sfxCalm('msg', 500);
 }
 
 function annClose(): void {
@@ -271,6 +285,7 @@ export function chatBubble(pid: string | undefined, text: string): void {
 }
 
 export function centerLabel(text: string): void {
+  sfxCalm('msg', 500, 0.7);
   const c = $opt('#center');
   if (c) addTemp(c, 'span', 'floatlbl center', text, 1600);
 }
@@ -286,6 +301,7 @@ export function floatLabel(pid: string | undefined, text: string, mineText?: str
   const f = document.createElement('div');
   f.className = 'fieldlbl';
   f.textContent = `${name} ${me && mineText ? mineText : text}`.trim();
+  sfxCalm('msg', 500, 0.7);
   if (placeMessage(f, 'cap')) {
     setTimeout(() => f.remove(), 1800);
     return;
@@ -297,6 +313,7 @@ export function floatLabel(pid: string | undefined, text: string, mineText?: str
 /** Einblendung über einem Element, die nicht beim nächsten Rendern verschwindet. */
 export function fixedLabel(cls: string, text: string, anchor: Element | null, duration = 2400, dy = 10): void {
   if (!anchor || !text) return;
+  sfxCalm('msg', 500, 0.7);
   document.querySelector(`#fly .${cls}`)?.remove();
   const f = document.createElement('div');
   f.className = cls;

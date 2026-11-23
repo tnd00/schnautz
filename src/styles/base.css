@@ -130,7 +130,9 @@ button {
   white-space: nowrap;
 }
 .chip b {
-  font-family: var(--display);
+  /* Codes immer serifenlos, auch am Tisch */
+  font-family: var(--ui);
+  font-weight: 750;
   letter-spacing: 0.14em;
   color: var(--brass-hi);
 }
@@ -147,6 +149,21 @@ button.chip:hover {
 .dot.online {
   background: #7fe3a3;
   box-shadow: 0 0 0 3px rgba(127, 227, 163, 0.18);
+  /* Lebt, aber ruhig: ein sanfter Ring alle paar Sekunden */
+  animation: alive 2.8s ease-in-out infinite;
+}
+@keyframes alive {
+  50% {
+    box-shadow: 0 0 0 5px rgba(127, 227, 163, 0.06);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot.online {
+    animation: none;
+  }
+}
+button.chip#netchip {
+  cursor: pointer;
 }
 .dot.connecting,
 .dot.reconnecting {
@@ -307,7 +324,7 @@ button.chip:hover {
   box-shadow: 0 0 0 4px rgba(214, 162, 74, 0.18);
 }
 .input.code {
-  font-family: var(--display);
+  font-family: var(--ui);
   letter-spacing: 0.3em;
   text-transform: uppercase;
   font-weight: 700;
@@ -318,12 +335,13 @@ button.chip:hover {
   animation: shake 0.4s;
 }
 @keyframes shake {
+  /* translate statt transform: Im Karussell steckt die Position der Kachel im transform */
   20%,
   60% {
-    transform: translateX(-6px);
+    translate: -6px 0;
   }
   40%,
   80% {
-    transform: translateX(6px);
+    translate: 6px 0;
   }
 }

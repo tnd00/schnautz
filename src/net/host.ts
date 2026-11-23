@@ -4,17 +4,19 @@
  * weitermachen kann.
  */
 import { type DataConnection, Peer } from 'peerjs';
+import { hostAutoNext, nextFor, stopAutoNext } from './autonext';
 import { botChatter, botTick } from './bots';
 import { clockFor, hostClock, resetClock } from './clock';
-import { act } from '../game/actions';
-import { SH_WIN_MS } from '../game/constants';
+import { act, soundOk } from '../game/actions';
+import { EMOTE_HOST_WINDOW_MS, SH_WIN_MS, TOSS_HOST_WINDOW_MS } from '../game/constants';
 import { checkReady, quitPlayer } from '../game/flow';
 import { isOwnLeftSeat, reclaimSeat, seatGuest, syncSeats, takeSeat } from '../game/seats';
-import { migrate, newState, pIdx, removePlayer } from '../game/state';
+import { cosmeticOnly, migrate, newState, pIdx, removePlayer } from '../game/state';
 import type { Action, LogEntry, State, View } from '../game/types';
 import { fitView, viewFor } from '../game/view';
 import { App } from '../ui/app';
 import { applyView } from '../ui/apply';
+import { annLeft } from '../ui/feedback';
 import { num, type Timer } from '../ui/dom';
 import { resetTableUI } from '../ui/reset';
 import { seqMsOf } from '../ui/shithead/sequence';
@@ -23,6 +25,7 @@ import { renderResume, showStartError } from '../ui/start';
 import { LS } from '../ui/storage';
 import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
 import { asMessage, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
+import { allowBurst, newRateBook, rateSound } from './rate';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 
 const GUEST_ID = /^p-[0-9a-f]{12}$/;
@@ -36,7 +39,6 @@ interface ConnInfo {
   pid?: string;
   seen: number;
   chat: number;
-  emote: number;
   /** Absichtlich geschlossen (ersetzt oder verabschiedet), kein Verbindungsabbruch. */
   replaced: boolean;
 }
@@ -56,12 +58,14 @@ export const H = {
   winId: null as number | null,
   /** Stand des Verlaufs beim letzten Versand. */
   commitN: 0,
+  /** Zeitsperren für Würfe und Klänge, nur im Speicher */
+  rate: newRateBook(),
 };
 
 function info(conn: DataConnection): ConnInfo {
   let i = H.info.get(conn);
   if (!i) {
-    i = { seen: 0, chat: 0, emote: 0, replaced: false };
+    i = { seen: 0, chat: 0, replaced: false };
     H.info.set(conn, i);
   }
   return i;
@@ -73,6 +77,7 @@ function resetHost(): void {
   H.keys = Object.create(null);
   H.retries = 0;
   H.commitN = 0;
+  H.rate = newRateBook();
   App.view = null;
   App.seenN = 0;
 }
@@ -313,16 +318,14 @@ function hostMsg(conn: DataConnection, raw: unknown): void {
     case 'act': {
       const a = m.a as Action | undefined;
       const now = Date.now();
-      // Einfacher Schutz gegen Spam
-      if (a?.type === 'emote') {
-        if (now - ci.emote < 900) return;
-        ci.emote = now;
-      }
+      // Einfacher Schutz gegen Spam, Reaktionen, Würfe und Klänge prüft gateAct
       if (a?.type === 'chat') {
         if (now - ci.chat < 600) return;
         ci.chat = now;
       }
-      const e = act(st, id, a as Action);
+      const g = gateAct(st, id, a as Action, now);
+      if (!g) return;
+      const e = act(st, id, g);
       if (e) hostSend(conn, { t: 'err', msg: e });
       else hostCommit();
       return;
@@ -335,6 +338,23 @@ function hostMsg(conn: DataConnection, raw: unknown): void {
       safeClose(conn, 300);
       return;
   }
+}
+
+/**
+ * Zeitsperren für Würfe und Klänge, gleich für Gäste, den Host und die KI. Zu schnell heißt still verworfen.
+ * Klänge baut der Host neu zusammen, `quiet` kommt nur von hier und nie vom Gast.
+ */
+export function gateAct(st: State, pid: string, a: Action, now = Date.now()): Action | null {
+  if (a?.type === 'emote') return allowBurst(H.rate, 'emote', pid, EMOTE_HOST_WINDOW_MS, now) ? a : null;
+  if (a?.type === 'toss') return allowBurst(H.rate, 'toss', pid, TOSS_HOST_WINDOW_MS, now) ? a : null;
+  if (a?.type !== 'sound') return a;
+  if (!soundOk(st, pid, a)) return null;
+  const verdict = rateSound(H.rate, pid, now);
+  if (verdict === 'seat') return null;
+  const s: Action = { type: 'sound', s: a.s };
+  if (a.bot) s.bot = true;
+  if (verdict === 'quiet') s.quiet = true;
+  return s;
 }
 
 function hostClosed(conn: DataConnection): void {
@@ -392,6 +412,7 @@ function hostView(st: State, pid: string, own = false): View {
     delete v.sh.win.until;
   }
   clockFor(v, own);
+  nextFor(v);
   // Was übers Netz geht, muss in eine PeerJS-Nachricht passen
   return own ? v : fitView(v);
 }
@@ -439,6 +460,7 @@ export function resetHostTimers(): void {
 export function stopHostClocks(): void {
   resetHostTimers();
   resetClock();
+  stopAutoNext();
 }
 
 /** Nach jeder Änderung: speichern, an alle senden, selbst anzeigen, KI anstoßen. */
@@ -455,7 +477,13 @@ export function hostCommit(): void {
   hostSave();
   H.conns.forEach((conn, pid) => hostSend(conn, { t: 'state', s: hostView(st, pid) }));
   applyView(hostOwnView(st));
-  botTick();
+  // Countdown zur nächsten Schnautz-Runde erst, wenn die Meldungen beim Host durch sind, dann allen schicken
+  if (hostAutoNext(st, seqMsOf(fresh) + annLeft() + 400)) {
+    H.conns.forEach((conn, pid) => hostSend(conn, { t: 'state', s: hostView(st, pid) }));
+    applyView(hostOwnView(st));
+  }
+  // Nur Chat, Reaktionen, Würfe oder Klänge: Geplante KI-Züge behalten ihre Denkpause
+  if (!cosmeticOnly(fresh)) botTick();
 }
 
 export function hostClose(): void {

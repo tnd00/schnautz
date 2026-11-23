@@ -4,11 +4,25 @@ import { activeList } from '../../game/state';
 import { App } from '../app';
 import { cardHTML, fmtVal, livesHTML, valHTML } from '../cards';
 import { layoutOpps } from '../carousel';
-import { marksHTML } from './marks';
+import { aimAttrs, marksHTML } from './marks';
 import { markClocks } from '../clock';
+import { markTosses } from '../toss';
 import { $, esc, listJoin, num } from '../dom';
 import { holdOverlay } from '../feedback';
-import { W, dealerId, myTurn, nameOf, pById, roundBest, schnautzResult, seatOrder, turnId, vb } from '../helpers';
+import {
+  W,
+  dealerId,
+  myTurn,
+  nameOf,
+  onlyBotsPlaying,
+  pById,
+  roundBest,
+  schnautzResult,
+  seatOrder,
+  turnId,
+  vb,
+} from '../helpers';
+import { nextSecs } from '../nextround';
 import { taunt } from '../taunts';
 
 /** Schnautz-Tisch: Gegner, Mitte, Status und eigene Hand. */
@@ -50,7 +64,9 @@ export function renderGame(v: View): void {
       rcls +
       '" data-pid="' +
       esc(p.id) +
-      '">' +
+      '"' +
+      aimAttrs(p) +
+      '>' +
       '<div class="ocards">' +
       cards +
       '</div><div class="ometa">' +
@@ -73,14 +89,13 @@ export function renderGame(v: View): void {
   const playing = myTurn(v),
     sel = App.sel;
   let ch = '<span class="cap">' + (v.phase === 'choose' ? 'Zweites Blatt' : 'Mitte') + '</span>';
+  // Die Zahl sitzt als Plakette am Stapel wie bei Shithead, darunter braucht die Mitte keinen Platz
   ch +=
-    '<div class="deck" title="Stapel">' +
+    `<div class="deck" title="${num(v.deck)} Karten im Stapel">` +
     cardHTML(null) +
     cardHTML(null) +
     cardHTML(null) +
-    '<span class="cnt">' +
-    num(v.deck) +
-    ' im Stapel</span></div>';
+    `<span class="pcount">${num(v.deck)}</span></div>`;
   ch += '<div class="middle">';
   if (v.phase === 'choose') {
     for (let j = 0; j < 3; j++)
@@ -168,7 +183,8 @@ export function renderGame(v: View): void {
     mh =
       '<div class="mehead"><span class="nm">Du</span>' +
       (me ? livesHTML(me, v.rules) : '') +
-      '</div><div class="outmsg">Du bist raus und schaust zu.</div>';
+      '</div><div class="outmsg">Du bist raus. Werfen und tröten darfst du trotzdem.</div>' +
+      (v.phase === 'play' || v.phase === 'choose' ? `<div class="actions botsrow">${botsOnlyHTML(v)}</div>` : '');
   } else {
     const hv = handValue(handCards ?? undefined, v.rules);
     const liveMe = v.phase === 'choose' || v.phase === 'play';
@@ -250,6 +266,7 @@ export function renderGame(v: View): void {
   meEl.setAttribute('data-pid', App.me);
   meEl.innerHTML = mh;
   markClocks();
+  markTosses();
 }
 
 function resultTitle(v: View): string {
@@ -275,7 +292,7 @@ export function renderOverlay(v: View): void {
   }
   if (holdOverlay()) return;
   if (App.peek) {
-    ov.innerHTML = '<button class="btn primary peek" data-act="unpeek">Ergebnis zeigen</button>';
+    ov.innerHTML = peekHTML(v, pById(v, App.me));
     return;
   }
   const me = pById(v, App.me);
@@ -370,7 +387,9 @@ export function renderOverlay(v: View): void {
       (isBest || isWin ? ' win' : '') +
       '" data-pid="' +
       esc(p.id) +
-      '"><div class="mini">' +
+      '"' +
+      aimAttrs(p, true) +
+      '><div class="mini">' +
       cards
         .map((x) => {
           return cardHTML(x);
@@ -401,11 +420,56 @@ export function renderOverlay(v: View): void {
     '<div class="rows">' +
     rows +
     '</div>' +
+    outRow(v, r) +
     foot +
     '</div></div>';
 }
 
 /** Fußzeile der Ergebnisfenster: bereit melden, warten, Tisch ansehen. */
+/**
+ * „Tisch ansehen“ am Ende einer Runde: unten eine Leiste mit Ergebnis, nächster Runde und für den Host am Ende
+ * der Partie „Zur Lobby“. Das Reaktionsfenster am Tisch ist dann weg, reagieren geht in der Übersicht.
+ */
+export function peekHTML(v: View, me: Player | null): string {
+  const next = v.phase === 'over' ? 'Neue Partie' : 'Nächste Runde';
+  return (
+    '<div class="peek">' +
+    '<button class="btn ghost" data-act="unpeek"><span class="blong">Ergebnis zeigen</span><span class="bshort">Ergebnis</span></button>' +
+    (App.role === 'host' && v.phase === 'over'
+      ? '<button class="btn ghost" data-act="lobbynow"><span class="blong">Zur Lobby</span><span class="bshort">Lobby</span></button>'
+      : '') +
+    (me && !me.ready ? `<button class="btn primary" data-act="ready">${next}</button>` : '') +
+    '</div>'
+  );
+}
+
+/** Ich bin raus und nur noch KIs spielen: Der Host kann abkürzen, Gäste sehen einen Hinweis. */
+export function botsOnlyHTML(v: View, small = false): string {
+  if (!onlyBotsPlaying(v)) return '';
+  if (App.role !== 'host') return '<span class="botsonly">Nur noch KIs im Spiel. Der Host kann neu starten.</span>';
+  const sz = small ? ' small' : '';
+  return (
+    `<button class="btn ghost${sz}" data-act="lobbynow">Zur Lobby</button>` +
+    `<button class="btn primary${sz}" data-act="restart">Neue Partie</button>`
+  );
+}
+
+/** Wer schon vor dieser Runde raus war, steht als Chip da, damit man auch dort hinwerfen kann. */
+function outRow(v: View, r: SchnautzResult): string {
+  const outs = v.players.filter((p) => !r.hands[p.id]);
+  if (!outs.length) return '';
+  return (
+    '<div class="outrow"><span>Schon raus</span>' +
+    outs
+      .map(
+        (p) =>
+          `<span class="chip" data-pid="${esc(p.id)}"${aimAttrs(p)}>${esc(p.id === App.me ? 'Du' : p.name)}</span>`,
+      )
+      .join('') +
+    '</div>'
+  );
+}
+
 export function overlayFoot(v: View, me: Player | null): string {
   const waiting = v.players
     .filter((p) => {
@@ -416,15 +480,22 @@ export function overlayFoot(v: View, me: Player | null): string {
     });
   const ready = me && me.ready;
   const btnLabel = v.phase === 'over' ? 'Neue Partie' : 'Nächste Runde';
+  const cd = v.phase === 'end' && nextSecs() ? `Weiter in <b class="nextcd">${nextSecs()}</b> s` : '';
   return (
+    '<div class="rfoot">' +
+    (me ? '<div class="emotes oemotes"></div>' : '') +
     '<div class="foot"><span class="waittxt">' +
     (ready ? (waiting.length ? 'Warte auf ' + esc(listJoin(waiting)) + '…' : "Los geht's…") : '') +
+    (cd ? (ready ? ' · ' : '') + cd : '') +
     '</span>' +
     (App.role === 'host' && ready && waiting.length
-      ? '<button class="btn ghost" data-act="force">Nicht warten</button>'
+      ? '<button class="btn ghost" data-act="force"><span class="blong">Nicht warten</span><span class="bshort">Los</span></button>'
       : '') +
-    '<button class="btn ghost" data-act="peek">Tisch ansehen</button>' +
+    (App.role === 'host' && v.phase === 'over'
+      ? '<button class="btn ghost" data-act="lobbynow"><span class="blong">Zur Lobby</span><span class="bshort">Lobby</span></button>'
+      : '') +
+    '<button class="btn ghost" data-act="peek"><span class="blong">Tisch ansehen</span><span class="bshort">Tisch</span></button>' +
     (ready ? '' : '<button class="btn primary" data-act="ready">' + btnLabel + '</button>') +
-    '</div>'
+    '</div></div>'
   );
 }

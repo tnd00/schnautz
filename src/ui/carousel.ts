@@ -25,7 +25,14 @@ export const CAR = {
   wheelT: 0,
   /** Gerade am Trackpad seitlich scrollen */
   wheeling: false,
+  /** Bis dahin nicht von selbst zur Person am Zug drehen (eigener Wurf auf eine Kachel am Rand) */
+  hold: 0,
+  /** Letzter Tipp auf eine Kachel, damit der Klick danach nicht doppelt zählt */
+  tapAt: 0,
 };
+
+/** So lange gleitet das Karussell (CSS in fit.css). */
+const SLIDE_MS = 450;
 
 /** So lange ohne Bewegung am Trackpad gilt als losgelassen. */
 const WHEEL_IDLE_MS = 700;
@@ -107,7 +114,7 @@ export function layoutOpps(v: View): void {
   const actor = actorOf(v);
   let target = CAR.shown;
   // Bei jedem Zugwechsel zur Person am Zug. Bin ich selbst dran oder wische gerade, bleibt es stehen
-  if (actor !== CAR.actor && !CAR.drag && !CAR.wheeling) {
+  if (actor !== CAR.actor && !CAR.drag && !CAR.wheeling && Date.now() >= CAR.hold) {
     CAR.actor = actor;
     const i = boxesOf(el).findIndex((b) => b.dataset.pid === actor);
     if (actor && actor !== App.me && i >= 0) target = CAR.shown + circ(i - CAR.shown, n);
@@ -141,8 +148,36 @@ function snapBack(el: HTMLElement): void {
   else snap(el, Math.round(CAR.shown));
 }
 
-/** Wischen mit Finger oder Maus und seitliches Scrollen am Trackpad. */
-export function initCarousel(): void {
+/** Liegt die Mitte der Kachel außerhalb des sichtbaren Bereichs? */
+export function offscreen(box: Element): boolean {
+  const r = box.getBoundingClientRect();
+  const o = $('#opps').getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  return (box as HTMLElement).style.visibility === 'hidden' || cx < o.left || cx > o.right;
+}
+
+/** Dreht eine Kachel in die Mitte und hält sie dort, bis carouselRelease. Gibt zurück, wie lange das Drehen dauert. */
+export function carouselShow(pid: string): number {
+  const el = $('#opps');
+  if (!el.classList.contains('car')) return 0;
+  const boxes = boxesOf(el);
+  const i = boxes.findIndex((b) => b.dataset.pid === pid);
+  if (i < 0 || !offscreen(boxes[i])) return 0;
+  CAR.hold = Infinity;
+  snap(el, CAR.shown + circ(i - CAR.shown, CAR.n));
+  return SLIDE_MS;
+}
+
+/** Wieder frei: zurück zur Person am Zug, außer es wischt gerade jemand. */
+export function carouselRelease(): void {
+  if (CAR.hold === 0) return;
+  CAR.hold = 0;
+  const el = $('#opps');
+  if (el.classList.contains('car') && !CAR.drag && !CAR.wheeling) snapBack(el);
+}
+
+/** Wischen mit Finger oder Maus und seitliches Scrollen am Trackpad. `onTap`: Tipp ohne Wischen auf eine Kachel. */
+export function initCarousel(onTap?: (pid: string) => void): void {
   const el = $('#opps');
   el.addEventListener('pointerdown', (e) => {
     if (!el.classList.contains('car') || (e.pointerType === 'mouse' && e.button !== 0)) return;
@@ -163,7 +198,16 @@ export function initCarousel(): void {
     const d = CAR.drag;
     if (!d || d.id !== e.pointerId) return;
     CAR.drag = null;
-    if (d.moved) snapBack(el);
+    if (d.moved) {
+      snapBack(el);
+      return;
+    }
+    // Mit Festhalten erreicht der Klick die Kachel nicht immer, deshalb hier selbst nachsehen
+    if (e.type !== 'pointerup' || !onTap) return;
+    const box = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('.opp[data-pid]');
+    if (!box?.dataset.pid) return;
+    CAR.tapAt = Date.now();
+    onTap(box.dataset.pid);
   };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);

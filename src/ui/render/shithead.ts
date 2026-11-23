@@ -6,16 +6,17 @@ import type { Card, Player, Rank, ShitheadResult, ShPlayerView, ShView, View } f
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
 import { layoutOpps } from '../carousel';
-import { marksHTML, reignHTML } from './marks';
+import { aimAttrs, marksHTML, reignHTML } from './marks';
 import { markClocks } from '../clock';
+import { markTosses } from '../toss';
 import { $, esc, hashStr, isMobile, listJoin, num } from '../dom';
 import { holdOverlay } from '../feedback';
-import { W, myTurn, nameOf, pById, seatOrder, turnId, vb } from '../helpers';
+import { W, myTurn, nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb } from '../helpers';
 import { fitHand } from '../shithead/hand';
 import { SEQ } from '../shithead/sequence';
 import { winLeft, winSecs } from '../shithead/window';
 import { taunt } from '../taunts';
-import { overlayFoot } from './schnautz';
+import { botsOnlyHTML, overlayFoot, peekHTML } from './schnautz';
 
 type Source = 'hand' | 'up' | 'down';
 type OwnCards = { hand: Card[]; up: Card[]; down: Card[] | number };
@@ -153,7 +154,7 @@ function opponentHTML(v: View, S: ShView, p: Player): string {
     .join(' ');
   const count0 = hn ? '' : ' zero';
   return (
-    `<div data-pid="${esc(p.id)}" class="${cls}">` +
+    `<div data-pid="${esc(p.id)}" class="${cls}"${aimAttrs(p)}>` +
     (handOnly ? bigHandHTML(hn) : shTableHTML(v, P, false)) +
     `<div class="ometa">${marksHTML(v, p)}<span class="nm">${esc(p.name)}</span>` +
     (handOnly
@@ -240,7 +241,9 @@ function statusHTML(
   if (v.phase === 'play') {
     if (meDone && me) {
       main = 'Du bist fertig!';
-      sub = `Platz ${num(me.place)}. Jetzt in Ruhe zuschauen.`;
+      sub = `Platz ${num(me.place)}. Werfen und tröten darfst du trotzdem.`;
+      // Nur noch KIs am Spielen: abkürzen statt zuschauen
+      if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
     }
     if (myTurn(v) && S.win?.lock) {
       const wl = winLeft();
@@ -256,7 +259,7 @@ function statusHTML(
       main = `${W(v, tId)} ist dran.`;
       if (S.win) sub = 'Neuer Stapel: Wer eine 4 hat, darf sie jetzt reinwerfen.';
     }
-    if (mine) quick = quickHTML(v);
+    if (mine && !quick) quick = quickHTML(v);
   } else if (v.phase === 'over') main = 'Partie vorbei.';
 
   const actor = v.phase === 'play' && tId ? pById(v, tId) : null;
@@ -388,6 +391,7 @@ export function renderSh(v: View): void {
   layoutSwapOpps(v);
   layoutOpps(v);
   markClocks();
+  markTosses();
 }
 
 /** Abstände zwischen den Gegnerkacheln in der Tauschrunde, wie in fit.css. */
@@ -454,7 +458,7 @@ export function renderShOverlay(v: View): void {
   }
   if (holdOverlay()) return;
   if (App.peek) {
-    ov.innerHTML = '<button class="btn primary peek" data-act="unpeek">Ergebnis zeigen</button>';
+    ov.innerHTML = peekHTML(v, pById(v, App.me));
     return;
   }
   const me = pById(v, App.me);
@@ -509,7 +513,7 @@ export function renderShOverlay(v: View): void {
               .join('')}${left.length > 8 ? `<span class="more">+${left.length - 8}</span>` : ''}</div>`
           : '';
       return (
-        `<div class="row${isL ? ' lose' : i === 0 ? ' win' : ''}"><div class="val" style="min-width:34px;text-align:left">${i + 1}.</div>` +
+        `<div class="row${isL ? ' lose' : i === 0 ? ' win' : ''}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val" style="min-width:34px;text-align:left">${i + 1}.</div>` +
         `<div class="who"><b>${hat}${nm(id)}</b><span>${what}${p?.shc ? ` · ${num(p.shc)}× Shithead` : ''}</span>${leftCards}</div></div>`
       );
     })

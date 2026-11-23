@@ -4,13 +4,15 @@ import { App } from '../ui/app';
 import { toast } from '../ui/feedback';
 import { unlockAudio } from '../ui/sound';
 import { sendToHost } from './guest';
-import { H, hostCommit } from './host';
+import { gateAct, H, hostCommit } from './host';
 
 /** Eigene Aktion ausführen: Der Gastgeber rechnet selbst, Gäste schicken sie an den Gastgeber. */
 export function doAct(a: Action): void {
   unlockAudio();
   if (App.role === 'host' && H.st) {
-    const e = act(H.st, App.me, a);
+    const g = gateAct(H.st, App.me, a);
+    if (!g) return;
+    const e = act(H.st, App.me, g);
     if (e) {
       toast(e);
       App.busy = false;

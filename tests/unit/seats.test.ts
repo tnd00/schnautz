@@ -189,3 +189,22 @@ describe('Plätze am Tisch', () => {
     expect(st.log.at(-1)).toMatchObject({ k: 'back' });
   });
 });
+
+describe('Neue Partie, wenn nur noch KIs spielen', () => {
+  it('startet sofort eine frische Partie, nur der Host darf das', () => {
+    const rng = rngF(12);
+    const st = newState('h', 'Host');
+    addPlayer(st, 'p1', 'Paul');
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 4 } }, rng);
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    const games = st.games;
+    expect(act(st, 'p1', { type: 'restart' }, rng)).toBe('Nur der Gastgeber startet eine neue Partie.');
+    expect(act(st, 'h', { type: 'restart' }, rng)).toBeNull();
+    expect(st.phase).toBe('swap');
+    expect(st.games).toBe(games + 1);
+    expect(st.players).toHaveLength(4);
+    act(st, 'h', { type: 'tolobby' }, rng);
+    expect(act(st, 'h', { type: 'restart' }, rng)).toBe('Die Partie hat noch gar nicht angefangen.');
+  });
+});

@@ -173,6 +173,18 @@ body.logopen .peek {
   bottom: max(18px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 40;
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+.peek .btn.ghost {
+  background: rgba(8, 22, 15, 0.88);
+  backdrop-filter: blur(4px);
+}
+/* Beim Ansehen des Tisches nach einer Runde: kein Reaktionsfenster am Tisch, die Leiste unten reicht */
+body.peeking #emofab,
+body.peeking #emotes {
+  display: none !important;
 }
 
 /* toast */
@@ -298,4 +310,12 @@ body.logopen .peek {
 }
 .paper .shc {
   background: rgba(42, 36, 27, 0.08);
+}
+
+/*
+ * Fenster wie Regeln, Bestenliste, Verbindung oder Einladung liegen über allem, was am Tisch aufpoppt
+ * (Meldungen, Flüge, Sprechblasen). Das Ergebnisfenster in #overlay bleibt darunter.
+ */
+#modal .modal {
+  z-index: 65;
 }

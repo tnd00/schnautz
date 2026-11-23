@@ -126,7 +126,7 @@
   .opp.turn,
   .opp.sh.turn {
     border-color: var(--brass-hi);
-    background: rgba(243, 205, 125, 0.14);
+    background: rgba(243, 205, 125, 0.03);
   }
   .opp .reign {
     font-size: 12px;
@@ -246,6 +246,9 @@
     gap: calc(var(--u) * 5);
     padding: 20px 12px 34px;
     border-radius: 22px;
+  }
+  #table[data-game='schnautz'] .center {
+    padding-bottom: 14px;
   }
   .center .cnt {
     bottom: -25px;
@@ -487,7 +490,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: calc(100% + 6px);
+    /* Etwas Abstand nach oben, damit die eigene Uhr am Platz frei bleibt */
+    bottom: calc(100% + 20px);
     display: none;
     justify-content: space-between;
     gap: 4px;
@@ -514,6 +518,105 @@
     height: auto;
     aspect-ratio: 1;
     font-size: 22px;
+  }
+  /* Am Handy: Reiter oben als kleine Chips, darunter eine Reihe */
+  .emotes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-height: 0;
+    border-radius: 22px;
+  }
+  .etabs {
+    justify-content: center;
+    gap: 6px;
+    padding-right: 0;
+    border-right: 0;
+  }
+  .emotes .etab {
+    flex: 0 1 auto;
+    max-width: none;
+    aspect-ratio: auto;
+    height: 26px;
+    width: auto;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: flex;
+    gap: 5px;
+    font: 650 12px/1 var(--ui);
+    color: var(--cream);
+  }
+  .emotes .etab i {
+    font-size: 13px;
+  }
+  .emotes .etab span {
+    display: inline;
+  }
+  .erow {
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .erow.e-toss {
+    justify-content: center;
+    gap: 8px;
+  }
+  .erow.e-snd button {
+    aspect-ratio: auto;
+    height: 46px;
+    max-width: none;
+    border-radius: 12px;
+  }
+  .erow.e-snd button i {
+    font-size: 20px;
+  }
+  .erow.e-snd button small {
+    font-size: 10.5px;
+  }
+  /* Im Ergebnisfenster steht das Reaktionsfenster fest über den Knöpfen */
+  .paper .emotes.oemotes .erow button {
+    font-size: 19px;
+    max-width: 40px;
+  }
+  .paper .emotes.oemotes {
+    position: static;
+    display: flex;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    animation: none;
+    margin-bottom: 8px;
+  }
+  .emotes .epanel {
+    position: static;
+    transform: none;
+    width: auto;
+    padding: 2px 2px 0;
+    border: 0;
+    box-shadow: none;
+    background: none;
+    animation: none;
+  }
+  .emotes .chip {
+    flex: none;
+    height: 30px;
+    font-size: 12.5px;
+  }
+  .emotes .ex {
+    flex: none;
+    aspect-ratio: 1;
+    width: 28px;
+    max-width: none;
+    font-size: 18px;
+  }
+  /* Größere Wurfzeichen am Tisch, die Krone deutlich größer als die Siegerkrone */
+  body.ingame .table .opp > .tossmark.crown {
+    font-size: max(22px, calc(var(--u) * 7));
+  }
+  body.ingame .table .opp > .tossmark.poo,
+  body.ingame .table .opp > .tossmark.heart,
+  body.ingame .table .opp > .tossmark.bunny {
+    font-size: max(28px, calc(var(--u) * 9));
   }
   /* Kein Platz für den Code: Der Einladungslink steht im Menü, dafür heißt das Buch Regeln */
   body.ingame #codechip {
@@ -543,8 +646,12 @@
   body.ingame .iconbtn:not(.rulesbtn) {
     width: 34px;
   }
-  .scorebar {
-    display: none;
+  /* Kurze Handys: Die kompakte Leiste bleibt, nur noch flacher */
+  body.ingame .scorebar .sb-p {
+    padding: 1px 5px;
+  }
+  body.ingame .scorebar .sb-n {
+    font-size: 11px;
   }
   .opps {
     padding-top: 6px;
@@ -556,6 +663,9 @@
   }
   .center {
     padding: 16px 10px 30px;
+  }
+  #table[data-game='schnautz'] .center {
+    padding-bottom: 12px;
   }
   .pile,
   .deck {
@@ -616,11 +726,7 @@
     border-color 0.2s,
     background 0.2s;
 }
-@media (max-width: 960px) {
-  .scorebar.many {
-    display: none;
-  }
-}
+
 @media (max-width: 960px) {
   /* Im Karussell sind die Gegner schmaler: Namenszeile kompakter, damit kurze Namen ganz passen */
   .opps.car .opp .ometa {
@@ -711,5 +817,53 @@
   .opp .tcards .tnone {
     height: calc(var(--tw) * 1.4 + 8px);
     font-size: 10px;
+  }
+}
+
+/*
+ * Schnautz am Handy: Die Leiste oben passt immer in eine Zeile. Alle teilen sich die Breite, jeder Eintrag zeigt
+ * einen gekürzten Namen und die Leben als Bierdeckel mit Zahl (.sb-lc), auch mit acht Leuten.
+ */
+@media (max-width: 960px) {
+  body.ingame .scorebar {
+    justify-content: stretch;
+    gap: 4px;
+  }
+  body.ingame .scorebar .sb-p {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 5px;
+  }
+  body.ingame .scorebar .sb-p .lives,
+  body.ingame .scorebar .sb-p .swim,
+  body.ingame .scorebar .sb-p .outt,
+  body.ingame .scorebar .sb-p .botb,
+  body.ingame .scorebar .sb-w {
+    display: none;
+  }
+  body.ingame .scorebar .sb-lc {
+    display: inline-flex;
+  }
+  body.ingame .scorebar .sb-p.out {
+    opacity: 0.45;
+  }
+  /* „schwimmt“ steht nur am eigenen Platz ausgeschrieben, sonst reicht das Zeichen */
+  body.ingame .swim .swt {
+    display: none;
+  }
+  body.ingame #me .swim .swt {
+    display: inline;
+  }
+  /* Die eigenen Leben stehen am eigenen Platz, bei vielen Leuten reicht die Zahl */
+  body.ingame .scorebar .sb-p.mine {
+    display: none;
+  }
+  body.ingame .scorebar.many .sb-lc .coaster {
+    display: none;
+  }
+  body.ingame .scorebar.many .sb-n {
+    font-size: 11px;
   }
 }

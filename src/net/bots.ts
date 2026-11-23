@@ -3,25 +3,32 @@
  * Ansicht (kein Schummeln) und spielt mit menschlich wirkenden Pausen. Außerdem gelegentliche
  * Chat-Sprüche und Emoji-Reaktionen.
  */
-import { act } from '../game/actions';
+import { act, soundOk } from '../game/actions';
 import { handValue } from '../game/schnautz';
 import { shAuto } from '../game/shithead';
 import { pIdx } from '../game/state';
-import type { Action, Player, State } from '../game/types';
+import type { Action, Player, State, TossItem } from '../game/types';
 import { viewFor } from '../game/view';
-import { H, hostCommit } from './host';
+import { gateAct, H, hostCommit } from './host';
+import { tableQuiet } from './rate';
 import { App } from '../ui/app';
 import { hashStr, num, type Timer } from '../ui/dom';
 import { ANN } from '../ui/feedback';
-import { seqLeft } from '../ui/shithead/sequence';
+import { seqLeft, seqMsOf } from '../ui/shithead/sequence';
 import { botDecide } from '../bots/index';
 import { BOT_LINES } from '../bots/lines';
+import { botTossReply } from '../bots/toss';
 
 /** Wie oft die KI eine Gelegenheit außer der Reihe bemerkt (in Prozent). */
 const NOTICE_THROW = 88;
 const NOTICE_BOMB = 80;
 const CHAT_PAUSE_MS = 7000;
 const RECENT_LINES = 12;
+/** Jede KI wirft höchstens alle 6 Sekunden, alle zusammen höchstens alle 3 */
+const BOT_TOSS_GAP_MS = 6000;
+const BOT_TOSS_ALL_MS = 3000;
+/** Für den ganzen Tisch höchstens ein KI-Klang in dieser Zeit */
+const BOT_SOUND_GAP_MS = 20000;
 
 interface Reaction {
   key: string;
@@ -37,6 +44,9 @@ export const BOTS = {
   react: {} as Record<string, Reaction>,
   /** Tauschrunde: eine Denkpause pro KI, alle tauschen gleichzeitig */
   swap: {} as Record<string, Timer>,
+  tossAt: {} as Record<string, number>,
+  tossAll: 0,
+  sndAt: 0,
 };
 
 function clearSwaps(): void {
@@ -66,6 +76,9 @@ export function resetBots(): void {
   clearSwaps();
   BOTS.scanN = -1;
   BOTS.recent = [];
+  BOTS.tossAt = {};
+  BOTS.tossAll = 0;
+  BOTS.sndAt = 0;
 }
 
 /** Reaktionen außer der Reihe (4er reinwerfen, Bombe einwerfen) laufen für jede KI parallel. */
@@ -290,6 +303,51 @@ export function botChatter(): void {
       900 + Math.random() * 1200,
     );
   };
+  // Plätze, auf denen nach dem Gehen eines Menschen die KI weiterspielt, werfen und tröten nie
+  const realBot = (id: string | null | undefined): Player | null => {
+    const p = bot(id);
+    return p && !p.left && !p.gone ? p : null;
+  };
+  const tossBot = (): Player | null => {
+    const bs = st.players.filter((p) => p.bot && !p.left && !p.gone);
+    return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null;
+  };
+  /** Wurf einer KI, erst wenn die laufende Animation durch ist */
+  const toss = (p: Player | null, item: TossItem, to: string | null | undefined, prob: number) => {
+    if (!p || p.left || !to || to === p.id || Math.random() > prob) return;
+    const now = Date.now();
+    if (now < (BOTS.tossAt[p.id] ?? 0) || now < BOTS.tossAll) return;
+    BOTS.tossAt[p.id] = now + BOT_TOSS_GAP_MS;
+    BOTS.tossAll = now + BOT_TOSS_ALL_MS;
+    setTimeout(
+      () => {
+        const s = H.st;
+        if (App.role !== 'host' || !s || s.phase === 'lobby') return;
+        const me = s.players[pIdx(s, p.id)];
+        if (!me?.bot || me.left || pIdx(s, to) < 0) return;
+        const a = gateAct(s, p.id, { type: 'toss', item, to, bot: true });
+        if (a && !act(s, p.id, a)) hostCommit();
+      },
+      seqLeft() + seqMsOf(fresh) + 1200 + Math.random() * 1400,
+    );
+  };
+  /** Klang einer KI: selten, nach der Pointe und nur in die Stille */
+  const snd = (p: Player | null, s: string, prob: number) => {
+    if (!p || p.left || Math.random() > prob || Date.now() < BOTS.sndAt) return;
+    BOTS.sndAt = Date.now() + BOT_SOUND_GAP_MS;
+    setTimeout(
+      () => {
+        const t = H.st;
+        const a: Action = { type: 'sound', s, bot: true };
+        if (App.role !== 'host' || !t || !soundOk(t, p.id, a) || !tableQuiet(H.rate, Date.now())) return;
+        const me = t.players[pIdx(t, p.id)];
+        if (me?.left) return;
+        const g = gateAct(t, p.id, a);
+        if (g?.type === 'sound' && !g.quiet && !act(t, p.id, g)) hostCommit();
+      },
+      seqLeft() + seqMsOf(fresh) + 2500 + Math.random() * 1500,
+    );
+  };
   const emo = (p: Player | null, ch: string, prob: number) => {
     if (!p || Math.random() > prob) return;
     setTimeout(
@@ -322,11 +380,17 @@ export function botChatter(): void {
           say(anyBot(), 'mockPickup', 0.35);
           emo(anyBot(), '😂', 0.3);
         }
+        if (!bot(e.p) && num(e.cnt) >= 8) {
+          toss(tossBot(), 'tomato', e.p, 0.2);
+          snd(tossBot(), 'ooh', 0.25);
+        }
         break;
       case 'shend':
         if (e.p && !bot(e.p)) {
           say(anyBot(), 'mockShithead', 0.8);
-          emo(anyBot(), '💩', 0.6);
+          emo(anyBot(), '💩', 0.3);
+          toss(tossBot(), 'poo', e.p, 0.5);
+          snd(tossBot(), 'sad', 0.4);
         }
         break;
       case 'result': {
@@ -335,6 +399,29 @@ export function botChatter(): void {
           say(anyBot(), 'mockLoseLife', 0.3);
           emo(anyBot(), '😂', 0.2);
         }
+        const out = ids.find((id) => e.changes[id].to === 'out' && !bot(id));
+        if (out) {
+          toss(tossBot(), 'egg', out, 0.25);
+          snd(tossBot(), 'sad', 0.3);
+        }
+        break;
+      }
+      case 'winner':
+        if (e.p && !bot(e.p)) toss(tossBot(), 'crown', e.p, 0.3);
+        break;
+      case 'shdone':
+        if (e.place === 1 && e.p && !bot(e.p)) toss(tossBot(), 'crown', e.p, 0.3);
+        break;
+      case 'toss': {
+        // Nur Treffer von Menschen auf KIs, so gibt es kein Hin und Her zwischen KIs
+        const hit = realBot(e.to);
+        if (!hit || bot(e.p)) break;
+        if (e.item === 'crown') {
+          say(hit, 'crowned', 0.5);
+          emo(hit, '👏', 0.4);
+        } else say(hit, 'tossBack', 0.3);
+        const back = botTossReply(viewFor(st, hit.id), e, Math.random());
+        if (back) toss(hit, back.item, back.to, 1);
         break;
       }
     }
@@ -347,6 +434,7 @@ export function botChatter(): void {
         if (e.bot) say(bot(e.p), 'greet', 0.7);
         break;
       case 'knock':
+        snd(realBot(e.p), 'roll', 0.2);
         if (bot(e.p)) say(bot(e.p), 'knock', 0.5);
         else {
           const bs = st.players.filter((p) => p.bot && !p.out);
@@ -359,6 +447,7 @@ export function botChatter(): void {
       case 'result': {
         if (e.reason === 'schnautz') say(bot(e.by), 'schnautz', 0.8);
         else if (e.reason === 'feuer') say(bot(e.by), 'feuer', 0.85);
+        if (e.reason === 'schnautz' || e.reason === 'feuer') snd(realBot(e.by), 'horn', 0.3);
         Object.entries(e.changes ?? {}).forEach(([id, c]) => {
           say(bot(id), c.to === 'out' ? 'out' : c.to === 'swim' ? 'swim' : 'loseLife', c.to === 'life' ? 0.35 : 0.7);
         });
@@ -372,15 +461,18 @@ export function botChatter(): void {
       }
       case 'winner':
         say(bot(e.p), 'winGame', 0.85);
+        snd(realBot(e.p), 'horn', 0.4);
         break;
       case 'shburn':
         if (!e.four) say(bot(e.p), 'shBurn', 0.3);
+        else snd(realBot(e.p), 'horn', 0.25);
         break;
       case 'shpickup':
         if (num(e.cnt) >= 6) say(bot(e.p), 'shPickup', 0.45);
         break;
       case 'shdone':
         say(bot(e.p), 'shFinish', 0.5);
+        if (e.place === 1) snd(realBot(e.p), 'horn', 0.3);
         break;
       case 'shend':
         say(bot(e.p), 'shShithead', 0.8);

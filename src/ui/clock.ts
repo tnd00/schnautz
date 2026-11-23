@@ -6,13 +6,19 @@ import type { View } from '../game/types';
 import { App } from './app';
 import { $opt, num } from './dom';
 import { panelFor } from './feedback';
+import { sfx } from './sound';
 
 export const CLK = {
   end: 0,
   total: 0,
   ids: [] as string[],
   iv: null as ReturnType<typeof setInterval> | null,
+  /** Zuletzt getickte Sekunde, damit jede Sekunde nur einmal tickt */
+  tickS: 0,
 };
+
+/** In den letzten Sekunden tickt die eigene Uhr hörbar. */
+const TICK_S = 5;
 
 /** Ab so vielen Sekunden wird die Anzeige rot. */
 const LOW_S = 10;
@@ -94,6 +100,12 @@ function tick(): void {
   const p = CLK.total ? Math.min(1, l / CLK.total) : 0;
   setUrgency(CLK.ids.includes(App.me) ? urgency(p) : null);
   const s = Math.ceil(l / 1000);
+  if (CLK.ids.includes(App.me) && s >= 1 && s <= TICK_S && !document.hidden) {
+    if (s !== CLK.tickS) {
+      CLK.tickS = s;
+      sfx('tick');
+    }
+  } else CLK.tickS = 0;
   document.querySelectorAll<HTMLElement>('.clk').forEach((c) => {
     c.style.setProperty('--p', p.toFixed(3));
     c.classList.toggle('low', s <= LOW_S);

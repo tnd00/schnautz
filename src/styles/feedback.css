@@ -475,3 +475,397 @@ body.logopen #fly .bubble {
     opacity: 0;
   }
 }
+
+/* Wurfgeschosse (src/ui/toss.ts): Flug, Zeichen am Ziel, Schild am Rand und kleine Wurfleiste */
+.opp,
+.me,
+.mehead .nm,
+.swhead b,
+.paper .row,
+.outrow .chip {
+  position: relative;
+}
+.opp[data-act='aim'] {
+  cursor: pointer;
+}
+.tossfly {
+  position: fixed;
+  z-index: 57;
+  font-size: clamp(26px, 7vw, 40px);
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+  will-change: transform;
+}
+.tosslbl {
+  position: fixed;
+  z-index: 57;
+  transform: translate(-50%, -50%);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(8, 22, 15, 0.92);
+  border: 1px solid rgba(246, 239, 223, 0.2);
+  color: var(--cream);
+  font: 650 12px/1.2 var(--ui);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fade 0.2s;
+}
+.tossmark {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  line-height: 1;
+  font-style: normal;
+  transition: opacity 0.3s;
+}
+.tossmark.out {
+  opacity: 0 !important;
+}
+/* Tomate und Ei: Klecks aus Verläufen mit Spritzern, halb durchsichtig, damit Karten lesbar bleiben */
+.tossmark.tomato,
+.tossmark.egg {
+  left: 50%;
+  top: 42%;
+  width: min(60%, 64px);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 46% 54% 50% 50% / 55% 45% 55% 45%;
+  opacity: 0.84;
+  animation: splat 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.3) backwards;
+}
+.tossmark.tomato {
+  background: radial-gradient(
+    circle at 42% 40%,
+    #ff7a66 0 14%,
+    #e0362b 15% 52%,
+    rgba(178, 28, 22, 0.92) 53% 68%,
+    transparent 69%
+  );
+}
+.tossmark.egg {
+  background: radial-gradient(
+    circle at 50% 46%,
+    #ffcb2e 0 20%,
+    #f6a91d 21% 24%,
+    #f8f3e4 25% 58%,
+    rgba(248, 243, 228, 0.86) 59% 68%,
+    transparent 69%
+  );
+}
+.tossmark i {
+  position: absolute;
+  border-radius: 50%;
+  background: #d8322a;
+}
+.tossmark.egg i {
+  background: #f8f3e4;
+}
+.tossmark i:nth-child(1) {
+  width: 18%;
+  height: 18%;
+  left: -4%;
+  top: 22%;
+}
+.tossmark i:nth-child(2) {
+  width: 12%;
+  height: 12%;
+  right: -2%;
+  top: 60%;
+}
+.tossmark i:nth-child(3) {
+  width: 11%;
+  height: 20%;
+  left: 56%;
+  top: 76%;
+  border-radius: 50% 50% 50% 50% / 35% 35% 65% 65%;
+  animation: drip 3.2s ease-in forwards;
+}
+.tossmark.egg i:nth-child(3) {
+  background: #ffcb2e;
+}
+/* Haufen, Herz und Hase landen wie Tomate und Ei mitten auf den Karten */
+.tossmark.poo,
+.tossmark.heart,
+.tossmark.bunny {
+  left: 50%;
+  top: 42%;
+  translate: -50% -50%;
+  font-size: 34px;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  animation:
+    plop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.4) backwards,
+    stink 1.6s ease-in-out infinite;
+}
+.tossmark.crown {
+  left: -10px;
+  top: -16px;
+  font-size: 30px;
+  rotate: -18deg;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 7px rgba(255, 214, 90, 0.85));
+  animation:
+    crownin 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.5) backwards,
+    sparkle 1.2s ease-in-out infinite;
+}
+@keyframes splat {
+  from {
+    scale: 0.2;
+    opacity: 0;
+  }
+}
+@keyframes drip {
+  to {
+    height: 34%;
+    top: 84%;
+  }
+}
+.tossmark.heart {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 8px rgba(255, 90, 120, 0.7));
+  animation:
+    crownin 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.5) backwards,
+    beat 0.9s ease-in-out infinite;
+}
+.tossmark.bunny {
+  animation:
+    plop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.4) backwards,
+    hop 0.75s ease-in-out infinite;
+}
+@keyframes beat {
+  15%,
+  45% {
+    transform: scale(1.22);
+  }
+  30% {
+    transform: scale(1.05);
+  }
+}
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.08, 0.92);
+  }
+  45% {
+    transform: translateY(-9px) scale(0.96, 1.05);
+  }
+}
+/* transform statt translate: Die Lage steckt in translate und soll beim Landen erhalten bleiben */
+@keyframes plop {
+  from {
+    transform: translateY(-30px) scale(1.3, 0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.25, 0.75);
+  }
+}
+@keyframes stink {
+  50% {
+    transform: translateY(-2px) rotate(-6deg);
+  }
+}
+@keyframes crownin {
+  from {
+    transform: translateY(-24px) scale(0.4);
+    opacity: 0;
+  }
+}
+@keyframes sparkle {
+  50% {
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 13px rgba(255, 228, 120, 1));
+    scale: 1.06;
+  }
+}
+/* Eigener Platz: nur ein kleiner Spritzer an „Du“, nichts über Karten, Uhr oder Knöpfen */
+.mehead .nm > .tossmark.tomato,
+.mehead .nm > .tossmark.egg {
+  width: 28px;
+  top: 50%;
+}
+.mehead .nm > .tossmark.crown {
+  left: 50%;
+  top: -20px;
+  translate: -50% 0;
+  font-size: 22px;
+}
+.mehead .nm > .tossmark.poo,
+.mehead .nm > .tossmark.heart,
+.mehead .nm > .tossmark.bunny {
+  top: 50%;
+  font-size: 24px;
+}
+.swhead b > .tossmark.tomato,
+.swhead b > .tossmark.egg {
+  width: 30px;
+  top: 50%;
+}
+.swhead b > .tossmark.crown {
+  left: -16px;
+  top: -16px;
+  font-size: 24px;
+}
+.swhead b > .tossmark.poo,
+.swhead b > .tossmark.heart,
+.swhead b > .tossmark.bunny {
+  top: 50%;
+  font-size: 26px;
+}
+.me > .tossmark.tomato,
+.me > .tossmark.egg {
+  top: 16px;
+  width: 28px;
+}
+.me > .tossmark.crown {
+  left: 50%;
+  top: -14px;
+  translate: -50% 0;
+  font-size: 22px;
+}
+.me > .tossmark.poo,
+.me > .tossmark.heart,
+.me > .tossmark.bunny {
+  top: 16px;
+  font-size: 24px;
+}
+/* Ergebnisfenster: Fleck rechts, Krone schräg über der linken Ecke, Haufen unten rechts */
+.paper .row > .tossmark.tomato,
+.paper .row > .tossmark.egg {
+  left: auto;
+  right: 52px;
+  top: 50%;
+  width: 34px;
+  translate: 0 -50%;
+}
+.paper .row > .tossmark.crown {
+  left: 4px;
+  top: -10px;
+  font-size: 22px;
+}
+.paper .row > .tossmark.poo,
+.paper .row > .tossmark.heart,
+.paper .row > .tossmark.bunny {
+  left: auto;
+  right: 52px;
+  top: 50%;
+  translate: 0 -50%;
+  font-size: 26px;
+}
+.outrow .chip > .tossmark.tomato,
+.outrow .chip > .tossmark.egg {
+  width: 26px;
+  top: 50%;
+}
+.outrow .chip > .tossmark.crown {
+  left: -6px;
+  top: -14px;
+  font-size: 18px;
+}
+.outrow .chip > .tossmark.poo,
+.outrow .chip > .tossmark.heart,
+.outrow .chip > .tossmark.bunny {
+  top: 50%;
+  font-size: 20px;
+}
+.paper .row[data-act='aim'] {
+  cursor: pointer;
+}
+.paper .row[data-act='aim']::after {
+  content: '🍅';
+  position: absolute;
+  right: 7px;
+  top: 5px;
+  font-size: 11px;
+  opacity: 0.3;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.paper .row[data-act='aim']:hover::after,
+.paper .row[data-act='aim']:focus-visible::after {
+  opacity: 1;
+}
+#tosspick {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #0f2a20;
+  border: 1px solid rgba(246, 239, 223, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  animation: rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#tosspick button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(246, 239, 223, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 21px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+#tosspick button:hover {
+  transform: scale(1.12);
+}
+#tosspick button:disabled {
+  opacity: 0.35;
+  transform: none;
+}
+
+/* Soundboard: Symbol mit Schallringen und dem Namen darunter */
+.emo.snd {
+  font-size: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.emo.snd i {
+  position: relative;
+  font-style: normal;
+}
+.emo.snd i::before,
+.emo.snd i::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px solid rgba(243, 205, 125, 0.6);
+  border-radius: 50%;
+  animation: ring 1s ease-out infinite;
+}
+.emo.snd i::after {
+  animation-delay: 0.5s;
+}
+.emo.snd small {
+  font: 650 11px/1.2 var(--ui);
+  color: var(--cream);
+  background: rgba(8, 22, 15, 0.88);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes ring {
+  from {
+    scale: 0.6;
+    opacity: 0.9;
+  }
+  to {
+    scale: 1.7;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tossmark,
+  .tossmark *,
+  .tossfly,
+  .emo.snd i::before,
+  .emo.snd i::after {
+    animation: none !important;
+  }
+}

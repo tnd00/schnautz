@@ -45,3 +45,13 @@ export function seatOrder(v: View): Player[] {
   for (let k = 1; k < n; k++) out.push(v.players[(idx + k + n) % n]);
   return out;
 }
+
+/** Spielen gerade nur noch KIs? Dann darf der Host die Partie abkürzen. */
+export function onlyBotsPlaying(v: View): boolean {
+  if (v.phase !== 'play' && v.phase !== 'choose' && v.phase !== 'swap') return false;
+  const live =
+    v.game === 'shithead'
+      ? v.players.filter((p) => !p.out && !!v.sh?.P[p.id] && !v.sh.finished.includes(p.id))
+      : v.players.filter((p) => !p.out);
+  return live.length > 0 && live.every((p) => p.bot);
+}

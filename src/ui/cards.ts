@@ -157,13 +157,13 @@ export const HAND_ICON =
   '<g transform="rotate(24 13 22)"><rect x="8.5" y="2" width="9" height="13" rx="1.8" fill="#fffdf6"/>' +
   '<path d="M13 5.6l2 2.9-2 2.9-2-2.9z" fill="#b3312a" stroke="none"/></g></g></svg>';
 
-const SWIM_ICON =
+export const SWIM_ICON =
   '<svg viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 7c4-4 7 4 11 0s7 4 11 0 7 4 10 0"/><path d="M2 15c4-4 7 4 11 0s7 4 11 0 7 4 10 0"/></svg>';
 
 /** Bierdeckel (Leben) eines Spielers. */
 export function livesHTML(p: Pick<Player, 'out' | 'lives'>, rules: Pick<Rules, 'lives'>): string {
   if (p.out) return '<span class="tag outt">raus</span>';
-  if (p.lives === 0) return `<span class="swim" title="schwimmt">${SWIM_ICON}schwimmt</span>`;
+  if (p.lives === 0) return `<span class="swim" title="schwimmt">${SWIM_ICON}<span class="swt">schwimmt</span></span>`;
   const pl = num(p.lives);
   const max = Math.min(8, Math.max(num(rules.lives), pl));
   let h = `<span class="lives" title="${pl} Leben">`;

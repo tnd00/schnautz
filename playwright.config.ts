@@ -26,7 +26,12 @@ export default defineConfig({
     launchOptions: {
       executablePath: process.env.PW_CHROME || undefined,
       // Lokale IP-Adressen statt mDNS-Namen, sonst finden sich die Browser ohne STUN nicht
-      args: ['--disable-features=WebRtcHideLocalIpsWithMdns', ...(noSandbox ? ['--no-sandbox'] : [])],
+      args: [
+        '--disable-features=WebRtcHideLocalIpsWithMdns',
+        // Damit der Audio-Kontext fürs Soundboard auch ohne echten Tipp läuft
+        '--autoplay-policy=no-user-gesture-required',
+        ...(noSandbox ? ['--no-sandbox'] : []),
+      ],
     },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

@@ -1,12 +1,20 @@
 /* Score-Leiste oben: Leben oder Kartenzahl, Siege, Shithead-Zähler und amtierende Sieger. */
 import type { Player, ShPlayerView, View } from '../../game/types';
 import { App } from '../app';
-import { livesHTML } from '../cards';
+import { livesHTML, SWIM_ICON as SWIM } from '../cards';
 import { $, esc, num } from '../dom';
 import { dealerId, turnId } from '../helpers';
 
 const count = (x: string[] | number) => (typeof x === 'number' ? x : x.length);
 const cardsLeft = (P: ShPlayerView) => count(P.hand) + P.up.length + count(P.down);
+
+/** Leben in einem Zeichen: Bierdeckel mit Zahl, Schwimmen oder raus. Für die schmale Leiste am Handy. */
+function livesCompact(v: View, p: Player): string {
+  if (v.game === 'shithead') return '';
+  if (p.out) return '<span class="sb-lc" title="raus">raus</span>';
+  if (p.lives === 0) return `<span class="sb-lc" title="schwimmt">${SWIM}</span>`;
+  return `<span class="sb-lc" title="${num(p.lives)} Leben"><span class="coaster"></span>${num(p.lives)}</span>`;
+}
 
 function statusOf(v: View, p: Player): string {
   if (v.game !== 'shithead') return livesHTML(p, v.rules);
@@ -41,12 +49,11 @@ export function renderScore(v: View): void {
       esc(p.id === App.me ? 'Du' : p.name) +
       (p.bot ? '<i class="botb">KI</i>' : '') +
       (!sh && v.knocker === p.id ? ' <span title="hat geklopft">✊</span>' : '') +
-      `</span>${statusOf(v, p)}` +
+      `</span>${statusOf(v, p)}${livesCompact(v, p)}` +
       (anyWin ? `<span class="sb-w" title="Gewonnene Partien">🏆 ${winsOf(p)}</span>` : '') +
       (sh && p.shc ? `<span class="sb-w" title="So oft Shithead">💩 ${num(p.shc)}</span>` : '') +
       '</div>';
   });
   el.innerHTML = h;
-  // Bei vielen Leuten ist die Leiste am Handy zu voll, dort zeigt das Karussell alle
   el.classList.toggle('many', v.players.length > 4);
 }

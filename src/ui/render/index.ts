@@ -9,6 +9,8 @@ import { renderGame, renderOverlay } from './schnautz';
 import { renderScore } from './scorebar';
 import { renderSh, renderShOverlay } from './shithead';
 import { renderTurnNote } from './turnnote';
+import { markTosses } from '../toss';
+import { fitDesktop } from '../fit';
 
 /** Zeichnet alles neu, was zur aktuellen Ansicht gehört. */
 export function render(): void {
@@ -42,4 +44,11 @@ export function render(): void {
   renderLog(v);
   if (sh) renderShOverlay(v);
   else renderOverlay(v);
+  // Beim Ansehen des Tisches nach einer Runde wird nur in der Übersicht reagiert
+  document.body.classList.toggle('peeking', App.peek && (v.phase === 'end' || v.phase === 'over'));
+  // Das Ergebnisfenster hat ein eigenes Reaktionsfenster
+  if (v.phase !== 'lobby') renderEmotes();
+  // Würfe kleben an Kacheln und Ergebniszeilen, nach dem Zeichnen wieder anhängen
+  markTosses();
+  fitDesktop();
 }

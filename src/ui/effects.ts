@@ -28,6 +28,22 @@ export function effects(prev: View, v: View, seqd = false): void {
   fresh.forEach((e) => {
     const mine = e.p === App.me;
     if (e.k === 'emote') emojiFly(e.p, e.e);
+    if (e.k === 'timeout' && mine) {
+      // Zu lange gebraucht: Damit klar ist, warum plötzlich etwas passiert ist
+      sfx('timeout');
+      try {
+        navigator.vibrate?.([60, 60, 60]);
+      } catch {
+        // Manche Browser verbieten Vibration ohne vorherige Geste
+      }
+      announce({
+        icon: '⏰',
+        tone: 'red',
+        title: 'Zeit um!',
+        sub: prev.phase === 'swap' ? 'Die KI hat für dich getauscht.' : 'Die KI hat für dich gezogen.',
+        ms: 2000,
+      });
+    }
     if (e.k === 'knock') {
       sfx('knock');
       announce({

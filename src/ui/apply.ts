@@ -13,11 +13,11 @@ import { renderLog } from './render/log';
 import { SEQ, runSeq, shPlan, totalMs, type Step } from './shithead/sequence';
 import { syncWin } from './shithead/window';
 import { syncClock } from './clock';
-
-/** Fingerabdruck der Ansicht ohne Verlauf: Ändert sich nur der Chat, wird nicht alles neu gezeichnet. */
-function viewSig(v: View): string {
-  return JSON.stringify({ ...v, log: null, n: null });
-}
+import { sfxCalm } from './sound';
+import { liveFx } from './livefx';
+import { syncNext } from './nextround';
+import { placePick } from './toss';
+import { viewSig } from './viewsig';
 
 function bumpSeen(v: View): void {
   App.seenN = v.log.reduce((mx, e) => Math.max(mx, e.n), App.seenN);
@@ -27,6 +27,8 @@ function bumpSeen(v: View): void {
 const SEQ_WATCHDOG_MS = 2500;
 
 export function applyView(v: View): void {
+  // Würfe und Klänge sofort, auch während eine Sequenz die Ansicht noch zurückhält
+  liveFx(v);
   if (SEQ.busy && Date.now() > SEQ.endAt + SEQ_WATCHDOG_MS) {
     if (SEQ.t) clearTimeout(SEQ.t);
     SEQ.t = null;
@@ -43,8 +45,11 @@ export function applyView(v: View): void {
   const prev = App.view;
   const sig = viewSig(v);
   if (prev && App.lastSig === sig) {
-    // Nur Chat oder Reaktionen: kein volles Neuzeichnen
+    // Nur Chat, Reaktionen, Würfe, Klänge oder neue Restzeiten: kein volles Neuzeichnen
     App.view = v;
+    syncWin(v);
+    syncClock(v);
+    syncNext(v);
     effects(prev, v);
     bumpSeen(v);
     renderLog(v);
@@ -56,6 +61,7 @@ export function applyView(v: View): void {
   App.busy = false;
   syncWin(v);
   syncClock(v);
+  syncNext(v);
   resetSelection(prev, v);
   setAnimations(prev, v);
 
@@ -72,6 +78,7 @@ export function applyView(v: View): void {
   render();
   if (prev) runFlights(prev, v);
   markLost(lostNow, v);
+  placePick();
 }
 
 function resetSelection(prev: View | null, v: View): void {
@@ -95,6 +102,8 @@ function setAnimations(prev: View | null, v: View): void {
   if (v.last && v.last.n > (prev?.last?.n ?? 0) && v.last.k === 'shplay' && v.last.p !== App.me)
     App.anim.pilePop = true;
   if (v.game === 'shithead' && v.phase === 'swap' && prev?.phase !== 'swap') App.anim.deal = true;
+  // Karten erscheinen: kurzes Austeilgeräusch
+  if (prev && (App.anim.deal || App.anim.dealMid)) sfxCalm('deal', 600);
 }
 
 /** Startet eine Shithead-Sequenz. Gibt false zurück, wenn das Zeichnen scheitert (dann normal weiter). */

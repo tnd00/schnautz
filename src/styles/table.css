@@ -59,10 +59,12 @@
 .opp .nm {
   font-weight: 650;
 }
+/* Am Zug leuchtet der Rand, nach innen wird das Gelb schwächer statt die Fläche zu füllen */
 .opp.turn {
   border-color: var(--brass-hi);
-  background: rgba(243, 205, 125, 0.13);
+  background: rgba(243, 205, 125, 0.03);
   box-shadow:
+    inset 0 0 18px rgba(243, 205, 125, 0.16),
     0 0 0 1px rgba(243, 205, 125, 0.35),
     0 0 34px rgba(243, 205, 125, 0.3);
   animation: turnGlow 1.8s ease-in-out infinite;
@@ -70,6 +72,7 @@
 @keyframes turnGlow {
   50% {
     box-shadow:
+      inset 0 0 22px rgba(243, 205, 125, 0.24),
       0 0 0 3px rgba(243, 205, 125, 0.45),
       0 0 46px rgba(243, 205, 125, 0.45);
   }
@@ -256,16 +259,30 @@
   gap: 14px;
   padding: 14px 18px 16px;
   border-radius: 24px;
-  border: 1px solid transparent;
+  /* Der eigene Platz ist immer gelb umrandet, am Zug leuchtet er wie ein Gegner am Zug */
+  border: 1px solid rgba(243, 205, 125, 0.45);
   width: min(560px, 100%);
   transition:
     border-color 0.2s,
     background 0.2s;
 }
+/* Am Zug leuchtet nur der Rand, nach innen wird das Gelb schwächer statt die Fläche zu füllen */
 .me.turn {
-  border-color: rgba(243, 205, 125, 0.5);
-  background: rgba(243, 205, 125, 0.06);
-  box-shadow: 0 0 60px rgba(243, 205, 125, 0.1);
+  border-color: var(--brass-hi);
+  background: transparent;
+  box-shadow:
+    inset 0 0 22px rgba(243, 205, 125, 0.16),
+    0 0 0 1px rgba(243, 205, 125, 0.35),
+    0 0 34px rgba(243, 205, 125, 0.3);
+  animation: meGlow 1.8s ease-in-out infinite;
+}
+@keyframes meGlow {
+  50% {
+    box-shadow:
+      inset 0 0 28px rgba(243, 205, 125, 0.24),
+      0 0 0 3px rgba(243, 205, 125, 0.45),
+      0 0 46px rgba(243, 205, 125, 0.45);
+  }
 }
 .mehead {
   display: flex;
@@ -356,7 +373,8 @@
   background: rgba(4, 16, 11, 0.35);
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 56px);
+  /* Höhe der Kopfzeile misst fitDesktop (src/ui/fit.ts) */
+  height: calc(100dvh - var(--toph, 58px));
   position: sticky;
   top: 0;
   min-height: 0;
@@ -497,4 +515,41 @@
   display: grid;
   place-items: center;
   padding: 0 5px;
+}
+
+/* Schnautz: Ohne Beschriftung unter dem Stapel ist die Mitte oben und unten gleich eng */
+#table[data-game='schnautz'] .center {
+  padding-bottom: 18px;
+}
+
+/*
+ * Am PC passt der Tisch ohne Scrollen ins Fenster (fitDesktop in src/ui/fit.ts). Ist Platz übrig,
+ * verteilt er sich über und unter der Tischmitte.
+ */
+@media (min-width: 961px) {
+  body.ingame .table > .center,
+  body.ingame .table > .seat {
+    margin-top: auto;
+  }
+}
+
+/* Leben kompakt für die Leiste am Handy, am PC stehen die Bierdeckel einzeln */
+.sb-lc {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--cream);
+}
+.sb-lc .coaster {
+  width: 10px;
+  height: 10px;
+}
+.sb-lc svg {
+  width: 16px;
+  height: 10px;
+  color: #8fd3ff;
 }

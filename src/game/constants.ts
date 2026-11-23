@@ -1,4 +1,4 @@
-import type { GameKind, Rank, Rules, Suit } from './types';
+import type { GameKind, Rank, Rules, Suit, TossItem } from './types';
 
 export const SUITS: readonly Suit[] = ['C', 'S', 'H', 'D'];
 export const SUIT_SYM: Record<Suit, string> = { C: '♣', S: '♠', H: '♥', D: '♦' };
@@ -20,6 +20,46 @@ export const DEFAULT_RULES: Readonly<Rules> = {
 };
 
 export const EMOTES: readonly string[] = ['😂', '🫵', '🤡', '💩', '🔥', '😭', '👏', '🙈'];
+
+/** Wurfgeschosse: Zeichen und wie lange sie am Ziel kleben */
+export const TOSS_ITEMS: readonly TossItem[] = ['tomato', 'egg', 'poo', 'crown', 'heart', 'bunny'];
+export const TOSS_ICON: Readonly<Record<TossItem, string>> = {
+  tomato: '🍅',
+  egg: '🥚',
+  poo: '💩',
+  crown: '👑',
+  heart: '❤️',
+  bunny: '🐰',
+};
+export const TOSS_LIFE_MS: Readonly<Record<TossItem, number>> = {
+  tomato: 3500,
+  egg: 3500,
+  poo: 4000,
+  crown: 5000,
+  heart: 4000,
+  bunny: 4500,
+};
+/** Soundboard in fester Reihenfolge */
+export const SOUNDS: readonly string[] = ['horn', 'roll', 'ooh', 'clap', 'sad', 'crick'];
+/** Am ganzen Tisch höchstens so viele hörbare Klänge in diesem Fenster, darüber fliegt nur das Symbol */
+export const SOUND_TABLE_MAX = 4;
+export const SOUND_TABLE_WINDOW_MS = 6000;
+/**
+ * Reaktionen, Würfe und Klänge: drei gehen schnell hintereinander, danach sperrt der Knopf. Die Pause beginnt
+ * erst nach der vorigen neu und wächst bei weiterem Spammen bis höchstens 5 Sekunden. Nach 6 Sekunden Ruhe
+ * gehen wieder drei auf einmal.
+ */
+export const BURST = 3;
+export const BURST_MAX_MS = 5000;
+export const BURST_CALM_MS = 6000;
+/** Erste Pause nach drei schnellen, je Art */
+export const EMOTE_GAP_MS = 800;
+export const TOSS_GAP_MS = 2000;
+export const SOUND_GAP_MS = 3000;
+/** Beim Host höchstens drei pro Platz in diesem Fenster, etwas großzügiger als die Oberfläche, damit nichts verfällt */
+export const EMOTE_HOST_WINDOW_MS = 550;
+export const TOSS_HOST_WINDOW_MS = 1400;
+export const SOUND_HOST_WINDOW_MS = 2100;
 /** So lange wartet die Person am Zug bei einem neuen Stapel, damit alle ihre 4er reinwerfen können. */
 export const SH_WIN_MS = 2000;
 /** Höchstzahl am Tisch je Spiel. */

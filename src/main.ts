@@ -4,6 +4,8 @@ import '@fontsource-variable/fraunces/opsz-italic.css';
 import '@fontsource-variable/bricolage-grotesque/opsz.css';
 import './styles/index.css';
 
+import { act } from './game/actions';
+import { BOTS } from './net/bots';
 import { G } from './net/guest';
 import { H, hostCommit } from './net/host';
 import { cleanCode } from './net/ids';
@@ -27,6 +29,8 @@ declare global {
       SEQ: typeof SEQ;
       applyView: typeof applyView;
       hostCommit: typeof hostCommit;
+      act: typeof act;
+      BOTS: typeof BOTS;
     };
   }
 }
@@ -38,5 +42,5 @@ showScreen('start');
 if (cleanCode(location.hash.slice(1)) && LS.get('name', '')) $('#btn-join').focus();
 // Zugang für die Ende-zu-Ende-Tests, nur beim Entwickeln oder mit lokalem PeerServer (Testparameter)
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('peerhost')) {
-  window.__schnautz = { App, H, G, SEQ, applyView, hostCommit };
+  window.__schnautz = { App, H, G, SEQ, applyView, hostCommit, act, BOTS };
 }

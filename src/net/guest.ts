@@ -24,6 +24,9 @@ export const G = {
   pending: false,
   reTimer: null as Timer | null,
   lastPong: 0,
+  /** Wann der letzte Ping rausging und wie lange die Antwort brauchte */
+  pingAt: 0,
+  rtt: 0,
   stopped: true,
   hb: null as ReturnType<typeof setInterval> | null,
   /** Mindestens einmal verbunden gewesen. */
@@ -193,6 +196,7 @@ function guestHeartbeat(): void {
   if (App.role !== 'guest' || G.stopped) return;
   const c = G.conn;
   if (c?.open) {
+    G.pingAt = Date.now();
     sendToHost({ t: 'ping' });
     if (Date.now() - G.lastPong > HOST_TIMEOUT_MS) {
       G.conn = null;
@@ -215,10 +219,13 @@ function guestMsg(raw: unknown): void {
   switch (m.t) {
     case 'pong':
       G.lastPong = Date.now();
+      if (G.pingAt) G.rtt = G.lastPong - G.pingAt;
       if (App.net !== 'online') setNet('online');
       return;
     case 'welcome': {
       G.ever = true;
+      // Nach dem Neuverbinden keine alten Würfe und Klänge nachspielen
+      App.fxSync = true;
       G.lastPong = Date.now();
       setNet('online');
       if (typeof m.pid === 'string' && m.pid && m.pid !== App.me) {

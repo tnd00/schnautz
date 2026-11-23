@@ -2,15 +2,18 @@
 import { rankOf } from '../game/cards';
 import { shCanBomb, shCanThrow } from '../game/shithead';
 import { seatLimit } from '../game/state';
-import { TURN_SECS } from '../game/constants';
-import type { Action, GameKind } from '../game/types';
+import { EMOTE_GAP_MS, SOUND_GAP_MS, SOUNDS, TOSS_ITEMS, TURN_SECS } from '../game/constants';
+import type { Action, GameKind, TossItem } from '../game/types';
 import { doAct } from '../net/dispatch';
 import { guestLeave, guestStart, guestStop, guestWake } from '../net/guest';
 import { hostCancel, hostClose, hostNew, hostResume } from '../net/host';
 import { cleanCode, genId } from '../net/ids';
 import { asSavedGuest, asSavedHost, HOST_RESUME_MS } from '../net/protocol';
-import { App } from './app';
-import { initCarousel, layoutOpps } from './carousel';
+import { App, type EmoTab } from './app';
+import { burst } from './burst';
+import { CAR, initCarousel, layoutOpps } from './carousel';
+import { fitDesktop } from './fit';
+import { FX_WAKE_MS } from './livefx';
 import { $, esc } from './dom';
 import { shakeEl, toast } from './feedback';
 import { myTurn, pById } from './helpers';
@@ -24,13 +27,17 @@ import { rulesHTML } from './render/rules';
 import { renderGame } from './render/schnautz';
 import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
 import { renderTurnNote } from './render/turnnote';
+import { inviteHTML } from './render/invite';
+import { netInfoHTML } from './render/netinfo';
 import { updatesHTML } from './render/updates';
 import { resetTableUI } from './reset';
 import { copyLink, setNet, shareLink, showScreen, updateTitle } from './screens';
 import { fitHand, grabRects } from './shithead/hand';
-import { renderSoundBtn, sfx, unlockAudio } from './sound';
+import { setSbBlock } from './soundboard';
+import { renderSoundBtn, setSbVolume, sfx, unlockAudio } from './sound';
 import { initStart, readName, renderResume, showStartError } from './start';
 import { LS, SS } from './storage';
+import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
 
 /** Shithead: Karte antippen (Tauschrunde oder Auswahl zum Ausspielen). */
 function shTap(kind: 'h' | 'u', i: number): void {
@@ -111,6 +118,8 @@ function toggleSound(): void {
   App.muted = !App.muted;
   LS.set('muted', App.muted);
   renderSoundBtn();
+  setSbVolume();
+  renderEmotes();
   if (!App.muted) {
     unlockAudio();
     sfx('card');
@@ -208,19 +217,92 @@ function onAction(a: string, t: HTMLElement): void {
       break;
     }
     case 'emotes':
+      App.aim = null;
+      renderEmotes();
       document.body.classList.toggle('emoopen');
       break;
-    case 'emote':
+    case 'etab': {
+      const tab = t.dataset.t as EmoTab;
+      if (tab !== 'emo' && tab !== 'snd' && tab !== 'toss') break;
+      App.etab = tab;
+      App.aim = null;
+      LS.set('etab', tab);
+      renderEmotes();
+      break;
+    }
+    case 'tossitem': {
+      const item = t.dataset.item as TossItem;
+      if (!TOSS_ITEMS.includes(item) || App.tossBlock) break;
+      App.aim = item;
+      renderEmotes();
+      break;
+    }
+    case 'tosscancel':
+      App.aim = null;
+      renderEmotes();
+      break;
+    case 'toss': {
+      const item = (t.dataset.item as TossItem) || App.aim;
+      const to = String(t.dataset.to || '');
+      if (!item || !to || !v) break;
+      // Nach dem Wurf schließt die Auswahl „… auf wen?“ sofort
+      App.aim = null;
+      renderEmotes();
+      document.body.classList.remove('emoopen');
+      closePick();
+      sendToss(item, to, (it, who) => doAct({ type: 'toss', item: it, to: who }), redrawToss);
+      break;
+    }
+    case 'aim': {
+      const pid = String(t.dataset.pid || '');
+      // Der Tipp im Karussell kam schon über initCarousel
+      if (!pid || Date.now() - CAR.tapAt < 400) break;
+      aimAt(pid);
+      break;
+    }
+    case 'sb': {
+      document.body.classList.remove('emoopen');
+      const s = String(t.dataset.s || '');
+      if (App.sbBlock || !v || !SOUNDS.includes(s)) break;
+      const r = burst('sound', SOUND_GAP_MS);
+      if (!r.ok) break;
+      if (r.cool) {
+        setSbBlock(true);
+        App.coolUntil.snd = Date.now() + r.cool;
+        renderEmotes();
+        setTimeout(() => {
+          setSbBlock(false);
+          renderEmotes();
+        }, r.cool);
+      }
+      doAct({ type: 'sound', s });
+      break;
+    }
+    case 'sbtoggle':
+      App.sbOff = !App.sbOff;
+      LS.set('sbOff', App.sbOff);
+      setSbVolume();
+      renderSoundBtn();
+      renderEmotes();
+      $('#menu').hidden = true;
+      break;
+    case 'emote': {
       document.body.classList.remove('emoopen');
       if (App.emoBlock || !v) break;
-      App.emoBlock = true;
-      renderEmotes();
-      setTimeout(() => {
-        App.emoBlock = false;
+      const r = burst('emote', EMOTE_GAP_MS);
+      if (!r.ok) break;
+      if (r.cool) {
+        App.emoBlock = true;
+        App.coolUntil.emo = Date.now() + r.cool;
         renderEmotes();
-      }, 1300);
+        setTimeout(() => {
+          App.emoBlock = false;
+          renderEmotes();
+        }, r.cool);
+      }
       doAct({ type: 'emote', e: String(t.dataset.e) });
       break;
+    }
     case 'game':
       doAct({ type: 'game', game: t.dataset.g as GameKind });
       break;
@@ -323,6 +405,16 @@ function onAction(a: string, t: HTMLElement): void {
       $('#menu').hidden = true;
       $('#modal').innerHTML = updatesHTML();
       break;
+    case 'netinfo':
+      $('#modal').innerHTML = netInfoHTML();
+      break;
+    case 'lobbynow':
+      // Am Ende der Partie oder wenn nur noch KIs spielen: ohne Rückfrage
+      doAct({ type: 'tolobby' });
+      break;
+    case 'restart':
+      doAct({ type: 'restart' });
+      break;
     case 'tolobby':
       $('#menu').hidden = true;
       confirmBox('Partie abbrechen und zurück in die Lobby?', 'Ja, zur Lobby', () => doAct({ type: 'tolobby' }));
@@ -403,13 +495,35 @@ function cancelConnect(): void {
   renderResume();
 }
 
+/** Wurfknöpfe nach Sperre oder Ende der Sperre neu zeichnen. */
+function redrawToss(): void {
+  renderEmotes();
+  placePick();
+}
+
+/** Tipp auf eine Kachel oder Ergebniszeile: kleine Wurfleiste für diese Person. */
+function aimAt(pid: string): void {
+  const v = App.view;
+  if (!v || v.phase === 'lobby' || pid === App.me || !pById(v, App.me)) return;
+  if (TOSS.pick === pid) closePick();
+  else openPick(pid);
+}
+
 /** Alle Ereignis-Listener einmal beim Start registrieren. */
 export function initEvents(): void {
-  initCarousel();
+  initCarousel(aimAt);
   document.addEventListener('visibilitychange', () => {
     updateTitle();
-    if (!document.hidden) guestWake();
+    if (!document.hidden) {
+      App.fxQuietUntil = Date.now() + FX_WAKE_MS;
+      guestWake();
+    }
   });
+  // Jeder Tipp schaltet den Ton frei, auch im Karussell, das den Zeiger festhält
+  document.addEventListener('pointerup', unlockAudio, { capture: true, passive: true });
+  document.addEventListener('keydown', unlockAudio, { capture: true, passive: true });
+  // Die Wurfleiste folgt ihrem Ziel und schließt, wenn das Ergebnisfenster scrollt
+  $('#overlay').addEventListener('scroll', closePick, { capture: true, passive: true });
   window.addEventListener('resize', () => {
     const v = App.view;
     if (v?.game === 'shithead' && v.phase !== 'lobby') {
@@ -418,12 +532,27 @@ export function initEvents(): void {
     }
     if (v && v.phase !== 'lobby') layoutOpps(v);
     if (v && v.phase !== 'lobby') renderLegend(v);
+    fitDesktop();
+    closePick();
   });
   document.addEventListener('click', (e) => {
     const target = e.target as Element;
     const menu = $('#menu');
     if (!menu.hidden && !target.closest('#menu') && !target.closest('#btn-menu')) menu.hidden = true;
-    if (!target.closest('#emotes') && !target.closest('#emofab')) document.body.classList.remove('emoopen');
+    if (!target.closest('.emotes') && !target.closest('#emofab')) {
+      document.body.classList.remove('emoopen');
+      if (App.aim) {
+        App.aim = null;
+        renderEmotes();
+      }
+    }
+    if (
+      TOSS.pick &&
+      !target.closest('#tosspick') &&
+      !target.closest('[data-act="aim"]') &&
+      Date.now() - CAR.tapAt >= 400
+    )
+      closePick();
     const t = target.closest<HTMLElement>('[data-act]');
     if (t?.dataset.act) onAction(t.dataset.act, t);
   });
@@ -432,10 +561,15 @@ export function initEvents(): void {
       $('#modal').innerHTML = '';
       $('#menu').hidden = true;
       document.body.classList.remove('logopen', 'emoopen', 'startform');
+      closePick();
+      if (App.aim) {
+        App.aim = null;
+        renderEmotes();
+      }
     }
     // Karten sind per Tastatur bedienbar
     const t = e.target as HTMLElement;
-    if ((e.key === 'Enter' || e.key === ' ') && t.matches?.('.card[data-act]')) {
+    if ((e.key === 'Enter' || e.key === ' ') && t.matches?.('.card[data-act], [data-act="aim"][role="button"]')) {
       e.preventDefault();
       t.click();
     }
@@ -486,7 +620,9 @@ export function initEvents(): void {
     const m = $('#menu');
     m.hidden = !m.hidden;
   };
-  $('#codechip').onclick = copyLink;
+  $('#codechip').onclick = () => {
+    $('#modal').innerHTML = inviteHTML();
+  };
   $('#chatform').addEventListener('submit', (e) => {
     e.preventDefault();
     const inp = $<HTMLInputElement>('#chatin');

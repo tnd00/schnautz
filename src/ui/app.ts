@@ -1,8 +1,9 @@
-import type { View } from '../game/types';
+import type { TossItem, View } from '../game/types';
 import type { Timer } from './dom';
 import { LS } from './storage';
 
 export type Role = 'host' | 'guest' | null;
+export type EmoTab = 'emo' | 'snd' | 'toss';
 export type NetState = 'off' | 'connecting' | 'online' | 'reconnecting';
 
 /** Einmalige Animationen für das nächste Rendern. */
@@ -44,6 +45,25 @@ export const App = {
   throwing: false,
   emoBlock: false,
   muted: LS.get('muted', false),
+  /** Offener Reiter im Reaktionsfenster */
+  etab: (['emo', 'snd', 'toss'].includes(LS.get('etab', 'emo')) ? LS.get('etab', 'emo') : 'emo') as EmoTab,
+  /** Gewählter Gegenstand, das Fenster wartet auf ein Ziel */
+  aim: null as TossItem | null,
+  tossBlock: false,
+  sbBlock: false,
+  /** Bis wann die Sperre je Reiter läuft, für den Balken, der leerläuft */
+  coolUntil: { emo: 0, snd: 0, toss: 0 } as Record<EmoTab, number>,
+  /** Soundboard nur für sich selbst stumm */
+  sbOff: LS.get('sbOff', false),
+  /** Wasserstand für Würfe und Klänge: Alles bis hierhin ist schon abgespielt */
+  fxN: 0,
+  /** Nächste Ansicht nur abgleichen, nichts nachspielen (nach Laden, Neuverbinden, neuem Tisch) */
+  fxSync: true,
+  /** Nach dem Aufwachen kurz nichts nachspielen */
+  fxQuietUntil: 0,
+  /** Zähler für E2E-Tests: gezeigte Klänge und gespielte Clips */
+  sbSeen: 0,
+  sbHeard: 0,
   anim: {} as AnimFlags,
   flying: 0,
   flownN: 0,

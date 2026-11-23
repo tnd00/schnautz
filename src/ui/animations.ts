@@ -6,7 +6,7 @@ import { cardHTML } from './cards';
 import { $, $opt, reduceMotion } from './dom';
 import { panelFor } from './feedback';
 import { pById } from './helpers';
-import { sfx } from './sound';
+import { sfxCalm } from './sound';
 
 const EASE = 'cubic-bezier(.3,.7,.2,1)';
 
@@ -345,5 +345,6 @@ export function emojiFly(pid: string | undefined, ch: string): void {
     { duration: 1900, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' },
   ).onfinish = () => el.remove();
   setTimeout(() => el.remove(), 2400);
-  if (pid !== App.me) sfx('pop');
+  // Ein gemeinsamer Ton für alle Reaktionen, damit man hört, dass etwas passiert ist
+  sfxCalm('pop', 120);
 }

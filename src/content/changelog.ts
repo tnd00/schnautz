@@ -10,6 +10,61 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.2',
+    date: '2026-11-23',
+    title: 'Werfen und Tröten',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Das Reaktionsfenster hat drei Reiter: Reaktionen, Sounds und Werfen.',
+          'Tomaten, Eier und Kackhaufen lassen sich auf andere am Tisch werfen, dazu Herzen und Hasen für die Netten. Alles landet direkt auf den Karten. Mit der Krone krönst du jemanden für ein paar Sekunden.',
+          'Ein Tipp auf eine Gegnerkachel oder eine Zeile im Ergebnisfenster öffnet die Wurfleiste direkt für diese Person.',
+          'Soundboard mit Tröte, Trommelwirbel, Uuuh, Applaus, Wah wah und Grillen. Alle am Tisch hören es, auch wer schon fertig oder raus ist.',
+          'Würfe und Soundboard klingen nach echten Aufnahmen statt nach Computer.',
+          'Im Ergebnisfenster gehen alle Reaktionen, Sounds und Würfe.',
+          'Drei Reaktionen, Sounds oder Würfe gehen schnell hintereinander. Wer weiter spammt, wartet immer etwas länger, höchstens fünf Sekunden.',
+          'Wer die Sounds nicht hören will, schaltet das Soundboard unter ⋯ ab. Die Symbole fliegen trotzdem.',
+          'Die KIs werfen ab und zu zurück, krönen Sieger und tröten selten mit.',
+          'Nach einem Wurf schließt sich die Auswahl, auf wen er geht, von selbst.',
+          'Am Ende einer Partie führt „Zur Lobby“ zurück, etwa um ein anderes Spiel zu wählen.',
+          'Bist du raus und spielen nur noch KIs, kann der Host gleich zur Lobby oder eine neue Partie starten.',
+          'Schnautz: Nach 10 Sekunden startet die nächste Runde von selbst, am Ende der Partie nicht.',
+          'Ein Tipp auf „verbunden“ zeigt Details zur Verbindung und wer gerade da ist.',
+          'Ein Tipp auf den Raumcode oben öffnet die Einladung mit Code und Link zum Kopieren oder Teilen.',
+        ],
+      },
+      {
+        h: 'Zeitlimit',
+        items: [
+          'Dein Platz ist immer gelb umrandet. Bist du dran, leuchtet der Rand wie bei den anderen und pulsiert schneller, je knapper die Zeit wird.',
+          'In den letzten fünf Sekunden tickt es.',
+          'Läuft deine Zeit ab und die KI zieht für dich, siehst und hörst du das.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Mehr Töne: wenn du dran bist, bei Reaktionen, beim Austeilen und bei Meldungen.',
+          'Wer dran ist, wird nur noch am Rand gelb, nicht mehr in der ganzen Fläche.',
+          'Schnautz: Die Zahl der Karten im Stapel steht am Stapel und macht die Tischmitte nicht mehr größer.',
+          'Schnautz am Handy: Die Leiste oben zeigt alle mit ihren Leben als Zahl und passt immer in eine Zeile.',
+          'Am Handy steht „schwimmt“ nur an deinem Platz ausgeschrieben, sonst reicht das Zeichen.',
+          'Bei „Tisch ansehen“ nach einer Runde stehen unten Ergebnis und nächste Runde, am Ende der Partie für den Host auch „Zur Lobby“.',
+          'Am PC ist mehr Luft zwischen Gegnern, Tischmitte und deinem Platz.',
+          'Der Einladungscode steht überall in klarer Schrift.',
+          'Chat, Reaktionen und die laufende Uhr unterbrechen keine Animation und keine Kartenauswahl mehr.',
+          'Am Handy geht der Ton zuverlässiger an, ein Tipp auf den Tisch reicht.',
+          'Wackelnde Gegner springen im Karussell nicht mehr an den Rand.',
+        ],
+      },
+      {
+        h: 'Behoben',
+        items: ['Meldungen aus dem Spiel legen sich nicht mehr über Regeln, Bestenliste, Verbindung oder Einladung.'],
+      },
+    ],
+  },
+  {
     v: '2.1.1',
     date: '2026-11-23',
     title: 'Luft im Verlauf',
