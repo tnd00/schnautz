@@ -154,7 +154,7 @@ button.chip:hover{border-color:rgba(243,205,125,.5)}
 .card{--cw:96px; --rot:0deg; --ty:0px; position:relative; flex:none; width:var(--cw); height:calc(var(--cw)*1.4); border-radius:calc(var(--cw)*.085);
   background:linear-gradient(155deg,#fffdf6 0%, #f6eedb 60%, #efe3c8 100%); color:var(--ink); font-size:calc(var(--cw)/6.2);
   box-shadow:0 0 0 1px rgba(70,45,10,.2), 0 1px 0 rgba(255,255,255,.7) inset, 0 7px 16px rgba(0,0,0,.33), 0 2px 3px rgba(0,0,0,.22);
-  transform:translateY(var(--ty)) rotate(var(--rot)); transition:transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s; user-select:none; -webkit-user-select:none; touch-action:manipulation}
+  transform:translateY(var(--ty)) rotate(var(--rot)) scale(var(--sc,1)); transition:transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s; user-select:none; -webkit-user-select:none; touch-action:manipulation}
 .card.red{color:var(--red)}
 .card::before{content:''; position:absolute; inset:calc(var(--cw)*.035); border-radius:calc(var(--cw)*.06); border:1px solid rgba(120,90,40,.16); pointer-events:none}
 .card .ix{position:absolute; top:.3em; left:.32em; display:flex; flex-direction:column; align-items:center; line-height:.92; font-family:var(--display); font-weight:700; font-size:1.06em; letter-spacing:-.03em}
@@ -344,7 +344,7 @@ body.logopen .peek{display:none}
 .burned{display:flex; flex-direction:column; align-items:center; gap:1px; color:var(--muted); font-size:11px; min-width:52px}
 .burned .flame{font-size:24px; line-height:1; filter:saturate(.8)}
 .burned b{font-family:var(--display); font-size:20px; color:var(--cream)}
-.shhand{display:flex; justify-content:safe center; max-width:100%; overflow-x:auto; padding:18px 12px 6px; --hw:clamp(64px, 17vw, 96px); scrollbar-width:thin}
+.shhand{display:flex; flex-wrap:wrap; justify-content:center; max-width:100%; padding:24px 12px 6px; --hw:clamp(64px, 17vw, 96px)}
 .shrow{display:flex; flex-direction:column; align-items:center; gap:2px; max-width:100%}
 @media (min-width: 700px){ .shrow{flex-direction:row; align-items:flex-end; gap:26px} .shrow .shhand{padding-bottom:0} }
 .shme{width:min(760px, 100%)}
@@ -354,6 +354,16 @@ body.logopen .peek{display:none}
 .mini .more{align-self:center; font-weight:700; font-size:13px; color:#6a5f4c; margin-left:2px}
 .shhand .card{--cw:var(--hw)}
 .shhand .card + .card{margin-left:calc(var(--hw) * var(--ov, -.06))}
+.shhand .card{z-index:1}
+.shhand .card.sel{z-index:4}
+.shhand .hbr{flex-basis:100%; height:0}
+.shhand .hbr + .card{margin-left:0}
+.shhand .card.r2{margin-top:calc(var(--hw) * -.74)}
+@media (hover:hover){
+  .shhand .card:hover{--ty:-26px; --sc:1.24; z-index:9; box-shadow:0 0 0 1px rgba(70,45,10,.25), 0 18px 34px rgba(0,0,0,.5)}
+  .shhand .card.sel:hover{--ty:-32px; box-shadow:0 0 0 3px var(--brass-hi), 0 0 26px rgba(243,205,125,.55), 0 18px 34px rgba(0,0,0,.5)}
+  .tcards .card.pick:hover{--sc:1.12; z-index:5}
+}
 .shme{gap:10px}
 
 /* ---------- Score-Leiste ---------- */
@@ -474,6 +484,55 @@ body.logopen .peek{display:none}
   .row .mini .card{--cw:30px}
   .row .val{font-size:20px; min-width:40px}
 }
+/* ---------- Shithead: Ablauf, Legende, Reaktionen ---------- */
+.g3d{position:fixed; z-index:44; pointer-events:none; transform-style:preserve-3d}
+.g3d > .card{position:absolute; left:0; top:0; backface-visibility:hidden; -webkit-backface-visibility:hidden}
+.g3d > .card.gb{transform:rotateY(180deg)}
+.pile .card.burning{animation:burnUp .7s ease-in forwards; animation-delay:var(--bd,0s)}
+@keyframes burnUp{0%{filter:none} 35%{filter:brightness(1.3) sepia(1) saturate(4) hue-rotate(-20deg); box-shadow:0 0 30px 8px rgba(255,120,30,.8)} 100%{filter:brightness(.4) sepia(1) saturate(5); transform:translateY(-38px) rotate(var(--rot)) scale(.55); opacity:0}}
+.fxboom{position:fixed; z-index:46; pointer-events:none; font-size:72px; line-height:1; transform:translate(-50%,-50%); animation:fxBoom 1s ease-out forwards}
+@keyframes fxBoom{0%{transform:translate(-50%,-50%) scale(.3); opacity:0} 25%{transform:translate(-50%,-50%) scale(1.35); opacity:1} 100%{transform:translate(-50%,-90%) scale(1.7); opacity:0}}
+.burned.hot b{display:inline-block; animation:bumpN .6s}
+.burned.hot .flame{display:inline-block; animation:bumpN .6s}
+@keyframes bumpN{40%{transform:scale(1.6); color:#ffb35c}}
+.nopelbl{position:fixed; z-index:47; transform:translate(-50%,-100%); background:var(--red); color:#fff; font-weight:800; font-size:14px; padding:5px 14px; border-radius:999px; white-space:nowrap; pointer-events:none; box-shadow:0 8px 20px rgba(0,0,0,.4); animation:bubIn .3s cubic-bezier(.2,1.3,.4,1)}
+.tauntlbl{position:fixed; z-index:47; transform:translate(-50%,-100%); width:max-content; max-width:min(90vw, 440px); background:#fbf6e8; color:#2a241b; font-weight:700; font-size:15px; line-height:1.3; text-align:center; padding:9px 16px; border-radius:16px; pointer-events:none; box-shadow:0 0 0 2px rgba(179,49,42,.35), 0 14px 30px rgba(0,0,0,.45); animation:bubIn .35s cubic-bezier(.2,1.3,.4,1)}
+.tauntlbl.out,.nopelbl.out{opacity:0; transition:opacity .3s}
+.deck .pcount{right:auto; left:-9px}
+.wincd{display:inline-grid; place-items:center; width:46px; height:46px; border-radius:50%; margin-left:12px; vertical-align:middle; background:conic-gradient(var(--brass-hi) calc(var(--p,1) * 360deg), rgba(255,255,255,.12) 0)}
+.wincd b{display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:#123526; font-family:var(--display); font-size:19px; font-style:normal; color:var(--cream)}
+.status .quick{margin-top:10px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap}
+.btn.big{min-height:54px; font-size:18px; padding:0 26px}
+.btn.bomb{background:linear-gradient(180deg,#e45a43,#a3261c); color:#fff; border:1px solid #ff9a7e; min-height:54px; font-size:18px; padding:0 24px; box-shadow:0 0 0 3px rgba(255,140,100,.3), 0 0 36px rgba(255,90,40,.55)}
+.legend{padding:12px 16px 12px; border-bottom:1px solid rgba(246,239,223,.08); max-height:46%; overflow-y:auto; scrollbar-width:thin}
+.legend-h{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.legend-h button{background:rgba(0,0,0,.25); border:1px solid rgba(246,239,223,.16); color:var(--cream); border-radius:999px; font-size:11.5px; padding:4px 11px; letter-spacing:.02em; text-transform:none; cursor:pointer}
+.lg{display:grid; grid-template-columns:auto 1fr; gap:8px 11px; margin-top:11px; align-items:center}
+.lg .rk{display:grid; place-items:center; min-width:30px; height:40px; padding:0 4px; border-radius:6px; background:linear-gradient(155deg,#fffdf6,#efe3c8); color:var(--ink); font-family:var(--display); font-weight:800; font-size:16px; box-shadow:0 0 0 1px rgba(70,45,10,.25), 0 3px 6px rgba(0,0,0,.3)}
+.lg .rk.r{color:var(--red)}
+.lg .rk.e{background:rgba(0,0,0,.25); box-shadow:inset 0 0 0 1px rgba(246,239,223,.16); color:var(--cream); font-size:16px}
+.lg .t b{display:block; color:var(--cream); font-size:13.5px}
+.lg .t span{display:block; color:var(--muted); font-size:12.5px; line-height:1.3}
+.legend-m{display:none; width:min(760px, 100%)}
+.legend-m .legend-h{justify-content:center}
+.legend-m .lg{background:rgba(0,0,0,.2); border-radius:16px; padding:12px 14px}
+.emotes{display:flex; gap:7px; justify-content:center; flex-wrap:wrap}
+.emotes button{width:42px; height:42px; border-radius:50%; border:1px solid rgba(246,239,223,.14); background:rgba(0,0,0,.25); font-size:21px; line-height:1; display:grid; place-items:center; transition:transform .15s, opacity .2s; cursor:pointer}
+.emotes button:hover{transform:scale(1.18)}
+.emotes button:disabled{opacity:.35; transform:none}
+.emo{position:fixed; z-index:57; font-size:66px; line-height:1; pointer-events:none; filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+.rainp{position:fixed; top:-70px; z-index:56; pointer-events:none; font-style:normal; line-height:1}
+.reign{display:inline-block; animation:wob 1.6s ease-in-out infinite; transform-origin:50% 90%}
+@keyframes wob{0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(10deg)}}
+.sb-p.shamed{border-color:rgba(176,120,60,.65); background:rgba(120,70,30,.28)}
+.paper .taunt{margin:-4px 0 14px; padding-left:22px; font-family:var(--display); font-style:italic; font-weight:700; font-size:clamp(17px,3.4vw,20px); color:#8e231d}
+.paper .taunt.good{color:#7a5a12}
+.ann-s .tt{display:block; margin-top:6px; font-style:italic; font-weight:700; color:#8e231d}
+.ann.gold .ann-s .tt{color:#5a3d06}
+.ann.wood .ann-s .tt{color:#ffd9b8}
+.row .hat{display:inline-block; margin-right:4px; animation:wob 1.4s ease-in-out infinite}
+@media (max-width: 960px){ .side .legend{display:none} .legend-m{display:block} }
+@media (max-width: 520px){ .emotes button{width:38px; height:38px; font-size:19px} .btn.bomb,.btn.big{font-size:16px; min-height:50px} }
 @media (prefers-reduced-motion: reduce){ *{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important} }
 </style>
 </head>
@@ -557,8 +616,11 @@ body.logopen .peek{display:none}
       <div class="center" id="center"></div>
       <div class="status" id="status"></div>
       <div class="me" id="me"></div>
+      <div class="emotes" id="emotes"></div>
+      <div class="legend-m" id="legend-m"></div>
     </div>
     <aside class="side" id="side">
+      <div class="legend" id="legend"></div>
       <h3>Verlauf &amp; Chat <button data-act="closelog" aria-label="Schließen">×</button></h3>
       <div class="log" id="log"></div>
       <form class="chatform" id="chatform" autocomplete="off">
@@ -595,7 +657,9 @@ var SUITS = ['C','S','H','D'];
 var SUIT_SYM = {C:'♣', S:'♠', H:'♥', D:'♦'};
 var RANKS = ['7','8','9','10','B','D','K','A'];
 var RANK_VAL = {'7':7,'8':8,'9':9,'10':10,'B':10,'D':10,'K':10,'A':11};
-var DEFAULT_RULES = {lives:3, feuer:true, dealerChoice:true, knockFirst:false, knockDouble:false, sh:{two:true, three:true, seven:true, ten:true, eight:false}};
+var DEFAULT_RULES = {lives:3, feuer:true, dealerChoice:true, knockFirst:false, knockDouble:false, sh:{two:true, three:true, seven:true, ten:true, eight:false, four:true, cut:true}};
+var EMOTES = ['😂','🫵','🤡','💩','🔥','😭'];
+var SH_WIN_MS = 5000;
 var MAX_PLAYERS = 4;
 
 function suitOf(c){ return c[0]; }
@@ -667,7 +731,7 @@ function sanitizeRules(r, old){
   if (r.lives != null){ var l = parseInt(r.lives, 10); if (!isNaN(l)) o.lives = Math.max(1, Math.min(6, l)); }
   ['feuer','dealerChoice','knockFirst','knockDouble'].forEach(function(k){ if (k in r) o[k] = !!r[k]; });
   if (!o.sh) o.sh = JSON.parse(JSON.stringify(DEFAULT_RULES.sh));
-  if (r.sh && typeof r.sh === 'object') ['two','three','seven','ten','eight'].forEach(function(k){ if (k in r.sh) o.sh[k] = !!r.sh[k]; });
+  if (r.sh && typeof r.sh === 'object') ['two','three','seven','ten','eight','four','cut'].forEach(function(k){ if (k in r.sh) o.sh[k] = !!r.sh[k]; });
   return o;
 }
 
@@ -756,6 +820,7 @@ function finishRound(st, reason, by){
   if (alive.length <= 1){
     st.phase = 'over'; st.winner = alive[0] ? alive[0].id : null;
     if (alive[0]) alive[0].wins = (alive[0].wins || 0) + 1;
+    st.reign = {win:st.winner, game:'schnautz'};
     addLog(st, {k:'winner', p:st.winner});
   } else st.phase = 'end';
 }
@@ -780,6 +845,7 @@ function beginGame(st, rng){ return st.game === 'shithead' ? shStart(st, rng) : 
 function migrate(st){
   if (!st.game) st.game = 'schnautz';
   if (!st.rules.sh) st.rules.sh = JSON.parse(JSON.stringify(DEFAULT_RULES.sh));
+  Object.keys(DEFAULT_RULES.sh).forEach(function(k){ if (!(k in st.rules.sh)) st.rules.sh[k] = DEFAULT_RULES.sh[k]; });
 }
 function quitPlayer(st, pid, rng){
   var i = pIdx(st, pid); if (i < 0) return;
@@ -802,6 +868,7 @@ function quitPlayer(st, pid, rng){
     st.phase = 'over'; st.turn = -1; st.winner = alive[0] ? alive[0].id : null;
     if (alive[0]) alive[0].wins = (alive[0].wins || 0) + 1;
     st.players.forEach(function(x){ x.ready = false; });
+    st.reign = {win:st.winner, game:'schnautz'};
     addLog(st, {k:'winner', p:st.winner});
     return;
   }
@@ -873,6 +940,13 @@ function shBegin(st){
   st.phase = 'play';
   st.players.forEach(function(p){ p.ready = false; });
   var n = st.players.length, off = st.games % n, best = 99, bi = -1, bc = null;
+  if (shR(st).four){
+    for (var q=0;q<n;q++){
+      var qi = (off + q) % n, qp = st.players[qi]; if (qp.out) continue;
+      var f4 = st.sh.P[qp.id].hand.filter(function(c){ return rankOf(c) === '4'; })[0];
+      if (f4){ st.turn = qi; addLog(st, {k:'shstart', p:qp.id, card:f4}); shOpenFours(st, qi); return; }
+    }
+  }
   for (var k=0;k<n;k++){
     var i = (off + k) % n, p = st.players[i];
     if (p.out) continue;
@@ -885,6 +959,53 @@ function shBegin(st){
   st.turn = bi;
   addLog(st, {k:'shstart', p:st.players[bi].id, card:bc});
 }
+// 4er-Start: Wer anfängt, legt seine 4er sofort. Danach haben alle anderen kurz Zeit, ihre 4er reinzuwerfen.
+function shOpenFours(st, bi){
+  var S = st.sh, pid = st.players[bi].id, P = S.P[pid];
+  var cards = P.hand.filter(function(c){ return rankOf(c) === '4'; });
+  if (!cards.length) return;
+  P.hand = P.hand.filter(function(c){ return rankOf(c) !== '4'; });
+  S.pile.push.apply(S.pile, cards); shDraw(st, P);
+  addLog(st, {k:'shplay', p:pid, cards:cards, src:'hand', open:true});
+  S.win = {r:'4', start:bi, by:[pid], id:st.n};
+  st.last = {k:'shplay', p:pid, n:st.n, cards:cards, src:'hand', open:true};
+}
+function shCloseWin(st){
+  var S = st.sh; if (!S || !S.win) return;
+  var w = S.win; S.win = null;
+  st.turn = shNextIdx(st, w.start);
+  addLog(st, {k:'shwinend', cnt:w.by.length});
+  st.last = {k:'shwinend', n:st.n};
+}
+function shTopRun(st){
+  var p = st.sh.pile; if (!p.length) return {r:null, k:0};
+  var r = rankOf(p[p.length-1]), k = 0;
+  for (var i=p.length-1;i>=0 && rankOf(p[i]) === r;i--) k++;
+  return {r:r, k:k};
+}
+// Bombe einwerfen: Wer die fehlenden Karten zu vier gleichen hat, darf sie jederzeit reinwerfen.
+function shCanBomb(st, pid){
+  var S = st.sh; if (!S || st.phase !== 'play' || S.win || !shR(st).cut) return null;
+  var pi = pIdx(st, pid); if (pi < 0 || st.players[pi].out || S.finished.indexOf(pid) >= 0) return null;
+  var P = S.P[pid]; if (!P || !Array.isArray(P.hand)) return null;
+  var t = shTopRun(st); if (!t.r || t.k >= 4) return null;
+  var src = P.hand.length ? 'hand' : (P.up.length ? 'up' : null); if (!src) return null;
+  var idx = []; P[src].forEach(function(c, i){ if (rankOf(c) === t.r) idx.push(i); });
+  if (idx.length !== 4 - t.k) return null;
+  return {src:src, idx:idx, r:t.r};
+}
+function shCanThrow(st, pid){
+  var S = st.sh; if (!S || !S.win || st.phase !== 'play') return null;
+  var pi = pIdx(st, pid); if (pi < 0 || st.players[pi].out || S.win.by.indexOf(pid) >= 0) return null;
+  var P = S.P[pid]; if (!P || !Array.isArray(P.hand)) return null;
+  var idx = []; P.hand.forEach(function(c, i){ if (rankOf(c) === S.win.r) idx.push(i); });
+  return idx.length ? idx : null;
+}
+function shBurnNow(st, pid, cut){
+  var S = st.sh;
+  S.burned.push.apply(S.burned, S.pile); S.pile = [];
+  addLog(st, {k:'shburn', p:pid, four:true, cut:!!cut}); st.last = {k:'shburn', p:pid, n:st.n};
+}
 function shNextIdx(st, i){
   var n = st.players.length;
   for (var k=1;k<=n;k++){ var j = (i + k) % n, p = st.players[j]; if (!p.out && st.sh.finished.indexOf(p.id) < 0) return j; }
@@ -893,11 +1014,12 @@ function shNextIdx(st, i){
 function shAdvance(st, skip){ var j = st.turn; for (var s=0;s<=skip;s++) j = shNextIdx(st, j); st.turn = j; }
 function shDraw(st, P){ while (P.hand.length < 3 && st.sh.deck.length) P.hand.push(st.sh.deck.shift()); shSort(P.hand); }
 function shEnd(st, loser, quitter){
-  var S = st.sh; S.shithead = loser;
+  var S = st.sh; S.shithead = loser; S.win = null;
   if (loser){ var lp = st.players[pIdx(st, loser)]; if (lp){ lp.shc = (lp.shc || 0) + 1; lp.place = S.finished.length + 1; } }
   var names = {}; st.players.forEach(function(p){ names[p.id] = p.name; });
   st.result = {reason:'shithead', ranking:S.finished.slice(), shithead:loser, quit:quitter || null, names:names};
   st.phase = 'over'; st.turn = -1; st.winner = S.finished[0] || null;
+  st.reign = {win:st.winner, sh:loser || null, game:'shithead'};
   if (st.winner){ var wp = st.players[pIdx(st, st.winner)]; if (wp) wp.wins = (wp.wins || 0) + 1; }
   st.players.forEach(function(p){ p.ready = false; });
   addLog(st, {k:'shend', p:loser});
@@ -949,7 +1071,7 @@ function shQuit(st, i, pid, rng){
 function shAuto(st, pid, rng){
   var S = st.sh, P = S.P[pid], pi = pIdx(st, pid);
   if (st.phase === 'swap'){ st.players[pi].ready = true; checkReady(st, rng); return null; }
-  if (st.phase !== 'play' || st.turn !== pi) return null;
+  if (st.phase !== 'play' || st.turn !== pi || S.win) return null;
   var src = P.hand.length ? 'hand' : (P.up.length ? 'up' : null);
   if (!src) return shAct(st, pid, pi, {type:'shblind', i:0}, rng);
   var arr = P[src], best = -1, bo = 99;
@@ -975,6 +1097,42 @@ function shAct(st, pid, pi, a, rng){
     st.players[pi].ready = true; checkReady(st, rng); return null;
   }
   if (st.phase !== 'play') return 'Das geht gerade nicht.';
+  if (t === 'shwinend'){
+    if (pid !== st.host) return null;
+    if (!S.win || a.id !== S.win.id) return null;
+    shCloseWin(st);
+    return null;
+  }
+  if (t === 'shthrow'){
+    if (!S.win) return 'Zu spät, die Runde läuft schon.';
+    if (st.players[pi].out || S.finished.indexOf(pid) >= 0) return null;
+    if (S.win.by.indexOf(pid) >= 0) return 'Deine 4er liegen schon drin.';
+    var ti = shCanThrow(st, pid); if (!ti) return 'Du hast keine 4 auf der Hand.';
+    var tc = ti.map(function(i){ return P.hand[i]; });
+    P.hand = P.hand.filter(function(c){ return rankOf(c) !== S.win.r; });
+    S.pile.push.apply(S.pile, tc); S.win.by.push(pid); shDraw(st, P);
+    addLog(st, {k:'shthrow', p:pid, cards:tc}); st.last = {k:'shplay', p:pid, n:st.n, cards:tc, src:'hand', thrown:true};
+    if (shFour(st)){
+      S.win = null; shBurnNow(st, pid, true); st.turn = pi;
+      shFinishCheck(st, pid, 0);
+    }
+    return null;
+  }
+  if (t === 'shbomb'){
+    var bm = shCanBomb(st, pid);
+    if (!bm) return S.win ? 'Moment, die 4er werden noch reingeworfen.' : 'Zu spät, das geht nicht mehr.';
+    var arr0 = P[bm.src], bc = bm.idx.map(function(i){ return arr0[i]; });
+    bm.idx.slice().sort(function(x, y){ return y - x; }).forEach(function(i){ arr0.splice(i, 1); });
+    S.pile.push.apply(S.pile, bc);
+    addLog(st, {k:'shbomb', p:pid, cards:bc, src:bm.src, out:pi !== st.turn});
+    st.last = {k:'shplay', p:pid, n:st.n, cards:bc, src:bm.src};
+    shDraw(st, P);
+    shBurnNow(st, pid, pi !== st.turn);
+    st.turn = pi;
+    shFinishCheck(st, pid, 0);
+    return null;
+  }
+  if (S.win) return 'Moment, die 4er werden noch reingeworfen.';
   if (pi !== st.turn) return 'Du bist gerade nicht dran.';
   if (t === 'shplay'){
     var src = a.from === 'up' ? 'up' : 'hand';
@@ -1020,6 +1178,14 @@ function act(st, pid, a, rng){
     if (text){ var ce = {k:'chat', p:pid, text:text}; if (me.bot) ce.bot = true; addLog(st, ce); }
     return null;
   }
+  if (t === 'emote'){
+    if (EMOTES.indexOf(a.e) < 0 || st.phase === 'lobby') return null;
+    if (me.bot && !a.bot) return null;
+    var olds = st.log.filter(function(x){ return x.k === 'emote'; });
+    if (olds.length >= 6) st.log.splice(st.log.indexOf(olds[0]), 1);
+    addLog(st, {k:'emote', p:pid, e:a.e});
+    return null;
+  }
   if (t === 'rules'){
     if (pid !== st.host) return 'Nur der Gastgeber kann die Regeln ändern.';
     if (st.phase !== 'lobby') return 'Regeln lassen sich nur in der Lobby ändern.';
@@ -1055,7 +1221,7 @@ function act(st, pid, a, rng){
   }
   if (t === 'skip' && st.game === 'shithead'){
     if (pid !== st.host) return 'Nur der Gastgeber kann das.';
-    if (st.phase !== 'play') return null;
+    if (st.phase !== 'play' || (st.sh && st.sh.win)) return null;
     var shw = st.players[st.turn];
     if (!shw || shw.online) return shw ? shw.name + ' ist wieder da.' : null;
     return shAuto(st, shw.id, rng);
@@ -1238,7 +1404,11 @@ function botShithead(v, rng, lvl){
     }
     return {type:'shready'};
   }
-  if (v.phase !== 'play' || v.turn !== pi) return null;
+  if (v.phase !== 'play') return null;
+  // 4er-Fenster: schnell die eigenen 4er reinwerfen
+  if (S.win) return shCanThrow(v, me) ? {type:'shthrow'} : null;
+  // Außer der Reihe nur, um vier gleiche vollzumachen
+  if (v.turn !== pi) return shCanBomb(v, me) ? {type:'shbomb'} : null;
   var src = P.hand.length ? 'hand' : (P.up.length ? 'up' : null);
   if (!src){
     var dn = typeof P.down === 'number' ? P.down : P.down.length;
@@ -1440,25 +1610,6 @@ function runFlights(prev, v){
   }
   App.holdUntil = Math.max(App.holdUntil, Date.now() + 900);
 }
-function runShFlights(prev, v){
-  var L = v.last; if (v.game !== 'shithead' || !L) return;
-  if ((prev.last && prev.last.n === L.n) || L.n <= App.flownN) return;
-  App.flownN = L.n;
-  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var pileCards = document.querySelectorAll('#center .pile .card'), top = pileCards[pileCards.length - 1];
-  var me = L.p === App.me;
-  var srcEl = function(src){
-    if (me) return document.querySelector(src === 'hand' ? '#me .shhand' : '#me .tcards');
-    var op = document.querySelector('.opp[data-pid="' + L.p + '"]');
-    return op ? op.querySelector(src === 'hand' ? '.ohand' : '.tcards') : null;
-  };
-  if (L.k === 'shplay' && L.cards && top){
-    fly(srcEl(L.src), top, L.cards[L.cards.length - 1], {spin:-10});
-  } else if (L.k === 'shpickup'){
-    var to = srcEl('hand'), pile = $('#center .pile .emptyslot') || $('#center .pile');
-    if (to && pile){ for (var i=0;i<Math.min(4, num(L.cnt));i++) fly(pile, to, null, {delay:i * 70, hide:false, fadeOut:true, dur:560, spin:12}); }
-  }
-}
 function markLost(lost, v){
   Object.keys(lost).forEach(function(id){
     var p = pById(v, id); if (!p) return;
@@ -1496,8 +1647,9 @@ function renderScore(v){
       var P = v.sh && v.sh.P[p.id], n = P ? (typeof P.hand === 'number' ? P.hand : P.hand.length) + P.up.length + (typeof P.down === 'number' ? P.down : P.down.length) : 0;
       stat = p.out ? '<span class="tag outt">raus</span>' : ((v.sh && v.sh.finished.indexOf(p.id) >= 0) ? '<span class="sb-c">Platz ' + num(p.place) + '</span>' : '<span class="sb-c">' + n + (n === 1 ? ' Karte' : ' Karten') + '</span>');
     } else stat = livesHTML(p, v.rules);
-    h += '<div class="sb-p' + (cur ? ' cur' : '') + (p.out ? ' out' : '') + (p.id === App.me ? ' mine' : '') + '" data-pid="' + esc(p.id) + '">' +
-      '<span class="sb-n">' + esc(p.id === App.me ? 'Du' : p.name) + (p.bot ? '<i class="botb">KI</i>' : '') + (!sh && v.knocker === p.id ? ' <span title="hat geklopft">✊</span>' : '') + '</span>' + stat +
+    var rg = v.reign && v.reign.game === v.game ? v.reign : null, crown = rg && rg.win === p.id, poo = sh && rg && rg.sh === p.id;
+    h += '<div class="sb-p' + (cur ? ' cur' : '') + (p.out ? ' out' : '') + (p.id === App.me ? ' mine' : '') + (poo ? ' shamed' : '') + '" data-pid="' + esc(p.id) + '">' +
+      '<span class="sb-n">' + (crown ? '<span class="reign" title="Hat die letzte Partie gewonnen">👑</span>' : '') + (poo ? '<span class="reign" title="Amtierender Shithead">💩</span>' : '') + esc(p.id === App.me ? 'Du' : p.name) + (p.bot ? '<i class="botb">KI</i>' : '') + (!sh && v.knocker === p.id ? ' <span title="hat geklopft">✊</span>' : '') + '</span>' + stat +
       (anyWin ? '<span class="sb-w" title="Gewonnene Partien">🏆 ' + num(p.wins) + '</span>' : '') + (sh && p.shc ? '<span class="sb-w" title="So oft Shithead">💩 ' + num(p.shc) + '</span>' : '') + '</div>';
   });
   el.innerHTML = h;
@@ -1547,7 +1699,11 @@ var SFX = {
   card: function(t){ tone(320, t, .06, 'triangle', .05); },
   knock: function(t){ thump(t); thump(t + .17); },
   win: function(t){ [523, 659, 784, 1047].forEach(function(f, i){ tone(f, t + i*.1, .35, 'triangle', .08); }); },
-  lose: function(t){ tone(392, t, .3, 'triangle', .07); tone(311, t + .16, .45, 'triangle', .07); }
+  lose: function(t){ tone(392, t, .3, 'triangle', .07); tone(311, t + .16, .45, 'triangle', .07); },
+  pop: function(t){ tone(880, t, .08, 'sine', .06); tone(1320, t + .05, .1, 'sine', .05); },
+  burn: function(t){ tone(220, t, .25, 'sawtooth', .035); tone(140, t + .08, .4, 'sawtooth', .035); },
+  bomb: function(t){ thump(t); thump(t + .12); tone(90, t, .55, 'square', .045); },
+  nope: function(t){ tone(260, t, .14, 'square', .04); tone(200, t + .13, .22, 'square', .04); }
 };
 function sfx(n){ if (App.muted || !AC) return; try { SFX[n](AC.currentTime + 0.01); } catch (e) {} }
 function renderSoundBtn(){
@@ -1626,6 +1782,10 @@ function hostNew(name){
 }
 function resetTableUI(){
   App.flownN = 0; App.holdUntil = 0; App.unread = 0; App.peek = false; App.lastSig = null;
+  clearTimeout(SEQ.t); SEQ.t = null; SEQ.busy = false; SEQ.next = null; SEQ.ov = null; SEQ.done = null; SEQ.gen++; App.playRects = null;
+  WIN.id = null; clearInterval(WIN.iv); WIN.iv = null; renderLegend.k = null;
+  if (typeof H !== 'undefined'){ clearTimeout(H.winT); H.winT = null; H.winId = null; }
+  if (typeof BOTS !== 'undefined' && BOTS.react){ Object.keys(BOTS.react).forEach(function(k){ clearTimeout(BOTS.react[k].t); }); BOTS.react = {}; }
   if (typeof BOTS !== 'undefined'){ clearTimeout(BOTS.timer); BOTS.timer = null; BOTS.key = null; BOTS.scanN = -1; BOTS.recent = []; }
   ANN.q = []; clearTimeout(ANN.t); ANN.busy = false; ANN.curEnd = 0; ANN.el = null; var an = $('#announce'); if (an) an.innerHTML = '';
 }
@@ -1636,6 +1796,7 @@ function hostResume(saved){
   H.st.players.forEach(function(p){ if (p.id !== App.me && !p.bot) p.online = false; });
   resetTableUI();
   migrate(H.st);
+  if (H.st.sh && H.st.sh.win) H.st.sh.win.until = Date.now() + 12000;
   hostCommit();
   hostOpen(true);
 }
@@ -1675,7 +1836,7 @@ function hostOpen(resume){
   });
   if (!H.hb) H.hb = setInterval(hostHeartbeat, 5000);
 }
-function hostFail(msg){ var p = H.peer; H.peer = null; try { p && p.destroy(); } catch (e) {} App.role = null; App.view = null; showScreen('start'); renderResume(); showStartError(msg); }
+function hostFail(msg){ resetTableUI(); var p = H.peer; H.peer = null; try { p && p.destroy(); } catch (e) {} App.role = null; App.view = null; showScreen('start'); renderResume(); showStartError(msg); }
 function hostAttach(conn){
   conn.on('data', function(m){ hostMsg(conn, m); });
   conn.on('close', function(){ hostClosed(conn); });
@@ -1717,6 +1878,7 @@ function hostMsg(conn, m){
   var id = conn._pid; if (!id) return;
   if (H.conns.get(id) !== conn){ try { conn.close(); } catch (e) {} return; }
   if (m.t === 'ping'){ hostSend(conn, {t:'pong'}); var pp = st.players[pIdx(st, id)]; if (pp && !pp.online){ pp.online = true; delete pp.offSince; hostCommit(); } return; }
+  if (m.t === 'act' && m.a && m.a.type === 'emote'){ var nowE = Date.now(); H.emo = H.emo || {}; if (H.emo[id] && nowE - H.emo[id] < 900) return; H.emo[id] = nowE; }
   if (m.t === 'act'){
     if (m.a && m.a.type === 'chat'){ var now = Date.now(); if (now - (conn._chat || 0) < 600) return; conn._chat = now; }
     var e = act(st, id, m.a); if (e) hostSend(conn, {t:'err', msg:e}); else hostCommit(); return;
@@ -1747,24 +1909,76 @@ function hostHeartbeat(){
   });
   if (changed) hostCommit();
 }
+function hostView(pid){
+  var v = viewFor(H.st, pid);
+  if (v.sh && v.sh.win){ v.sh.win.left = Math.max(0, num(v.sh.win.until) - Date.now()); delete v.sh.win.until; }
+  return v;
+}
+function hostOwnView(){
+  var v = hostView(App.me);
+  if (v.sh && v.sh.win) v.sh.win.at = num(H.st.sh.win.until);
+  return v;
+}
+function hostWin(){
+  var st = H.st, w = st && st.game === 'shithead' && st.phase === 'play' && st.sh && st.sh.win;
+  if (!w){ clearTimeout(H.winT); H.winT = null; H.winId = null; return; }
+  if (H.winId === w.id) return;
+  if (!w.until || w.until < Date.now() + 1500) w.until = Date.now() + SH_WIN_MS;
+  H.winId = w.id; clearTimeout(H.winT);
+  H.winT = setTimeout(function(){
+    H.winT = null;
+    var st2 = H.st; if (!st2 || !st2.sh || !st2.sh.win || st2.sh.win.id !== w.id) return;
+    var humans = st2.players.filter(function(p){ return !p.bot && !p.out; });
+    BOTS.slow = humans.filter(function(p){ return st2.sh.win.by.indexOf(p.id) < 0 && st2.sh.P[p.id] && st2.sh.P[p.id].hand.some(function(c){ return rankOf(c) === '4'; }); }).map(function(p){ return p.id; });
+    BOTS.slowOk = humans.length === 1;
+    shCloseWin(st2);
+    hostCommit();
+  }, Math.max(0, w.until - Date.now()));
+}
 function hostCommit(){
   if (!H.st) return;
+  hostWin();
   botChatter();
   hostSave();
-  H.conns.forEach(function(conn, pid){ hostSend(conn, {t:'state', s:viewFor(H.st, pid)}); });
-  applyView(viewFor(H.st, App.me));
+  H.conns.forEach(function(conn, pid){ hostSend(conn, {t:'state', s:hostView(pid)}); });
+  applyView(hostOwnView());
   botTick();
 }
-var BOT_LINES = {"greet": ["Na, wer mischt?", "Moin zusammen. Ich hab Zeit mitgebracht.", "Ist hier noch ein Platz frei?", "So, jetzt wird's ernst. Also halb ernst.", "Hallo in die Runde 👋", "Ich bin nur zum Gewinnen hier.", "Seid nett zu mir, ich bin eingerostet.", "Karten her, ich bin bereit!"], "knock": ["Klopf, klopf. Letzte Runde!", "Ich klopf mal. Viel Glück euch.", "Mir reicht das so 😌", "Zack, geklopft.", "Noch eine Runde, dann wird abgerechnet.", "Ich klopfe. Bitte nicht böse sein.", "Tisch hält? Gut, dann klopf ich.", "Mutig oder dumm? Gleich wissen wir's."], "otherKnock": ["Jetzt schon? Ich war noch nicht so weit.", "Oha, da fühlt sich jemand sicher.", "Na toll. Meine Hand sieht traurig aus.", "Geklopft? Dann muss ich wohl zaubern.", "Moment, ich brauch noch drei Runden!", "Uff 😬", "Ganz ruhig bleiben, alles im Griff.", "Das war bestimmt nur ein Bluff."], "schnautz": ["Schnautz! Einunddreißig auf die Hand.", "31. Ich sag nur Schnautz 😎", "Schnautz! Karten auf den Tisch.", "Bitte einmal alle staunen.", "Einunddreißig. Besser geht's nicht.", "Schnautz, meine Lieben!", "Das nennt man Timing. Schnautz!"], "feuer": ["Feuer! Drei Asse 🔥", "Drei Asse. Ich muss mich kurz setzen.", "Es brennt am Tisch. Feuer!", "Feuer! Bitte alle einen Deckel abgeben.", "Asse, Asse, Asse. Mehr sag ich nicht.", "Das passiert mir sonst nie. Feuer!", "Holt den Feuerlöscher, ich hab drei Asse."], "swapAll": ["Alles neu, bitte.", "Die drei können weg.", "Einmal komplett tauschen, danke.", "Schlimmer kann's nicht werden. Oder?", "Neue Karten, neues Glück 🍀", "Ich nehm den ganzen Tisch.", "Weg mit dem Blatt, her mit der Mitte!"], "roundWin": ["Beste Hand. Ich bin selbst überrascht.", "Diese Runde geht an mich 😇", "Läuft bei mir.", "Na also, geht doch!", "Danke, danke, bitte keinen Applaus.", "Glück? Reines Können.", "So darf es gern weitergehen."], "loseLife": ["Autsch, ein Deckel weniger.", "Den Bierdeckel hab ich eh nicht gemocht.", "Okay, das war nichts.", "Ein Deckel weg. Kein Drama.", "Mist, das war mein Lieblingsdeckel 😢", "Ich nenne das Aufwärmphase.", "Wer hat meine Karten gemischt?", "Na gut, der geht auf mich."], "swim": ["Ich schwimme. Das Wasser ist angenehm.", "Deckel alle, ab jetzt wird gepaddelt 🏊", "Hat jemand Schwimmflügel für mich?", "Noch bin ich nicht untergegangen.", "Schwimmen kann ich. Hoffe ich.", "Ab jetzt ohne Netz und ohne Deckel.", "Blubb."], "out": ["Das war's für mich. Macht's gut!", "Raus bin ich. Schön war's trotzdem.", "Ich schau euch dann mal zu 🍿", "Untergegangen. Mit Würde, hoffe ich.", "Beim nächsten Mal seid ihr dran.", "Tja. Gluck gluck.", "Ich geh dann mal die Chips holen."], "winGame": ["Gewonnen! Wer hätte das gedacht.", "Sieg 🏆 Ich bedanke mich bei meinen Karten.", "Revanche? Jederzeit.", "Das war knapp. Na ja, eigentlich nicht.", "Ich bleib bescheiden. Ab morgen.", "Gutes Spiel, ihr wart starke Gegner.", "Der Tisch gehört heute mir."], "shBurn": ["Zehn drauf. Stapel weg 🔥", "Und weg ist der Stapel.", "Verbrannt! Ich mag den Geruch.", "Einmal aufräumen, bitte.", "Puff, alles sauber.", "Der Stapel hat mich eh genervt.", "Feuer frei. Ich bin gleich nochmal dran."], "shPickup": ["Och nö. Der ganze Stapel?", "Na super, jetzt hab ich Lesestoff.", "Ich sammle halt gern Karten 🙃", "Wer braucht schon eine freie Hand?", "Das sind mehr Karten als Finger.", "Okay, das tat weh.", "Alles meins. Leider.", "Ich nehm's sportlich."], "shFinish": ["Fertig! Ich lehn mich zurück.", "Karten los, Sorgen los ✌️", "Ich bin durch. Viel Spaß noch!", "Hände leer, Gewissen rein.", "Das ging ja flott.", "So, ich bin raus aus der Nummer.", "Fertig. Wer wird's denn nun?"], "shShithead": ["Okay, ich bin der Shithead. Glückwunsch.", "Einer muss es ja machen.", "Shithead, das bin dann wohl ich 🙈", "Ich trage den Titel mit Stolz.", "Nächste Runde wird alles anders.", "Ich hab euch gewinnen lassen. Ehrlich.", "Dafür misch ich jetzt, oder?"]};
-var BOTS = {timer:null, chatAt:0, scanN:-1, recent:[]};
+var BOT_LINES = {"greet": ["Na, wer mischt?", "Moin zusammen. Ich hab Zeit mitgebracht.", "Ist hier noch ein Platz frei?", "So, jetzt wird's ernst. Also halb ernst.", "Hallo in die Runde 👋", "Ich bin nur zum Gewinnen hier.", "Seid nett zu mir, ich bin eingerostet.", "Karten her, ich bin bereit!"], "knock": ["Klopf, klopf. Letzte Runde!", "Ich klopf mal. Viel Glück euch.", "Mir reicht das so 😌", "Zack, geklopft.", "Noch eine Runde, dann wird abgerechnet.", "Ich klopfe. Bitte nicht böse sein.", "Tisch hält? Gut, dann klopf ich.", "Mutig oder dumm? Gleich wissen wir's."], "otherKnock": ["Jetzt schon? Ich war noch nicht so weit.", "Oha, da fühlt sich jemand sicher.", "Na toll. Meine Hand sieht traurig aus.", "Geklopft? Dann muss ich wohl zaubern.", "Moment, ich brauch noch drei Runden!", "Uff 😬", "Ganz ruhig bleiben, alles im Griff.", "Das war bestimmt nur ein Bluff."], "schnautz": ["Schnautz! Einunddreißig auf die Hand.", "31. Ich sag nur Schnautz 😎", "Schnautz! Karten auf den Tisch.", "Bitte einmal alle staunen.", "Einunddreißig. Besser geht's nicht.", "Schnautz, meine Lieben!", "Das nennt man Timing. Schnautz!"], "feuer": ["Feuer! Drei Asse 🔥", "Drei Asse. Ich muss mich kurz setzen.", "Es brennt am Tisch. Feuer!", "Feuer! Bitte alle einen Deckel abgeben.", "Asse, Asse, Asse. Mehr sag ich nicht.", "Das passiert mir sonst nie. Feuer!", "Holt den Feuerlöscher, ich hab drei Asse."], "swapAll": ["Alles neu, bitte.", "Die drei können weg.", "Einmal komplett tauschen, danke.", "Schlimmer kann's nicht werden. Oder?", "Neue Karten, neues Glück 🍀", "Ich nehm den ganzen Tisch.", "Weg mit dem Blatt, her mit der Mitte!"], "roundWin": ["Beste Hand. Ich bin selbst überrascht.", "Diese Runde geht an mich 😇", "Läuft bei mir.", "Na also, geht doch!", "Danke, danke, bitte keinen Applaus.", "Glück? Reines Können.", "So darf es gern weitergehen."], "loseLife": ["Autsch, ein Deckel weniger.", "Den Bierdeckel hab ich eh nicht gemocht.", "Okay, das war nichts.", "Ein Deckel weg. Kein Drama.", "Mist, das war mein Lieblingsdeckel 😢", "Ich nenne das Aufwärmphase.", "Wer hat meine Karten gemischt?", "Na gut, der geht auf mich."], "swim": ["Ich schwimme. Das Wasser ist angenehm.", "Deckel alle, ab jetzt wird gepaddelt 🏊", "Hat jemand Schwimmflügel für mich?", "Noch bin ich nicht untergegangen.", "Schwimmen kann ich. Hoffe ich.", "Ab jetzt ohne Netz und ohne Deckel.", "Blubb."], "out": ["Das war's für mich. Macht's gut!", "Raus bin ich. Schön war's trotzdem.", "Ich schau euch dann mal zu 🍿", "Untergegangen. Mit Würde, hoffe ich.", "Beim nächsten Mal seid ihr dran.", "Tja. Gluck gluck.", "Ich geh dann mal die Chips holen."], "winGame": ["Gewonnen! Wer hätte das gedacht.", "Sieg 🏆 Ich bedanke mich bei meinen Karten.", "Revanche? Jederzeit.", "Das war knapp. Na ja, eigentlich nicht.", "Ich bleib bescheiden. Ab morgen.", "Gutes Spiel, ihr wart starke Gegner.", "Der Tisch gehört heute mir."], "shBurn": ["Zehn drauf. Stapel weg 🔥", "Und weg ist der Stapel.", "Verbrannt! Ich mag den Geruch.", "Einmal aufräumen, bitte.", "Puff, alles sauber.", "Der Stapel hat mich eh genervt.", "Feuer frei. Ich bin gleich nochmal dran."], "shPickup": ["Och nö. Der ganze Stapel?", "Na super, jetzt hab ich Lesestoff.", "Ich sammle halt gern Karten 🙃", "Wer braucht schon eine freie Hand?", "Das sind mehr Karten als Finger.", "Okay, das tat weh.", "Alles meins. Leider.", "Ich nehm's sportlich."], "shFinish": ["Fertig! Ich lehn mich zurück.", "Karten los, Sorgen los ✌️", "Ich bin durch. Viel Spaß noch!", "Hände leer, Gewissen rein.", "Das ging ja flott.", "So, ich bin raus aus der Nummer.", "Fertig. Wer wird's denn nun?"], "shShithead": ["Okay, ich bin der Shithead. Glückwunsch.", "Einer muss es ja machen.", "Shithead, das bin dann wohl ich 🙈", "Ich trage den Titel mit Stolz.", "Nächste Runde wird alles anders.", "Ich hab euch gewinnen lassen. Ehrlich.", "Dafür misch ich jetzt, oder?"], "mockPickup": ["Na, sammelst du jetzt Karten? Schönes Hobby 📚", "Brauchst du eine Tüte für den Stapel?", "Ui, das ist aber eine stattliche Hand geworden.", "Danke fürs Aufräumen, der Tisch sah echt wild aus.", "Mit so vielen Karten machst du bald ein eigenes Spiel auf.", "Lass dir Zeit beim Sortieren, wir warten gern 😌", "Ich würde ja helfen, aber meine Hand ist fast leer."], "mockShithead": ["Shithead steht dir. Solltest du öfter tragen 💩", "Ich sag nichts. Ich grinse nur ganz leise.", "Jemand muss den Titel tragen. Schön, dass du dich opferst.", "Gegen eine KI verloren. Das erzählst du besser keinem.", "Du mischst, ich lehn mich zurück.", "War knapp! Also für mich nicht, aber für dich bestimmt.", "Kopf hoch, nächste Runde klappt vielleicht der vorletzte Platz."], "mockLoseLife": ["Ups, da war es ein Deckel weniger 🍺", "Den Deckel nehm ich gern in Verwahrung.", "Mit der Hand wolltest du gewinnen? Mutig.", "Nicht traurig sein, es ist nur Pappe. Wertvolle Pappe.", "Ich zähl mal kurz deine Deckel. Oh. Das ging schnell.", "Soll ich dir schon mal die Schwimmflügel aufpusten?", "Das war knapp daneben. Na gut, es war weit daneben."], "mockBlindFail": ["Blind gezockt, blind verloren. Klassiker 🙈", "Ich hab es kommen sehen. Gesagt hab ich natürlich nichts.", "Dein Glück macht wohl gerade Pause.", "Schöne Karte! Nur leider die falsche.", "Das war mutig. Erfolglos, aber mutig.", "Augen zu, einfach durch? Hat diesmal nicht geklappt.", "Der Stapel hat schon nach dir gerufen 📣"], "bomb": ["Bumm! Entschuldigung, war ich nicht dran? 💣", "Vier Gleiche. Musste einfach sein, sorry.", "Ich funk mal kurz dazwischen. Stapel ist weg.", "Ihr wart mir zu langsam, da hab ich abgeräumt 🔥", "Hoppla, ist mir so aus der Hand gerutscht.", "Der Stapel hat mich angeschaut. Ich musste ihn anzünden.", "Dazwischengrätschen kann ich am besten."], "throw4": ["Meine 4 ist drin. Wo bleibt ihr?", "Zack, 4 liegt! ⚡", "Meine 4 liegt schon. Schlaft ihr noch?", "4 rein, weg damit.", "Schnelle Finger, kleine Karte. Die 4 ist raus 😎", "Ich fang mal an. Bitte sehr, eine 4.", "Die 4 brauch ich nicht, die könnt ihr haben."], "slow4": ["Zu langsam! Die 4 bleibt schön bei dir 🐌", "Da war wohl jemand noch mit Kartenhalten beschäftigt.", "Verschlafen? Die 4 darfst du jetzt behalten.", "Tja, wer zu spät wirft, den bestraft der Stapel.", "Ich hab extra gewartet. Stimmt nicht, klingt aber nett.", "Die 4 klebt wohl an deinen Fingern 😄", "Nächstes Mal einfach schneller sein. Ganz simpler Trick."]};
+var BOTS = {timer:null, chatAt:0, scanN:-1, recent:[], react:{}};
+// Reaktionen außer der Reihe (4er reinwerfen, Bombe einwerfen) laufen für jede KI parallel
+function botReact(st){
+  st.players.forEach(function(p){
+    if (!p.bot || p.out) return;
+    var a = botDecide(viewFor(st, p.id), null, 'normal');
+    if (!a || (a.type !== 'shthrow' && a.type !== 'shbomb')){ var R0 = BOTS.react[p.id]; if (R0){ clearTimeout(R0.t); delete BOTS.react[p.id]; } return; }
+    var key = a.type + '|' + st.games + '|' + (a.type === 'shthrow' ? st.sh.win.id : (st.last ? st.last.n : 0));
+    var R = BOTS.react[p.id];
+    if (R && R.key === key) return;
+    if (R && R.t) clearTimeout(R.t);
+    R = BOTS.react[p.id] = {key:key, t:null};
+    if (hashStr(p.id + key) % 100 >= (a.type === 'shthrow' ? 88 : 80)) return;
+    var d = a.type === 'shthrow' ? 900 + Math.random() * 3300 : 700 + Math.random() * 1600 + seqLeft();
+    R.t = setTimeout(function(){
+      R.t = null;
+      if (App.role !== 'host' || !H.st) return;
+      var a2 = botDecide(viewFor(H.st, p.id), null, 'normal');
+      if (!a2 || a2.type !== a.type) return;
+      if (!act(H.st, p.id, a2)) hostCommit();
+    }, d);
+  });
+}
 function botTick(){
   if (App.role !== 'host' || !H.st) return;
   var st = H.st; if (st.phase === 'lobby'){ clearTimeout(BOTS.timer); BOTS.timer = null; BOTS.key = null; return; }
+  if (st.game === 'shithead' && st.phase === 'play') botReact(st);
+  else if (BOTS.react){ Object.keys(BOTS.react).forEach(function(k){ clearTimeout(BOTS.react[k].t); }); BOTS.react = {}; }
   var humansNeeded = st.players.some(function(p){ return !p.bot && p.online && (st.phase === 'over' || !p.out); });
   var who = null, a0 = null;
   for (var i=0;i<st.players.length;i++){
     var p = st.players[i]; if (!p.bot) continue;
     var a = botDecide(viewFor(st, p.id), null, 'normal');
+    if (a && (a.type === 'shthrow' || a.type === 'shbomb')) continue;
     if (a && a.type === 'ready' && humansNeeded) continue;
     if (a){ who = p; a0 = a; break; }
   }
@@ -1783,11 +1997,12 @@ function botTick(){
   else if (trivial) d = 800 + r * 600;
   else d = 1200 + r * 1400;
   if (ANN.busy && a0.type !== 'ready') d += 700;
+  if (st.game === 'shithead' && a0.type !== 'shswap' && a0.type !== 'shready' && a0.type !== 'ready') d += seqLeft();
   BOTS.timer = setTimeout(function(){
     BOTS.timer = null; BOTS.key = null;
     if (App.role !== 'host' || !H.st) return;
     var v = viewFor(H.st, who.id), a = botDecide(v, null, 'normal');
-    if (!a){ botTick(); return; }
+    if (!a || a.type === 'shthrow' || a.type === 'shbomb'){ botTick(); return; }
     var e = act(H.st, who.id, a);
     if (e){
       if (window.console) console.warn('KI-Zug abgelehnt', e, a);
@@ -1818,6 +2033,17 @@ function botChatter(){
     BOTS.recent.push(text); if (BOTS.recent.length > 12) BOTS.recent.shift();
     setTimeout(function(){ if (!H.st || pIdx(H.st, p.id) < 0) return; act(H.st, p.id, {type:'chat', text:text, bot:true}); hostCommit(); }, 900 + Math.random() * 1200);
   };
+  var anyBot = function(){ var bs = st.players.filter(function(p){ return p.bot && !p.gone; }); return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null; };
+  var emo = function(p, ch, prob){ if (!p || Math.random() > prob) return; setTimeout(function(){ if (!H.st || pIdx(H.st, p.id) < 0 || H.st.phase === 'lobby') return; act(H.st, p.id, {type:'emote', e:ch, bot:true}); hostCommit(); }, 500 + Math.random() * 900); };
+  fresh.forEach(function(e){
+    if (e.k === 'shbomb'){ if (bot(e.p)){ say(bot(e.p), 'bomb', .7); emo(bot(e.p), '🔥', .35); } }
+    else if (e.k === 'shthrow'){ if (bot(e.p)) say(bot(e.p), 'throw4', .35); }
+    else if (e.k === 'shwinend'){ if (BOTS.slowOk && BOTS.slow && BOTS.slow.length) say(anyBot(), 'slow4', .6); BOTS.slow = null; }
+    else if (e.k === 'shblindfail'){ if (!bot(e.p)) say(anyBot(), 'mockBlindFail', .3); }
+    else if (e.k === 'shpickup' && !bot(e.p) && num(e.cnt) >= 6){ say(anyBot(), 'mockPickup', .35); emo(anyBot(), '😂', .3); }
+    else if (e.k === 'shend' && e.p && !bot(e.p)){ say(anyBot(), 'mockShithead', .8); emo(anyBot(), '💩', .6); }
+    else if (e.k === 'result' && e.changes){ var hl = Object.keys(e.changes).filter(function(id){ return !bot(id); }); if (hl.length && !Object.keys(e.changes).some(function(id){ return bot(id); })){ say(anyBot(), 'mockLoseLife', .3); emo(anyBot(), '😂', .2); } }
+  });
   fresh.forEach(function(e){
     if (e.k === 'join' && e.bot) say(bot(e.p), 'greet', .7);
     else if (e.k === 'knock'){
@@ -1928,7 +2154,7 @@ function guestMsg(m){
     LS.set('guest', {code:App.code, pid:App.me, key:App.key, name:App.name, ts:Date.now()});
     return;
   }
-  if (m.t === 'state'){ G.lastPong = Date.now(); setNet('online'); applyView(m.s); return; }
+  if (m.t === 'state'){ G.lastPong = Date.now(); setNet('online'); if (m.s && m.s.sh && m.s.sh.win && m.s.sh.win.left != null) m.s.sh.win.at = Date.now() + num(m.s.sh.win.left); applyView(m.s); return; }
   if (m.t === 'reject'){ guestFail(m.msg || 'Beitreten hat nicht geklappt.'); return; }
   if (m.t === 'err'){ toast(m.msg); App.busy = false; return; }
   if (m.t === 'closed'){ LS.del('guest'); guestFail('Der Gastgeber hat den Tisch aufgelöst.'); return; }
@@ -1940,7 +2166,7 @@ function guestStop(){
   try { c && c.close(); } catch (e) {}
   setTimeout(function(){ try { p && p.destroy(); } catch (e) {} }, 300);
 }
-function guestFail(msg){ guestStop(); App.role = null; $('#netbar').hidden = true; App.view = null; setNet('off'); showScreen('start'); renderResume(); showStartError(msg); }
+function guestFail(msg){ resetTableUI(); guestStop(); App.role = null; $('#netbar').hidden = true; App.view = null; setNet('off'); showScreen('start'); renderResume(); showStartError(msg); }
 
 /* ---------- Aktionen ---------- */
 function doAct(a){
@@ -1953,17 +2179,22 @@ function doAct(a){
 
 /* ---------- Ansicht anwenden ---------- */
 function viewSig(v){ var o = {}; Object.keys(v).forEach(function(k){ if (k !== 'log' && k !== 'n') o[k] = v[k]; }); return JSON.stringify(o); }
+function bumpSeen(v){ var mx = App.seenN; v.log.forEach(function(e){ if (e.n > mx) mx = e.n; }); App.seenN = mx; }
 function applyView(v){
+  if (SEQ.busy && Date.now() > SEQ.endAt + 2500){ clearTimeout(SEQ.t); SEQ.t = null; if (SEQ.done) SEQ.done(); else { SEQ.busy = false; SEQ.ov = null; } }
+  if (SEQ.busy){ SEQ.next = v; return; }
   var prev = App.view, sig = viewSig(v);
   if (prev && App.lastSig === sig){
     App.view = v;
     effects(prev, v);
-    var mx = App.seenN; v.log.forEach(function(e){ if (e.n > mx) mx = e.n; }); App.seenN = mx;
+    bumpSeen(v);
     renderLog(v);
     return;
   }
+  var fresh = v.log.filter(function(e){ return e.n > App.seenN; });
   App.lastSig = sig;
   App.view = v; App.busy = false;
+  syncWin(v);
   if (!prev || prev.turn !== v.turn || prev.phase !== v.phase || prev.round !== v.round || (prev.last && prev.last.n) !== (v.last && v.last.n)){ App.ss = {src:null, idx:[]}; }
   if (!prev || prev.turn !== v.turn || prev.phase !== v.phase || prev.round !== v.round){ App.sel = {h:null, m:null}; App.sw = {h:null, u:null}; }
   if (!prev || prev.phase !== v.phase) App.peek = false;
@@ -1976,21 +2207,50 @@ function applyView(v){
     if (v.last.k === 'shplay' && v.last.p !== App.me) App.anim.pilePop = true;
   }
   if (v.game === 'shithead' && v.phase === 'swap' && (!prev || prev.phase !== 'swap')) App.anim.deal = true;
+  var steps = prev ? shPlan(prev, v, fresh) : [];
+  if (steps.length){
+    var total = 0; steps.forEach(function(x){ total += stepMs(x); });
+    App.holdUntil = Math.max(App.holdUntil, Date.now() + total + 250);
+    App.anim.pilePop = false;
+    SEQ.busy = true; SEQ.endAt = Date.now() + total;
+    SEQ.ov = {pile:(prev.sh.pile || []).slice(), burned:num(prev.sh.burned), myHand:null};
+    var pm = prev.sh.P && prev.sh.P[App.me];
+    if (pm && Array.isArray(pm.hand) && steps.some(function(x){ return (x.k === 'pickup' || x.k === 'blind') && x.e.p === App.me; })) SEQ.ov.myHand = pm.hand.slice();
+    var ok = true;
+    try { render(); } catch (er) { ok = false; if (window.console) console.warn(er); }
+    if (ok){
+      var gen = SEQ.gen;
+      SEQ.done = function(){
+        SEQ.done = null;
+        if (gen !== SEQ.gen) return;
+        SEQ.busy = false; SEQ.ov = null; App.anim = {};
+        if (App.view !== v || !App.role) return;
+        render();
+        effects(prev, v, true);
+        bumpSeen(v);
+        renderLog(v);
+        if (SEQ.next){ var nx = SEQ.next; SEQ.next = null; applyView(nx); }
+      };
+      runSeq(steps, v, function(){ if (SEQ.done) SEQ.done(); });
+      return;
+    }
+    SEQ.busy = false; SEQ.ov = null; App.holdUntil = 0;
+  }
   var lostNow = {};
   if (prev && prev.players) v.players.forEach(function(p){ var q = pById(prev, p.id); if (q && (p.lives < q.lives || (p.out && !q.out))) lostNow[p.id] = true; });
   if (prev) effects(prev, v);
-  var maxN = App.seenN;
-  v.log.forEach(function(e){ if (e.n > maxN) maxN = e.n; });
-  App.seenN = maxN;
+  bumpSeen(v);
   render();
-  if (prev){ runFlights(prev, v); runShFlights(prev, v); }
+  if (prev) runFlights(prev, v);
   markLost(lostNow, v);
 }
-function effects(prev, v){
+function effects(prev, v, seqd){
   var fresh = v.log.filter(function(e){ return e.n > App.seenN; });
   var N = function(id, fb){ return esc(nameOf(v, id, fb)); };
+  var RN = function(id, fb){ return nameOf(v, id, fb); };
   fresh.forEach(function(e){
     var mine = e.p === App.me;
+    if (e.k === 'emote') emojiFly(e.p, e.e);
     if (e.k === 'knock'){
       sfx('knock');
       announce({icon:'✊', tone:'wood', title: mine ? 'Du klopfst!' : 'Klopf, klopf!', sub: mine ? 'Alle anderen haben noch einen Zug.' : N(e.p, e.name) + ' klopft. Jeder andere hat noch einen Zug.'});
@@ -2003,14 +2263,20 @@ function effects(prev, v){
     if (e.k === 'keep' && !mine) floatLabel(e.p, 'behält');
     if (e.k === 'take' && !mine) floatLabel(e.p, 'nimmt blind');
     if (e.k === 'chat' && e.p !== App.me){ setTimeout(function(){ chatBubble(e.p, e.text); }, 30); if (!e.bot && !document.body.classList.contains('logopen')) App.unread++; }
-    if (e.k === 'shburn'){ sfx('knock'); announce({icon:'🔥', tone:'red', title: e.four ? 'Vier Gleiche!' : 'Verbrannt!', sub: N(e.p, e.name) + vb(e.p, ' verbrennst', ' verbrennt') + ' den Stapel.', ms:1400}); }
-    if ((e.k === 'shplay' || e.k === 'shpickup' || e.k === 'shblindfail') && !mine) sfx('card');
-    if (e.k === 'shpickup' && num(e.cnt) >= 5) setTimeout(function(){ floatLabel(e.p, num(e.cnt) + ' Karten aufgenommen'); }, 60);
-    if (e.k === 'shdone') announce({icon:'✅', tone:'gold', title: N(e.p, e.name) + vb(e.p, ' bist fertig!', ' ist fertig!'), sub:'Platz ' + num(e.place) + '.', ms:1600});
+    if (!seqd){
+      if (e.k === 'shburn'){ sfx(e.cut ? 'bomb' : 'burn'); announce(burnAnn(v, e)); }
+      if ((e.k === 'shplay' || e.k === 'shpickup' || e.k === 'shblindfail' || e.k === 'shthrow') && !mine) sfx('card');
+      if (e.k === 'shpickup' && num(e.cnt) >= 5) setTimeout(function(){ floatLabel(e.p, '+' + num(e.cnt) + ' Karten'); }, 60);
+      if (e.k === 'shthrow') setTimeout(function(){ floatLabel(e.p, '4er rein!'); }, 60);
+      if (e.k === 'shplay' && e.open) announce(openAnn(v, e));
+    }
+    if (e.k === 'shdone') announce({icon: e.place === 1 ? '🥇' : '✅', tone:'gold', title: N(e.p, e.name) + vb(e.p, ' bist fertig!', ' ist fertig!'), sub:'Platz ' + num(e.place) + '.' + (mine && e.place === 1 ? '<span class="tt">' + esc(taunt('shWinSelf', null, e.n)) + '</span>' : ''), ms: mine ? 2200 : 1600});
     if (e.k === 'shend' && e.p){
-      announce({icon:'💩', tone:'red', title: mine ? 'Du bist der Shithead!' : N(e.p, e.name) + ' ist der Shithead!', ms:2000});
+      announce({icon:'💩', tone:'red', title: mine ? 'Du bist der Shithead!' : N(e.p, e.name) + ' ist der Shithead!', sub:'<span class="tt">' + esc(mine ? taunt('shLoserSelf', null, e.n) : taunt('shLoserOther', {name:RN(e.p, e.name)}, e.n)) + '</span>', ms:2600});
       holdForAnnouncements();
       setTimeout(function(){ sfx(mine ? 'lose' : 'win'); }, 300);
+      if (mine) setTimeout(function(){ rain('💩', 34); }, 250);
+      else if (v.sh && v.sh.finished && v.sh.finished[0] === App.me) setTimeout(confetti, 500);
     }
     if (e.k === 'result'){
       var best = roundBest(v), c = e.changes && e.changes[App.me], ids = Object.keys(e.changes || {});
@@ -2026,6 +2292,10 @@ function effects(prev, v){
       else if (e.reason === 'feuer'){ title = 'Feuer!'; icon = '🔥'; tone = 'red'; lines = [N(e.by) + vb(e.by, ' hast', ' hat') + ' drei Asse. Alle anderen verlieren einen Bierdeckel.']; }
       else { title = 'Aufgedeckt!'; icon = '🃏'; }
       if (!ids.length && e.reason !== 'quit') lines.push('Gleichstand. Niemand verliert einen Bierdeckel.');
+      var tt = '';
+      if (c) tt = taunt(c.to === 'out' ? 'scOutSelf' : (c.to === 'swim' ? 'scSwimSelf' : 'scLoseSelf'), null, e.n);
+      else if (ids.length && e.reason !== 'quit'){ var l0 = ids[0], c0 = e.changes[l0]; tt = taunt(c0.to === 'out' ? 'scOutOther' : (c0.to === 'swim' ? 'scSwimOther' : 'scLoseOther'), {name:RN(l0, e.names && e.names[l0])}, e.n); }
+      if (tt) lines.push('<span class="tt">' + esc(tt) + '</span>');
       if (c){ tone = (c.to === 'swim') ? 'sea' : 'red'; icon = c.to === 'out' ? '🚪' : (c.to === 'swim' ? '🏊' : '🍺'); }
       else if (best.indexOf(App.me) >= 0 && ids.length && e.reason !== 'feuer'){ tone = 'gold'; icon = '👑'; lines.push('Du hattest die beste Hand.'); }
       if (e.reason !== 'quit') announce({icon:icon, tone:tone, title:title, sub:lines.join(' '), ms:2300});
@@ -2033,13 +2303,13 @@ function effects(prev, v){
       setTimeout(function(){ sfx(c ? 'lose' : 'win'); }, 300);
     }
     if (e.k === 'winner' && e.p){
-      announce({icon:'🏆', tone:'gold', title: mine ? 'Du gewinnst die Partie!' : N(e.p, e.name) + ' gewinnt die Partie!', ms:2200});
+      announce({icon:'🏆', tone:'gold', title: mine ? 'Du gewinnst die Partie!' : N(e.p, e.name) + ' gewinnt die Partie!', sub:'<span class="tt">' + esc(mine ? taunt('gameWinSelf', null, e.n) : taunt('gameLoseSelf', {name:RN(e.p, e.name)}, e.n)) + '</span>', ms:2600});
       holdForAnnouncements(300);
       if (mine) setTimeout(confetti, 600);
     }
   });
-  var was = prev.phase === 'play' && turnId(prev) === App.me;
-  if (myTurn(v) && !was){
+  var was = prev.phase === 'play' && turnId(prev) === App.me && !(prev.sh && prev.sh.win);
+  if (myTurn(v) && !(v.sh && v.sh.win) && !was){
     sfx('turn');
     if (navigator.vibrate) try { navigator.vibrate(60); } catch (er) {}
   }
@@ -2064,7 +2334,7 @@ function render(){
   if (v.phase === 'lobby'){ showScreen('lobby'); renderLobby(v); }
   else { showScreen('game'); if (sh) renderSh(v); else renderGame(v); }
   $('#brand-name').textContent = sh ? 'Shithead' : 'Schnautz'; $('#brand-badge').hidden = sh;
-  if (v.phase !== 'lobby') renderScore(v);
+  if (v.phase !== 'lobby'){ renderScore(v); renderLegend(v); renderEmotes(); }
   renderLog(v);
   if (sh) renderShOverlay(v); else renderOverlay(v);
 }
@@ -2097,6 +2367,8 @@ function renderLobby(v){
       st2('seven', '7 heißt drunter', 'Der Nächste muss 7 oder niedriger legen') +
       st2('three', '3 ist durchsichtig', 'Geht immer, es zählt die Karte darunter') +
       st2('eight', '8 lässt aussetzen', 'Jede 8 überspringt einen Spieler') +
+      st2('four', '4er am Anfang reinwerfen', 'Wer eine 4 hat, fängt an. Die anderen haben ' + Math.round(SH_WIN_MS / 1000) + ' Sekunden für ihre 4er') +
+      st2('cut', 'Bombe einwerfen', 'Wer die fehlenden Karten zu vier gleichen hat, darf jederzeit reinwerfen') +
       '<p class="note" style="margin-top:8px">Vier gleiche Karten hintereinander verbrennen den Stapel immer. Wer sie vollmacht, legt gleich nochmal.</p>';
   } else
   $('#rules-form').innerHTML = gsel +
@@ -2233,10 +2505,14 @@ function logLine(v, e){
     case 'shdeal': return ['sys', 'Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.'];
     case 'shstart': return ['', who() + vb(p, ' fängst an', ' fängt an') + (e.card ? ' (niedrigste Karte ' + cardChip(e.card) + ').' : '.')];
     case 'shplay': return ['', who() + vb(p, ' legst ', ' legt ') + (e.cards || []).map(cardChip).join(' ') + (e.src === 'up' ? ' vom Tisch' : (e.src === 'down' ? ' blind' : '')) + '.'];
-    case 'shburn': return ['big', (e.four ? 'Vier Gleiche! ' : '') + who() + vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.')];
+    case 'shburn': return ['big', (e.cut ? 'Bombe! ' : (e.four ? 'Vier Gleiche! ' : '')) + who() + vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.')];
     case 'shpickup': return ['', who() + vb(p, ' nimmst den Stapel auf (', ' nimmt den Stapel auf (') + num(e.cnt) + (num(e.cnt) === 1 ? ' Karte).' : ' Karten).')];
     case 'shblindfail': return ['', who() + vb(p, ' deckst blind ', ' deckt blind ') + cardChip(e.card) + ' auf. Die passt nicht. ' + esc(vb(p, 'Du nimmst ', nameOf(v, p, e.name) + ' nimmt ')) + num(e.cnt) + (num(e.cnt) === 1 ? ' Karte auf.' : ' Karten auf.')];
     case 'shdone': return ['big', who() + vb(p, ' bist fertig! Platz ', ' ist fertig! Platz ') + num(e.place) + '.'];
+    case 'shthrow': return ['', who() + vb(p, ' wirfst ', ' wirft ') + (e.cards || []).map(cardChip).join(' ') + ' rein.'];
+    case 'shbomb': return ['big', '💣 ' + who() + vb(p, ' wirfst ', ' wirft ') + (e.cards || []).map(cardChip).join(' ') + (e.out ? ' außer der Reihe' : '') + ' zur Bombe ein.'];
+    case 'shwinend': return ['sys', 'Die Zeit für die 4er ist um.'];
+    case 'emote': return null;
     case 'shend': return ['big', e.p ? '💩 ' + who() + vb(p, ' bist der Shithead!', ' ist der Shithead!') : 'Die Partie ist vorbei.'];
     case 'lobby': return ['sys', 'Zurück in der Lobby.'];
     case 'round': return ['round', 'Runde ' + num(e.r) + ' · ' + esc(nameOf(v, p)) + vb(p, ' gibst', ' gibt')];
@@ -2267,11 +2543,12 @@ function logLine(v, e){
 }
 var lastLogKey = '';
 function renderLog(v){
-  var key = (v.log.length ? v.log[v.log.length-1].n : 0) + ':' + v.log.length + ':' + App.me;
+  var list = SEQ.busy ? v.log.filter(function(e){ return e.n <= App.seenN || e.k === 'chat'; }) : v.log;
+  var key = (list.length ? list[list.length-1].n : 0) + ':' + list.length + ':' + App.me;
   var u = $('#unread'); u.hidden = !App.unread; u.textContent = App.unread > 9 ? '9+' : String(App.unread);
   if (key === lastLogKey) return; lastLogKey = key;
   var el = $('#log'), near = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
-  el.innerHTML = v.log.map(function(e){ var l = logLine(v, e); return l ? '<div class="e ' + l[0] + '">' + l[1] + '</div>' : ''; }).join('') || '<div class="e sys">Hier erscheint, was am Tisch passiert. Ihr könnt auch schreiben.</div>';
+  el.innerHTML = list.map(function(e){ var l = logLine(v, e); return l ? '<div class="e ' + l[0] + '">' + l[1] + '</div>' : ''; }).join('') || '<div class="e sys">Hier erscheint, was am Tisch passiert. Ihr könnt auch schreiben.</div>';
   if (near || !renderLog.once){ el.scrollTop = el.scrollHeight; renderLog.once = true; }
 }
 
@@ -2303,6 +2580,10 @@ function renderOverlay(v){
   else if (best.indexOf(App.me) >= 0 && loserIds.length) verdict = '<div class="verdict good">👑 Rundensieg! Du hattest die beste Hand.</div>';
   else if (!loserIds.length && r.reason !== 'quit') verdict = '<div class="verdict">🤝 Gleichstand. Niemand verliert einen Bierdeckel.</div>';
   else if (loserIds.length) verdict = '<div class="verdict">' + esc(listJoin(loserIds.map(function(id){ return nameOf(v, id); }))) + (loserIds.length > 1 ? ' verlieren' : ' verliert') + ' diesmal.</div>';
+  var tt = '', good = false;
+  if (v.phase === 'over' && v.winner){ if (v.winner === App.me){ tt = taunt('gameWinSelf', null, 'o' + v.games); good = true; } else tt = taunt('gameLoseSelf', {name:nameOf(v, v.winner)}, 'o' + v.games); }
+  else if (myC) tt = taunt(myC.to === 'out' ? 'scOutSelf' : (myC.to === 'swim' ? 'scSwimSelf' : 'scLoseSelf'), null, 'o' + v.games + ':' + v.round);
+  else if (loserIds.length && r.reason !== 'quit'){ var c0 = r.changes[loserIds[0]]; tt = taunt(c0.to === 'out' ? 'scOutOther' : (c0.to === 'swim' ? 'scSwimOther' : 'scLoseOther'), {name:nameOf(v, loserIds[0])}, 'o' + v.games + ':' + v.round); good = true; }
   var rows = '';
   var order = v.players.filter(function(p){ return r.hands[p.id]; }).sort(function(a, b){ return handValue(r.hands[b.id], v.rules).v - handValue(r.hands[a.id], v.rules).v; });
   order.forEach(function(p){
@@ -2316,7 +2597,7 @@ function renderOverlay(v){
       '<div class="val">' + (hv.kind === 'feuer' ? '33' : fmtVal(num(hv.v))) + '</div></div>';
   });
   var foot = overlayFoot(v, me);
-  ov.innerHTML = '<div class="modal"><div class="paper">' + (v.phase === 'over' ? '<div class="trophy">🏆</div>' : '') + '<h2>' + resultTitle(v) + '</h2><p class="lead">' + lead + '</p>' + verdict + '<div class="rows">' + rows + '</div>' + foot + '</div></div>';
+  ov.innerHTML = '<div class="modal"><div class="paper">' + (v.phase === 'over' ? '<div class="trophy">🏆</div>' : '') + '<h2>' + resultTitle(v) + '</h2><p class="lead">' + lead + '</p>' + verdict + (tt ? '<p class="taunt' + (good ? ' good' : '') + '">' + esc(tt) + '</p>' : '') + '<div class="rows">' + rows + '</div>' + foot + '</div></div>';
 }
 
 function listJoin(a){ return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' und ' + a[a.length-1]; }
@@ -2328,6 +2609,305 @@ function overlayFoot(v, me){
     (App.role === 'host' && ready && waiting.length ? '<button class="btn ghost" data-act="force">Nicht warten</button>' : '') +
     '<button class="btn ghost" data-act="peek">Tisch ansehen</button>' +
     (ready ? '' : '<button class="btn primary" data-act="ready">' + btnLabel + '</button>') + '</div>';
+}
+
+/* ---------- Shithead: Ablauf sichtbar machen ---------- */
+var TAUNTS = {"screen": {"shLoserSelf": ["Glückwunsch, der Titel gehört dir. Trag ihn mit Würde 👑", "Einer muss es ja sein. Heute bist es halt du.", "Shithead steht dir erstaunlich gut.", "Die Karten waren schuld. Ganz sicher. Bestimmt.", "Letzter Platz ist auch fast ein Platz auf dem Treppchen.", "Du darfst jetzt mischen. Ehrenamt verpflichtet 💩", "Kopf hoch, sonst rutscht die Krone.", "Revanche? Du hast sie dringend nötig."], "shLoserOther": ["{name} ist Shithead. Bitte alle einmal mitfühlend nicken.", "Applaus für {name}, frisch gekrönt zum Shithead 💩", "{name} hat sich den Titel redlich erarbeitet.", "Irgendwer musste es werden. Danke, {name}!", "{name} mischt die nächste Runde. So will es das Gesetz.", "Shithead des Abends ist {name}. Wer hätte es geahnt?", "{name} sitzt noch auf Karten. Wir anderen sitzen bequem.", "Sei lieb zu {name}. Oder auch nicht 😇"], "shWinSelf": ["Zuerst fertig. Die anderen dürfen noch ein bisschen üben.", "Hände leer, Gewissen rein. Viel Spaß noch da unten 😎", "Du bist durch. Lehn dich zurück, die Show beginnt.", "So macht man das. Hat jemand mitgeschrieben?", "Fertig! Jetzt schaust du in Ruhe zu, wie es eng wird.", "Platz eins. Der Rest kämpft nur noch gegen die Schande.", "Das ging schnell. Fast schon unhöflich schnell.", "Du hast frei, die anderen haben Karten 🍿"], "scLoseSelf": ["Ein Deckel weniger. Der hat dir eh nicht gestanden.", "Autsch. Da geht er hin, dein schöner Bierdeckel.", "Deckel abgeben bitte. Quittung gibt es keine.", "Das war die schwächste Hand am Tisch. Leider deine.", "Bierdeckel futsch. Wird langsam luftig bei dir 🍺", "Nicht weinen, es ist nur Pappe.", "Deine Karten hatten heute wohl was Besseres vor.", "Einmal Deckel zum Mitnehmen, nur halt nicht für dich."], "scLoseOther": ["{name} gibt einen Deckel ab. Danke für die Spende 🍺", "Ein Deckel weniger für {name}. Wir trauern kurz. Fertig.", "{name} hatte die schwächste Hand. Kommt vor. Hier öfter.", "Da schrumpft der Stapel von {name}. Wie schade aber auch.", "{name} zahlt die Runde in Pappe.", "Schon wieder {name}? Na gut, den Deckel nehmen wir gern.", "{name} verliert einen Deckel. Die Fassung hoffentlich nicht.", "Deckel adé, {name}. Der kommt nicht wieder 👋"], "scSwimSelf": ["Du schwimmst. Schwimmflügel nicht vergessen 🏊", "Alle Deckel weg. Ab jetzt wird gepaddelt.", "Willkommen im tiefen Wasser. Ist frisch, oder?", "Noch ein Patzer, dann gehst du unter. Kein Druck.", "Du schwimmst jetzt. Seepferdchen hast du hoffentlich.", "Letzte Chance. Das Wasser steht dir bis zum Hals 🌊", "Deckel hast du keine mehr, dafür nasse Füße.", "Bitte ruhig weiteratmen. Verlieren ist ab jetzt verboten."], "scSwimOther": ["{name} schwimmt! Wirft wer einen Rettungsring? Nein? Gut.", "{name} paddelt jetzt um alles 🏊", "Kein Deckel mehr bei {name}. Ab jetzt wird es nass.", "{name} ist im tiefen Becken angekommen.", "Noch ein Fehler, dann geht {name} baden 🌊", "{name} schwimmt. Bitte nicht füttern.", "Der Bademeister schaut schon streng zu {name} rüber.", "{name} hält sich gerade so über Wasser. Mal sehen wie lange."], "scOutSelf": ["Blub. Das war es für dich.", "Du bist raus. Zuschauen ist auch schön, sagt man.", "Untergegangen. Dein Handtuch liegt am Beckenrand 🏖️", "Feierabend für dich. Die anderen spielen noch um was.", "Raus bist du. Hol schon mal Snacks für die Gewinner.", "Das Wasser war wohl doch zu tief.", "Ab auf die Tribüne. Von dort redet es sich leichter.", "Ausgeschieden. Nächstes Mal mit Karten, die was können."], "scOutOther": ["{name} ist raus. Blub blub 🫧", "Tschüss {name}, war schön mit dir. Kurz, aber schön.", "{name} ist untergegangen. Schweigeminute? Nö.", "Wieder ein Platz frei. {name} darf jetzt zuschauen.", "{name} hat es hinter sich. Handtuch bitte!", "Das war es für {name}. Die Tribüne ist da drüben 👉", "{name} verabschiedet sich. Nicht ganz freiwillig.", "{name} ist raus. Getränke holen wäre jetzt nett."], "gameWinSelf": ["Gewonnen! War das überhaupt jemals spannend? 🏆", "Sieg auf ganzer Linie. Autogramme gibt es später.", "Du hast alle versenkt. Bleib ruhig kurz unerträglich.", "Partie gewonnen. Der Tisch gehört dir.", "So sieht Gewinnen aus. Die anderen wissen es jetzt auch.", "Alle Deckel, aller Ruhm, alles deins 😎", "Bitte nur ganz dezent angeben. Oder halt nicht.", "Das war eine Lehrstunde. Gern geschehen."], "gameLoseSelf": ["{name} hat gewonnen. Du darfst jetzt höflich klatschen 👏", "Sieg für {name}. Für dich bleibt die Erfahrung.", "{name} gewinnt die Partie. Das hörst du noch lange.", "Heute war {name} besser. Morgen vielleicht auch, wer weiß.", "{name} holt den Sieg. Du holst erst mal tief Luft.", "Gratulier {name} schön. Zähneknirschen ist erlaubt.", "{name} hat alle überlebt. Dich leider auch.", "Der Pokal geht an {name}. Du bekommst eine Revanche 🙃"], "pickupOther": ["{name} sammelt {n} Karten ein. Fleißig, fleißig 📚", "{n} Karten für {name}. Die Hand wird langsam zum Fächer.", "{name} nimmt den Stapel. {n} Karten Zuwachs, Glückwunsch!", "Danke fürs Aufräumen, {name}! Waren ja nur {n} Karten.", "{name} hat jetzt {n} neue Freunde auf der Hand.", "Da wandern {n} Karten zu {name}. Wir winken hinterher 👋", "{name} braucht bald eine dritte Hand für die {n} Karten.", "{n} auf einen Schlag. {name} sorgt für schlechte Zeiten vor."], "pickupSelf": ["{n} Karten für dich. Lass es dir schmecken.", "Der Stapel gehört dir. Alle {n} Karten, viel Freude damit.", "Du nimmst {n} Karten auf. Kannst du die noch halten?", "Glückwunsch zu {n} neuen Karten. Hat ja keiner bestellt.", "Einmal alles bitte. Macht {n} Karten 🧾", "{n} Karten mehr. Dein Ziel rückt in weite Ferne.", "Das sind {n} gute Gründe, nächstes Mal besser zu legen.", "Aufsammeln bitte! {n} Karten warten auf dich 📚"], "blindFailOther": ["{name} zockt blind. Daneben, aber schön war es trotzdem.", "Blind gezogen, blind verloren. Danke {name}!", "Das Glück hat {name} gerade kurz verlassen 🍀", "{name} deckt auf. Passt natürlich nicht.", "Mut hatte {name}. Die passende Karte leider nicht.", "{name} hat auf Glück gesetzt. Das Glück hatte frei.", "Blinder Griff ins Leere von {name}. Der Stapel wartet 🙈", "Fast, {name}. Also nicht wirklich, aber nett versucht."], "blindFailSelf": ["Passt nicht. Wer hätte das ahnen können? 🙈", "Blind gezockt, prompt bestraft.", "Das Glück lässt freundlich grüßen. Aus der Ferne.", "Falsche Karte. Der Stapel freut sich schon auf dich.", "Daneben. Nächstes Mal fester die Daumen drücken.", "Deine Karte wollte einfach nicht mitspielen.", "Ein Schuss ins Dunkle. Getroffen hast du nichts.", "Autsch. Die lag aber auch gemein da."], "bombSelf": ["Bumm! Vier Gleiche, Stapel weg. Sauber reingegrätscht 💣", "Dazwischengefunkt, alles abgefackelt. Herrlich.", "Außer der Reihe, trotzdem voll ins Schwarze 🔥", "Der Stapel brennt. Die anderen gucken nur noch.", "Niemand hat dich gefragt. Genau deshalb war es so schön.", "Vier voll, Stapel Asche. Das saß.", "Reingeworfen, abgeräumt, breit gegrinst 😏", "Das nennt man Timing. Die anderen nennen es anders."], "bombOther": ["{name} funkt dazwischen. Vier Gleiche, Stapel weg 💣", "Bumm! {name} hat einfach reingeworfen. Frechheit.", "{name} war gar nicht dran. Abgeräumt wird trotzdem.", "Der Stapel brennt. Bedank dich bei {name} 🔥", "{name} drängelt sich vor. Jetzt steht alles in Flammen.", "Bombe von {name}. Dein schöner Plan ist jetzt Asche.", "Da war {name} schneller, als erlaubt sein sollte.", "{name} macht die Vier voll. Warst du mitten im Zug? Schade."]}};
+var SEQ = {busy:false, ov:null, next:null, endAt:0, t:null, gen:0, done:null};
+var WIN = {id:null, until:0, iv:null};
+function reduceMotion(){ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+function seqLeft(){ return SEQ.busy ? Math.max(0, SEQ.endAt - Date.now()) : 0; }
+function taunt(cat, data, seed){
+  var arr = (typeof TAUNTS !== 'undefined' && TAUNTS.screen && TAUNTS.screen[cat]) || [];
+  if (!arr.length) return '';
+  var i = seed != null ? hashStr(String(seed) + cat) % arr.length : Math.floor(Math.random() * arr.length);
+  var nm = (data && data.name) || 'Jemand', nn = data && data.n != null ? String(data.n) : '';
+  return arr[i].replace(/\{name\}/g, function(){ return nm; }).replace(/\{n\}/g, function(){ return nn; });
+}
+function burnAnn(v, e){
+  var mine = e.p === App.me, nm = nameOf(v, e.p, e.name);
+  if (e.cut) return {icon:'💣', tone:'red', title:'Bombe!', sub:'<span class="tt">' + esc(mine ? taunt('bombSelf', null, e.n) : taunt('bombOther', {name:nm}, e.n)) + '</span>', ms:2000};
+  return {icon:'🔥', tone:'red', title: e.four ? 'Vier Gleiche!' : 'Verbrannt!', sub: esc(nm) + vb(e.p, ' verbrennst', ' verbrennt') + ' den Stapel.', ms:1300};
+}
+function openAnn(v, e){
+  var mine = e.p === App.me;
+  return {icon:'⏱️', tone:'gold', title:'4er reinwerfen!', sub: esc(nameOf(v, e.p, e.name)) + vb(e.p, ' fängst', ' fängt') + ' mit der 4 an. Wer noch eine hat, muss schnell sein.', ms:1700};
+}
+function shPlan(prev, v, fresh){
+  if (!prev || v.game !== 'shithead' || prev.game !== 'shithead' || !prev.sh || !v.sh || prev.games !== v.games) return [];
+  if (reduceMotion() || document.hidden) return [];
+  var pile = (prev.sh.pile || []).slice(), burned = num(prev.sh.burned), steps = [];
+  fresh.forEach(function(e){
+    if (e.k === 'shplay' || e.k === 'shthrow' || e.k === 'shbomb'){
+      pile = pile.concat(e.cards || []);
+      steps.push({k:'play', e:e, pile:pile.slice(), src: e.k === 'shthrow' ? 'hand' : (e.src || 'hand')});
+    } else if (e.k === 'shburn'){
+      var from = pile.slice(-4); burned += pile.length; pile = [];
+      steps.push({k:'burn', e:e, from:from, burned:burned});
+    } else if (e.k === 'shpickup'){
+      steps.push({k:'pickup', e:e, from:pile.slice(-5)}); pile = [];
+    } else if (e.k === 'shblindfail'){
+      pile = pile.concat([e.card]);
+      steps.push({k:'blind', e:e, pile:pile.slice()});
+      steps.push({k:'pickup', e:e, from:pile.slice(-5), fail:true}); pile = [];
+    }
+  });
+  if (!steps.length || steps.length > 12) return [];
+  var dur = 0; steps.forEach(function(x){ dur += stepMs(x); });
+  if (dur > 4800) return [];
+  if (JSON.stringify(pile) !== JSON.stringify(v.sh.pile || []) || burned !== num(v.sh.burned)) return [];
+  return steps;
+}
+function stepMs(s){
+  if (s.k === 'play') return s.src === 'down' ? 1350 : (s.e.k === 'shthrow' ? 650 : 760);
+  if (s.k === 'burn') return s.e.cut ? 1250 : 1000;
+  if (s.k === 'blind') return 2000;
+  if (s.k === 'pickup') return 850;
+  return 300;
+}
+function runSeq(steps, v, done){
+  var i = 0, gen = SEQ.gen;
+  var next = function(){
+    if (gen !== SEQ.gen) return;
+    if (i >= steps.length){ SEQ.t = null; done(); return; }
+    var s = steps[i++];
+    try { runStep(s, v); } catch (er) { if (window.console) console.warn(er); }
+    SEQ.t = setTimeout(next, stepMs(s));
+  };
+  next();
+}
+function pileEls(){ return Array.prototype.slice.call(document.querySelectorAll('#center .pile .card')); }
+function shSrcEl(pid, src){
+  var root = pid === App.me ? $('#me') : document.querySelector('.opp[data-pid="' + pid + '"]');
+  if (!root) return $('#center .deck');
+  if (src === 'hand') return root.querySelector(pid === App.me ? '.shhand' : '.ohand') || root;
+  return root.querySelector('.tcards') || root;
+}
+function srcRects(pid, src, n){
+  var out = [], pr = App.playRects, k;
+  if (pid === App.me && pr && Date.now() - pr.t < 6000 && pr.src === src && pr.rects.length){
+    for (k=0;k<n;k++) out.push(pr.rects[Math.min(k, pr.rects.length - 1)]);
+    App.playRects = null; return out;
+  }
+  var el = shSrcEl(pid, src); if (!el) return out;
+  var r = el.getBoundingClientRect(), fc = el.querySelector('.card'), cw = fc ? fc.offsetWidth : 40;
+  var box = {left:r.left + r.width / 2 - cw / 2, top:r.top + r.height / 2 - cw * 0.7, width:cw, height:cw * 1.4};
+  for (k=0;k<n;k++) out.push(box);
+  return out;
+}
+function flyG(fromR, toR, card, o){
+  o = o || {};
+  if (!fromR || !toR || !toR.width) return;
+  var w = o.w || 80, h = w * 1.4, s0 = o.s0 || 1, s1 = o.s1 || 1;
+  var cx = toR.left + toR.width / 2, cy = toR.top + toR.height / 2;
+  var dx = fromR.left + fromR.width / 2 - cx, dy = fromR.top + fromR.height / 2 - cy;
+  var g, wrap = document.createElement('div');
+  if (o.flip){ g = wrap; g.className = 'g3d'; g.innerHTML = cardHTML(card) + cardHTML(null, 'gb'); }
+  else { wrap.innerHTML = cardHTML(card || null); g = wrap.firstChild; }
+  g.style.cssText = 'position:fixed; left:' + (cx - w / 2) + 'px; top:' + (cy - h / 2) + 'px; width:' + w + 'px; height:' + h + 'px; --cw:' + w + 'px; z-index:44; pointer-events:none; transition:none';
+  $('#fly').appendChild(g);
+  var rot = o.rot || '0deg', arc = o.arc == null ? 54 : o.arc, pre = o.flip ? 'perspective(900px) ' : '';
+  var k0 = pre + 'translate(' + dx + 'px,' + dy + 'px) scale(' + s0 + ')' + (o.flip ? ' rotateY(180deg)' : '');
+  var k1 = pre + 'translate(' + (dx / 2) + 'px,' + (dy / 2 - arc) + 'px) scale(' + ((s0 + s1) / 2 * 1.12) + ') rotate(' + (o.spin || 0) + 'deg)' + (o.flip ? ' rotateY(90deg)' : '');
+  var k2 = pre + 'translate(0px,0px) scale(' + s1 + ') rotate(' + rot + ')' + (o.flip ? ' rotateY(0deg)' : '');
+  if (o.hideEl) o.hideEl.style.visibility = 'hidden';
+  App.flying++;
+  var anim = g.animate([{transform:k0, opacity:1}, {transform:k1, opacity:1, offset:.5}, {transform:k2, opacity: o.fade ? 0 : 1}], {duration:o.dur || 620, delay:o.delay || 0, easing:'cubic-bezier(.3,.7,.2,1)', fill:'both'});
+  var fin = function(){ if (!g.parentNode) return; g.remove(); if (o.hideEl) o.hideEl.style.visibility = ''; App.flying = Math.max(0, App.flying - 1); };
+  anim.onfinish = fin;
+  setTimeout(fin, (o.dur || 620) + (o.delay || 0) + 400);
+}
+function fixedLabel(cls, text, anchor, ms, dy){
+  if (!anchor || !text) return;
+  var r = anchor.getBoundingClientRect(), old = document.querySelector('#fly .' + cls); if (old) old.remove();
+  var f = document.createElement('div'); f.className = cls; f.textContent = text;
+  f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top - (dy || 10)) + 'px';
+  $('#fly').appendChild(f);
+  setTimeout(function(){ f.classList.add('out'); setTimeout(function(){ f.remove(); }, 320); }, ms || 2400);
+}
+function tauntLabel(text, ms){ fixedLabel('tauntlbl', text, $('#center'), ms || 2800, 12); }
+function boomFx(ch, el){
+  if (!el) return;
+  var r = el.getBoundingClientRect(), f = document.createElement('div'); f.className = 'fxboom'; f.textContent = ch;
+  f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top + r.height / 2) + 'px';
+  $('#fly').appendChild(f); setTimeout(function(){ f.remove(); }, 1100);
+}
+function later(fn, ms){ var g = SEQ.gen; return setTimeout(function(){ if (g === SEQ.gen) fn(); }, ms); }
+function runStep(s, v){
+  var e = s.e, mine = e.p === App.me, nm = nameOf(v, e.p, e.name);
+  if (s.k === 'play'){
+    SEQ.ov.pile = s.pile; renderShCenter(v);
+    var cards = e.cards || [], els = pileEls(), n = Math.min(cards.length, els.length);
+    var rects = srcRects(e.p, s.src, n), base = els.length - n;
+    for (var k=0;k<n;k++){
+      var to = els[base + k], tr = to.getBoundingClientRect(), w = to.offsetWidth, fr = rects[k];
+      if (!fr) continue;
+      flyG(fr, tr, cards[cards.length - n + k], {w:w, s0:(fr.width || w) / w, rot:(getComputedStyle(to).getPropertyValue('--rot') || '0deg').trim(), hideEl:to, delay:k * 110, dur: s.src === 'down' ? 760 : 560, flip: s.src === 'down', spin:-8});
+    }
+    if (!mine || s.src !== 'hand') sfx('card');
+    if (e.k === 'shthrow') floatLabel(e.p, '4er rein!');
+    if (e.k === 'shbomb') floatLabel(e.p, 'wirft ein!');
+    if (e.open) announce(openAnn(v, e));
+    if (s.src === 'down') later(function(){ fixedLabel('nopelbl', mine ? 'Blind gelegt, passt!' : nm + ' legt blind, passt!', $('#center .pile'), 1100, 14); }, 760);
+  } else if (s.k === 'burn'){
+    var pe = pileEls(), pl = $('#center .pile');
+    pe.forEach(function(c, k){ c.style.setProperty('--bd', (k * 0.05) + 's'); c.classList.add('burning'); });
+    boomFx(e.cut ? '💣' : '🔥', pl);
+    sfx(e.cut ? 'bomb' : 'burn');
+    announce(burnAnn(v, e));
+    later(function(){
+      if (!SEQ.ov) return;
+      SEQ.ov.pile = []; SEQ.ov.burned = s.burned; renderShCenter(v);
+      var b = $('#center .burned'); if (b) b.classList.add('hot');
+    }, 700);
+  } else if (s.k === 'blind'){
+    SEQ.ov.pile = s.pile; renderShCenter(v);
+    var bt = pileEls().pop(), br = srcRects(e.p, 'down', 1)[0];
+    if (bt && br) flyG(br, bt.getBoundingClientRect(), e.card, {w:bt.offsetWidth, s0:(br.width || bt.offsetWidth) / bt.offsetWidth, rot:(getComputedStyle(bt).getPropertyValue('--rot') || '0deg').trim(), hideEl:bt, dur:760, flip:true});
+    later(function(){
+      var p2 = $('#center .pile'); if (p2) shakeEl(p2);
+      sfx('nope');
+      fixedLabel('nopelbl', 'Passt nicht!', p2, 1200, 14);
+      tauntLabel(mine ? taunt('blindFailSelf', null, e.n) : taunt('blindFailOther', {name:nm}, e.n), 2400);
+    }, 820);
+  } else if (s.k === 'pickup'){
+    var src = $('#center .pile'), pr = src ? src.getBoundingClientRect() : null, pw = pileEls()[0] ? pileEls()[0].offsetWidth : 80;
+    var hand = shSrcEl(e.p, 'hand'), hr = hand ? hand.getBoundingClientRect() : null;
+    var hc = hand && hand.querySelector('.card'), hw = hc ? hc.offsetWidth : 30;
+    if (pr && hr){
+      var target = {left:hr.left + hr.width / 2 - hw / 2, top:hr.top + hr.height / 2 - hw * 0.7, width:hw, height:hw * 1.4};
+      (s.from || []).forEach(function(c, k){ flyG(pr, target, c, {w:pw, s1:hw / pw, delay:k * 70, dur:560, spin:10, fade:e.p !== App.me}); });
+    }
+    SEQ.ov.pile = []; renderShCenter(v);
+    if (mine && SEQ.ov.myHand){ later(function(){ if (SEQ.ov){ SEQ.ov.myHand = null; renderSh(v); } }, 520); }
+    var cnt = num(e.cnt);
+    later(function(){ floatLabel(e.p, '+' + cnt + (cnt === 1 ? ' Karte' : ' Karten')); }, 200);
+    if (!s.fail && cnt >= 6) tauntLabel(mine ? taunt('pickupSelf', {n:cnt}, e.n) : taunt('pickupOther', {name:nm, n:cnt}, e.n), 2600);
+    sfx('card');
+  }
+}
+
+/* ---------- Shithead: 4er-Fenster ---------- */
+function syncWin(v){
+  var w = v && v.game === 'shithead' && v.phase === 'play' && v.sh && v.sh.win;
+  if (!w){ WIN.id = null; clearInterval(WIN.iv); WIN.iv = null; return; }
+  var until = w.at ? num(w.at) : Date.now() + (w.left != null ? num(w.left) : SH_WIN_MS);
+  if (WIN.id !== w.id || w.at || Math.abs(until - WIN.until) > 600) WIN.until = until;
+  WIN.id = w.id;
+  if (!WIN.iv) WIN.iv = setInterval(tickWin, 100);
+}
+function winLeft(){ return Math.max(0, WIN.until - Date.now()); }
+function tickWin(){
+  if (!WIN.id){ clearInterval(WIN.iv); WIN.iv = null; return; }
+  var el = $('#wincd'); if (!el) return;
+  var left = winLeft();
+  el.style.setProperty('--p', (left / SH_WIN_MS).toFixed(3));
+  var b = el.querySelector('b'); if (b) b.textContent = String(Math.ceil(left / 1000));
+}
+
+/* ---------- Hand ohne Scrollen ---------- */
+function fitHand(){
+  var el = $('#me .shhand'); if (!el) return;
+  el.querySelectorAll('.hbr').forEach(function(x){ x.remove(); });
+  var cards = el.querySelectorAll('.card'), n = cards.length;
+  cards.forEach(function(c){ c.classList.remove('r2'); });
+  if (!n) return;
+  var hw = cards[0].offsetWidth || 80, row = el.parentElement, meEl = $('#me'), mcs = getComputedStyle(meEl);
+  var avail = meEl.clientWidth - parseFloat(mcs.paddingLeft || 0) - parseFloat(mcs.paddingRight || 0);
+  var tc = row.querySelector('.tcards');
+  if (tc && getComputedStyle(row).flexDirection === 'row') avail -= tc.offsetWidth + 26;
+  avail -= 24 + 6;
+  var minSlice = Math.max(20, hw * 0.3), rows = 1, per = n, slice = hw;
+  for (;;){
+    per = Math.ceil(n / rows);
+    slice = per > 1 ? (avail - hw) / (per - 1) : hw;
+    if (slice >= minSlice || rows >= 3) break;
+    rows++;
+  }
+  el.style.setProperty('--ov', Math.max(-0.82, Math.min(-0.06, slice / hw - 1)).toFixed(3));
+  for (var r=1;r<rows;r++){
+    var first = cards[r * per]; if (!first) break;
+    var br = document.createElement('i'); br.className = 'hbr'; el.insertBefore(br, first);
+    for (var k=r*per;k<Math.min(n, (r + 1) * per);k++) cards[k].classList.add('r2');
+  }
+}
+window.addEventListener('resize', function(){ var v = App.view; if (v && v.game === 'shithead' && v.phase !== 'lobby') fitHand(); });
+function myCardEl(src, i){
+  var list = src === 'hand' ? document.querySelectorAll('#me .shhand .card') : document.querySelectorAll('#me .tcards .upc .card');
+  return list[i] || null;
+}
+function grabRects(src, idx){
+  var rects = [];
+  idx.forEach(function(i){ var el = myCardEl(src, i); if (el) rects.push(el.getBoundingClientRect()); });
+  App.playRects = rects.length ? {t:Date.now(), src:src, rects:rects} : null;
+}
+
+/* ---------- Legende ---------- */
+function legendOn(m){ var x = LS.get(m ? 'legendM' : 'legend', null); return x == null ? !m : !!x; }
+function legendItems(v){
+  var it = [];
+  if (v.game === 'shithead'){
+    var R = v.rules.sh || DEFAULT_RULES.sh;
+    if (R.two) it.push(['2', 'Neustart', 'Geht immer. Danach ist wieder alles erlaubt.']);
+    if (R.three) it.push(['3', 'Durchsichtig', 'Geht immer. Es zählt die Karte darunter.']);
+    if (R.seven) it.push(['7', 'Drunter', 'Der Nächste muss 7 oder niedriger legen.']);
+    if (R.eight) it.push(['8', 'Aussetzen', 'Pro 8 setzt ein Spieler aus.']);
+    if (R.ten) it.push(['10', 'Verbrennt', 'Geht immer. Der Stapel ist weg und du legst nochmal.']);
+    it.push(['4×', 'Bombe', 'Vier gleiche hintereinander verbrennen den Stapel. Du legst nochmal.', 'e']);
+    if (R.cut) it.push(['💣', 'Einwerfen', 'Hast du die fehlenden Karten zu vier gleichen, wirf sie jederzeit rein. Auch wenn du nicht dran bist.', 'e']);
+    if (R.four) it.push(['4', '4er am Start', 'Wer eine 4 hat, fängt an. Die anderen haben ' + Math.round(SH_WIN_MS / 1000) + ' Sekunden für ihre 4er.']);
+    it.push(['A', 'Reihenfolge', '2 bis 10, dann Bube, Dame, König und Ass.']);
+  } else {
+    it.push(['A', '11 Punkte', 'Das Ass ist die stärkste Karte.']);
+    it.push(['K', '10 Punkte', 'König, Dame, Bube und Zehn zählen je 10.']);
+    it.push(['9', 'Augenzahl', 'Neun, Acht und Sieben zählen, was draufsteht.']);
+    it.push(['♥', 'Eine Farbe', 'Gezählt werden nur Karten derselben Farbe.', 'r']);
+    it.push(['3×', '30,5', 'Drei gleiche Werte, etwa drei Buben.', 'e']);
+    it.push(['31', 'Schnautz', 'Sofort aufdecken, die Runde ist vorbei.', 'e']);
+    if (v.rules.feuer) it.push(['🔥', 'Feuer', 'Drei Asse zählen 33. Alle anderen verlieren einen Deckel.', 'e']);
+  }
+  return it;
+}
+function legendHTML(v, m){
+  var on = legendOn(m), h = '<div class="legend-h"><span>' + (v.game === 'shithead' ? 'Sonderkarten' : 'Kartenwerte') + '</span><button type="button" data-act="legend" data-m="' + (m ? 1 : 0) + '">' + (on ? 'ausblenden' : 'einblenden') + '</button></div>';
+  if (on) h += '<div class="lg">' + legendItems(v).map(function(x){ return '<span class="rk' + (x[3] ? ' ' + x[3] : '') + '">' + esc(x[0]) + '</span><span class="t"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span></span>'; }).join('') + '</div>';
+  return h;
+}
+function renderLegend(v){
+  var key = v.game + JSON.stringify(v.game === 'shithead' ? v.rules.sh : v.rules.feuer) + legendOn(false) + legendOn(true);
+  if (renderLegend.k === key) return; renderLegend.k = key;
+  var a = $('#legend'), b = $('#legend-m');
+  if (a) a.innerHTML = legendHTML(v, false);
+  if (b) b.innerHTML = legendHTML(v, true);
+}
+
+/* ---------- Reaktionen ---------- */
+function renderEmotes(){
+  var el = $('#emotes'); if (!el) return;
+  var key = App.emoBlock ? '1' : '0'; if (el.dataset.k === key) return; el.dataset.k = key;
+  el.innerHTML = EMOTES.map(function(e){ return '<button type="button" data-act="emote" data-e="' + e + '" aria-label="Reaktion ' + e + '"' + (App.emoBlock ? ' disabled' : '') + '>' + e + '</button>'; }).join('');
+}
+function emojiFly(pid, ch){
+  if (EMOTES.indexOf(ch) < 0) return;
+  var src = panelFor(pid) || $('#center'); if (!src) return;
+  var r = src.getBoundingClientRect(), el = document.createElement('div'); el.className = 'emo'; el.textContent = ch;
+  var x = r.left + r.width / 2 + (Math.random() - 0.5) * 70, y = r.top + Math.min(r.height / 2, 90);
+  el.style.left = (x - 33) + 'px'; el.style.top = (y - 33) + 'px';
+  $('#fly').appendChild(el);
+  var tilt = (Math.random() - 0.5) * 34;
+  el.animate([{transform:'translateY(20px) scale(.4)', opacity:0}, {transform:'translateY(-30px) scale(1.55) rotate(' + tilt + 'deg)', opacity:1, offset:.22}, {transform:'translateY(-90px) scale(1.25) rotate(' + (-tilt) + 'deg)', opacity:1, offset:.7}, {transform:'translateY(-160px) scale(1)', opacity:0}], {duration:1900, easing:'cubic-bezier(.2,.8,.3,1)', fill:'forwards'}).onfinish = function(){ el.remove(); };
+  setTimeout(function(){ if (el.parentNode) el.remove(); }, 2400);
+  if (pid !== App.me) sfx('pop');
+}
+function rain(ch, n){
+  var layer = $('#fly');
+  for (var i=0;i<n;i++){
+    var c = document.createElement('i'); c.className = 'rainp'; c.textContent = ch;
+    var x = Math.random() * innerWidth, dx = (Math.random() - 0.5) * 180, rot = (Math.random() - 0.5) * 540;
+    c.style.cssText = 'left:' + x + 'px; font-size:' + (22 + Math.random() * 26) + 'px';
+    layer.appendChild(c);
+    c.animate([{transform:'translate(0,0) rotate(0deg)', opacity:1}, {transform:'translate(' + dx + 'px,' + (innerHeight + 120) + 'px) rotate(' + rot + 'deg)', opacity:.95}], {duration:2200 + Math.random() * 1600, delay:Math.random() * 800, easing:'cubic-bezier(.35,.4,.6,1)', fill:'forwards'}).onfinish = (function(el){ return function(){ el.remove(); }; })(c);
+  }
 }
 
 /* ---------- Shithead: Tisch ---------- */
@@ -2352,7 +2932,7 @@ function shPileInfo(v){
 function hashStr(s){ var h = 7; for (var i=0;i<s.length;i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
 function shTableHTML(v, P, mine){
   var down = typeof P.down === 'number' ? P.down : P.down.length, up = P.up || [], slots = Math.max(down, up.length);
-  var src = mine ? shSrc(v) : null, playing = mine && myTurn(v), meP = pById(v, App.me);
+  var src = mine ? shSrc(v) : null, playing = mine && myTurn(v) && !(v.sh && v.sh.win), meP = pById(v, App.me);
   var swapping = mine && v.phase === 'swap' && meP && !meP.ready;
   if (!slots) return '<div class="tcards"><div class="tnone">keine Tischkarten</div></div>';
   var h = '<div class="tcards">';
@@ -2376,9 +2956,27 @@ function shTableHTML(v, P, mine){
   }
   return h + '</div>';
 }
+function renderShCenter(v){
+  var S = v.sh; if (!S) return;
+  var R = v.rules.sh || DEFAULT_RULES.sh, ov = SEQ.ov;
+  var pile = ov ? ov.pile : (S.pile || []), burned = ov ? ov.burned : num(S.burned);
+  var pv = {rules:v.rules, sh:{pile:pile}};
+  var ch = '<span class="cap">Stapel</span>';
+  var dn = num(S.deck);
+  ch += '<div class="deck" title="Nachziehstapel">' + (dn ? cardHTML(null) + (dn > 1 ? cardHTML(null) : '') + (dn > 2 ? cardHTML(null) : '') : '<div class="emptyslot"></div>') + (dn ? '<span class="pcount" title="Karten zum Nachziehen">' + dn + '</span>' : '') + '<span class="cnt">' + (dn ? 'ziehen' : 'leer') + '</span></div>';
+  var startI = Math.max(0, pile.length - 5), ph = '';
+  for (var k=startI;k<pile.length;k++){
+    var hh = hashStr(pile[k] + ':' + k), rot = (hh % 25) - 12, dx = (hh % 11) - 5, dy = ((hh >> 3) % 9) - 4, isTop = k === pile.length - 1;
+    ph += cardHTML(pile[k], (isTop && App.anim.pilePop && !ov ? 'pop' : ''), 'style="--rot:' + rot + 'deg; left:' + dx + 'px; top:' + dy + 'px"');
+  }
+  if (!pile.length) ph = '<div class="emptyslot">leer</div>';
+  ch += '<div class="pile">' + ph + '<span class="cnt' + (R.seven && pile.length && shTop(pv) === '7' ? ' warn' : '') + '">' + esc(shPileInfo(pv)) + '</span>' + (pile.length > 5 ? '<span class="pcount">' + pile.length + '</span>' : '') + '</div>';
+  ch += '<div class="burned" title="Verbrannte Karten"><span class="flame">🔥</span><b>' + burned + '</b><span>verbrannt</span></div>';
+  $('#center').innerHTML = ch;
+}
 function renderSh(v){
   var S = v.sh; if (!S) return;
-  var R = v.rules.sh || DEFAULT_RULES.sh, tId = turnId(v), playing = myTurn(v), over = v.phase === 'over';
+  var R = v.rules.sh || DEFAULT_RULES.sh, tId = turnId(v), playing = myTurn(v) && !S.win, over = v.phase === 'over';
   var me = pById(v, App.me), mine = shMine(v), src = shSrc(v);
   // Gegner
   var oh = '';
@@ -2392,27 +2990,16 @@ function renderSh(v){
     else if (done) tag = '<span class="tag">Platz ' + num(p.place) + '</span>';
     else if (over && S.shithead === p.id) tag = '<span class="tag outt">Shithead</span>';
     else if (v.phase === 'swap') tag = p.ready ? '<span class="tag">fertig</span>' : '<span class="tag turn">tauscht<span class="thinking"><i></i><i></i><i></i></span></span>';
+    else if (v.phase === 'play' && S.win) tag = S.win.by.indexOf(p.id) >= 0 ? '<span class="tag turn">' + (S.win.by[0] === p.id ? 'fängt an' : '4er rein') + '</span>' : '';
     else if (v.phase === 'play' && tId === p.id) tag = '<span class="tag turn">ist dran<span class="thinking"><i></i><i></i><i></i></span></span>';
-    var on = v.phase === 'play' && tId === p.id;
+    var on = v.phase === 'play' && tId === p.id && !S.win;
     oh += '<div data-pid="' + esc(p.id) + '" class="opp sh' + (on ? ' turn' : '') + (p.out || done ? ' out' : '') + (!p.online ? ' offline' : '') + '">' +
       shTableHTML(v, P, false) +
       '<div class="ometa"><span class="nm">' + esc(p.name) + '</span><span class="ohand" title="Karten auf der Hand">' + hand + '<span class="hcount' + (hn ? '' : ' zero') + '">' + hn + '</span></span>' + shcHTML(p) + '</div>' + (tag || '<span class="tag" style="visibility:hidden">.</span>') + '</div>';
   });
   $('#opps').innerHTML = oh;
 
-  // Mitte
-  var ch = '<span class="cap">Stapel</span>';
-  var dn = num(S.deck);
-  ch += '<div class="deck" title="Nachziehstapel">' + (dn ? cardHTML(null) + (dn > 1 ? cardHTML(null) : '') + (dn > 2 ? cardHTML(null) : '') : '<div class="emptyslot"></div>') + (dn ? '<span class="pcount" title="Karten zum Nachziehen">' + dn + '</span>' : '') + '<span class="cnt">' + (dn ? 'ziehen' : 'leer') + '</span></div>';
-  var pile = S.pile || [], startI = Math.max(0, pile.length - 5), ph = '';
-  for (var k=startI;k<pile.length;k++){
-    var hh = hashStr(pile[k] + ':' + k), rot = (hh % 25) - 12, dx = (hh % 11) - 5, dy = ((hh >> 3) % 9) - 4, isTop = k === pile.length - 1;
-    ph += cardHTML(pile[k], (isTop && App.anim.pilePop ? 'pop' : ''), 'style="--rot:' + rot + 'deg; left:' + dx + 'px; top:' + dy + 'px"');
-  }
-  if (!pile.length) ph = '<div class="emptyslot">leer</div>';
-  ch += '<div class="pile">' + ph + '<span class="cnt' + (R.seven && shTop(v) === '7' ? ' warn' : '') + '">' + esc(shPileInfo(v)) + '</span>' + (pile.length > 5 ? '<span class="pcount">' + pile.length + '</span>' : '') + '</div>';
-  ch += '<div class="burned" title="Verbrannte Karten"><span class="flame">🔥</span><b>' + num(S.burned) + '</b><span>verbrannt</span></div>';
-  $('#center').innerHTML = ch;
+  renderShCenter(v);
 
   // Status
   var main = '', sub = '', canAny = false;
@@ -2425,6 +3012,12 @@ function renderSh(v){
       main = wn.length ? 'Warte auf ' + esc(listJoin(wn)) + '…' : 'Gleich geht es los.';
       if (wn.length && App.role === 'host') sub = '<button class="btn ghost small" data-act="force">Nicht warten, jetzt starten</button>';
     }
+  } else if (v.phase === 'play' && S.win){
+    var canT = shCanThrow(v, App.me), inBy = S.win.by.indexOf(App.me) >= 0, wl = winLeft();
+    main = '<em>4er reinwerfen!</em><span class="wincd" id="wincd" style="--p:' + (wl / SH_WIN_MS).toFixed(3) + '"><b>' + Math.ceil(wl / 1000) + '</b></span>';
+    if (canT) sub = '<div class="quick"><button class="btn primary pulse big" data-act="shthrow">' + (canT.length > 1 ? 'Meine ' + canT.length + ' Vieren rein!' : 'Meine 4 rein!') + '</button></div>';
+    else if (inBy) sub = (S.win.by[0] === App.me ? 'Du fängst mit der 4 an.' : 'Deine 4 ist drin.') + ' Mal sehen, wer noch schnell genug ist.';
+    else sub = W(v, S.win.by[0]) + vb(S.win.by[0], ' fängst', ' fängt') + ' mit der 4 an. Wer noch eine 4 hat, muss schnell sein.';
   } else if (v.phase === 'play'){
     if (meDone){ main = 'Du bist fertig!'; sub = 'Platz ' + num(me.place) + '. Jetzt in Ruhe zuschauen.'; }
     if (playing){
@@ -2435,10 +3028,12 @@ function renderSh(v){
       else sub = 'Tippe gleiche Karten an und leg sie ab.';
     } else if (!meDone) main = W(v, tId) + ' ist dran.';
   } else if (over) main = 'Partie vorbei.';
-  var actor = v.phase === 'play' && tId ? pById(v, tId) : null;
+  var actor = v.phase === 'play' && tId && !S.win ? pById(v, tId) : null;
   if (actor && actor.id !== App.me && !actor.online){
     sub = esc(actor.name) + ' ist gerade offline.' + (App.role === 'host' ? ' <button class="btn ghost small" data-act="skip">Für ' + esc(actor.name) + ' spielen</button>' : ' Das Spiel wartet.');
   }
+  var bm = v.phase === 'play' && !S.win ? shCanBomb(v, App.me) : null;
+  if (bm) sub = (sub && sub.indexOf('quick') < 0 ? sub : '') + '<div class="quick"><button class="btn bomb pulse" data-act="shbomb">💣 Bombe! ' + (bm.idx.length > 1 ? bm.idx.length + '× ' : '') + esc(shRankLabel(bm.r)) + ' einwerfen</button></div>';
   var stEl = $('#status'); stEl.className = 'status';
   stEl.innerHTML = '<div class="main">' + main + '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '');
 
@@ -2447,12 +3042,11 @@ function renderSh(v){
   if (!me || !mine){
     mh = '<div class="outmsg">Du spielst diese Partie nicht mit.</div>';
   } else {
-    var hand = Array.isArray(mine.hand) ? mine.hand : [];
+    var hand = SEQ.ov && SEQ.ov.myHand ? SEQ.ov.myHand : (Array.isArray(mine.hand) ? mine.hand : []);
     var swapping = v.phase === 'swap' && !me.ready;
     mh += '<div class="mehead"><span class="nm">' + esc(me.name) + '</span>' + shcHTML(me) + (meDone ? '<span class="tag">Platz ' + num(me.place) + '</span>' : '') + '<span class="pill">' + hand.length + (hand.length === 1 ? ' Karte' : ' Karten') + '</span></div>';
     mh += '<div class="shrow">' + shTableHTML(v, mine, true);
-    var n = hand.length, ovl = n <= 5 ? -0.06 : (n <= 8 ? -0.36 : -0.5);
-    mh += '<div class="shhand" style="--ov:' + ovl + '">';
+    mh += '<div class="shhand">';
     hand.forEach(function(c, i){
       var selectable = swapping || (playing && src === 'hand');
       var cls = (selectable ? 'pick' : '') + ((swapping && App.sw.h === i) || (App.ss.src === 'hand' && App.ss.idx.indexOf(i) >= 0) ? ' sel' : '') +
@@ -2467,11 +3061,13 @@ function renderSh(v){
       if (selIdx.length) label = (selIdx.length > 1 ? selIdx.length + '× ' : '') + shRankLabel(rankOf(arr[selIdx[0]])) + ' ausspielen';
       var okSel = selIdx.length && shCanPlay(v, rankOf(arr[selIdx[0]]));
       mh += '<button class="btn primary' + (okSel ? ' pulse' : '') + '" data-act="shplay"' + (okSel ? '' : ' disabled') + '>' + esc(label) + '</button>';
+      if (selIdx.length){ var sameN = arr.filter(function(c){ return rankOf(c) === rankOf(arr[selIdx[0]]); }).length; if (sameN > selIdx.length) mh += '<button class="btn ghost" data-act="shselall">Alle ' + sameN + ' wählen</button>'; }
       mh += '<button class="btn ' + (canAny ? 'ghost' : 'wood pulse') + '" data-act="shpickup"' + (S.pile.length ? '' : ' disabled') + '>Aufnehmen (' + S.pile.length + ')</button>';
     }
     mh += '</div>';
   }
-  var meEl = $('#me'); meEl.className = 'me shme' + ((playing || (v.phase === 'swap' && me && !me.ready)) ? ' turn' : ''); meEl.innerHTML = mh;
+  var meEl = $('#me'); meEl.className = 'me shme' + (((playing && !S.win) || (v.phase === 'swap' && me && !me.ready)) ? ' turn' : ''); meEl.innerHTML = mh;
+  fitHand();
 }
 function renderShOverlay(v){
   var ov = $('#overlay');
@@ -2482,15 +3078,21 @@ function renderShOverlay(v){
   var nm = function(id){ return esc(nameOf(v, id, names[id])); };
   var title = loser === App.me ? 'Du bist der <span class="r">Shithead!</span>' : (loser ? nm(loser) + ' ist der <span class="r">Shithead!</span>' : 'Partie vorbei');
   var lead = r.quit ? nm(r.quit) + vb(r.quit, ' hast', ' hat') + ' den Tisch verlassen.' : (r.ranking.length ? (r.ranking[0] === App.me ? 'Du warst zuerst fertig.' : nm(r.ranking[0]) + ' war zuerst fertig.') : '');
+  var tt = '', good = false;
+  if (!r.quit && loser){
+    if (loser === App.me) tt = taunt('shLoserSelf', null, 'o' + v.games);
+    else if (r.ranking[0] === App.me){ tt = taunt('shWinSelf', null, 'o' + v.games); good = true; }
+    else tt = taunt('shLoserOther', {name:nameOf(v, loser, names[loser])}, 'o' + v.games);
+  }
   var rows = '', order = r.ranking.concat(loser ? [loser] : []);
   order.forEach(function(id, i){
     var p = pById(v, id), isL = id === loser, P = v.sh && v.sh.P[id], left = [];
     if (isL && P) left = [].concat(Array.isArray(P.hand) ? P.hand : [], P.up || [], Array.isArray(P.down) ? P.down : []);
     rows += '<div class="row' + (isL ? ' lose' : (i === 0 ? ' win' : '')) + '"><div class="val" style="min-width:34px;text-align:left">' + (i + 1) + '.</div>' +
-      '<div class="who"><b>' + nm(id) + '</b><span>' + (isL ? left.length + (left.length === 1 ? ' Karte übrig' : ' Karten übrig') : (i === 0 ? 'zuerst fertig' : 'fertig')) + (p && p.shc ? ' · ' + num(p.shc) + '× Shithead' : '') + '</span>' +
+      '<div class="who"><b>' + (isL ? '<span class="hat">💩</span>' : (i === 0 ? '<span class="hat">👑</span>' : '')) + nm(id) + '</b><span>' + (isL ? left.length + (left.length === 1 ? ' Karte übrig' : ' Karten übrig') : (i === 0 ? 'zuerst fertig' : 'fertig')) + (p && p.shc ? ' · ' + num(p.shc) + '× Shithead' : '') + '</span>' +
       (isL && left.length ? '<div class="mini shleft">' + left.slice(0, 8).map(function(c){ return cardHTML(c); }).join('') + (left.length > 8 ? '<span class="more">+' + (left.length - 8) + '</span>' : '') + '</div>' : '') + '</div></div>';
   });
-  ov.innerHTML = '<div class="modal"><div class="paper"><div class="trophy">' + (loser === App.me ? '💩' : (loser ? '🏆' : '👋')) + '</div><h2>' + title + '</h2><p class="lead">' + lead + '</p><div class="rows">' + rows + '</div>' + overlayFoot(v, me) + '</div></div>';
+  ov.innerHTML = '<div class="modal"><div class="paper"><div class="trophy">' + (loser === App.me ? '💩' : (loser ? '🏆' : '👋')) + '</div><h2>' + title + '</h2><p class="lead">' + lead + '</p>' + (tt ? '<p class="taunt' + (good ? ' good' : '') + '">' + esc(tt) + '</p>' : '') + '<div class="rows">' + rows + '</div>' + overlayFoot(v, me) + '</div></div>';
 }
 function shTap(kind, i){
   var v = App.view; if (!v || v.game !== 'shithead') return;
@@ -2501,7 +3103,7 @@ function shTap(kind, i){
     if (App.sw.h != null && App.sw.u != null){ var a = {type:'shswap', h:App.sw.h, u:App.sw.u}; App.sw = {h:null, u:null}; sfx('card'); doAct(a); return; }
     renderSh(v); return;
   }
-  if (!myTurn(v)) return;
+  if (!myTurn(v) || (v.sh && v.sh.win)) return;
   var src = kind === 'h' ? 'hand' : 'up', arr = P[src]; if (!arr || !arr[i]) return;
   if (shSrc(v) !== src) return;
   var cur = App.ss;
@@ -2556,10 +3158,11 @@ function rulesSh(R){
   return '<h2>So geht <span class="r">Shithead</span></h2><p class="lead">Auch bekannt als Palace oder Karma. Gespielt wird mit 52 Karten, das Ass ist am höchsten.</p>' +
     '<h3>Worum es geht</h3>' + p('Werde alle deine Karten los. Wer am Ende als Letzter noch Karten hat, ist der Shithead.') +
     '<h3>Aufbau</h3>' + p('Jeder bekommt drei verdeckte Karten, darauf drei offene und dazu drei auf die Hand. Vor dem Start darfst du Handkarten mit deinen offenen Tischkarten tauschen.') +
-    '<h3>Ablauf</h3>' + p('Wer die niedrigste Handkarte hat, fängt an. Sonderkarten zählen dabei nicht. Du legst eine oder mehrere Karten mit gleichem Wert auf den Stapel. Sie müssen gleich hoch oder höher sein als die oberste Karte. Danach ziehst du wieder auf drei Handkarten nach, solange der Nachziehstapel reicht.') +
+    '<h3>Ablauf</h3>' + (R.four ? p('Wer eine 4 auf der Hand hat, fängt an und legt sie sofort. Alle anderen haben dann ' + Math.round(SH_WIN_MS / 1000) + ' Sekunden, um ihre 4er per Knopfdruck reinzuwerfen. Wer zu langsam ist, behält sie erst mal. Hat niemand eine 4, fängt die niedrigste Handkarte an.') : '') + p((R.four ? 'Danach geht es reihum. ' : 'Wer die niedrigste Handkarte hat, fängt an. Sonderkarten zählen dabei nicht. ') + 'Du legst eine oder mehrere Karten mit gleichem Wert auf den Stapel. Sie müssen gleich hoch oder höher sein als die oberste Karte. Danach ziehst du wieder auf drei Handkarten nach, solange der Nachziehstapel reicht.') +
     p('Kannst oder willst du nicht legen, nimmst du den ganzen Stapel auf.') +
     '<h3>Tischkarten</h3>' + p('Sind Nachziehstapel und Hand leer, spielst du deine offenen Tischkarten. Danach kommen die verdeckten, blind und eine nach der anderen. Passt die aufgedeckte Karte nicht, nimmst du den Stapel samt dieser Karte auf.') +
-    '<h3>Sonderkarten</h3>' + sp.map(p).join('');
+    '<h3>Sonderkarten</h3>' + sp.map(p).join('') +
+    (R.cut ? '<h3>Einwerfen</h3>' + p('Liegen oben schon gleiche Karten und du hast genau die fehlenden zu vier gleichen, darfst du sie jederzeit reinwerfen, auch wenn du nicht dran bist. Der Stapel verbrennt und du bist als Nächstes dran. Wer zuerst drückt, gewinnt das Rennen.') : '');
 }
 function rulesSchnautz(r){
   var p = function(t){ return '<p>' + t + '</p>'; };
@@ -2588,6 +3191,7 @@ function selCard(kind, i){
   App.anim = {}; renderGame(v);
 }
 function leaveTable(){
+  resetTableUI();
   if (App.role === 'host') hostClose();
   else { try { G.conn && G.conn.open && G.conn.send({t:'bye'}); } catch (e) {} LS.del('guest'); guestStop(); }
   App.role = null; App.view = null; App.unread = 0; setNet('off');
@@ -2603,8 +3207,13 @@ document.addEventListener('click', function(e){
     case 'hand': selCard('h', +t.dataset.i); break;
     case 'shh': shTap('h', +t.dataset.i); break;
     case 'shu': shTap('u', +t.dataset.i); break;
-    case 'shd': if (App.busy) break; App.busy = true; sfx('card'); doAct({type:'shblind', i:+t.dataset.i}); break;
-    case 'shplay': if (App.busy || !App.ss.idx.length) break; App.busy = true; sfx('card'); var pa = {type:'shplay', from:App.ss.src, idx:App.ss.idx.slice()}; App.ss = {src:null, idx:[]}; doAct(pa); break;
+    case 'shd': if (App.busy) break; App.busy = true; sfx('card'); App.playRects = {t:Date.now(), src:'down', rects:[t.getBoundingClientRect()]}; doAct({type:'shblind', i:+t.dataset.i}); break;
+    case 'shplay': if (App.busy || !App.ss.idx.length) break; App.busy = true; sfx('card'); grabRects(App.ss.src, App.ss.idx); var pa = {type:'shplay', from:App.ss.src, idx:App.ss.idx.slice()}; App.ss = {src:null, idx:[]}; doAct(pa); break;
+    case 'shthrow': if (App.throwing) break; App.throwing = true; setTimeout(function(){ App.throwing = false; }, 1500); sfx('card'); (function(){ var ti = shCanThrow(v, App.me); if (ti) grabRects('hand', ti); })(); doAct({type:'shthrow'}); break;
+    case 'shbomb': if (App.throwing) break; App.throwing = true; setTimeout(function(){ App.throwing = false; }, 1500); (function(){ var bm = shCanBomb(v, App.me); if (bm) grabRects(bm.src, bm.idx); })(); doAct({type:'shbomb'}); break;
+    case 'shselall': (function(){ var P = shMine(v), src = App.ss.src; if (!P || !src || !App.ss.idx.length) return; var arr = P[src], r = rankOf(arr[App.ss.idx[0]]); App.ss.idx = []; arr.forEach(function(c, i){ if (rankOf(c) === r) App.ss.idx.push(i); }); App.anim = {}; renderSh(v); })(); break;
+    case 'legend': (function(){ var m = t.dataset.m === '1'; LS.set(m ? 'legendM' : 'legend', !legendOn(m)); if (v) renderLegend(v); })(); break;
+    case 'emote': if (App.emoBlock || !v) break; App.emoBlock = true; renderEmotes(); setTimeout(function(){ App.emoBlock = false; renderEmotes(); }, 1300); doAct({type:'emote', e:t.dataset.e}); break;
     case 'shpickup': if (App.busy) break; App.busy = true; doAct({type:'shpickup'}); break;
     case 'shready': doAct({type:'shready'}); break;
     case 'game': doAct({type:'game', game:t.dataset.g}); break;
@@ -2667,6 +3276,7 @@ $('#joincode').addEventListener('input', function(e){ e.target.value = cleanCode
 $('#joincode').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('#btn-join').click(); });
 $('#name').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ if (cleanCode($('#joincode').value).length === 5) $('#btn-join').click(); else $('#btn-host').click(); } });
 $('#btn-cancel').onclick = function(){
+  resetTableUI();
   if (App.role === 'host'){ var p = H.peer; H.peer = null; try { p && p.destroy(); } catch (e) {} if (H.st && H.st.players.length === 1 && H.st.phase === 'lobby') LS.del('host'); H.st = null; }
   if (App.role === 'guest') guestStop();
   App.role = null; App.view = null; setNet('off'); showScreen('start'); renderResume();
@@ -2689,7 +3299,7 @@ initStart();
 showScreen('start');
 var startCode = cleanCode((location.hash || '').slice(1));
 if (startCode && LS.get('name', '')) $('#btn-join').focus();
-window.__schnautz = {App:App, H:H, G:G, applyView:applyView};
+window.__schnautz = {App:App, H:H, G:G, applyView:applyView, hostCommit:hostCommit};
 })();
 </script>
 </body>
