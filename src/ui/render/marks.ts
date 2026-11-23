@@ -2,10 +2,11 @@
 import type { Player, View } from '../../game/types';
 import { App } from '../app';
 import { esc } from '../dom';
+import { reignOf } from '../../game/games';
 
 export function reignHTML(v: View, id: string): string {
-  const rg = v.reign?.game === v.game ? v.reign : null;
-  if (rg?.sh === id && App.zerHide !== id) return '<span class="reign" title="Amtierender Shithead">💩</span>';
+  const rg = reignOf(v);
+  if (rg?.lose === id && App.zerHide !== id) return '<span class="reign" title="Amtierender Shithead">💩</span>';
   if (rg?.win === id) return '<span class="reign" title="Hat die letzte Partie gewonnen">👑</span>';
   return '';
 }

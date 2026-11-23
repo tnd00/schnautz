@@ -3,6 +3,7 @@ import type { GameKind, Rules, ShRules } from '../../game/types';
 import { App } from '../app';
 import { num } from '../dom';
 import { legendGrid, legendTitle } from './legend';
+import { GAME_NAME, GAMES, unreachable } from '../../game/games';
 
 /* ---------- Regeln ---------- */
 const p = (t: string) => `<p>${t}</p>`;
@@ -18,18 +19,15 @@ export function rulesHTML(game?: GameKind): string {
   const r: Rules = v ? v.rules : DEFAULT_RULES;
   const tabs =
     '<div class="gamesel">' +
-    (['schnautz', 'shithead'] as const)
-      .map(
-        (x) =>
-          `<button data-act="rulestab" data-g="${x}" class="${g === x ? 'on' : ''}">${x === 'shithead' ? 'Shithead' : 'Schnautz'}</button>`,
-      )
-      .join('') +
+    GAMES.map(
+      (x) => `<button data-act="rulestab" data-g="${x}" class="${g === x ? 'on' : ''}">${GAME_NAME[x]}</button>`,
+    ).join('') +
     '</div>';
   const glance = `<section class="rsec glance"><h3>${legendTitle(g)} auf einen Blick</h3>${legendGrid(g, r)}</section>`;
   return (
     '<div class="modal"><div class="paper sheet rules"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
     (v ? '' : tabs) +
-    (g === 'shithead' ? rulesSh(r.sh || DEFAULT_RULES.sh, glance) : rulesSchnautz(r, glance)) +
+    rulesOf(g, r, glance) +
     (r.turnSecs
       ? sec(
           'Zeitlimit',
@@ -38,6 +36,17 @@ export function rulesHTML(game?: GameKind): string {
       : '') +
     '</div></div>'
   );
+}
+
+function rulesOf(g: GameKind, r: Rules, glance: string): string {
+  switch (g) {
+    case 'shithead':
+      return rulesSh(r.sh || DEFAULT_RULES.sh, glance);
+    case 'schnautz':
+      return rulesSchnautz(r, glance);
+    default:
+      return unreachable(g);
+  }
 }
 
 function rulesSh(R: ShRules, glance: string): string {

@@ -54,10 +54,10 @@ export function takeSeat(st: State, seatId: string, name: string): void {
   p.wins = 0;
   p.shc = 0;
   // Krone oder Shithead-Titel der KI gehen nicht auf den Menschen über
-  if (st.reign) {
-    if (st.reign.win === p.id) st.reign.win = null;
-    if (st.reign.sh === p.id) st.reign.sh = null;
-  }
+  Object.values(st.reigns ?? {}).forEach((rg) => {
+    if (rg.win === p.id) rg.win = null;
+    if (rg.lose === p.id) rg.lose = null;
+  });
   // Ebenso Forderung, Duell und Tipp der KI
   forgetRematch(st, p.id);
   if (st.sh?.bets) delete st.sh.bets[p.id];

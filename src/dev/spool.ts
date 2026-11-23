@@ -9,6 +9,7 @@ import { shCanBet } from '../game/bets';
 import { addLog } from '../game/state';
 import type { Action, Rng, State } from '../game/types';
 import { viewFor } from '../game/view';
+import { unreachable } from '../game/games';
 
 /** end: Partie vorbei · round: Schnautz-Runde vorbei · done: ich bin fertig und darf tippen */
 export type SpoolGoal = 'end' | 'round' | 'done';
@@ -67,11 +68,16 @@ function reached(goal: SpoolGoal, ph: State['phase'], st: State, me: string): bo
 /** Passt der Ausgang zum Wunsch? Wird nach dem Zielzug geprüft. */
 function wanted(want: SpoolWant, st: State, me: string): boolean {
   if (want === 'any') return true;
-  if (st.game === 'shithead') {
-    const r = st.result?.reason === 'shithead' ? st.result : null;
-    return want === 'lose' ? r?.shithead === me : st.sh?.finished[0] === me;
+  switch (st.game) {
+    case 'shithead': {
+      const r = st.result?.reason === 'shithead' ? st.result : null;
+      return want === 'lose' ? r?.shithead === me : st.sh?.finished[0] === me;
+    }
+    case 'schnautz':
+      return want === 'win' ? st.winner === me : st.winner !== me;
+    default:
+      return unreachable(st.game);
   }
-  return want === 'win' ? st.winner === me : st.winner !== me;
 }
 
 /** Spielt bis zum Ziel. Gibt die Zahl der Züge davor zurück oder -1, wenn das Ziel nicht kam oder nicht passt. */

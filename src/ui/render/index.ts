@@ -12,6 +12,21 @@ import { renderSh, renderShOverlay } from './shithead';
 import { renderTurnNote } from './turnnote';
 import { markTosses } from '../toss';
 import { fitDesktop } from '../fit';
+import { GAME_NAME, unreachable } from '../../game/games';
+import type { View } from '../../game/types';
+
+/** Was jedes Spiel am Tisch zeichnet und ob die Leiste oben und das Abzeichen am Namen dazugehören. */
+function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: boolean; badge: boolean } {
+  switch (v.game) {
+    case 'shithead':
+      // Bei Shithead stehen alle schon auf dem Spielfeld, die Leiste wäre doppelt
+      return { draw: () => renderSh(v), overlay: () => renderShOverlay(v), scorebar: false, badge: false };
+    case 'schnautz':
+      return { draw: () => renderGame(v), overlay: () => renderOverlay(v), scorebar: true, badge: true };
+    default:
+      return unreachable(v.game);
+  }
+}
 
 /** Zeichnet alles neu, was zur aktuellen Ansicht gehört. */
 export function render(): void {
@@ -20,7 +35,7 @@ export function render(): void {
   $('#codechip-code').textContent = App.code;
   $('#menu-lobby').hidden = !(App.role === 'host' && v.phase !== 'lobby');
   $('#menu-leave').textContent = App.role === 'host' ? 'Tisch auflösen' : 'Tisch verlassen';
-  const sh = v.game === 'shithead';
+  const t = tableOf(v);
   if (v.phase === 'lobby') {
     showScreen('lobby');
     renderLobby(v);
@@ -28,16 +43,14 @@ export function render(): void {
     showScreen('game');
     const tbl = $('#table');
     tbl.dataset.game = v.game;
-    tbl.classList.toggle('swap', sh && v.phase === 'swap');
-    if (sh) renderSh(v);
-    else renderGame(v);
+    tbl.classList.toggle('swap', v.game === 'shithead' && v.phase === 'swap');
+    t.draw();
   }
-  $('#brand-name').textContent = sh ? 'Shithead' : 'Schnautz';
-  $('#brand-badge').hidden = sh;
+  $('#brand-name').textContent = GAME_NAME[v.game];
+  $('#brand-badge').hidden = !t.badge;
   if (v.phase !== 'lobby') {
-    // Bei Shithead stehen alle schon auf dem Spielfeld, die Leiste wäre doppelt
-    $('#scorebar').hidden = sh;
-    if (!sh) renderScore(v);
+    $('#scorebar').hidden = !t.scorebar;
+    if (t.scorebar) renderScore(v);
     renderLegend(v);
     renderEmotes();
   }
@@ -45,8 +58,7 @@ export function render(): void {
   // Offenes Tipp-Fenster mitziehen oder schließen, wenn Tippen nicht mehr geht
   if ($opt('#modal .paper.bets')) renderBetModal(v);
   renderLog(v);
-  if (sh) renderShOverlay(v);
-  else renderOverlay(v);
+  t.overlay();
   // Beim Ansehen des Tisches nach einer Runde wird nur in der Übersicht reagiert
   document.body.classList.toggle('peeking', App.peek && (v.phase === 'end' || v.phase === 'over'));
   // Das Ergebnisfenster hat ein eigenes Reaktionsfenster

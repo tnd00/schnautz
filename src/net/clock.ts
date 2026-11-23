@@ -4,9 +4,8 @@
  * Das gilt auch für den Host selbst und für alle, die gerade offline sind.
  */
 import { botDecide } from '../bots/index';
-import { act } from '../game/actions';
+import { act, fallbackMove } from '../game/actions';
 import { clockTurn, noteTimeout } from '../game/clock';
-import { shAuto } from '../game/shithead';
 import type { State, View } from '../game/types';
 import { viewFor } from '../game/view';
 import { App } from '../ui/app';
@@ -81,10 +80,7 @@ function autoMove(st: State, id: string, swap: boolean): void {
     if (!a) break;
     const err = act(st, id, a);
     if (err) {
-      if (st.game === 'shithead') {
-        if (st.phase === 'swap') act(st, id, { type: 'shready' });
-        else shAuto(st, id);
-      } else act(st, id, st.phase === 'choose' ? { type: 'keep' } : { type: 'pass' });
+      fallbackMove(st, id);
       return;
     }
     // Ein Zug reicht, nur die Tauschrunde geht bis "fertig"

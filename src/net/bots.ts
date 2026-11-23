@@ -3,11 +3,10 @@
  * Ansicht (kein Schummeln) und spielt mit menschlich wirkenden Pausen. Außerdem gelegentliche
  * Chat-Sprüche und Emoji-Reaktionen.
  */
-import { act, soundOk } from '../game/actions';
+import { act, fallbackMove, soundOk } from '../game/actions';
 import { shBetsOn, shCanBet } from '../game/bets';
 import { botRematchSeat } from '../game/rematch';
 import { handValue } from '../game/schnautz';
-import { shAuto } from '../game/shithead';
 import { pIdx } from '../game/state';
 import type { Action, Player, State, TossItem } from '../game/types';
 import { viewFor } from '../game/view';
@@ -22,6 +21,7 @@ import { BOT_LINES } from '../bots/lines';
 import { botTossReply } from '../bots/toss';
 import { botBet } from '../bots/bets';
 import { zerRevealDelay } from '../ui/shithead/ceremony-plan';
+import { szResult } from '../game/games';
 
 /** Wie oft die KI eine Gelegenheit außer der Reihe bemerkt (in Prozent). */
 const NOTICE_THROW = 88;
@@ -333,10 +333,7 @@ export function botTick(): void {
       if (e) {
         // Sollte nie passieren, aber das Spiel darf nicht hängen
         console.warn('KI-Zug abgelehnt', e, a);
-        if (s.game === 'shithead') {
-          if (s.phase === 'swap') act(s, botId, { type: 'shready' });
-          else shAuto(s, botId);
-        } else act(s, botId, s.phase === 'choose' ? { type: 'keep' } : { type: 'pass' });
+        fallbackMove(s, botId);
       }
       hostCommit();
     },
@@ -589,7 +586,7 @@ export function botChatter(): void {
         Object.entries(e.changes ?? {}).forEach(([id, c]) => {
           say(bot(id), c.to === 'out' ? 'out' : c.to === 'swim' ? 'swim' : 'loseLife', c.to === 'life' ? 0.35 : 0.7);
         });
-        const res = st.result && st.result.reason !== 'shithead' ? st.result : null;
+        const res = szResult(st.result);
         if (res?.vals && e.reason === 'knock') {
           const max = Math.max(...Object.values(res.vals).map((x) => x.v));
           const top = Object.keys(res.vals).filter((id) => res.vals[id].v === max);

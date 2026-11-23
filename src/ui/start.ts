@@ -5,6 +5,7 @@ import { cardHTML } from './cards';
 import { $, esc, num } from './dom';
 import { shakeEl, toast } from './feedback';
 import { LS } from './storage';
+import { GAME_NAME } from '../game/games';
 
 export function showStartError(msg: string): void {
   const e = $('#start-err');
@@ -26,9 +27,9 @@ export function renderResume(): void {
     const state =
       hs.st.phase === 'lobby'
         ? ' wartet noch.'
-        : hs.st.game === 'shithead'
-          ? ' läuft noch (Shithead).'
-          : ` läuft noch (Runde ${num(hs.st.round)}).`;
+        : hs.st.game === 'schnautz'
+          ? ` läuft noch (Runde ${num(hs.st.round)}).`
+          : ` läuft noch (${GAME_NAME[hs.st.game] ?? 'Partie'}).`;
     h +=
       `<div class="resume"><p>Dein Tisch <b>${esc(hs.code)}</b> mit ${n} ${n === 1 ? 'Person' : 'Leuten'}${state}</p>` +
       '<button class="btn primary" data-act="resumehost">Fortsetzen</button><button class="btn ghost" data-act="dropresume" data-k="host">Verwerfen</button></div>';

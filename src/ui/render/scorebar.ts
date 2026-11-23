@@ -4,6 +4,7 @@ import { App } from '../app';
 import { livesHTML, SWIM_ICON as SWIM } from '../cards';
 import { $, esc, num } from '../dom';
 import { dealerId, turnId } from '../helpers';
+import { reignOf } from '../../game/games';
 
 const count = (x: string[] | number) => (typeof x === 'number' ? x : x.length);
 const cardsLeft = (P: ShPlayerView) => count(P.hand) + P.up.length + count(P.down);
@@ -33,12 +34,12 @@ export function renderScore(v: View): void {
   // Siege zählen pro Spiel, wie in der Bestenliste
   const winsOf = (p: Player) => num(p.stats?.[v.game]?.wins);
   const anyWin = v.players.some((p) => winsOf(p) > 0);
-  const rg = v.reign?.game === v.game ? v.reign : null;
+  const rg = reignOf(v);
   let h = `<div class="sb-meta"><b>${sh ? 'Shithead' : `Runde ${num(v.round)}`}</b><small>Partie ${num(v.games)}</small></div>`;
   v.players.forEach((p) => {
     const cur = (v.phase === 'play' && tId === p.id) || (v.phase === 'choose' && dId === p.id);
     const crown = rg?.win === p.id;
-    const poo = sh && rg?.sh === p.id;
+    const poo = sh && rg?.lose === p.id;
     const cls = ['sb-p', cur && 'cur', p.out && 'out', p.id === App.me && 'mine', poo && 'shamed']
       .filter(Boolean)
       .join(' ');

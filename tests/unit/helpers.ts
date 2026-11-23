@@ -3,6 +3,7 @@ import { botDecide } from '../../src/bots/index';
 import { act } from '../../src/game/actions';
 import type { Action, Card, Rng, SchnautzResult, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
+import { szResult } from '../../src/game/games';
 
 /** Reproduzierbarer Zufall (LCG), damit fehlschlagende Partien nachspielbar sind. */
 export function rngF(seed: number): Rng {
@@ -14,8 +15,9 @@ export function rngF(seed: number): Rng {
 }
 
 export function schnautzResult(st: State): SchnautzResult {
-  assert.ok(st.result && st.result.reason !== 'shithead', 'Schnautz-Ergebnis erwartet');
-  return st.result as SchnautzResult;
+  const r = szResult(st.result);
+  assert.ok(r, 'Schnautz-Ergebnis erwartet');
+  return r;
 }
 
 /** Alle Shithead-Karten (52 je Deck) genau einmal im Spiel? */

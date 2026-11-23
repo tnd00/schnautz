@@ -5,6 +5,7 @@
  */
 import { addLog, pIdx } from './state';
 import type { Player, State } from './types';
+import { reignOf, unreachable } from './games';
 
 const byId = (st: State, id: string | null | undefined): Player | null =>
   id ? (st.players[pIdx(st, id)] ?? null) : null;
@@ -25,7 +26,7 @@ export function challenge(st: State, pid: string): void {
   const r = st.rematch;
   if (!r) return;
   const me = byId(st, pid);
-  const vsP = byId(st, st.reign?.win ?? null);
+  const vsP = byId(st, reignOf(st)?.win ?? null);
   const vs = vsP && vsP.id !== pid ? vsP.id : null;
   const old = st.rematchDuel;
   const same = !!old && !!vs && ((old.by === pid && old.vs === vs) || (old.by === vs && old.vs === pid));
@@ -51,14 +52,21 @@ export function settleDuel(st: State): void {
     return;
   }
   let res: 'won' | 'lost' | 'tie';
-  if (st.game === 'shithead') {
-    const pb = by.place || Infinity;
-    const pv = vs.place || Infinity;
-    res = pb < pv ? 'won' : pb > pv ? 'lost' : 'tie';
-  } else {
-    const ob = by.id === st.winner ? Infinity : (by.outRound ?? Infinity);
-    const ov = vs.id === st.winner ? Infinity : (vs.outRound ?? Infinity);
-    res = ob > ov ? 'won' : ob < ov ? 'lost' : 'tie';
+  switch (st.game) {
+    case 'shithead': {
+      const pb = by.place || Infinity;
+      const pv = vs.place || Infinity;
+      res = pb < pv ? 'won' : pb > pv ? 'lost' : 'tie';
+      break;
+    }
+    case 'schnautz': {
+      const ob = by.id === st.winner ? Infinity : (by.outRound ?? Infinity);
+      const ov = vs.id === st.winner ? Infinity : (vs.outRound ?? Infinity);
+      res = ob > ov ? 'won' : ob < ov ? 'lost' : 'tie';
+      break;
+    }
+    default:
+      return unreachable(st.game);
   }
   d.res = res;
   addLog(st, { k: 'rematchend', p: by.id, name: by.name, to: vs.id, tn: vs.name, res, c: d.n });
@@ -79,7 +87,7 @@ export function forgetRematch(st: State, id: string): void {
 export function botRematchSeat(st: State): string | null {
   const r = st.rematch;
   if (!r || !Array.isArray(r.can)) return null;
-  const winner = byId(st, st.reign?.win ?? null);
+  const winner = byId(st, reignOf(st)?.win ?? null);
   if (!winner || winner.bot) return null;
   if (r.can.some((id) => !byId(st, id)?.bot)) return null;
   return r.can.find((id) => byId(st, id)?.bot && !byId(st, id)?.left && rematchOpen(st, id)) ?? null;

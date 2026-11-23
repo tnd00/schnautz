@@ -1,13 +1,14 @@
 /* Lobby: Plätze am Tisch, Spielauswahl und Regeln. Am Handy als zwei Reiter, damit nichts scrollt. */
 import { DEFAULT_RULES, MIN_SEATS, SH_WIN_MS, TURN_SECS } from '../../game/constants';
 import { maxSeats, seatLimit } from '../../game/state';
-import type { Player, Rules, ShRules, View } from '../../game/types';
+import type { GameKind, Player, Rules, ShRules, View } from '../../game/types';
 import { App } from '../app';
 import { BOT_TAG } from '../cards';
 import { $, esc, num } from '../dom';
 import { pById } from '../helpers';
 import { shareLink } from '../screens';
 import { shcHTML } from './shithead';
+import { GAME_NAME, GAMES, unreachable } from '../../game/games';
 
 const ICON_MINUS =
   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 12h12"/></svg>';
@@ -85,9 +86,21 @@ function toggle(
 }
 
 function gameSelect(v: View, host: boolean): string {
-  const btn = (g: 'schnautz' | 'shithead', label: string) =>
-    `<button data-act="game" data-g="${g}" class="${v.game === g ? 'on' : ''}"${host ? '' : ' disabled'}>${label}</button>`;
-  return `<div class="gamesel">${btn('schnautz', 'Schnautz')}${btn('shithead', 'Shithead')}</div>`;
+  const btn = (g: GameKind) =>
+    `<button data-act="game" data-g="${g}" class="${v.game === g ? 'on' : ''}"${host ? '' : ' disabled'}>${GAME_NAME[g]}</button>`;
+  return `<div class="gamesel">${GAMES.map(btn).join('')}</div>`;
+}
+
+/** Regeln des gewählten Spiels in der Lobby. */
+function gameRules(v: View, host: boolean): string {
+  switch (v.game) {
+    case 'shithead':
+      return shitheadRules(v.rules.sh ?? DEFAULT_RULES.sh, !host);
+    case 'schnautz':
+      return schnautzRules(v.rules, host);
+    default:
+      return unreachable(v.game);
+  }
 }
 
 function shitheadRules(sr: ShRules, dis: boolean): string {
@@ -158,9 +171,7 @@ export function renderLobby(v: View): void {
     el.classList.toggle('on', el.dataset.pane === App.ltab);
   });
 
-  const rules =
-    v.game === 'shithead' ? shitheadRules(v.rules.sh ?? DEFAULT_RULES.sh, !host) : schnautzRules(v.rules, host);
-  $('#rules-form').innerHTML = gameSelect(v, host) + rules;
+  $('#rules-form').innerHTML = gameSelect(v, host) + gameRules(v, host);
   $('#rules-note').textContent = host
     ? 'Du bist Gastgeber und legst die Regeln fest.'
     : 'Die Regeln legt der Gastgeber fest.';

@@ -20,6 +20,7 @@ import type {
 } from './types';
 import { shPlaceBet, shSettleBets } from './bets';
 import { offerRematch, settleDuel } from './rematch';
+import { setReign } from './games';
 
 type PileTable = { rules: Pick<Rules, 'sh'>; sh: { pile: Card[] } | null };
 
@@ -271,7 +272,7 @@ export function shEnd(st: State, loser: string | null, quitter?: string): void {
   st.phase = 'over';
   st.turn = -1;
   st.winner = S.finished[0] ?? null;
-  st.reign = { win: st.winner, sh: loser, game: 'shithead' };
+  setReign(st, 'shithead', st.winner, loser);
   if (st.winner) {
     const wp = st.players[pIdx(st, st.winner)];
     if (wp) wp.wins = (wp.wins || 0) + 1;

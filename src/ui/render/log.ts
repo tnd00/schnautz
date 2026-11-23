@@ -6,6 +6,7 @@ import { W, nameOf, vb } from '../helpers';
 import { SEQ } from '../shithead/sequence';
 import { rematchLog } from './rematch';
 import { ZER } from '../ceremony';
+import { GAME_NAME, isGame } from '../../game/games';
 
 /** Eine Zeile im Verlauf: CSS-Klasse und HTML (Namen und Texte sind escaped). */
 export function logLine(v: View, e: LogEntry): [cls: string, html: string] | null {
@@ -33,7 +34,10 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
     case 'back':
       return ['big', who() + vb(p, ' bist zurück und spielst wieder selbst.', ' ist zurück und spielt wieder selbst.')];
     case 'game':
-      return ['round', 'Partie ' + num(e.g) + ' beginnt' + (e.game === 'shithead' ? ' · Shithead' : '')];
+      return [
+        'round',
+        'Partie ' + num(e.g) + ' beginnt' + (isGame(e.game) && e.game !== 'schnautz' ? ' · ' + GAME_NAME[e.game] : ''),
+      ];
     case 'shdeal':
       return ['sys', 'Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.'];
     case 'shstart':

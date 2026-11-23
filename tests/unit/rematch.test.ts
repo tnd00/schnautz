@@ -5,6 +5,7 @@ import { takeSeat } from '../../src/game/seats';
 import { addBot, addPlayer, newState } from '../../src/game/state';
 import type { GameKind, State } from '../../src/game/types';
 import { playOut, rngF } from './helpers';
+import { szResult } from '../../src/game/games';
 
 /** Drei Menschen ohne Zeitlimit, Partie zu Ende gespielt. */
 function finished(game: GameKind, seed: number): State {
@@ -30,7 +31,7 @@ describe('Revanche', () => {
 
   it('bietet bei Schnautz an, wer in der letzten Runde rausgeflogen ist', () => {
     const st = finished('schnautz', 5);
-    const res = st.result!.reason !== 'shithead' ? st.result! : null;
+    const res = szResult(st.result);
     const outs = Object.keys(res!.changes).filter((id) => res!.changes[id].to === 'out');
     expect(st.rematch!.can.sort()).toEqual(outs.filter((id) => id !== st.winner).sort());
   });

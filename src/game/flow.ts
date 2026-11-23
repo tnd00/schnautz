@@ -4,6 +4,7 @@ import { syncSeats } from './seats';
 import { shBegin, shStart } from './shithead';
 import { addLog, pIdx, removePlayer } from './state';
 import type { ActResult, Rng, State } from './types';
+import { unreachable } from './games';
 
 export function checkReady(st: State, rng?: Rng): ActResult {
   if (st.phase === 'swap') {
@@ -23,8 +24,16 @@ export function checkReady(st: State, rng?: Rng): ActResult {
   return null;
 }
 
-export const beginGame = (st: State, rng?: Rng): ActResult =>
-  st.game === 'shithead' ? shStart(st, rng) : startGame(st, rng);
+export function beginGame(st: State, rng?: Rng): ActResult {
+  switch (st.game) {
+    case 'shithead':
+      return shStart(st, rng);
+    case 'schnautz':
+      return startGame(st, rng);
+    default:
+      return unreachable(st.game);
+  }
+}
 
 /**
  * Jemand verlässt den Tisch. In der Lobby wird der Platz frei (und bei Bedarf mit KI gefüllt),

@@ -3,6 +3,7 @@ import type { Player, PlayerStats, View } from '../../game/types';
 import { App } from '../app';
 import { esc, num } from '../dom';
 import { reignHTML } from './shithead';
+import { unreachable } from '../../game/games';
 
 interface Row {
   p: Player;
@@ -15,8 +16,20 @@ function cell(v: number | string, title: string): string {
   return `<span class="bv" title="${esc(title)}">${v}</span>`;
 }
 
+/** Bestenliste: Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt Deckel und 31. */
+function placesGame(v: View): boolean {
+  switch (v.game) {
+    case 'shithead':
+      return true;
+    case 'schnautz':
+      return false;
+    default:
+      return unreachable(v.game);
+  }
+}
+
 export function boardHTML(v: View): string {
-  const sh = v.game === 'shithead';
+  const sh = placesGame(v);
   const rows: Row[] = v.players.map((p) => ({ p, s: p.stats?.[v.game] ?? { games: 0, wins: 0 } }));
   rows.sort((a, b) =>
     sh

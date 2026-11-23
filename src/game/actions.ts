@@ -18,6 +18,7 @@ import {
   seatLimit,
 } from './state';
 import type { Action, ActResult, LogEntry, Rng, State } from './types';
+import { GAME_NAME, isGame, unreachable } from './games';
 
 const MAX_EMOTES_IN_LOG = 6;
 const MAX_TOSSES_IN_LOG = 6;
@@ -95,11 +96,9 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
     case 'game': {
       if (!isHost) return 'Nur der Gastgeber wählt das Spiel.';
       if (st.phase !== 'lobby') return 'Das Spiel lässt sich nur in der Lobby wechseln.';
-      const game = a.game === 'shithead' ? 'shithead' : 'schnautz';
+      const game = isGame(a.game) ? a.game : 'schnautz';
       const humans = st.players.filter((p) => !p.bot).length;
-      if (humans > maxSeats(game)) {
-        return `${game === 'shithead' ? 'Shithead' : 'Schnautz'} geht mit höchstens ${maxSeats(game)} Leuten.`;
-      }
+      if (humans > maxSeats(game)) return `${GAME_NAME[game]} geht mit höchstens ${maxSeats(game)} Leuten.`;
       st.game = game;
       syncSeats(st, rng);
       return null;
@@ -156,23 +155,50 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       return null;
   }
 
-  if (st.game === 'shithead') return a.type.startsWith('sh') ? shAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
-  return schnautzMove(st, pid, pi, a, rng);
+  switch (st.game) {
+    case 'shithead':
+      return a.type.startsWith('sh') ? shAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
+    case 'schnautz':
+      return schnautzMove(st, pid, pi, a, rng);
+    default:
+      return unreachable(st.game);
+  }
+}
+
+/** Einfacher Ersatzzug, wenn ein Zug der KI abgelehnt wurde. Das Spiel darf nie hängen. */
+export function fallbackMove(st: State, pid: string, rng?: Rng): void {
+  switch (st.game) {
+    case 'shithead':
+      if (st.phase === 'swap') act(st, pid, { type: 'shready' }, rng);
+      else shAuto(st, pid, rng);
+      return;
+    case 'schnautz':
+      act(st, pid, st.phase === 'choose' ? { type: 'keep' } : { type: 'pass' }, rng);
+      return;
+    default:
+      unreachable(st.game);
+  }
 }
 
 /** Der Gastgeber spielt einen einfachen Zug für jemanden, der gerade offline ist. */
 function skipOffline(st: State, rng?: Rng): ActResult {
-  if (st.game === 'shithead') {
-    if (st.phase !== 'play' || st.sh?.win?.lock) return null;
-    const who = st.players[st.turn];
-    if (!who) return null;
-    if (who.online) return `${who.name} ist wieder da.`;
-    return shAuto(st, who.id, rng);
+  switch (st.game) {
+    case 'shithead': {
+      if (st.phase !== 'play' || st.sh?.win?.lock) return null;
+      const who = st.players[st.turn];
+      if (!who) return null;
+      if (who.online) return `${who.name} ist wieder da.`;
+      return shAuto(st, who.id, rng);
+    }
+    case 'schnautz': {
+      const who = st.phase === 'choose' ? st.players[st.dealer] : st.phase === 'play' ? st.players[st.turn] : null;
+      if (!who) return null;
+      if (who.online) return `${who.name} ist wieder da.`;
+      return act(st, who.id, { type: st.phase === 'choose' ? 'keep' : 'pass' }, rng);
+    }
+    default:
+      return unreachable(st.game);
   }
-  const who = st.phase === 'choose' ? st.players[st.dealer] : st.phase === 'play' ? st.players[st.turn] : null;
-  if (!who) return null;
-  if (who.online) return `${who.name} ist wieder da.`;
-  return act(st, who.id, { type: st.phase === 'choose' ? 'keep' : 'pass' }, rng);
 }
 
 function schnautzMove(st: State, pid: string, pi: number, a: Action, rng?: Rng): ActResult {

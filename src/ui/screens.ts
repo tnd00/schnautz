@@ -5,6 +5,7 @@ import { $, $opt } from './dom';
 import { toast } from './feedback';
 import { dealerId, myTurn } from './helpers';
 import { dlog } from './devlog';
+import { GAME_NAME } from '../game/games';
 
 export type Screen = 'start' | 'wait' | 'lobby' | 'game';
 
@@ -92,5 +93,5 @@ function fallbackCopy(text: string): void {
 export function updateTitle(): void {
   const v = App.view;
   const yourTurn = v && (myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me)) && document.hidden;
-  document.title = `${yourTurn ? '● Du bist dran · ' : ''}${v?.game === 'shithead' ? 'Shithead' : 'Schnautz'} · Online`;
+  document.title = `${yourTurn ? '● Du bist dran · ' : ''}${GAME_NAME[v?.game ?? 'schnautz']} · Online`;
 }

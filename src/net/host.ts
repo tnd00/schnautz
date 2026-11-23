@@ -12,7 +12,7 @@ import { EMOTE_HOST_WINDOW_MS, REMATCH_ANN_MS, SH_WIN_MS, TOSS_HOST_WINDOW_MS } 
 import { checkReady, quitPlayer } from '../game/flow';
 import { isOwnLeftSeat, reclaimSeat, seatGuest, syncSeats, takeSeat } from '../game/seats';
 import { cosmeticOnly, migrate, newState, pIdx, removePlayer } from '../game/state';
-import type { Action, LogEntry, State, View } from '../game/types';
+import type { Action, GameKind, LogEntry, State, View } from '../game/types';
 import { fitView, viewFor } from '../game/view';
 import { App } from '../ui/app';
 import { applyView } from '../ui/apply';
@@ -30,6 +30,7 @@ import { asMessage, type GuestMessage, type HostMessage, type SavedHost } from '
 import { allowBurst, newRateBook, rateSound } from './rate';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 import { dlog } from '../ui/devlog';
+import { canShow, GAME_NAME } from '../game/games';
 
 const GUEST_ID = /^p-[0-9a-f]{12}$/;
 const HEARTBEAT_MS = 5000;
@@ -237,6 +238,13 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
   let pid = String(m.pid || '');
   const key = String(m.key || '').slice(0, 40);
   const name = cleanName(m.name) || 'Gast';
+  // Eine alte Seite würde ein neueres Spiel falsch zeichnen
+  const v = typeof m.v === 'string' ? m.v.slice(0, 20) : undefined;
+  if (!canShow(st.game, v)) {
+    dlog('net', `${name} abgewiesen, Version ${v ?? 'unbekannt'} kennt ${GAME_NAME[st.game]} nicht`);
+    rejectConn(conn, `An diesem Tisch läuft ${GAME_NAME[st.game]}. Lade die Seite neu, dann kannst du mitspielen.`);
+    return;
+  }
   // Eigene Gast-ID oder ein Platz, den dieser Gast mit seinem Schlüssel schon hatte
   const ownSeat = !!key && H.keys[pid] === key && pIdx(st, pid) >= 0;
   if (!key || ci.pid) return;
@@ -367,6 +375,15 @@ export function gateAct(st: State, pid: string, a: Action, now = Date.now()): Ac
   if (a.bot) s.bot = true;
   if (verdict === 'quiet') s.quiet = true;
   return s;
+}
+
+/** Namen verbundener Gäste, deren Seite dieses Spiel noch nicht kennt. */
+export function outdatedFor(game: GameKind): string[] {
+  const st = H.st;
+  if (!st) return [];
+  return [...H.conns]
+    .filter(([, c]) => c.open && !canShow(game, info(c).v))
+    .map(([pid]) => st.players[pIdx(st, pid)]?.name ?? 'Jemand');
 }
 
 /** Dev-Menü: offene Verbindungen mit letztem Lebenszeichen und Version. */

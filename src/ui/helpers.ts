@@ -3,9 +3,10 @@ import { pIdx } from '../game/state';
 import type { Player, SchnautzResult, View } from '../game/types';
 import { App } from './app';
 import { esc } from './dom';
+import { szResult, unreachable } from '../game/games';
 
 export function schnautzResult(v: View): SchnautzResult | null {
-  return v.result && v.result.reason !== 'shithead' ? v.result : null;
+  return szResult(v.result);
 }
 
 /** Wer hatte in dieser Schnautz-Runde die beste Hand? */
@@ -49,9 +50,18 @@ export function seatOrder(v: View): Player[] {
 /** Spielen gerade nur noch KIs? Dann darf der Host die Partie abkürzen. */
 export function onlyBotsPlaying(v: View): boolean {
   if (v.phase !== 'play' && v.phase !== 'choose' && v.phase !== 'swap') return false;
-  const live =
-    v.game === 'shithead'
-      ? v.players.filter((p) => !p.out && !!v.sh?.P[p.id] && !v.sh.finished.includes(p.id))
-      : v.players.filter((p) => !p.out);
+  const live = livePlayers(v);
   return live.length > 0 && live.every((p) => p.bot);
+}
+
+/** Wer in der laufenden Partie noch mitspielt. */
+export function livePlayers(v: View): Player[] {
+  switch (v.game) {
+    case 'shithead':
+      return v.players.filter((p) => !p.out && !!v.sh?.P[p.id] && !v.sh.finished.includes(p.id));
+    case 'schnautz':
+      return v.players.filter((p) => !p.out);
+    default:
+      return unreachable(v.game);
+  }
 }

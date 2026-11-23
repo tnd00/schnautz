@@ -2,6 +2,7 @@ import { BOT_NAMES } from '../content/names';
 import { rnd } from './cards';
 import { cloneRules, DEFAULT_RULES, LOG_LIMIT, MAX_SEATS, MIN_SEATS, TURN_SECS } from './constants';
 import type { ActResult, GameKind, LogEntry, LogInput, Player, PlayerStats, Rng, Rules, ShRules, State } from './types';
+import { isGame, setReign } from './games';
 
 export function mkPlayer(id: string, name: string, lives = 3, bot = false): Player {
   const p: Player = { id, name, lives: lives || 3, out: false, ready: false, online: true, wins: 0 };
@@ -187,7 +188,13 @@ export function sanitizeRules(r: unknown, old?: Rules): Rules {
 
 /** Bringt gespeicherte Zustände älterer Versionen auf den aktuellen Stand. */
 export function migrate(st: State): void {
-  if (!st.game) st.game = 'schnautz';
+  if (!isGame(st.game)) st.game = 'schnautz';
+  const old = (st as State & { reign?: { win?: string | null; sh?: string | null; game?: unknown } }).reign;
+  if (old) {
+    if (isGame(old.game)) setReign(st, old.game, old.win ?? null, old.sh ?? null);
+    delete (st as { reign?: unknown }).reign;
+  }
+  if (st.reigns && typeof st.reigns !== 'object') delete st.reigns;
   // Ältere Tische kannten keine Platzzahl: so viele wie schon da sind, mindestens wie früher vier
   if (typeof st.rules.seats !== 'number') st.rules.seats = Math.max(DEFAULT_RULES.seats, st.players.length);
   if (typeof st.rules.fill !== 'boolean') st.rules.fill = DEFAULT_RULES.fill;

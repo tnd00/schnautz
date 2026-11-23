@@ -183,9 +183,10 @@ export interface ShState {
   bets?: Record<string, ShBet>;
 }
 
+/** Krone für den letzten Sieger, Titel für den letzten Verlierer (Shithead), je Spiel */
 export interface Reign {
   win: string | null;
-  sh?: string | null;
+  lose?: string | null;
   game: GameKind;
 }
 
@@ -301,7 +302,8 @@ export interface State {
   log: LogEntry[];
   n: number;
   games: number;
-  reign?: Reign;
+  /** Krone und Verlierer-Titel je Spiel, sie bleiben, bis dort jemand Neues gewinnt (src/game/games.ts) */
+  reigns?: Partial<Record<GameKind, Reign>>;
   /** Nach der Partie: Revanche anbieten */
   rematch?: RematchOffer | null;
   /** Läuft oder lief gerade ein Revanche-Duell */

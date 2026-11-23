@@ -4,6 +4,7 @@ import { RANK_VAL, SUITS } from './constants';
 import { activeList, addLog, countGame, nextActive, pIdx, prevActive, statsOf } from './state';
 import type { ActResult, Card, HandValue, LifeChange, Player, Rng, Rules, SchnautzReason, State, Suit } from './types';
 import { offerRematch, settleDuel } from './rematch';
+import { setReign, szResult } from './games';
 
 /** Wert einer Hand: Summe der stärksten Farbe, drei Gleiche 30,5, drei Asse (Feuer) 33. */
 export function handValue(cards: readonly Card[] | number | undefined, rules?: Pick<Rules, 'feuer'>): HandValue {
@@ -211,10 +212,10 @@ export function declareWinner(st: State, winner: { id: string; wins: number } | 
   st.players.forEach((p) => {
     p.ready = false;
   });
-  st.reign = { win: st.winner, game: 'schnautz' };
+  setReign(st, 'schnautz', st.winner);
   addLog(st, { k: 'winner', p: st.winner ?? undefined });
   settleDuel(st);
   // Revanche fordern darf, wer in der letzten Runde rausgeflogen ist
-  const res = st.result && st.result.reason !== 'shithead' ? st.result : null;
+  const res = szResult(st.result);
   offerRematch(st, res ? Object.keys(res.changes).filter((id) => res.changes[id].to === 'out') : []);
 }

@@ -5,7 +5,8 @@ import { act } from '../../src/game/actions';
 import { quitPlayer, toBot } from '../../src/game/flow';
 import { finishRound } from '../../src/game/schnautz';
 import { reclaimSeat, seatGuest } from '../../src/game/seats';
-import { addPlayer, newState, pIdx } from '../../src/game/state';
+import { addPlayer, migrate, newState, pIdx } from '../../src/game/state';
+import { reignOf, setReign } from '../../src/game/games';
 import type { Card, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { rngF, shCardsOk } from './helpers';
@@ -97,7 +98,11 @@ describe('Plätze am Tisch', () => {
     const b = bots(st)[1];
     b.stats = { shithead: { games: 3, wins: 2 } };
     b.shc = 1;
-    st.reign = { win: b.id, sh: null, game: 'shithead' };
+    // Krone im Shithead, Titel im Schnautz: Beides geht nicht auf den Menschen über
+    st.reigns = {
+      shithead: { win: b.id, lose: null, game: 'shithead' },
+      schnautz: { win: null, lose: b.id, game: 'schnautz' },
+    };
     const cards = structuredClone(S.P[b.id]);
     const turn = st.turn;
     const n = st.players.length;
@@ -107,7 +112,8 @@ describe('Plätze am Tisch', () => {
     expect(b.name).toBe('Lena');
     expect(b.stats).toEqual({});
     expect(b.shc).toBe(0);
-    expect(st.reign.win).toBeNull();
+    expect(st.reigns.shithead?.win).toBeNull();
+    expect(st.reigns.schnautz?.lose).toBeNull();
     expect(S.P[b.id]).toEqual(cards);
     expect(st.turn).toBe(turn);
     expect(st.players).toHaveLength(n);
@@ -206,5 +212,23 @@ describe('Neue Partie, wenn nur noch KIs spielen', () => {
     expect(st.players).toHaveLength(4);
     act(st, 'h', { type: 'tolobby' }, rng);
     expect(act(st, 'h', { type: 'restart' }, rng)).toBe('Die Partie hat noch gar nicht angefangen.');
+  });
+});
+
+describe('Kronen je Spiel', () => {
+  it('übernimmt eine alte Krone aus gespeicherten Tischen in ihr Spiel', () => {
+    const st = newState('h', 'Host');
+    (st as unknown as { reign: unknown }).reign = { win: 'h', sh: 'x', game: 'shithead' };
+    migrate(st);
+    expect(st.reigns).toEqual({ shithead: { win: 'h', lose: 'x', game: 'shithead' } });
+    expect('reign' in st).toBe(false);
+  });
+
+  it('behält die Krone eines Spiels, während ein anderes gespielt wird', () => {
+    const st = newState('h', 'Host');
+    setReign(st, 'shithead', 'a', 'b');
+    setReign(st, 'schnautz', 'c');
+    expect(reignOf(st, 'shithead')).toMatchObject({ win: 'a', lose: 'b' });
+    expect(reignOf(st)).toMatchObject({ win: 'c', lose: null });
   });
 });
