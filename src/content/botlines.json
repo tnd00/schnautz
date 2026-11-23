@@ -156,6 +156,47 @@
       "Majestät bedankt sich.",
       "Steht mir, oder?",
       "Ich wusste doch, dass ihr mich mögt."
+    ],
+    "rematchCall": [
+      "Revanche! Das war reines Pech.",
+      "Nochmal. Diesmal schau ich genauer hin.",
+      "Das lasse ich nicht auf mir sitzen.",
+      "Revanche. Jetzt aber richtig.",
+      "Glückstreffer. Beweis mir das Gegenteil."
+    ],
+    "rematchAccept": [
+      "Gerne. Ich mag Wiederholungen.",
+      "Komm her, ich hab Zeit.",
+      "Angenommen. Bring Taschentücher mit.",
+      "Revanche? Na klar, ich gewinne gern zweimal."
+    ],
+    "rematchWin": [
+      "Gerechtigkeit ist wiederhergestellt.",
+      "Gewonnen ist gewonnen.",
+      "Zweimal hintereinander, das ist Können.",
+      "Das Duell gehört mir."
+    ],
+    "mockRematchLost": [
+      "Mutig gefordert, tapfer verloren.",
+      "Vielleicht beim dritten Mal?",
+      "Revanche verpatzt. Steht dir aber.",
+      "Groß angekündigt, klein gelandet 😅"
+    ],
+    "rematchHype": [
+      "Ich hol schon mal Popcorn 🍿",
+      "Ui, jetzt wird es persönlich.",
+      "Duell! Ich wette auf ein Drama.",
+      "Das wird gut. Ich setz mich in die erste Reihe."
+    ],
+    "betOn": [
+      "Mein Tipp steht 🔮",
+      "Die Kristallkugel hat gesprochen.",
+      "Ich hab da so ein Gefühl. 🔮",
+      "Getippt. Nichts Persönliches.",
+      "Meine Punkte sind gesetzt. Jetzt wird's spannend.",
+      "Ich sag nur 🔮",
+      "Mal sehen, ob ich recht behalte.",
+      "Der Tipp ist raus, ich lehn mich zurück."
     ]
   }
 }

@@ -33,6 +33,7 @@ export const CAR = {
 
 /** So lange gleitet das Karussell (CSS in fit.css). */
 const SLIDE_MS = 450;
+export const CAR_GLIDE_MS = SLIDE_MS;
 
 /** So lange ohne Bewegung am Trackpad gilt als losgelassen. */
 const WHEEL_IDLE_MS = 700;
@@ -166,6 +167,20 @@ export function carouselShow(pid: string): number {
   CAR.hold = Infinity;
   snap(el, CAR.shown + circ(i - CAR.shown, CAR.n));
   return SLIDE_MS;
+}
+
+/** Zeremonie: Kachel in die Mitte holen, ohne sie festzuhalten. Gibt zurück, ob gedreht wird. */
+export function focusOpp(pid: string): boolean {
+  const el = $('#opps');
+  if (!el.classList.contains('car') || CAR.drag || CAR.wheeling) return false;
+  const boxes = boxesOf(el);
+  const i = boxes.findIndex((b) => b.dataset.pid === pid);
+  if (i < 0) return false;
+  const to = CAR.shown + circ(i - CAR.shown, CAR.n);
+  if (Math.abs(to - CAR.shown) < 0.01) return false;
+  CAR.actor = pid;
+  snap(el, to);
+  return true;
 }
 
 /** Wieder frei: zurück zur Person am Zug, außer es wischt gerade jemand. */

@@ -15,12 +15,14 @@ import { nameOf, vb } from '../helpers';
 import { renderSh, renderShCenter } from '../render/shithead';
 import { sfx } from '../sound';
 import { taunt } from '../taunts';
+import { zerSlow } from '../ceremony';
+import { decisivePlay, SEQ_CARD_GAP_MS, slowExtraMs, ZER_SLOW_FLIGHT_MS } from './ceremony-plan';
 
 type Entry<K extends LogEntry['k']> = Extract<LogEntry, { k: K }>;
 type PlayEntry = Entry<'shplay'> | Entry<'shthrow'> | Entry<'shbomb'>;
 
 export type Step =
-  | { k: 'play'; e: PlayEntry; pile: Card[]; src: 'hand' | 'up' | 'down' }
+  | { k: 'play'; e: PlayEntry; pile: Card[]; src: 'hand' | 'up' | 'down'; slow?: true }
   | { k: 'burn'; e: Entry<'shburn'>; from: Card[]; burned: number }
   | { k: 'pickup'; e: Entry<'shpickup'> | Entry<'shblindfail'>; from: Card[]; fail?: boolean }
   | { k: 'blind'; e: Entry<'shblindfail'>; pile: Card[] };
@@ -116,13 +118,16 @@ export function shPlan(prev: View, v: View, fresh: LogEntry[]): Step[] {
   }
   if (!steps.length || steps.length > MAX_STEPS || totalMs(steps) > MAX_TOTAL_MS) return [];
   if (JSON.stringify(pile) !== JSON.stringify(v.sh.pile) || burned !== num(v.sh.burned)) return [];
+  // Der Zug, der den Shithead festlegt, kommt in Zeitlupe. Er zählt nicht gegen die Obergrenze
+  const d = decisivePlay(fresh);
+  if (d) steps.forEach((s) => s.k === 'play' && s.e === d && (s.slow = true));
   return steps;
 }
 
 export function stepMs(s: Step): number {
   switch (s.k) {
     case 'play':
-      return s.src === 'down' ? 1350 : s.e.k === 'shthrow' ? 650 : 760;
+      return (s.src === 'down' ? 1350 : s.e.k === 'shthrow' ? 650 : 760) + (s.slow ? slowExtraMs(s.e) : 0);
     case 'burn':
       return s.e.cut ? 1250 : 1000;
     case 'blind':
@@ -135,7 +140,8 @@ export function stepMs(s: Step): number {
 export const totalMs = (steps: Step[]): number => steps.reduce((t, s) => t + stepMs(s), 0);
 
 /**
- * Wie lange die Sequenz zu diesen Log-Einträgen etwa läuft. Der Gastgeber startet die 4er-Sperre
+ * Wie lange die Sequenz zu diesen Log-Einträgen etwa läuft. Die Zeitlupe der Zeremonie fehlt hier absichtlich,
+ * sie kommt nur am Partieende vor, wo keine Uhr mehr läuft. Der Gastgeber startet die 4er-Sperre
  * erst danach, damit alle den leeren Stapel wirklich sehen.
  */
 export function seqMsOf(entries: LogEntry[]): number {
@@ -244,20 +250,41 @@ function runStep(s: Step, v: View): void {
           s0: (fr.width || w) / w,
           rot: rotOf(to),
           hideEl: to,
-          delay: k * 110,
+          delay: k * SEQ_CARD_GAP_MS,
           dur: s.src === 'down' ? 760 : 560,
           flip: s.src === 'down',
           spin: -8,
+          // Zeitlupe für die entscheidende Karte: über der Abdunklung, Balken erst beim Umdrehen
+          ...(s.slow
+            ? {
+                z: 49,
+                slow: {
+                  extra: ZER_SLOW_FLIGHT_MS,
+                  onSlow:
+                    k === 0
+                      ? () => {
+                          zerSlow(true, v.games);
+                          sfx('slowmo');
+                        }
+                      : undefined,
+                  onLand: k === n - 1 ? () => zerSlow(false) : undefined,
+                },
+              }
+            : {}),
         });
       }
+      if (s.slow) later(() => zerSlow(false), stepMs(s));
       if (!mine || s.src !== 'hand') sfx('card');
       if (s.e.k === 'shthrow') floatLabel(e.p, 'wirft 4er rein', 'wirfst 4er rein');
       if (s.e.k === 'shbomb') floatLabel(e.p, 'wirft eine Bombe ein', 'wirfst eine Bombe ein');
       if (s.src === 'down') {
-        later(() => {
-          const text = mine ? 'Blind gelegt, passt!' : `${nm} legt blind, passt!`;
-          fixedLabel('nopelbl', text, $opt('#center .pile'), 1100, 14);
-        }, 760);
+        later(
+          () => {
+            const text = mine ? 'Blind gelegt, passt!' : `${nm} legt blind, passt!`;
+            fixedLabel('nopelbl', text, $opt('#center .pile'), 1100, 14);
+          },
+          760 + (s.slow ? ZER_SLOW_FLIGHT_MS : 0),
+        );
       }
       break;
     }

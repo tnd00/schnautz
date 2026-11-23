@@ -15,7 +15,8 @@ import { CAR, initCarousel, layoutOpps } from './carousel';
 import { fitDesktop } from './fit';
 import { FX_WAKE_MS } from './livefx';
 import { $, esc } from './dom';
-import { shakeEl, toast } from './feedback';
+import { shakeEl, skipAnnouncement, toast } from './feedback';
+import { ceremonyOn, ZER } from './ceremony';
 import { myTurn, pById } from './helpers';
 import { boardHTML } from './render/board';
 import { renderEmotes } from './render/emotes';
@@ -27,6 +28,7 @@ import { rulesHTML } from './render/rules';
 import { renderGame } from './render/schnautz';
 import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
 import { renderTurnNote } from './render/turnnote';
+import { openBetModal, renderBetModal } from './render/bets';
 import { inviteHTML } from './render/invite';
 import { netInfoHTML } from './render/netinfo';
 import { closeUpdate, reloadApp } from './update';
@@ -121,6 +123,7 @@ function toggleSound(): void {
   renderSoundBtn();
   setSbVolume();
   renderEmotes();
+  if (App.muted) ZER.stop?.();
   if (!App.muted) {
     unlockAudio();
     sfx('card');
@@ -415,6 +418,26 @@ function onAction(a: string, t: HTMLElement): void {
     case 'netinfo':
       $('#modal').innerHTML = netInfoHTML();
       break;
+    case 'rematch':
+      doAct({ type: 'rematch' });
+      break;
+    case 'betopen':
+      document.body.classList.remove('logopen');
+      renderTurnNote();
+      if (v) openBetModal(v);
+      break;
+    case 'betpick':
+      App.betSel = t.dataset.pid ?? null;
+      if (v) renderBetModal(v);
+      break;
+    case 'shbet': {
+      const on = App.betSel;
+      if (!on || !v) break;
+      App.betSel = null;
+      $('#modal').innerHTML = '';
+      doAct({ type: 'shbet', on });
+      break;
+    }
     case 'lobbynow':
       // Am Ende der Partie oder wenn nur noch KIs spielen: ohne Rückfrage
       doAct({ type: 'tolobby' });
@@ -528,6 +551,9 @@ export function initEvents(): void {
   });
   // Jeder Tipp schaltet den Ton frei, auch im Karussell, das den Zeiger festhält
   document.addEventListener('pointerup', unlockAudio, { capture: true, passive: true });
+  // iPhones werten erst touchend oder click als echten Tipp, der Ton freischalten darf
+  document.addEventListener('touchend', unlockAudio, { capture: true, passive: true });
+  document.addEventListener('click', unlockAudio, { capture: true, passive: true });
   document.addEventListener('keydown', unlockAudio, { capture: true, passive: true });
   // Die Wurfleiste folgt ihrem Ziel und schließt, wenn das Ergebnisfenster scrollt
   $('#overlay').addEventListener('scroll', closePick, { capture: true, passive: true });
@@ -561,6 +587,8 @@ export function initEvents(): void {
     )
       closePick();
     const t = target.closest<HTMLElement>('[data-act]');
+    // Während der Zeremonie überspringt ein Tipp auf Tischmitte oder Status sie
+    if (!t && ceremonyOn() && target.closest('#center, #status')) skipAnnouncement();
     if (t?.dataset.act) onAction(t.dataset.act, t);
   });
   document.addEventListener('keydown', (e) => {
@@ -568,6 +596,7 @@ export function initEvents(): void {
       $('#modal').innerHTML = '';
       $('#menu').hidden = true;
       document.body.classList.remove('logopen', 'emoopen', 'startform');
+      if (ceremonyOn()) skipAnnouncement();
       closePick();
       if (App.aim) {
         App.aim = null;

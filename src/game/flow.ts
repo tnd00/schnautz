@@ -64,6 +64,7 @@ export function toLobby(st: State): void {
     p.out = false;
     p.ready = false;
     p.place = 0;
+    delete p.outRound;
   });
   Object.assign(st, {
     hands: {},
@@ -81,6 +82,8 @@ export function toLobby(st: State): void {
     passes: 0,
     turns: 0,
     sh: null,
+    rematch: null,
+    rematchDuel: null,
   } satisfies Partial<State>);
   addLog(st, { k: 'lobby' });
   syncSeats(st);

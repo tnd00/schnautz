@@ -4,6 +4,8 @@
  * Chat-Sprüche und Emoji-Reaktionen.
  */
 import { act, soundOk } from '../game/actions';
+import { shBetsOn, shCanBet } from '../game/bets';
+import { botRematchSeat } from '../game/rematch';
 import { handValue } from '../game/schnautz';
 import { shAuto } from '../game/shithead';
 import { pIdx } from '../game/state';
@@ -18,6 +20,8 @@ import { seqLeft, seqMsOf } from '../ui/shithead/sequence';
 import { botDecide } from '../bots/index';
 import { BOT_LINES } from '../bots/lines';
 import { botTossReply } from '../bots/toss';
+import { botBet } from '../bots/bets';
+import { zerRevealDelay } from '../ui/shithead/ceremony-plan';
 
 /** Wie oft die KI eine Gelegenheit außer der Reihe bemerkt (in Prozent). */
 const NOTICE_THROW = 88;
@@ -47,7 +51,85 @@ export const BOTS = {
   tossAt: {} as Record<string, number>,
   tossAll: 0,
   sndAt: 0,
+  /** Geplante Tipps fertiger KIs */
+  bet: {} as Record<string, Timer>,
+  /** Geplante Revanche-Forderung einer KI */
+  rematch: null as Timer | null,
+  rematchKey: '',
 };
+
+function clearBets(): void {
+  Object.values(BOTS.bet).forEach((t) => clearTimeout(t));
+  BOTS.bet = {};
+}
+
+function clearRematch(): void {
+  if (BOTS.rematch) clearTimeout(BOTS.rematch);
+  BOTS.rematch = null;
+  BOTS.rematchKey = '';
+}
+
+/** Fertige KIs tippen nach einer Weile, wer Shithead wird. */
+function botBets(st: State): void {
+  st.players.forEach((p) => {
+    if (!p.bot || p.out || !shCanBet(st, p.id)) {
+      if (BOTS.bet[p.id]) {
+        clearTimeout(BOTS.bet[p.id]);
+        delete BOTS.bet[p.id];
+      }
+      return;
+    }
+    if (BOTS.bet[p.id]) return;
+    const d = 2500 + Math.random() * 4500 + Math.min(seqLeft(), 2000) + (ANN.busy ? 1500 : 0);
+    BOTS.bet[p.id] = setTimeout(() => {
+      delete BOTS.bet[p.id];
+      const s = H.st;
+      if (App.role !== 'host' || !s || s.game !== 'shithead' || s.phase !== 'play') return;
+      if (!s.players[pIdx(s, p.id)]?.bot || !shCanBet(s, p.id)) return;
+      const a = botBet(viewFor(s, p.id));
+      if (a && !act(s, p.id, a)) hostCommit();
+    }, d);
+  });
+}
+
+/** Eine KI als Verliererin fordert manchmal einen menschlichen Sieger heraus, nach den Meldungen zum Ende. */
+function planBotRematch(st: State): void {
+  const id = st.phase === 'over' ? botRematchSeat(st) : null;
+  if (!id || hashStr(`${st.games}${id}`) % 100 >= 45) {
+    clearRematch();
+    return;
+  }
+  const key = `${st.games}|${id}`;
+  if (BOTS.rematch && BOTS.rematchKey === key) return;
+  clearRematch();
+  BOTS.rematchKey = key;
+  const games = st.games;
+  const fire = (): void => {
+    BOTS.rematch = null;
+    const s = H.st;
+    if (App.role !== 'host' || !s || s.games !== games || botRematchSeat(s) !== id) return;
+    // Erst wenn alle Meldungen durch sind, sonst geht die Forderung unter
+    if (App.holdUntil > Date.now() || ANN.busy || seqLeft() > 0) {
+      BOTS.rematch = setTimeout(fire, Math.max(400, App.holdUntil - Date.now()) + 1200 + Math.random() * 1800);
+      return;
+    }
+    if (act(s, id, { type: 'rematch', bot: true })) return;
+    hostCommit();
+    const text = Math.random() < 0.9 ? pickLine('rematchCall') : null;
+    if (text) {
+      BOTS.chatAt = Date.now() + CHAT_PAUSE_MS;
+      setTimeout(
+        () => {
+          if (!H.st || H.st.games !== games || pIdx(H.st, id) < 0) return;
+          act(H.st, id, { type: 'chat', text, bot: true });
+          hostCommit();
+        },
+        900 + Math.random() * 600,
+      );
+    }
+  };
+  BOTS.rematch = setTimeout(fire, Math.max(0, App.holdUntil - Date.now()) + 1200 + Math.random() * 1800);
+}
 
 function clearSwaps(): void {
   Object.values(BOTS.swap).forEach((t) => clearTimeout(t));
@@ -79,6 +161,8 @@ export function resetBots(): void {
   BOTS.tossAt = {};
   BOTS.tossAll = 0;
   BOTS.sndAt = 0;
+  clearBets();
+  clearRematch();
 }
 
 /** Reaktionen außer der Reihe (4er reinwerfen, Bombe einwerfen) laufen für jede KI parallel. */
@@ -188,10 +272,18 @@ export function botTick(): void {
   if (App.role !== 'host' || !st) return;
   if (st.phase === 'lobby') {
     clearTurnTimer();
+    clearBets();
+    clearRematch();
     return;
   }
-  if (st.game === 'shithead' && st.phase === 'play') botReact(st);
-  else clearReactions();
+  if (st.game === 'shithead' && st.phase === 'play') {
+    botReact(st);
+    botBets(st);
+  } else {
+    clearReactions();
+    clearBets();
+  }
+  planBotRematch(st);
   if (st.game === 'shithead' && st.phase === 'swap') {
     botSwapRound(st);
     return;
@@ -267,6 +359,18 @@ function passIsObvious(st: State, id: string): boolean {
 }
 
 /** Schaut auf neue Ereignisse und lässt die KI ab und zu etwas sagen oder reagieren. */
+/** Zufälliger Spruch, der zuletzt nicht kam. */
+function pickLine(cat: string): string | null {
+  const arr = BOT_LINES[cat];
+  if (!arr?.length) return null;
+  const unused = arr.filter((x) => !BOTS.recent.includes(x));
+  const pool = unused.length ? unused : arr;
+  const text = pool[Math.floor(Math.random() * pool.length)];
+  BOTS.recent.push(text);
+  if (BOTS.recent.length > RECENT_LINES) BOTS.recent.shift();
+  return text;
+}
+
 export function botChatter(): void {
   const st = H.st;
   if (!st) return;
@@ -284,23 +388,24 @@ export function botChatter(): void {
     const bs = st.players.filter((p) => p.bot && !p.gone);
     return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null;
   };
-  const say = (p: Player | null, cat: string, prob: number) => {
-    if (!p || Math.random() > prob || Date.now() < BOTS.chatAt) return;
-    const arr = BOT_LINES[cat];
-    if (!arr?.length) return;
-    BOTS.chatAt = Date.now() + CHAT_PAUSE_MS;
-    const unused = arr.filter((x) => !BOTS.recent.includes(x));
-    const pool = unused.length ? unused : arr;
-    const text = pool[Math.floor(Math.random() * pool.length)];
-    BOTS.recent.push(text);
-    if (BOTS.recent.length > RECENT_LINES) BOTS.recent.shift();
+  // Am Partieende reagiert die KI erst, wenn die Zeremonie den Shithead enthüllt hat
+  const endWait = fresh.some((e) => e.k === 'shend') ? zerRevealDelay(fresh, seqMsOf(fresh)) : 0;
+  const games = st.games;
+  /** Noch dieselbe Partie in derselben Phase? Sonst landet Spott in der nächsten Tauschrunde. */
+  const still = (phase?: string) => !!H.st && H.st.games === games && (!phase || H.st.phase === phase);
+  const say = (p: Player | null, cat: string, prob: number, extra = 0, force = false) => {
+    if (!p || p.left || Math.random() > prob || (!force && Date.now() < BOTS.chatAt)) return;
+    const text = pickLine(cat);
+    if (!text) return;
+    BOTS.chatAt = Date.now() + extra + CHAT_PAUSE_MS;
+    const phase = extra ? st.phase : undefined;
     setTimeout(
       () => {
-        if (!H.st || pIdx(H.st, p.id) < 0) return;
+        if (!H.st || pIdx(H.st, p.id) < 0 || !still(phase)) return;
         act(H.st, p.id, { type: 'chat', text, bot: true });
         hostCommit();
       },
-      900 + Math.random() * 1200,
+      extra + 900 + Math.random() * 1200,
     );
   };
   // Plätze, auf denen nach dem Gehen eines Menschen die KI weiterspielt, werfen und tröten nie
@@ -328,7 +433,7 @@ export function botChatter(): void {
         const a = gateAct(s, p.id, { type: 'toss', item, to, bot: true });
         if (a && !act(s, p.id, a)) hostCommit();
       },
-      seqLeft() + seqMsOf(fresh) + 1200 + Math.random() * 1400,
+      seqLeft() + seqMsOf(fresh) + endWait + 1200 + Math.random() * 1400,
     );
   };
   /** Klang einer KI: selten, nach der Pointe und nur in die Stille */
@@ -345,20 +450,51 @@ export function botChatter(): void {
         const g = gateAct(t, p.id, a);
         if (g?.type === 'sound' && !g.quiet && !act(t, p.id, g)) hostCommit();
       },
-      seqLeft() + seqMsOf(fresh) + 2500 + Math.random() * 1500,
+      seqLeft() + seqMsOf(fresh) + endWait + 2500 + Math.random() * 1500,
     );
   };
-  const emo = (p: Player | null, ch: string, prob: number) => {
-    if (!p || Math.random() > prob) return;
+  const emo = (p: Player | null, ch: string, prob: number, extra = 0) => {
+    if (!p || p.left || Math.random() > prob) return;
+    const phase = extra ? st.phase : undefined;
     setTimeout(
       () => {
-        if (!H.st || pIdx(H.st, p.id) < 0 || H.st.phase === 'lobby') return;
+        if (!H.st || pIdx(H.st, p.id) < 0 || H.st.phase === 'lobby' || !still(phase)) return;
         act(H.st, p.id, { type: 'emote', e: ch, bot: true });
         hostCommit();
       },
-      500 + Math.random() * 900,
+      extra + 500 + Math.random() * 900,
     );
   };
+
+  // Revanche und Tipps zuerst: Ein Duell-Spruch geht vor dem üblichen Spott
+  fresh.forEach((e) => {
+    switch (e.k) {
+      case 'rematch': {
+        if (bot(e.p)) break;
+        const vs = realBot(e.to);
+        if (vs) say(vs, 'rematchAccept', 0.8, 0, true);
+        else if (e.to) say(anyBot(), 'rematchHype', 0.35, 0, true);
+        break;
+      }
+      case 'rematchend': {
+        const winnerId = e.res === 'won' ? e.p : e.res === 'lost' ? e.to : null;
+        const loserId = e.res === 'won' ? e.to : e.res === 'lost' ? e.p : null;
+        if (winnerId && realBot(winnerId)) say(realBot(winnerId), 'rematchWin', 0.7, endWait, true);
+        else if (loserId === e.p && e.p && !bot(e.p)) {
+          say(anyBot(), 'mockRematchLost', 0.5, endWait, true);
+          emo(anyBot(), '😂', 0.3, endWait);
+        }
+        break;
+      }
+      case 'shbet':
+        // Nur der erste Tipp auf ein Ziel bekommt einen Spruch
+        if (bot(e.p) && shBetsOn(st, e.on)[0]?.n === e.n) say(bot(e.p), 'betOn', 0.4);
+        break;
+      case 'shend':
+        Object.keys(e.hits ?? {}).forEach((id) => emo(realBot(id), '👏', 0.5, endWait));
+        break;
+    }
+  });
 
   // Sticheleien und Reaktionen auf Shithead-Ereignisse
   fresh.forEach((e) => {
@@ -387,8 +523,8 @@ export function botChatter(): void {
         break;
       case 'shend':
         if (e.p && !bot(e.p)) {
-          say(anyBot(), 'mockShithead', 0.8);
-          emo(anyBot(), '💩', 0.3);
+          say(anyBot(), 'mockShithead', 0.8, endWait);
+          emo(anyBot(), '💩', 0.3, endWait);
           toss(tossBot(), 'poo', e.p, 0.5);
           snd(tossBot(), 'sad', 0.4);
         }
@@ -475,7 +611,7 @@ export function botChatter(): void {
         if (e.place === 1) snd(realBot(e.p), 'horn', 0.3);
         break;
       case 'shend':
-        say(bot(e.p), 'shShithead', 0.8);
+        say(bot(e.p), 'shShithead', 0.8, endWait);
         break;
     }
   });

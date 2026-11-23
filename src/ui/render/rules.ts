@@ -82,7 +82,15 @@ function rulesSh(R: ShRules, glance: string): string {
           'Einwerfen',
           'Liegen oben schon gleiche Karten und du hast genau die fehlenden zu vier gleichen, darfst du sie jederzeit als Bombe reinwerfen, auch wenn du nicht dran bist. Der Stapel verbrennt und du bist als Nächstes dran. Wer zuerst drückt, gewinnt das Rennen.',
         )
-      : '')
+      : '') +
+    sec(
+      'Tippen',
+      'Wer fertig ist, tippt einmal pro Partie, wer Shithead wird. Ein Treffer bringt so viele Punkte, wie beim Tippen noch Leute im Rennen sind, weniger einen. Früh lohnt sich also. Die Punkte stehen in der Bestenliste.',
+    ) +
+    sec(
+      'Revanche',
+      'Der Shithead kann im Ergebnisfenster Revanche gegen den Sieger fordern. Das zählt als bereit, der Sieger muss annehmen. In der nächsten Partie gewinnt das Duell, wer den besseren Platz holt.',
+    )
   );
 }
 
@@ -123,6 +131,10 @@ function rulesSchnautz(r: Rules, glance: string): string {
         num(r.lives) +
         ' Leben, hier als Bierdeckel. Wer den letzten verliert, schwimmt und darf weiterspielen. Wer schwimmend noch einmal verliert, ist raus. Wer als Letzter übrig bleibt, gewinnt.',
       'Haben alle gleich viel, verliert niemand. Bei Gleichstand am unteren Ende verlieren alle mit dem niedrigsten Wert.',
+    ) +
+    sec(
+      'Revanche',
+      'Wer in der letzten Runde rausgeflogen ist, kann im Ergebnisfenster Revanche gegen den Sieger fordern. Das zählt als bereit, der Sieger muss annehmen. In der nächsten Partie gewinnt das Duell, wer länger durchhält.',
     )
   );
 }

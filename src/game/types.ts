@@ -51,6 +51,10 @@ export interface PlayerStats {
   hot?: number;
   /** Shithead: Summe der Plätze, für den Schnitt */
   places?: number;
+  /** Shithead: abgegebene Tipps, Treffer und Punkte daraus */
+  bets?: number;
+  betHits?: number;
+  betPts?: number;
 }
 
 export interface Player {
@@ -67,6 +71,8 @@ export interface Player {
   gone?: boolean;
   offSince?: number;
   place?: number;
+  /** Schnautz: In dieser Runde ist der Platz rausgeflogen (für Revanche und Duelle) */
+  outRound?: number;
   shc?: number;
   stats?: Partial<Record<GameKind, PlayerStats>>;
 }
@@ -102,6 +108,38 @@ export interface ShitheadResult {
   shithead: string | null;
   quit: string | null;
   names: Record<string, string>;
+  /** Alle Tipps dieser Partie mit Treffer oder nicht */
+  bets?: ShBetResult[];
+}
+
+/** Ein Tipp, wer Shithead wird: Ziel, festgeschriebene Punkte, Lognummer beim Tippen. */
+export interface ShBet {
+  on: string;
+  q: number;
+  n: number;
+}
+
+export interface ShBetResult {
+  p: string;
+  on: string;
+  q: number;
+  ok: boolean;
+}
+
+/** Wer nach der Partie Revanche fordern darf und ob es schon jemand getan hat. */
+export interface RematchOffer {
+  game: number;
+  can: string[];
+  by: string | null;
+}
+
+/** Das Duell in der Revanche-Partie: `by` fordert, `vs` war Sieger, `n` zählt Revanchen in Folge. */
+export interface RematchDuel {
+  by: string;
+  vs: string;
+  game: number;
+  n: number;
+  res?: 'won' | 'lost' | 'tie';
 }
 
 export type Result = SchnautzResult | ShitheadResult;
@@ -141,6 +179,8 @@ export interface ShState {
   win?: ShWindow | null;
   /** Mit wie vielen Decks gespielt wird (52 Karten je Deck), fehlt bei älteren Partien */
   decks?: number;
+  /** Tipps der Fertigen, Schlüssel ist die tippende Person */
+  bets?: Record<string, ShBet>;
 }
 
 export interface Reign {
@@ -221,7 +261,10 @@ export type LogEntry = LogBase &
     | { k: 'shpickup'; cnt: number }
     | { k: 'shblindfail'; card: Card; cnt: number }
     | { k: 'shdone'; place: number }
-    | { k: 'shend' }
+    | { k: 'shend'; hits?: Record<string, { q: number; name: string }> }
+    | { k: 'shbet'; on: string; onName: string; q: number }
+    | { k: 'rematch'; to: string | null; tn?: string; c: number }
+    | { k: 'rematchend'; to: string; tn: string; res: 'won' | 'lost' | 'tie'; c: number }
   );
 
 export type LogKind = LogEntry['k'];
@@ -254,6 +297,10 @@ export interface State {
   n: number;
   games: number;
   reign?: Reign;
+  /** Nach der Partie: Revanche anbieten */
+  rematch?: RematchOffer | null;
+  /** Läuft oder lief gerade ein Revanche-Duell */
+  rematchDuel?: RematchDuel | null;
   /** Wer bei Schnautz zuletzt verloren hat und deshalb die nächste Runde anfängt. */
   loser?: string | null;
 }
@@ -300,6 +347,8 @@ export type Action =
   | { type: 'addbot' }
   | { type: 'rmbot'; id: string }
   | { type: 'tolobby' }
+  /** Nach der Partie: Revanche fordern, zählt auch als bereit */
+  | { type: 'rematch'; bot?: boolean }
   /** Host: laufende Partie beenden und sofort eine neue starten (etwa wenn nur noch KIs spielen) */
   | { type: 'restart' }
   | { type: 'skip' }
@@ -318,7 +367,9 @@ export type Action =
   | { type: 'shblind'; i: number }
   | { type: 'shthrow' }
   | { type: 'shbomb' }
-  | { type: 'shunlock'; id: number };
+  | { type: 'shunlock'; id: number }
+  /** Wer fertig ist, tippt, wer Shithead wird */
+  | { type: 'shbet'; on: string };
 
 export type ActionType = Action['type'];
 

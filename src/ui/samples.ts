@@ -56,6 +56,17 @@ export function loadSamples(ac: AudioContext): void {
 
 /** Spielt eine Aufnahme. Gibt ihre Länge in Sekunden zurück oder null, wenn sie noch nicht geladen ist. */
 export function playSample(ac: AudioContext, name: SampleName, out: AudioNode, vol = 1, at = 0): number | null {
+  return startSample(ac, name, out, vol, at)?.dur ?? null;
+}
+
+/** Wie playSample, mit Möglichkeit zum Abbrechen (sanft in 40 ms). */
+export function startSample(
+  ac: AudioContext,
+  name: SampleName,
+  out: AudioNode,
+  vol = 1,
+  at = 0,
+): { dur: number; stop: () => void } | null {
   const b = BUF.get(name);
   if (!b) return null;
   const s = ac.createBufferSource();
@@ -65,5 +76,15 @@ export function playSample(ac: AudioContext, name: SampleName, out: AudioNode, v
   s.connect(g);
   g.connect(out);
   s.start(at || ac.currentTime);
-  return b.duration;
+  return {
+    dur: b.duration,
+    stop: () => {
+      try {
+        g.gain.setTargetAtTime(0, ac.currentTime, 0.015);
+        s.stop(ac.currentTime + 0.1);
+      } catch {
+        /* schon vorbei */
+      }
+    },
+  };
 }

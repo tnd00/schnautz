@@ -32,6 +32,9 @@ export function boardHTML(v: View): string {
         '#<small>Partien</small>',
       ];
   const played = rows.some((r) => r.s.games > 0);
+  // Tipp-Punkte als eigene Spalte, sobald bei Shithead jemand getippt hat
+  const tips = sh && rows.some((r) => num(r.s.bets) > 0);
+  if (tips) head.splice(3, 0, '🔮<small>Tipp-Punkte</small>');
   const MEDALS = ['🥇', '🥈', '🥉'];
   const body = rows
     .map((r, i) => {
@@ -41,6 +44,7 @@ export function boardHTML(v: View): string {
             cell(s.wins, 'Gewonnene Partien'),
             cell(num(r.p.shc), 'So oft Shithead'),
             cell(s.games ? avgPlace(r).toFixed(1).replace('.', ',') : '·', 'Durchschnittlicher Platz'),
+            ...(tips ? [cell(num(s.betPts), 'Punkte aus richtigen Tipps')] : []),
             cell(s.games, 'Gespielte Partien'),
           ]
         : [
@@ -62,7 +66,7 @@ export function boardHTML(v: View): string {
     '<div class="modal"><div class="paper sheet board"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
     `<h2>Bestenliste <span class="r">${sh ? 'Shithead' : 'Schnautz'}</span></h2>` +
     `<p class="lead">${played ? 'Zählt alle fertigen Partien, seit dieser Tisch offen ist.' : 'Noch keine Partie fertig. Nach der ersten steht hier, wer vorne liegt.'}</p>` +
-    `<div class="btable"><div class="brow bhead"><span class="bp"></span><span class="bn"></span>${head.map((h) => `<span class="bv">${h}</span>`).join('')}</div>${body}</div>` +
+    `<div class="btable${tips ? ' c5' : ''}"><div class="brow bhead"><span class="bp"></span><span class="bn"></span>${head.map((h) => `<span class="bv">${h}</span>`).join('')}</div>${body}</div>` +
     '</div></div>'
   );
 }

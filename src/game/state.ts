@@ -196,4 +196,10 @@ export function migrate(st: State): void {
   // Alte Fenster kannten keine Sperre
   const w = st.sh?.win;
   if (w && typeof w.lock !== 'boolean') w.lock = true;
+  // Gespeicherte Tische können kaputte Revanche-Felder haben
+  const r = st.rematch;
+  if (r && (!Array.isArray(r.can) || typeof r.game !== 'number')) st.rematch = null;
+  const d = st.rematchDuel;
+  if (d && (typeof d.by !== 'string' || typeof d.vs !== 'string' || typeof d.game !== 'number')) st.rematchDuel = null;
+  if (st.sh && st.sh.bets && typeof st.sh.bets !== 'object') delete st.sh.bets;
 }

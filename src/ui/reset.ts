@@ -9,6 +9,8 @@ import { resetWin } from './shithead/window';
 import { resetClockUI } from './clock';
 import { CAR } from './carousel';
 import { resetToss } from './toss';
+import { resetBetUI } from './render/bets';
+import { resetCeremony } from './ceremony';
 
 /** Alles zurücksetzen, was zu einem Tisch gehört (Verlassen, neuer Tisch, Fortsetzen). */
 export function resetTableUI(): void {
@@ -27,6 +29,8 @@ export function resetTableUI(): void {
   resetBots();
   resetAnnouncements();
   resetToss();
+  resetBetUI();
+  resetCeremony();
   CAR.hold = 0;
   App.fxSync = true;
   App.aim = null;

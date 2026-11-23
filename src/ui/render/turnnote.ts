@@ -4,6 +4,7 @@ import { $ } from '../dom';
 import { dealerId, myTurn } from '../helpers';
 import { quickHTML } from './shithead';
 import { CLK } from '../clock';
+import { shCanBet } from '../../game/bets';
 
 export function renderTurnNote(): void {
   const el = $('#turnnote');
@@ -23,6 +24,10 @@ export function renderTurnNote(): void {
     // In der Tauschrunde sind alle gleichzeitig dran, bis sie auf Fertig drücken
     else if (v.phase === 'swap' && v.players.some((p) => p.id === App.me && !p.ready && !p.out))
       html = `<button class="btn primary pulse" data-act="closelog">Tauschrunde läuft! Zurück zum Tisch${CLK.ids.includes(App.me) ? ' <span class="clkn"></span>' : ''}</button>`;
+    // Fertig, aber noch nicht getippt: Auch aus dem Chat heraus geht der Tipp
+    else if (shCanBet(v, App.me))
+      html =
+        '<button class="btn ghost betbtn" data-act="betopen"><span class="bl">🔮 Tippen, wer Shithead wird</span></button>';
   }
   if (el.innerHTML !== html) el.innerHTML = html;
   el.hidden = !html;

@@ -31,6 +31,9 @@ export const CHANGELOG: readonly Release[] = [
           'Bist du raus und spielen nur noch KIs, kann der Host gleich zur Lobby oder eine neue Partie starten.',
           'Schnautz: Nach 10 Sekunden startet die nächste Runde von selbst, am Ende der Partie nicht.',
           'Ein Tipp auf „verbunden“ zeigt Details zur Verbindung und wer gerade da ist.',
+          'Der Shithead bekommt eine Zeremonie mit Zeitlupe, Spotlicht, trauriger Posaune und braunem Konfetti. Antippen überspringt sie.',
+          'Revanche: Wer verloren hat, fordert im Ergebnisfenster den Sieger heraus. Am Ende der nächsten Partie steht fest, wer das Duell gewinnt.',
+          'Wer bei Shithead fertig ist, tippt, wer Shithead wird. Früh tippen bringt mehr Punkte, die Punkte stehen in der Bestenliste.',
           'Ein Tipp auf den Raumcode oben öffnet die Einladung mit Code und Link zum Kopieren oder Teilen.',
           'Gibt es eine neue Version, erscheint oben ein Hinweis. Nach dem Neuladen geht es von selbst zurück an den Tisch. Spielt jemand noch mit altem Stand, sagt der Tisch Bescheid.',
         ],
@@ -48,6 +51,7 @@ export const CHANGELOG: readonly Release[] = [
         items: [
           'Mehr Töne: wenn du dran bist, bei Reaktionen, beim Austeilen und bei Meldungen.',
           'Wer dran ist, wird nur noch am Rand gelb, nicht mehr in der ganzen Fläche.',
+          'Wer am Gerät weniger Bewegung eingestellt hat, sieht kein Konfetti mehr. Die Zeremonie läuft dann ruhig ohne Zeitlupe.',
           'Schnautz: Die Zahl der Karten im Stapel steht am Stapel und macht die Tischmitte nicht mehr größer.',
           'Schnautz am Handy: Die Leiste oben zeigt alle mit ihren Leben als Zahl und passt immer in eine Zeile.',
           'Am Handy steht „schwimmt“ nur an deinem Platz ausgeschrieben, sonst reicht das Zeichen.',
@@ -61,7 +65,11 @@ export const CHANGELOG: readonly Release[] = [
       },
       {
         h: 'Behoben',
-        items: ['Meldungen aus dem Spiel legen sich nicht mehr über Regeln, Bestenliste, Verbindung oder Einladung.'],
+        items: [
+          'Meldungen aus dem Spiel legen sich nicht mehr über Regeln, Bestenliste, Verbindung oder Einladung.',
+          'Am iPhone klingen die Töne jetzt auch, wenn der Lautlos-Schalter an ist. Ausschalten geht über den Ton-Knopf im Spiel.',
+          'Am Handy passen die Namen der Sounds im Ergebnisfenster ganz hinein.',
+        ],
       },
     ],
   },

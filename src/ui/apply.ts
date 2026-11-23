@@ -14,6 +14,7 @@ import { SEQ, runSeq, shPlan, totalMs, type Step } from './shithead/sequence';
 import { syncWin } from './shithead/window';
 import { syncClock } from './clock';
 import { sfxCalm } from './sound';
+import { ceremonyGuard, ZER, zerSlow } from './ceremony';
 import { liveFx } from './livefx';
 import { syncNext } from './nextround';
 import { placePick } from './toss';
@@ -27,6 +28,8 @@ function bumpSeen(v: View): void {
 const SEQ_WATCHDOG_MS = 2500;
 
 export function applyView(v: View): void {
+  // Gehört die Zeremonie nicht mehr zu dieser Partie, endet sie sofort
+  ceremonyGuard(v);
   // Würfe und Klänge sofort, auch während eine Sequenz die Ansicht noch zurückhält
   liveFx(v);
   if (SEQ.busy && Date.now() > SEQ.endAt + SEQ_WATCHDOG_MS) {
@@ -36,6 +39,7 @@ export function applyView(v: View): void {
     else {
       SEQ.busy = false;
       SEQ.ov = null;
+      zerSlow(false);
     }
   }
   if (SEQ.busy) {
@@ -129,6 +133,7 @@ function startSequence(prev: View, v: View, steps: Step[]): boolean {
   const gen = SEQ.gen;
   SEQ.done = () => {
     SEQ.done = null;
+    if (ZER.slow) zerSlow(false);
     if (gen !== SEQ.gen) return;
     SEQ.busy = false;
     SEQ.ov = null;

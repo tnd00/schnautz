@@ -1,5 +1,8 @@
 import { strict as assert } from 'node:assert';
+import { botDecide } from '../../src/bots/index';
+import { act } from '../../src/game/actions';
 import type { Action, Card, Rng, SchnautzResult, State } from '../../src/game/types';
+import { viewFor } from '../../src/game/view';
 
 /** Reproduzierbarer Zufall (LCG), damit fehlschlagende Partien nachspielbar sind. */
 export function rngF(seed: number): Rng {
@@ -27,3 +30,18 @@ export function shCardsOk(st: State): void {
 }
 
 export const action = (a: Action): Action => a;
+
+/** Alle spielen wie die KI, bis die Partie vorbei ist. `stop` bricht vorher ab. */
+export function playOut(st: State, rng: Rng, stop?: (st: State) => boolean): void {
+  for (let guard = 0; st.phase !== 'over' && guard < 20000; guard++) {
+    if (stop?.(st)) return;
+    if (st.sh?.win?.lock) act(st, st.host, { type: 'shunlock', id: st.sh.win.id }, rng);
+    let moved = false;
+    for (const p of st.players) {
+      const a = botDecide(viewFor(st, p.id), rng, 'normal');
+      if (a && !act(st, p.id, a, rng)) moved = true;
+      if (moved && a?.type !== 'ready') break;
+    }
+    if (!moved) break;
+  }
+}

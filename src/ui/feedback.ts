@@ -115,10 +115,15 @@ export function banner(text: string): void {
 /** Große Meldung in der Tischmitte. `title` und `sub` sind HTML und müssen bereits escaped sein. */
 export interface Announcement {
   icon?: string;
-  tone?: '' | 'gold' | 'red' | 'wood' | 'sea';
+  tone?: '' | 'gold' | 'red' | 'wood' | 'sea' | 'brown';
   title: string;
   sub?: string;
   ms?: number;
+  /** Zusätzliche Klasse, etwa für die Zeremonie */
+  cls?: string;
+  /** Wenn die Meldung erscheint und wenn sie endet (übersprungen oder abgelaufen) */
+  onShow?: () => void;
+  onEnd?: (skipped: boolean) => void;
 }
 
 export const ANN = {
@@ -127,7 +132,16 @@ export const ANN = {
   curEnd: 0,
   el: null as HTMLElement | null,
   t: undefined as Timer | undefined,
+  /** Die Meldung, die gerade steht */
+  cur: null as Announcement | null,
 };
+
+/** Laufende Meldung beenden und ihren Abschluss genau einmal melden. */
+function endCur(skipped: boolean): void {
+  const o = ANN.cur;
+  ANN.cur = null;
+  o?.onEnd?.(skipped);
+}
 
 export function resetAnnouncements(): void {
   ANN.q = [];
@@ -135,7 +149,14 @@ export function resetAnnouncements(): void {
   ANN.busy = false;
   ANN.curEnd = 0;
   ANN.el = null;
+  endCur(true);
   $('#announce').innerHTML = '';
+}
+
+/** Wartende Meldungen einer Art verwerfen, die laufende davon schließen. */
+export function dropAnnouncements(cls: string): void {
+  ANN.q = ANN.q.filter((o) => o.cls !== cls);
+  if (ANN.cur?.cls === cls) skipAnnouncement();
 }
 
 export function announce(o: Announcement): void {
@@ -164,24 +185,27 @@ function annNext(): void {
   ANN.busy = true;
   ANN.curEnd = Date.now() + ms(o.ms, 1700) + 240;
   const el = document.createElement('div');
-  el.className = `ann ${o.tone ?? ''}`;
+  el.className = `ann ${o.tone ?? ''} ${o.cls ?? ''}`.trim();
   el.innerHTML =
     (o.icon ? `<div class="ann-ic">${o.icon}</div>` : '') +
     `<div class="ann-t">${o.title}</div>` +
     (o.sub ? `<div class="ann-s">${o.sub}</div>` : '');
   el.title = 'Antippen zum Überspringen';
-  el.addEventListener('click', annSkip);
+  el.addEventListener('click', skipAnnouncement);
   placeInField($('#announce'));
   $('#announce').appendChild(el);
   ANN.el = el;
-  ANN.t = setTimeout(annClose, ms(o.ms, 1700));
-  sfxCalm('msg', 500);
+  ANN.cur = o;
+  ANN.t = setTimeout(() => annClose(false), ms(o.ms, 1700));
+  if (o.cls !== 'zer') sfxCalm('msg', 500);
+  o.onShow?.();
 }
 
-function annClose(): void {
+function annClose(skipped = false): void {
   const el = ANN.el;
   if (!el) return;
   ANN.el = null;
+  endCur(skipped);
   el.classList.add('out');
   setTimeout(() => {
     el.remove();
@@ -189,10 +213,11 @@ function annClose(): void {
   }, 240);
 }
 
-function annSkip(): void {
+/** Laufende Meldung überspringen (Antippen, Esc). */
+export function skipAnnouncement(): void {
   clearTimeout(ANN.t);
   ANN.curEnd = Date.now();
-  annClose();
+  annClose(true);
   if (App.holdUntil > Date.now()) {
     App.holdUntil = Date.now() + annLeft() + 300;
     if (App.holdT) clearTimeout(App.holdT);

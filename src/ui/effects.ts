@@ -1,20 +1,27 @@
 import type { View } from '../game/types';
-import { confetti, emojiFly, rain } from './animations';
+import { confetti, emojiFly } from './animations';
 import { App } from './app';
-import { esc, num } from './dom';
+import { $opt, esc, num } from './dom';
+import { REMATCH_ANN_MS } from '../game/constants';
 import {
   type Announcement,
   announce,
   centerLabel,
   chatBubble,
+  fixedLabel,
   floatLabel,
   holdForAnnouncements,
   shakePanel,
+  tauntLabel,
 } from './feedback';
-import { myTurn, nameOf, roundBest, turnId, vb } from './helpers';
+import { myTurn, nameOf, pById, roundBest, turnId, vb } from './helpers';
+import { betEffect, BETUI } from './render/bets';
+import { duelResult, duelRunning, rematchAnn } from './render/rematch';
 import { updateTitle } from './screens';
 import { burnAnn } from './shithead/sequence';
 import { sfx } from './sound';
+import { shitheadCeremony } from './ceremony';
+import { ZER_SHDONE_MS } from './shithead/ceremony-plan';
 import { taunt } from './taunts';
 
 /**
@@ -87,7 +94,9 @@ export function effects(prev: View, v: View, seqd = false): void {
           floatLabel(e.p, 'wirft 4er rein', 'wirfst 4er rein');
         }, 60);
     }
-    if (e.k === 'shdone')
+    if (e.k === 'shdone') {
+      // Direkt vor der Zeremonie nur kurz, der Spruch für Platz 1 steht dann im Ergebnisfenster
+      const toEnd = fresh.some((x) => x.k === 'shend' && x.p);
       announce({
         icon: e.place === 1 ? '🥇' : '✅',
         tone: 'gold',
@@ -96,30 +105,13 @@ export function effects(prev: View, v: View, seqd = false): void {
           'Platz ' +
           num(e.place) +
           '.' +
-          (mine && e.place === 1 ? '<span class="tt">' + esc(taunt('shWinSelf', null, e.n)) + '</span>' : ''),
-        ms: mine ? 2200 : 1600,
+          (mine && e.place === 1 && !toEnd ? '<span class="tt">' + esc(taunt('shWinSelf', null, e.n)) + '</span>' : ''),
+        ms: toEnd ? ZER_SHDONE_MS : mine ? 2200 : 1600,
       });
-    if (e.k === 'shend' && e.p) {
-      announce({
-        icon: '💩',
-        tone: 'red',
-        title: mine ? 'Du bist der Shithead!' : N(e.p, e.name) + ' ist der Shithead!',
-        sub:
-          '<span class="tt">' +
-          esc(mine ? taunt('shLoserSelf', null, e.n) : taunt('shLoserOther', { name: RN(e.p, e.name) }, e.n)) +
-          '</span>',
-        ms: 2600,
-      });
-      holdForAnnouncements();
-      setTimeout(() => {
-        sfx(mine ? 'lose' : 'win');
-      }, 300);
-      if (mine)
-        setTimeout(() => {
-          rain('💩', 34);
-        }, 250);
-      else if (v.sh && v.sh.finished && v.sh.finished[0] === App.me) setTimeout(confetti, 500);
+      if (mine && e.place === 1) setTimeout(() => sfx('win'), 200);
     }
+    // Der Shithead steht fest: Zeremonie statt einfacher Meldung
+    if (e.k === 'shend' && e.p && prev.phase !== 'over' && v.phase === 'over') shitheadCeremony(v, e);
     if (e.k === 'result') {
       const best = roundBest(v);
       const c = e.changes?.[App.me];
@@ -178,6 +170,24 @@ export function effects(prev: View, v: View, seqd = false): void {
         sfx(c ? 'lose' : 'win');
       }, 300);
     }
+    if (e.k === 'rematch') {
+      sfx('duel');
+      const a = rematchAnn(v, e);
+      announce({ icon: '⚔️', tone: 'red', title: a.title, sub: a.sub, ms: REMATCH_ANN_MS });
+    }
+    if (e.k === 'rematchend' && v.players.length > 2 && [e.p, e.to].some((id) => !pById(v, id ?? '')?.bot)) {
+      const full = duelResult(v, { by: e.p ?? '', vs: e.to, res: e.res }, e.name, e.tn);
+      const cut = full.indexOf('! ');
+      announce({
+        icon: '⚔️',
+        tone: e.res === 'won' ? 'gold' : e.res === 'lost' ? 'red' : '',
+        title: full.slice(0, cut + 1),
+        sub: full.slice(cut + 2),
+        ms: 2200,
+      });
+      holdForAnnouncements(300);
+    }
+    if (e.k === 'shbet') betEffect(v, e);
     if (e.k === 'winner' && e.p) {
       announce({
         icon: '🏆',
@@ -193,6 +203,19 @@ export function effects(prev: View, v: View, seqd = false): void {
       if (mine) setTimeout(confetti, 600);
     }
   });
+  // Zu Beginn der Revanche-Partie ein kurzer Hinweis am Tisch
+  const started = fresh.some((e) => e.k === 'shdeal' || (e.k === 'round' && e.r === 1));
+  const duel = started ? duelRunning(v) : '';
+  if (duel) {
+    const wait = fresh.some((e) => e.k === 'rematch') ? REMATCH_ANN_MS + 300 : 600;
+    setTimeout(() => fixedLabel('duellbl', duel, $opt('#center'), 3200), wait);
+  }
+  // Ein Spruch zum ersten Tipp auf mich wartet, bis ich nicht mehr dran bin
+  if (BETUI.pend && (BETUI.pend.games !== v.games || v.phase !== 'play')) BETUI.pend = null;
+  if (BETUI.pend && !myTurn(v)) {
+    tauntLabel(BETUI.pend.text);
+    BETUI.pend = null;
+  }
   const was = prev.phase === 'play' && turnId(prev) === App.me && !prev.sh?.win?.lock;
   if (myTurn(v) && !v.sh?.win?.lock && !was) {
     sfx('turn');

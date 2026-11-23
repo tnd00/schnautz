@@ -16,6 +16,8 @@ import { fitHand } from '../shithead/hand';
 import { SEQ } from '../shithead/sequence';
 import { winLeft, winSecs } from '../shithead/window';
 import { taunt } from '../taunts';
+import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
+import { rematchLine, rematchMark } from './rematch';
 import { botsOnlyHTML, overlayFoot, peekHTML } from './schnautz';
 
 type Source = 'hand' | 'up' | 'down';
@@ -148,6 +150,8 @@ function opponentHTML(v: View, S: ShView, p: Player): string {
     tag = p.ready ? '<span class="tag">fertig</span>' : `<span class="tag turn">tauscht${THINKING}</span>`;
   else if (v.phase === 'play' && tId === p.id) tag = `<span class="tag turn">ist dran${THINKING}</span>`;
   else if (v.phase === 'play' && S.win?.by.includes(p.id)) tag = '<span class="tag four">4er rein</span>';
+  // Sonst die Zahl der Tipps auf diese Person
+  if (!tag) tag = betTagHTML(v, p.id);
   const on = v.phase === 'play' && tId === p.id;
   const cls = ['opp sh', on && 'turn', (p.out || done) && 'out', !p.online && 'offline', handOnly && 'handonly']
     .filter(Boolean)
@@ -241,7 +245,7 @@ function statusHTML(
   if (v.phase === 'play') {
     if (meDone && me) {
       main = 'Du bist fertig!';
-      sub = `Platz ${num(me.place)}. Werfen und tröten darfst du trotzdem.`;
+      sub = betSub(v, num(me.place)) ?? `Platz ${num(me.place)}. Werfen und tröten darfst du trotzdem.`;
       // Nur noch KIs am Spielen: abkürzen statt zuschauen
       if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
     }
@@ -258,6 +262,7 @@ function statusHTML(
     } else if (!meDone) {
       main = `${W(v, tId)} ist dran.`;
       if (S.win) sub = 'Neuer Stapel: Wer eine 4 hat, darf sie jetzt reinwerfen.';
+      else sub = betsOnMeSub(v) ?? '';
     }
     if (mine && !quick) quick = quickHTML(v);
   } else if (v.phase === 'over') main = 'Partie vorbei.';
@@ -358,7 +363,7 @@ function myPlaceHTML(v: View, S: ShView, me: Player, mine: OwnCards, src: Source
     const pileN = S.pile.length;
     const pickOk = playing && pileN > 0;
     mh += `<button class="btn ${canAny || !pickOk ? 'ghost' : 'wood pulse'}" data-act="shpickup"${pickOk ? '' : ' disabled'}>Aufnehmen (${pileN})</button>`;
-  }
+  } else if (meDone) mh += betActionHTML(v);
   return `${mh}</div>`;
 }
 
@@ -489,6 +494,7 @@ export function renderShOverlay(v: View): void {
       good = true;
     } else tt = taunt('shLoserOther', { name: nameOf(v, loser, names[loser]) }, seed);
   }
+  const rline = rematchLine(v);
   const order = loser ? [...r.ranking, loser] : r.ranking;
   const rows = order
     .map((id, i) => {
@@ -514,13 +520,32 @@ export function renderShOverlay(v: View): void {
           : '';
       return (
         `<div class="row${isL ? ' lose' : i === 0 ? ' win' : ''}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val" style="min-width:34px;text-align:left">${i + 1}.</div>` +
-        `<div class="who"><b>${hat}${nm(id)}</b><span>${what}${p?.shc ? ` · ${num(p.shc)}× Shithead` : ''}</span>${leftCards}</div></div>`
+        `<div class="who"><b>${hat}${nm(id)}${rematchMark(v, id)}</b><span>${what}${p?.shc ? ` · ${num(p.shc)}× Shithead` : ''}</span>${leftCards}</div></div>`
       );
     })
     .join('');
   ov.innerHTML =
     `<div class="modal"><div class="paper sheet result"><div class="trophy">${loser === App.me ? '💩' : loser ? '🏆' : '👋'}</div>` +
     `<h2>${title}</h2><p class="lead">${lead}</p>` +
-    (tt ? `<p class="taunt${good ? ' good' : ''}">${esc(tt)}</p>` : '') +
-    `<div class="rows">${rows}</div>${overlayFoot(v, me)}</div></div>`;
+    (rline ? `<p class="taunt rv">${rline}</p>` : tt ? `<p class="taunt${good ? ' good' : ''}">${esc(tt)}</p>` : '') +
+    `<div class="rows">${rows}</div>${betResultHTML(v, r)}${overlayFoot(v, me)}</div></div>`;
+}
+
+/** Eine Zeile unter den Plätzen: Wer hat richtig getippt? */
+function betResultHTML(v: View, r: ShitheadResult): string {
+  const bets = Array.isArray(r.bets) ? r.bets : [];
+  if (!bets.length) return '';
+  if (!r.shithead) return '<p class="betres">🔮 Ohne Shithead zählt kein Tipp.</p>';
+  const mine = bets.find((b) => b.p === App.me);
+  const others = bets.filter((b) => b.ok && b.p !== App.me);
+  const names = r.names ?? {};
+  const list = others.map((b) => `${esc(nameOf(v, b.p, names[b.p]))} (+${num(b.q)})`);
+  let text = '';
+  if (mine)
+    text = mine.ok
+      ? `Richtig getippt! +${num(mine.q)} ${mine.q === 1 ? 'Punkt' : 'Punkte'}.`
+      : 'Dein Tipp lag daneben.';
+  if (list.length) text += `${text ? ' ' : ''}${mine ? 'Auch richtig' : 'Richtig getippt'}: ${listJoin(list)}.`;
+  else if (!mine) text = 'Niemand hat richtig getippt.';
+  return `<p class="betres">🔮 ${text}</p>`;
 }

@@ -23,6 +23,7 @@ import {
   vb,
 } from '../helpers';
 import { nextSecs } from '../nextround';
+import { canChallenge, mustAccept, rematchLine, rematchMark } from './rematch';
 import { taunt } from '../taunts';
 
 /** Schnautz-Tisch: Gegner, Mitte, Status und eigene Hand. */
@@ -357,6 +358,7 @@ export function renderOverlay(v: View): void {
     );
     good = true;
   }
+  const rline = rematchLine(v);
   let rows = '';
   const order = v.players
     .filter((p) => {
@@ -399,6 +401,7 @@ export function renderOverlay(v: View): void {
       '<div class="who"><b>' +
       (isBest ? '👑 ' : '') +
       esc(p.id === App.me ? 'Du' : p.name) +
+      rematchMark(v, p.id) +
       '</b><span>' +
       (cons || (isBest ? '<span class="conseq good">beste Hand</span>' : livesHTML(p, v.rules))) +
       '</span></div>' +
@@ -416,7 +419,11 @@ export function renderOverlay(v: View): void {
     lead +
     '</p>' +
     verdict +
-    (tt ? '<p class="taunt' + (good ? ' good' : '') + '">' + esc(tt) + '</p>' : '') +
+    (rline
+      ? '<p class="taunt rv">' + rline + '</p>'
+      : tt
+        ? '<p class="taunt' + (good ? ' good' : '') + '">' + esc(tt) + '</p>'
+        : '') +
     '<div class="rows">' +
     rows +
     '</div>' +
@@ -484,10 +491,14 @@ export function overlayFoot(v: View, me: Player | null): string {
   return (
     '<div class="rfoot">' +
     (me ? '<div class="emotes oemotes"></div>' : '') +
-    '<div class="foot"><span class="waittxt">' +
-    (ready ? (waiting.length ? 'Warte auf ' + esc(listJoin(waiting)) + '…' : "Los geht's…") : '') +
-    (cd ? (ready ? ' · ' : '') + cd : '') +
-    '</span>' +
+    `<div class="foot${!ready && (canChallenge(v) || mustAccept(v)) ? ' rv' : ''}">` +
+    // Der Wartetext nur, wenn es etwas zu sagen gibt, sonst kostet er Platz in der Knopfreihe
+    (ready || cd
+      ? '<span class="waittxt">' +
+        (ready ? (waiting.length ? 'Warte auf ' + esc(listJoin(waiting)) + '…' : "Los geht's…") : '') +
+        (cd ? (ready ? ' · ' : '') + cd : '') +
+        '</span>'
+      : '') +
     (App.role === 'host' && ready && waiting.length
       ? '<button class="btn ghost" data-act="force"><span class="blong">Nicht warten</span><span class="bshort">Los</span></button>'
       : '') +
@@ -495,7 +506,20 @@ export function overlayFoot(v: View, me: Player | null): string {
       ? '<button class="btn ghost" data-act="lobbynow"><span class="blong">Zur Lobby</span><span class="bshort">Lobby</span></button>'
       : '') +
     '<button class="btn ghost" data-act="peek"><span class="blong">Tisch ansehen</span><span class="bshort">Tisch</span></button>' +
-    (ready ? '' : '<button class="btn primary" data-act="ready">' + btnLabel + '</button>') +
+    readyBtns(v, !!ready, btnLabel) +
     '</div></div>'
   );
+}
+
+/** Weiter-Knöpfe: Wer verloren hat, darf Revanche fordern, wer gefordert wurde, nimmt an. */
+function readyBtns(v: View, ready: boolean, label: string): string {
+  if (ready) return '';
+  if (mustAccept(v))
+    return '<button class="btn primary rv" data-act="ready" aria-label="Revanche annehmen"><span class="blong">⚔️ Revanche annehmen</span><span class="bshort">⚔️ Annehmen</span></button>';
+  if (canChallenge(v))
+    return (
+      `<button class="btn ghost" data-act="ready" aria-label="${label}"><span class="blong">${label}</span><span class="bshort">Weiter</span></button>` +
+      '<button class="btn primary rv" data-act="rematch">⚔️ Revanche!</button>'
+    );
+  return `<button class="btn primary" data-act="ready">${label}</button>`;
 }

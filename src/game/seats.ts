@@ -2,6 +2,7 @@
 import { MIN_SEATS } from './constants';
 import { addBot, addLog, addPlayer, MAX_SEATS_ALL, pIdx, seatLimit, uniqueName } from './state';
 import type { Player, Rng, State } from './types';
+import { forgetRematch } from './rematch';
 
 export type SeatResult = { id: string } | { err: string };
 
@@ -57,6 +58,9 @@ export function takeSeat(st: State, seatId: string, name: string): void {
     if (st.reign.win === p.id) st.reign.win = null;
     if (st.reign.sh === p.id) st.reign.sh = null;
   }
+  // Ebenso Forderung, Duell und Tipp der KI
+  forgetRematch(st, p.id);
+  if (st.sh?.bets) delete st.sh.bets[p.id];
   addLog(st, { k: 'takeover', p: p.id, name: p.name, from });
 }
 

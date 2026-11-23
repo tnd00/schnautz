@@ -44,6 +44,8 @@ export const SOUNDS: readonly string[] = ['horn', 'roll', 'ooh', 'clap', 'sad', 
 /** Am ganzen Tisch höchstens so viele hörbare Klänge in diesem Fenster, darüber fliegt nur das Symbol */
 export const SOUND_TABLE_MAX = 4;
 export const SOUND_TABLE_WINDOW_MS = 6000;
+/** So lange steht die große Ansage einer Revanche-Forderung */
+export const REMATCH_ANN_MS = 2400;
 /**
  * Reaktionen, Würfe und Klänge: drei gehen schnell hintereinander, danach sperrt der Knopf. Die Pause beginnt
  * erst nach der vorigen neu und wächst bei weiterem Spammen bis höchstens 5 Sekunden. Nach 6 Sekunden Ruhe

@@ -573,9 +573,29 @@
     font-size: 10.5px;
   }
   /* Im Ergebnisfenster steht das Reaktionsfenster fest über den Knöpfen */
-  .paper .emotes.oemotes .erow button {
+  .paper .emotes.oemotes .erow:not(.e-snd) button {
     font-size: 19px;
     max-width: 40px;
+  }
+  /* Sounds im Ergebnisfenster: volle Breite, damit die Namen passen */
+  .paper .emotes.oemotes .erow.e-snd {
+    flex-wrap: nowrap;
+    gap: 3px;
+  }
+  .paper .emotes.oemotes .erow.e-snd button {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    height: 44px;
+    padding: 0 1px;
+  }
+  .paper .emotes.oemotes .erow.e-snd button small {
+    font-size: 9.5px;
+    letter-spacing: -0.01em;
+  }
+  /* Am Handy kein kleines 🍅 über der Punktzahl, ein Tipp auf die Zeile reicht */
+  .paper .row[data-act='aim']::after {
+    content: none;
   }
   .paper .emotes.oemotes {
     position: static;

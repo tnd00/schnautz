@@ -170,6 +170,8 @@ interface FallOptions {
 
 /** Lässt Elemente von oben über den ganzen Bildschirm fallen. */
 function fall(make: (i: number) => HTMLElement, o: FallOptions): void {
+  // Weniger Bewegung gewünscht: kein Konfetti und kein Regen
+  if (reduceMotion()) return;
   const layer = $('#fly');
   for (let i = 0; i < o.n; i++) {
     const c = make(i);
@@ -192,26 +194,71 @@ function fall(make: (i: number) => HTMLElement, o: FallOptions): void {
 
 const CONFETTI_COLORS = ['#f3cd7d', '#d6a24a', '#f6efdf', '#b3312a', '#8fd3e8', '#7fe3a3'];
 
-export function confetti(): void {
+export interface ConfettiOptions {
+  colors?: string[];
+  n?: number;
+  dur?: [number, number];
+  /** Zusätzliche Teile als Zeichen, etwa ein paar 💩 */
+  extra?: { ch: string; n: number }[];
+  /** Klasse für alle Teile, damit sie sich gezielt ausblenden lassen */
+  cls?: string;
+}
+
+export function confetti(o: ConfettiOptions = {}): void {
+  const colors = o.colors ?? CONFETTI_COLORS;
+  const chars = (o.extra ?? []).flatMap((x) => Array.from({ length: x.n }, () => x.ch));
+  const n = o.n ?? 70;
   fall(
     (i) => {
       const c = document.createElement('i');
-      c.className = 'confetti';
-      c.style.cssText = `left:${Math.random() * innerWidth}px; background:${CONFETTI_COLORS[i % CONFETTI_COLORS.length]}; width:${6 + Math.random() * 6}px; height:${8 + Math.random() * 10}px`;
+      const ch = i >= n ? chars[i - n] : '';
+      c.className = `confetti${ch ? ' ch' : ''}${o.cls ? ` ${o.cls}` : ''}`;
+      if (ch) {
+        c.textContent = ch;
+        c.style.cssText = `left:${Math.random() * innerWidth}px; font-size:${18 + Math.random() * 10}px; background:none`;
+      } else
+        c.style.cssText = `left:${Math.random() * innerWidth}px; background:${colors[i % colors.length]}; width:${6 + Math.random() * 6}px; height:${8 + Math.random() * 10}px`;
       return c;
     },
     {
-      n: 70,
+      n: n + chars.length,
       spread: 240,
       startY: -40,
       endBelow: 60,
       rot: () => Math.random() * 720,
       endOpacity: 0.9,
-      dur: [1800, 1400],
+      dur: o.dur ?? [1800, 1400],
       maxDelay: 400,
       easing: 'cubic-bezier(.2,.6,.4,1)',
     },
   );
+}
+
+/** Ein Zeichen fällt von oben auf ein Element und staucht sich beim Aufprall. */
+export function dropOn(el: HTMLElement, ch: string, onLand?: () => void): void {
+  const r = el.getBoundingClientRect();
+  const d = document.createElement('div');
+  d.className = 'zerdrop';
+  d.textContent = ch;
+  // Am eigenen Platz liegen rechts oben Knöpfe, dort landet der Haufen etwas weiter innen
+  const x = el.id === 'me' ? r.left + r.width / 2 + Math.min(90, r.width / 4) : r.right - 22;
+  const y = r.top + 6;
+  d.style.left = `${x}px`;
+  d.style.top = `${y}px`;
+  $('#fly').appendChild(d);
+  const a = d.animate(
+    [
+      { transform: 'translate(-50%, -120px) scale(1)', opacity: 0 },
+      { transform: 'translate(-50%, -30px) scale(1)', opacity: 1, offset: 0.6 },
+      { transform: 'translate(-50%, 0) scale(1.3, .7)', opacity: 1, offset: 0.85 },
+      { transform: 'translate(-50%, 0) scale(1)', opacity: 1 },
+    ],
+    { duration: 650, easing: 'cubic-bezier(.5,0,.8,.4)', fill: 'forwards' },
+  );
+  a.onfinish = () => {
+    onLand?.();
+    setTimeout(() => d.remove(), 2400);
+  };
 }
 
 /** Regen aus Emojis, etwa Kackhaufen für den Shithead. */
@@ -262,7 +309,14 @@ export interface FlyGOptions {
   flip?: boolean;
   /** Dieses Element bleibt unsichtbar, bis die Karte gelandet ist. */
   hideEl?: HTMLElement;
+  /** Ebene der fliegenden Karte, sonst 44 */
+  z?: number;
+  /** Zeitlupe ab der Mitte des Flugs: `extra` Millisekunden länger, Rückrufe beim Bremsen und Landen */
+  slow?: { extra: number; onSlow?: () => void; onLand?: () => void };
 }
+
+/** Bei dieser Kurve ist die Hälfte des Wegs nach rund 19 Prozent der Zeit geschafft. */
+const EASE_HALF = 0.188;
 
 /** Shithead: allgemeiner Kartenflug zwischen zwei Rechtecken, optional mit Umdrehen. */
 export function flyG(
@@ -288,7 +342,7 @@ export function flyG(
   } else {
     g = cardGhost(card);
   }
-  g.style.cssText = `position:fixed; left:${cx - w / 2}px; top:${cy - h / 2}px; width:${w}px; height:${h}px; --cw:${w}px; z-index:44; pointer-events:none; transition:none`;
+  g.style.cssText = `position:fixed; left:${cx - w / 2}px; top:${cy - h / 2}px; width:${w}px; height:${h}px; --cw:${w}px; z-index:${o.z ?? 44}; pointer-events:none; transition:none`;
   $('#fly').appendChild(g);
   const rot = o.rot ?? '0deg';
   const arc = o.arc ?? 54;
@@ -314,10 +368,26 @@ export function flyG(
     g.remove();
     if (o.hideEl) o.hideEl.style.visibility = '';
     App.flying = Math.max(0, App.flying - 1);
+    o.slow?.onLand?.();
   };
   anim.onfinish = fin;
+  const extra = o.slow?.extra ?? 0;
+  if (o.slow) {
+    // Normales Tempo bis zur Mitte, dann so gebremst, dass die Karte genau `extra` später landet
+    const rest = dur * (1 - EASE_HALF);
+    setTimeout(
+      () => {
+        if (!g.parentNode) return;
+        const rate = rest / (rest + extra);
+        if (typeof anim.updatePlaybackRate === 'function') anim.updatePlaybackRate(rate);
+        else anim.playbackRate = rate;
+        o.slow?.onSlow?.();
+      },
+      delay + dur * EASE_HALF,
+    );
+  }
   // Im Hintergrund-Tab laufen Animationen nicht, dann räumt der Timer auf
-  setTimeout(fin, dur + delay + 400);
+  setTimeout(fin, dur + delay + extra + 400);
 }
 
 /** Emoji-Reaktion steigt groß über dem Platz des Absenders auf. */

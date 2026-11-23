@@ -169,6 +169,16 @@
       "Bombe von {name}. Dein schöner Plan ist jetzt Asche.",
       "Da war {name} schneller, als erlaubt sein sollte.",
       "{name} macht die Vier voll. Warst du mitten im Zug? Schade."
+    ],
+    "betOnMe": [
+      "{name} tippt auf dich als Shithead. Zeig, dass das Quatsch ist!",
+      "{name} hält dich für den Shithead. Frechheit.",
+      "{name} setzt auf dich. Als Verlierer. Autsch.",
+      "Die Kristallkugel von {name} sieht dich ganz hinten 🔮",
+      "{name} wettet gegen dich. Das schreit nach Rache.",
+      "{name} glaubt nicht an dich. Noch nicht.",
+      "Laut {name} bist du heute der Shithead. Wirklich?",
+      "{name} hat dich getippt. Mach daraus eine Pleite für {name}."
     ]
   },
   "bot": {

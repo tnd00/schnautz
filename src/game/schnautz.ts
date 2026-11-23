@@ -3,6 +3,7 @@ import { newDeck, rankOf, rnd, shuffle, suitOf } from './cards';
 import { RANK_VAL, SUITS } from './constants';
 import { activeList, addLog, countGame, nextActive, pIdx, prevActive, statsOf } from './state';
 import type { ActResult, Card, HandValue, LifeChange, Player, Rng, Rules, SchnautzReason, State, Suit } from './types';
+import { offerRematch, settleDuel } from './rematch';
 
 /** Wert einer Hand: Summe der stärksten Farbe, drei Gleiche 30,5, drei Asse (Feuer) 33. */
 export function handValue(cards: readonly Card[] | number | undefined, rules?: Pick<Rules, 'feuer'>): HandValue {
@@ -33,6 +34,7 @@ export function startGame(st: State, rng?: Rng): ActResult {
     p.out = false;
     p.ready = false;
     delete p.gone;
+    delete p.outRound;
   });
   st.games++;
   st.round = 0;
@@ -170,6 +172,7 @@ export function finishRound(st: State, reason: SchnautzReason, by: string | null
       if (p.lives > 0) p.lives--;
       else p.out = true;
     }
+    if (p.out) p.outRound = st.round;
     changes[id] = { n, to: p.out ? 'out' : p.lives === 0 ? 'swim' : 'life' };
     const ps = statsOf(p, 'schnautz');
     ps.coasters = (ps.coasters ?? 0) + n;
@@ -210,4 +213,8 @@ export function declareWinner(st: State, winner: { id: string; wins: number } | 
   });
   st.reign = { win: st.winner, game: 'schnautz' };
   addLog(st, { k: 'winner', p: st.winner ?? undefined });
+  settleDuel(st);
+  // Revanche fordern darf, wer in der letzten Runde rausgeflogen ist
+  const res = st.result && st.result.reason !== 'shithead' ? st.result : null;
+  offerRematch(st, res ? Object.keys(res.changes).filter((id) => res.changes[id].to === 'out') : []);
 }

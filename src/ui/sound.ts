@@ -1,11 +1,22 @@
 /* Kleine Klänge, mit der Web Audio API erzeugt. Kein Ton, bevor jemand geklickt hat (Browser-Regel). */
 import { App } from './app';
 import { $ } from './dom';
-import { loadSamples, playSample, type SampleName } from './samples';
+import { loadSamples, startSample, type SampleName } from './samples';
+import { trombone } from './soundboard';
 
 let AC: AudioContext | null = null;
 
+let primed = false;
+
 export function unlockAudio(): void {
+  // iPhone: Ohne diese Einstellung schweigt Web Audio, sobald der Lautlos-Schalter an ist.
+  // Den Ton im Spiel schaltet man über den eigenen Knopf ab.
+  try {
+    const s = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (s && s.type !== 'playback') s.type = 'playback';
+  } catch {
+    /* ältere Browser kennen das nicht */
+  }
   if (!AC) {
     try {
       const Ctx =
@@ -17,6 +28,19 @@ export function unlockAudio(): void {
   }
   // Safari kennt neben suspended auch interrupted
   if (AC.state !== 'running') void AC.resume().catch(() => undefined);
+  // Ein stummer Mini-Ton direkt im Tipp schaltet Web Audio auf iPhones zuverlässig frei
+  if (!primed) {
+    primed = true;
+    try {
+      const b = AC.createBuffer(1, 1, 22050);
+      const src = AC.createBufferSource();
+      src.buffer = b;
+      src.connect(AC.destination);
+      src.start(0);
+    } catch {
+      primed = false;
+    }
+  }
   loadSamples(AC);
 }
 
@@ -166,6 +190,16 @@ const SFX = {
     noise(a, t, 0.035, 'bandpass', 2200, 0.7, o, 2);
     tone(a, 1100, t + 0.01, 0.07, 'sine', 0.07, o, 380);
   },
+  /** Revanche: Schlag und zwei Fanfarentöne */
+  duel: (a, t, o) => {
+    thump(a, t, o);
+    tone(a, 392, t + 0.05, 0.22, 'sawtooth', 0.05, o);
+    tone(a, 523, t + 0.25, 0.4, 'sawtooth', 0.05, o);
+  },
+  /** Zeitlupe: tiefer, fallender Ton */
+  slowmo: (a, t, o) => tone(a, 300, t, 0.8, 'sine', 0.06, o, 110),
+  /** Traurige Posaune für den Shithead (Ersatz, solange die Aufnahme lädt) */
+  trombone: (a, t, o) => void trombone(a, t, o),
   /** Krone funkelt */
   crown: (a, t, o) => [1047, 1319, 1568, 2093].forEach((f, i) => tone(a, f, t + i * 0.06, 0.3, 'triangle', 0.05, o)),
 } satisfies Record<string, Sfx>;
@@ -180,27 +214,37 @@ const SAMPLE_OF: Partial<Record<SoundName, SampleName>> = {
   crown: 'crown',
   pop: 'emote',
   deal: 'deal',
+  trombone: 'sad',
   love: 'heart',
   smack: 'bunny',
 };
 
-/** Spielton. `vol` unter 1 dämpft, etwa für fremde Würfe. */
-export function sfx(name: SoundName, vol = 1): void {
+const NOOP = (): void => undefined;
+
+/** Spielton. `vol` unter 1 dämpft, etwa für fremde Würfe. Gibt eine Funktion zurück, die den Ton abbricht. */
+export function sfx(name: SoundName, vol = 1): () => void {
   const ac = audio();
-  if (App.muted || !ac) return;
+  if (App.muted || !ac) return NOOP;
   try {
     const sample = SAMPLE_OF[name];
-    if (sample && playSample(ac, sample, ac.destination, Math.max(0, vol)) !== null) return;
-    let out: AudioNode = ac.destination;
-    if (vol < 1) {
-      const g = ac.createGain();
-      g.gain.value = Math.max(0, vol);
-      g.connect(ac.destination);
-      out = g;
-    }
-    SFX[name](ac, ac.currentTime + 0.01, out);
+    const played = sample ? startSample(ac, sample, ac.destination, Math.max(0, vol)) : null;
+    if (played) return played.stop;
+    // Eigener Bus pro Ton, damit er sich sanft abbrechen lässt
+    const g = ac.createGain();
+    g.gain.value = Math.max(0, vol);
+    g.connect(ac.destination);
+    SFX[name](ac, ac.currentTime + 0.01, g);
+    return () => {
+      try {
+        g.gain.setTargetAtTime(0, ac.currentTime, 0.015);
+        setTimeout(() => g.disconnect(), 300);
+      } catch {
+        /* schon vorbei */
+      }
+    };
   } catch {
     /* Ton ist nicht wichtig genug für einen Fehler */
+    return NOOP;
   }
 }
 
@@ -211,7 +255,7 @@ export function sfxCalm(name: SoundName, gap: number, vol = 1): void {
   const now = Date.now();
   if (now - (lastAt[name] ?? 0) < gap) return;
   lastAt[name] = now;
-  sfx(name, vol);
+  void sfx(name, vol);
 }
 
 let SB: GainNode | null = null;

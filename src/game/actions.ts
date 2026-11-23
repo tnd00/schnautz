@@ -3,6 +3,7 @@ import { EMOTES, SOUNDS, TOSS_ITEMS } from './constants';
 import { beginGame, checkReady, toLobby } from './flow';
 import { checkInstant, endTurn, renewMiddle, startRound } from './schnautz';
 import { shAct, shAuto, shBegin } from './shithead';
+import { challenge, rematchOpen } from './rematch';
 import { syncSeats } from './seats';
 import {
   activeList,
@@ -143,6 +144,13 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       return null;
     case 'ready':
       if (st.phase !== 'end' && st.phase !== 'over') return null;
+      me.ready = true;
+      checkReady(st, rng);
+      return null;
+    case 'rematch':
+      // Fordern zählt als bereit. Ein später oder unberechtigter Tipp ist einfach bereit, er scheitert nie
+      if (st.phase !== 'over' || (me.bot && !a.bot)) return null;
+      if (rematchOpen(st, pid)) challenge(st, pid);
       me.ready = true;
       checkReady(st, rng);
       return null;

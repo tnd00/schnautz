@@ -61,6 +61,9 @@ export const App = {
   fxSync: true,
   /** Nach dem Aufwachen kurz nichts nachspielen */
   fxQuietUntil: 0,
+  /** Tipp-Fenster: gewählte Person und in welcher Partie es schon offen war (dann pulsiert der Knopf nicht mehr) */
+  betSel: null as string | null,
+  betSeen: -1,
   /** Zähler für E2E-Tests: gezeigte Klänge und gespielte Clips */
   sbSeen: 0,
   sbHeard: 0,

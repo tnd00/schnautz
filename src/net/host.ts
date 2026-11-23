@@ -8,7 +8,7 @@ import { hostAutoNext, nextFor, stopAutoNext } from './autonext';
 import { botChatter, botTick } from './bots';
 import { clockFor, hostClock, resetClock } from './clock';
 import { act, soundOk } from '../game/actions';
-import { EMOTE_HOST_WINDOW_MS, SH_WIN_MS, TOSS_HOST_WINDOW_MS } from '../game/constants';
+import { EMOTE_HOST_WINDOW_MS, REMATCH_ANN_MS, SH_WIN_MS, TOSS_HOST_WINDOW_MS } from '../game/constants';
 import { checkReady, quitPlayer } from '../game/flow';
 import { isOwnLeftSeat, reclaimSeat, seatGuest, syncSeats, takeSeat } from '../game/seats';
 import { cosmeticOnly, migrate, newState, pIdx, removePlayer } from '../game/state';
@@ -475,7 +475,9 @@ export function hostCommit(): void {
   hostWin(st, fresh);
   // Die Uhr fürs Zeitlimit steht, solange die Animation oder die 4er-Sperre läuft
   const win = st.game === 'shithead' ? st.sh?.win : null;
-  hostClock(st, Math.max(seqMsOf(fresh), win?.lock ? num(win.until) - Date.now() : 0));
+  // Startet mit einer Revanche-Forderung gleich die neue Partie, steht die Uhr bis die Ansage durch ist
+  const rematchAnn = fresh.some((e) => e.k === 'rematch') ? REMATCH_ANN_MS : 0;
+  hostClock(st, Math.max(seqMsOf(fresh), win?.lock ? num(win.until) - Date.now() : 0) + rematchAnn);
   botChatter();
   hostSave();
   H.conns.forEach((conn, pid) => hostSend(conn, { t: 'state', s: hostView(st, pid) }));

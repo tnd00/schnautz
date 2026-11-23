@@ -1,7 +1,7 @@
 {
   "name": "schnautz-online",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Schnautz (Schwimmen, 31) und Shithead online im Browser spielen, direkt von Browser zu Browser.",
   "type": "module",
   "engines": {

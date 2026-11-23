@@ -18,6 +18,8 @@ import type {
   State,
   Table,
 } from './types';
+import { shPlaceBet, shSettleBets } from './bets';
+import { offerRematch, settleDuel } from './rematch';
 
 type PileTable = { rules: Pick<Rules, 'sh'>; sh: { pile: Card[] } | null };
 
@@ -283,7 +285,16 @@ export function shEnd(st: State, loser: string | null, quitter?: string): void {
   st.players.forEach((p) => {
     p.ready = false;
   });
-  addLog(st, { k: 'shend', p: loser ?? undefined });
+  // Feste Reihenfolge am Partieende: shdone steht direkt vor shend, alles Weitere kommt danach
+  const bets = shSettleBets(st, loser);
+  if (bets.length) st.result.bets = bets;
+  const hits = Object.fromEntries(bets.filter((b) => b.ok).map((b) => [b.p, { q: b.q, name: names[b.p] ?? '' }]));
+  addLog(
+    st,
+    Object.keys(hits).length ? { k: 'shend', p: loser ?? undefined, hits } : { k: 'shend', p: loser ?? undefined },
+  );
+  settleDuel(st);
+  offerRematch(st, loser && !quitter ? [loser] : []);
 }
 
 const stillPlaying = (st: State): Player[] => st.players.filter((x) => !x.out && !sh(st).finished.includes(x.id));
@@ -374,6 +385,9 @@ export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
   const P = S.P[pid];
   if (!P || st.players[pi].out) return 'Du spielst diese Partie nicht mit.';
   switch (a.type) {
+    case 'shbet':
+      // Tippen ändert weder Zug noch Uhr noch 4er-Fenster
+      return shPlaceBet(st, pid, a.on);
     case 'shswap': {
       if (st.phase !== 'swap') return 'Tauschen geht nur vor dem Start.';
       if (st.players[pi].ready) return 'Du hast schon auf Fertig gedrückt.';

@@ -1,6 +1,7 @@
 import { App } from '../app';
-import { $ } from '../dom';
+import { $, $opt } from '../dom';
 import { showScreen } from '../screens';
+import { renderBetModal } from './bets';
 import { renderEmotes } from './emotes';
 import { renderLegend } from './legend';
 import { renderLobby } from './lobby';
@@ -41,6 +42,8 @@ export function render(): void {
     renderEmotes();
   }
   renderTurnNote();
+  // Offenes Tipp-Fenster mitziehen oder schließen, wenn Tippen nicht mehr geht
+  if ($opt('#modal .paper.bets')) renderBetModal(v);
   renderLog(v);
   if (sh) renderShOverlay(v);
   else renderOverlay(v);

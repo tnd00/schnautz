@@ -4,6 +4,8 @@ import { cardChip } from '../cards';
 import { $, esc, num } from '../dom';
 import { W, nameOf, vb } from '../helpers';
 import { SEQ } from '../shithead/sequence';
+import { rematchLog } from './rematch';
+import { ZER } from '../ceremony';
 
 /** Eine Zeile im Verlauf: CSS-Klasse und HTML (Namen und Texte sind escaped). */
 export function logLine(v: View, e: LogEntry): [cls: string, html: string] | null {
@@ -92,6 +94,11 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
       ];
     case 'emote':
       return null;
+    case 'rematch':
+    case 'rematchend': {
+      const t = rematchLog(v, e);
+      return t ? ['big', t] : null;
+    }
     case 'shend':
       return [
         'big',
@@ -176,11 +183,13 @@ export function resetLog(): void {
 
 /** Verlauf und Chat. Während einer Shithead-Sequenz erscheinen Züge erst, wenn sie zu sehen waren. */
 export function renderLog(v: View): void {
-  const list = SEQ.busy
-    ? v.log.filter((e) => {
-        return e.n <= App.seenN || e.k === 'chat';
-      })
-    : v.log;
+  const list = (
+    SEQ.busy
+      ? v.log.filter((e) => {
+          return e.n <= App.seenN || e.k === 'chat';
+        })
+      : v.log
+  ).filter((e) => !ZER.logN || e.n < ZER.logN || e.k === 'chat');
   const key = (list.length ? list[list.length - 1].n : 0) + ':' + list.length + ':' + App.me;
   const u = $('#unread');
   u.hidden = !App.unread;

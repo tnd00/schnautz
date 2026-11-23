@@ -1292,3 +1292,113 @@ body:not(.intable) .menu .t-only {
   font-size: 13px;
   color: var(--muted);
 }
+
+/* Bestenliste mit Tipp-Punkten: eine Spalte mehr */
+.btable.c5 .brow {
+  grid-template-columns: 24px minmax(0, 1fr) repeat(5, 48px);
+}
+@media (max-width: 560px) {
+  .btable.c5 .brow,
+  .paper.sheet .btable.c5 .brow {
+    grid-template-columns: 18px minmax(0, 1fr) repeat(5, 38px);
+  }
+}
+
+/* Revanche im Ergebnisfenster */
+.paper.sheet .btn.rv {
+  background: linear-gradient(180deg, #d0493f, #9b2a23);
+  color: #fff3e8;
+  border: 1px solid rgba(243, 205, 125, 0.6);
+  animation: rvPulse 1.6s ease-in-out infinite;
+}
+@keyframes rvPulse {
+  50% {
+    box-shadow: 0 0 0 4px rgba(208, 73, 63, 0.25);
+  }
+}
+.paper.sheet .taunt.rv {
+  color: #f6b3aa;
+}
+.rmk {
+  margin-left: 4px;
+}
+.paper .foot .btn {
+  white-space: nowrap;
+}
+/* Tipps: Knopf am eigenen Platz, Hinweis, Fenster, Zahl an den Kacheln und Ergebniszeile */
+.tag.bet {
+  background: rgba(143, 112, 214, 0.22);
+  color: #d9c8ff;
+}
+.betbtn.pulse {
+  animation: rvPulse 1.6s ease-in-out infinite;
+}
+.betnote {
+  font: 650 13px/1.3 var(--ui);
+  color: var(--cream);
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(143, 112, 214, 0.16);
+  border: 1px solid rgba(143, 112, 214, 0.35);
+}
+.paper.bets .betgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+.paper.bets .betc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(246, 239, 223, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.paper.bets .betc .bn {
+  max-width: 100%;
+  font: 700 15px/1.2 var(--ui);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.paper.bets .betc .bs {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.paper.bets .betc.sel {
+  border-color: #b49cf0;
+  background: rgba(143, 112, 214, 0.22);
+  box-shadow: 0 0 0 2px rgba(180, 156, 240, 0.35);
+}
+.paper.bets .foot {
+  justify-content: flex-end;
+}
+.paper.sheet .betres {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: #d9c8ff;
+}
+
+/* Mit Revanche-Knopf werden die anderen Knöpfe kurz, damit alles in eine Zeile passt */
+.paper .foot.rv .blong {
+  display: none;
+}
+.paper .foot.rv .bshort {
+  display: inline;
+}
+@media (max-width: 520px) {
+  .paper .foot.rv {
+    gap: 5px;
+  }
+  .paper .foot.rv .btn {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+}

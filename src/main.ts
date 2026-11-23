@@ -5,6 +5,8 @@ import '@fontsource-variable/bricolage-grotesque/opsz.css';
 import './styles/index.css';
 
 import { act } from './game/actions';
+import { botDecide } from './bots/index';
+import { viewFor } from './game/view';
 import { BOTS } from './net/bots';
 import { G } from './net/guest';
 import { H, hostCommit } from './net/host';
@@ -32,6 +34,8 @@ declare global {
       hostCommit: typeof hostCommit;
       act: typeof act;
       BOTS: typeof BOTS;
+      botDecide: typeof botDecide;
+      viewFor: typeof viewFor;
     };
   }
 }
@@ -46,5 +50,5 @@ autoResume();
 if (cleanCode(location.hash.slice(1)) && LS.get('name', '')) $('#btn-join').focus();
 // Zugang für die Ende-zu-Ende-Tests, nur beim Entwickeln oder mit lokalem PeerServer (Testparameter)
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('peerhost')) {
-  window.__schnautz = { App, H, G, SEQ, applyView, hostCommit, act, BOTS };
+  window.__schnautz = { App, H, G, SEQ, applyView, hostCommit, act, BOTS, botDecide, viewFor };
 }
