@@ -1,0 +1,242 @@
+/* Shithead Tisch */
+.opp.sh {
+  min-width: 150px;
+  gap: 6px;
+}
+.ohand {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+}
+.ohand .card {
+  --cw: 20px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.ohand .card + .card {
+  margin-left: -14px;
+}
+.hcount {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.hcount.zero {
+  opacity: 0.5;
+}
+.tcards {
+  display: flex;
+  gap: 7px;
+  --tw: 44px;
+  justify-content: center;
+}
+.tslot {
+  position: relative;
+  width: var(--tw);
+  height: calc(var(--tw) * 1.4 + 12px);
+}
+.tslot > .card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  --cw: var(--tw);
+}
+.tslot .upc {
+  position: absolute;
+  left: 3px;
+  top: 12px;
+}
+.tslot .upc .card {
+  --cw: var(--tw);
+}
+.tnone {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 10px 0;
+}
+.shme .tcards {
+  --tw: clamp(52px, 13vw, 68px);
+}
+.card.blindc {
+  box-shadow:
+    0 0 0 3px var(--brass-hi),
+    0 0 22px rgba(243, 205, 125, 0.5),
+    0 7px 16px rgba(0, 0, 0, 0.33);
+}
+.card.dim {
+  filter: brightness(0.62) saturate(0.5);
+}
+.pile {
+  position: relative;
+  width: var(--mw);
+  height: calc(var(--mw) * 1.4);
+  --mw: clamp(78px, 20vw, 106px);
+}
+.pile .card {
+  position: absolute;
+  --cw: var(--mw);
+}
+.pile .cnt {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cream);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 9px;
+  border-radius: 999px;
+  z-index: 2;
+}
+.pile .cnt.warn {
+  background: #8a4b2a;
+  color: #fff3dc;
+}
+.pcount {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  z-index: 3;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.emptyslot {
+  position: absolute;
+  inset: 0;
+  border: 1.5px dashed rgba(246, 239, 223, 0.22);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.deck .emptyslot {
+  width: 100%;
+  height: 100%;
+}
+.burned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  color: var(--muted);
+  font-size: 11px;
+  min-width: 52px;
+}
+.burned .flame {
+  font-size: 24px;
+  line-height: 1;
+  filter: saturate(0.8);
+}
+.burned b {
+  font-family: var(--display);
+  font-size: 20px;
+  color: var(--cream);
+}
+.shhand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+  padding: 24px 12px 6px;
+  --hw: clamp(64px, 17vw, 96px);
+}
+.shrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+}
+@media (min-width: 700px) {
+  .shrow {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 26px;
+  }
+  .shrow .shhand {
+    padding-bottom: 0;
+  }
+}
+.shme {
+  width: min(760px, 100%);
+}
+.shme .actions .btn {
+  white-space: nowrap;
+}
+.mini.shleft {
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.mini.shleft .card {
+  --cw: 30px;
+}
+.mini .more {
+  align-self: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #6a5f4c;
+  margin-left: 2px;
+}
+.shhand .card {
+  --cw: var(--hw);
+}
+.shhand .card + .card {
+  margin-left: calc(var(--hw) * var(--ov, -0.06));
+}
+.shhand .card {
+  z-index: 1;
+}
+.shhand .card.sel {
+  z-index: 4;
+}
+.shhand .hbr {
+  flex-basis: 100%;
+  height: 0;
+}
+.shhand .hbr + .card {
+  margin-left: 0;
+}
+.shhand .card.r2 {
+  margin-top: calc(var(--hw) * -0.74);
+}
+@media (hover: hover) {
+  .shhand .card:hover {
+    --ty: -26px;
+    --sc: 1.24;
+    z-index: 9;
+    box-shadow:
+      0 0 0 1px rgba(70, 45, 10, 0.25),
+      0 18px 34px rgba(0, 0, 0, 0.5);
+  }
+  .shhand .card.sel:hover {
+    --ty: -32px;
+    box-shadow:
+      0 0 0 3px var(--brass-hi),
+      0 0 26px rgba(243, 205, 125, 0.55),
+      0 18px 34px rgba(0, 0, 0, 0.5);
+  }
+  .tcards .card.pick:hover {
+    --sc: 1.12;
+    z-index: 5;
+  }
+}
+.shme {
+  gap: 10px;
+}
