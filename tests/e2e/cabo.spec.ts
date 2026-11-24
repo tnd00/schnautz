@@ -206,7 +206,13 @@ test('Spionieren und Blindtausch gehen auch im Karussell mit der Maus', async ({
   const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
   await hostTable(host, 'Tahna');
   await chooseCabo(host, false);
-  for (let i = 0; i < 6; i++) await host.click('[data-act=addbot]');
+  // Ab vier Plätzen braucht es mehr Stühle, dann verschwindet der Knopf für die nächste KI kurz
+  for (let i = 0; i < 20 && (await playerCount(host)) < 7; i++) {
+    const add = host.locator('[data-act=addbot]');
+    if (await add.count()) await add.first().click();
+    else await host.click('[data-act=seats][data-d="1"]');
+    await host.waitForTimeout(100);
+  }
   await expect.poll(() => playerCount(host)).toBe(7);
   await host.click('[data-act=start]');
   await waitForPhase(host, ['peek'], 20_000);

@@ -177,7 +177,8 @@ function quickLock(): boolean {
   return true;
 }
 
-function onAction(a: string, t: HTMLElement): void {
+/** `viaCar`: Der Tipp kam schon aufgelöst aus dem Karussell (initCarousel), dann gilt keine Doppelklick-Sperre. */
+function onAction(a: string, t: HTMLElement, viaCar = false): void {
   const v = App.view;
   const i = Number(t.dataset.i);
   switch (a) {
@@ -208,7 +209,7 @@ function onAction(a: string, t: HTMLElement): void {
       break;
     case 'cbo':
       // Im Karussell kam der Tipp schon über initCarousel, der Klick danach zählt nicht doppelt
-      if (Date.now() - CAR.tapAt < 400 && t.closest('.opps.car')) break;
+      if (!viaCar && Date.now() - CAR.tapAt < 400 && t.closest('.opps.car')) break;
       cbTapOpp(t.dataset.o ?? '', Number(t.dataset.sid));
       break;
     case 'cbdeck':
@@ -610,7 +611,7 @@ function aimAt(pid: string): void {
 
 /** Alle Ereignis-Listener einmal beim Start registrieren. */
 export function initEvents(): void {
-  initCarousel(aimAt, (el) => el.dataset.act && onAction(el.dataset.act, el));
+  initCarousel(aimAt, (el) => el.dataset.act && onAction(el.dataset.act, el, true));
   document.addEventListener('visibilitychange', () => {
     updateTitle();
     if (!document.hidden) {

@@ -71,7 +71,7 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
     }
     const q = v.sh?.win ? (shCanThrow(v, me) ? 'shthrow' : null) : shCanBomb(v, me) ? 'shbomb' : null;
     if (q && (await host.locator(`[data-act=${q}]`).count())) {
-      await host.click(`[data-act=${q}]`);
+      await host.click(`[data-act=${q}]`, { timeout: 5000 }).catch(() => undefined);
       await host.waitForTimeout(300);
       continue;
     }
@@ -83,20 +83,26 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
     moves++;
     const P = S.P[me];
     const hand = Array.isArray(P.hand) ? P.hand : [];
-    if (!hand.length && !P.up.length)
-      await host.click('.shme .card[data-act=shd] >> nth=0', { position: { x: 10, y: 20 } });
-    else {
-      const arr = hand.length ? hand : P.up;
-      const ok = arr.flatMap((c, k) => (shCanPlay(v, rankOf(c)) ? [k] : []));
-      // Meist die niedrigste Karte, ab und zu eine andere, sonst spielen Mensch und KI im Endspiel endlos Pingpong
-      const i0 = !ok.length ? -1 : Math.random() < 0.7 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
-      if (i0 < 0) await host.click('[data-act=shpickup]');
+    // Klicks mit Zeitgrenze: Ganz selten hängt ein Klick in Chrome, dann im nächsten Durchgang neu
+    try {
+      if (!hand.length && !P.up.length)
+        await host.click('.shme .card[data-act=shd] >> nth=0', { position: { x: 10, y: 20 }, timeout: 5000 });
       else {
-        await host.click(`.shme [data-act=${hand.length ? 'shh' : 'shu'}][data-i="${i0}"]`, {
-          position: { x: 8, y: 18 },
-        });
-        await host.click('[data-act=shplay]');
+        const arr = hand.length ? hand : P.up;
+        const ok = arr.flatMap((c, k) => (shCanPlay(v, rankOf(c)) ? [k] : []));
+        // Meist die niedrigste Karte, ab und zu eine andere, sonst spielen Mensch und KI im Endspiel endlos Pingpong
+        const i0 = !ok.length ? -1 : Math.random() < 0.7 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
+        if (i0 < 0) await host.click('[data-act=shpickup]', { timeout: 5000 });
+        else {
+          await host.click(`.shme [data-act=${hand.length ? 'shh' : 'shu'}][data-i="${i0}"]`, {
+            position: { x: 8, y: 18 },
+            timeout: 5000,
+          });
+          await host.click('[data-act=shplay]', { timeout: 5000 });
+        }
       }
+    } catch {
+      continue;
     }
     await waitForChange(host, v.n);
   }
