@@ -35,38 +35,47 @@ function cheapest(hand: string[], a: string, ts: string): number {
   return best;
 }
 
+/** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (src/ui/durak/input.ts). */
+async function button(page: Page, act: string): Promise<boolean> {
+  const b = page.locator(`[data-act=${act}]:not([disabled])`);
+  if (!(await b.count())) return false;
+  await page.waitForTimeout(450);
+  await b.first().click({ timeout: 5000 });
+  return true;
+}
+
 /** Ein Zug über die Oberfläche, wenn die Partie auf mich wartet. true heißt: geklickt. */
 async function dkMove(page: Page, v: View, me: string): Promise<boolean> {
   const D = v.dk;
   if (!D || v.phase !== 'play' || !dkWaiting(v).includes(me)) return false;
   const hand = D.P[me];
   if (!Array.isArray(hand) || !hand.length) return false;
-  if (!D.table.length) {
-    await page.click('#me [data-act=dkh][data-i="0"]');
-    await page.click('[data-act=dkgo]');
-    return true;
-  }
-  if (me === D.def) {
-    const ts = dkTrump(D);
-    for (let i = 0; i < D.table.length; i++) {
-      const p = D.table[i];
-      if (p.d) continue;
-      const j = cheapest(hand, p.a, ts);
-      if (j < 0) break;
-      // Erst den Angriff wählen, dann die Karte: das schlägt sofort
-      await page.click(`#center .dkpair[data-i="${i}"]`);
-      await page.click(`#me [data-act=dkh][data-i="${j}"]`);
-      return true;
+  try {
+    if (!D.table.length) {
+      // Nur wählen, wenn die Karte noch nicht gewählt ist, ein zweiter Tipp hebt die Auswahl wieder auf
+      const card = page.locator('#me [data-act=dkh][data-i="0"]');
+      if (!(await card.evaluate((el) => el.classList.contains('sel')))) await card.click({ timeout: 5000 });
+      return await button(page, 'dkgo');
     }
-    await page.click('[data-act=dktake]');
-    return true;
+    if (me === D.def) {
+      const ts = dkTrump(D);
+      for (let i = 0; i < D.table.length; i++) {
+        const p = D.table[i];
+        if (p.d) continue;
+        const j = cheapest(hand, p.a, ts);
+        if (j < 0) break;
+        // Erst den Angriff wählen, dann die Karte: das schlägt sofort
+        await page.click(`#center .dkpair[data-i="${i}"]`, { timeout: 5000 });
+        await page.click(`#me [data-act=dkh][data-i="${j}"]`, { timeout: 5000 });
+        return true;
+      }
+      return await button(page, 'dktake');
+    }
+    return await button(page, 'dkpass');
+  } catch {
+    // Ein Zug von jemand anderem kam dazwischen: im nächsten Durchgang neu
+    return false;
   }
-  const pass = page.locator('[data-act=dkpass]');
-  if (await pass.count()) {
-    await pass.click();
-    return true;
-  }
-  return false;
 }
 
 /** Spielt über die Oberfläche, bis die Partie vorbei ist. */
