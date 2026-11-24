@@ -29,8 +29,10 @@ export function fitView(v: View, max = VIEW_MAX_BYTES): View {
 /**
  * Ansicht für einen Platz am Tisch: fremde Handkarten und alle verdeckten Karten werden zu Anzahlen.
  * Nur das darf an Gäste und an die KI gehen, damit niemand schummeln kann.
+ * `ownKnow`: Nur beim Host, wenn die KI für einen Menschen zieht (Zeitablauf): Dann bekommt sie bei Cabo, was diese
+ * Person selbst gesehen hat. Diese Ansicht verlässt den Host nie.
  */
-export function viewFor(st: State, pid: string): View {
+export function viewFor(st: State, pid: string, ownKnow = false): View {
   const copy = structuredClone(st);
   const hands: View['hands'] = {};
   Object.entries(copy.hands).forEach(([id, h]) => {
@@ -68,7 +70,7 @@ export function viewFor(st: State, pid: string): View {
     });
     const hold =
       C.hold && (C.hold.by === pid || C.hold.from === 'pile') ? C.hold : C.hold && { by: C.hold.by, from: C.hold.from };
-    const bot = !!st.players.find((p) => p.id === pid)?.bot;
+    const bot = ownKnow || !!st.players.find((p) => p.id === pid)?.bot;
     const { know, reveal: shows, ...rest } = C;
     cb = {
       ...rest,

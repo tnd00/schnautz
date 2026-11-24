@@ -51,7 +51,8 @@ function step(st: State, rng: Rng): Move | null {
     return act(st, m.pid, m.a, rng) ? null : m;
   }
   for (const p of st.players) {
-    const a = botDecide(viewFor(st, p.id), rng, 'normal');
+    // Auch für Menschen mit ihrem eigenen Wissen, die Kopie verlässt den Host nie
+    const a = botDecide(viewFor(st, p.id, true), rng, 'normal');
     if (!a || COSMETIC.has(a.type)) continue;
     if (!act(st, p.id, a, rng)) return { pid: p.id, a };
   }

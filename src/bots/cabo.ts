@@ -1,8 +1,8 @@
 /*
  * Cabo-KI: entscheidet nur aus ihrer Ansicht. Ihr Wissen kommt vom Host (nur KIs bekommen es), vergessen tut sie
- * selbst: Je länger sie eine Karte nicht gesehen hat, desto eher ist sie weg, ab und zu merkt sie sich auch einen
- * falschen Wert. Das ist gewollt, sonst wäre sie gegen Menschen unschlagbar. Das Vergessen hängt nur am Zug, an
- * der Karte und an der KI, darum entscheidet sie innerhalb eines Zuges immer gleich.
+ * selbst: Je mehr eigene Züge seit dem Ansehen vergangen sind, desto eher ist eine Karte weg, und was weg ist, kommt
+ * nicht wieder. Manche Karten merkt sie sich von Anfang an falsch (3 daneben). Das ist gewollt, sonst wäre sie gegen
+ * Menschen unschlagbar. Alles hängt nur an KI, Platz und Zeitpunkt des Ansehens, darum entscheidet sie stabil.
  */
 import { cbVal } from '../game/cards';
 import type { Action, CbSlotView, CbView, Rng, View } from '../game/types';
@@ -18,14 +18,20 @@ function hash01(s: string): number {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
+  // Endmischung (murmur3), sonst ändert ein anderes letztes Zeichen das Ergebnis kaum
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
   return (h >>> 0) / 4294967296;
 }
 
-/** So leicht vergisst die KI: je Zug seit dem Ansehen etwas mehr, höchstens gut die Hälfte. */
+/** So leicht vergisst die KI: je eigenem Zug seit dem Ansehen etwas mehr, höchstens `max`. */
 const FORGET: Readonly<Record<BotLevel, { per: number; max: number; wrong: number }>> = {
-  weak: { per: 0.09, max: 0.7, wrong: 0.12 },
-  normal: { per: 0.05, max: 0.55, wrong: 0.07 },
-  strong: { per: 0.015, max: 0.2, wrong: 0.02 },
+  weak: { per: 0.18, max: 0.7, wrong: 0.12 },
+  normal: { per: 0.1, max: 0.55, wrong: 0.07 },
+  strong: { per: 0.03, max: 0.2, wrong: 0.02 },
 };
 
 /**
@@ -38,12 +44,14 @@ export function botCbRecall(v: View, owner: string, s: CbSlotView, lvl: BotLevel
   const k = C?.know?.[s.id];
   if (!C || !k) return null;
   const f = FORGET[lvl];
-  const age = Math.max(0, C.t - k.t);
-  // Alle drei Züge wird neu gewürfelt, so bleibt eine Erinnerung eine Weile stabil
-  const h = hash01(`${v.me}|${owner}|${s.id}|${k.t}|${Math.floor(C.t / 3)}`);
-  const pForget = Math.min(f.max, f.per * age);
-  if (h < pForget) return null;
-  if (h < pForget + f.wrong) return Math.max(0, Math.min(13, cbVal(k.c) + (h * 1000 > 500 ? 3 : -3)));
+  // Alter in eigenen Zügen, am großen Tisch vergeht zwischen zwei eigenen Zügen sonst zu viel
+  const age = Math.max(0, C.t - k.t) / Math.max(1, v.players.length);
+  const key = `${v.me}|${owner}|${s.id}|${k.t}`;
+  // Die Schwelle steigt mit dem Alter, ein vergessener Platz bleibt vergessen, bis sie ihn wieder sieht
+  if (hash01(key) < Math.min(f.max, f.per * age)) return null;
+  // Falsch gemerkt, aber nie direkt nach dem Ansehen, und mal zu hoch, mal zu tief
+  if (age >= 1 && hash01(`${key}|w`) < f.wrong)
+    return Math.max(0, Math.min(13, cbVal(k.c) + (hash01(`${key}|d`) < 0.5 ? -3 : 3)));
   return cbVal(k.c);
 }
 
@@ -86,7 +94,8 @@ export function botCabo(v: View, rng?: Rng, lvl: BotLevel = 'normal'): Action | 
   const cfg = BOT_CFG[lvl];
   const top = C.pile[C.pile.length - 1];
   // Schnappen: Eine Karte, die sie für gleich hält, fliegt drauf, auch wenn sie sich irrt
-  if (v.rules.cb?.snap && top) {
+  const busy = C.hold?.by === v.me || C.power?.by === v.me;
+  if (v.rules.cb?.snap && top && !busy) {
     const hit = ms.find((m) => m.v != null && m.v === cbVal(top));
     if (hit && hash01(`${v.me}|snap|${C.t}|${hit.s.id}`) < 0.7) return { type: 'cbsnap', id: hit.s.id };
   }
@@ -97,13 +106,22 @@ export function botCabo(v: View, rng?: Rng, lvl: BotLevel = 'normal'): Action | 
       const unk = ms.find((m) => m.v == null && !m.s.up);
       return unk ? { type: 'cbpeek', id: unk.s.id } : { type: 'cbskip' };
     }
-    const others = v.players.filter((p) => p.id !== v.me && C.P[p.id]?.length);
+    // Im Kreis ab dem eigenen Platz, damit nicht immer dieselbe Person (meist der Host) dran ist
+    const n = v.players.length;
+    const mi = v.players.findIndex((p) => p.id === v.me);
+    const others = v.players
+      .map((_, k) => v.players[(mi + 1 + k) % n])
+      .filter((p) => p.id !== v.me && C.P[p.id]?.length);
     if (C.power.kind === 'spy') {
-      for (const p of others) {
-        const s = C.P[p.id].find((x) => !x.up && botCbRecall(v, p.id, x, lvl) == null);
-        if (s) return { type: 'cbspy', to: p.id, id: s.id };
-      }
-      return { type: 'cbskip' };
+      // Wer Cabo gerufen hat, ist am spannendsten, sonst irgendeine unbekannte Karte
+      const cands = others.flatMap((p) =>
+        C.P[p.id].filter((x) => !x.up && botCbRecall(v, p.id, x, lvl) == null).map((x) => ({ to: p.id, id: x.id })),
+      );
+      const caller = cands.filter((x) => x.to === C.cabo);
+      const pool = caller.length ? caller : cands;
+      if (!pool.length) return { type: 'cbskip' };
+      const pick = pool[Math.floor(hash01(`${v.me}|spy|${C.t}`) * pool.length)];
+      return { type: 'cbspy', to: pick.to, id: pick.id };
     }
     // Blind tauschen: eigene hohe Karte gegen eine bekannte niedrige, sonst manchmal ins Blaue
     const w = worst(ms);
@@ -149,7 +167,10 @@ export function botCabo(v: View, rng?: Rng, lvl: BotLevel = 'normal'): Action | 
   const n = v.players.length;
   const tooEarly = C.t < n * 2;
   const brave = 4 + (cfg.mistake > 0.3 ? 4 : 0) + Math.floor(hash01(`${v.me}|cabo|${v.round}`) * 4);
-  if (!C.cabo && !tooEarly && known >= ms.length - 1 && guess <= brave) return { type: 'cbcabo' };
+  const sure = known >= ms.length - 1 && guess <= brave;
+  // Gegen Ende der Runde ist ein mutiger Ruf besser als der leere Stapel, der kommt sowieso bald
+  const late = C.deck <= n * 1.5 && known >= ms.length - 2 && guess <= brave + 4;
+  if (!C.cabo && !tooEarly && (sure || late)) return { type: 'cbcabo' };
   const w = worst(ms);
   if (top && w && cbVal(top) <= 3 && est(w.v) >= cbVal(top) + 4) return { type: 'cbdraw', from: 'pile' };
   // Hat eine Strafkarte den Stapel geleert, bleibt nur die Ablage

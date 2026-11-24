@@ -87,7 +87,8 @@ function autoMove(st: State, id: string, swap: boolean): void {
   const t0 = st.cb?.t;
   const caboTurn = () => st.game === 'cabo' && st.phase === 'play' && st.cb?.t === t0 && st.players[st.turn]?.id === id;
   for (let i = 0; i < 12; i++) {
-    const a = botDecide(viewFor(st, id), undefined, 'normal');
+    // Mit dem eigenen Wissen der Person, sonst würfe die KI gemerkte gute Karten weg
+    const a = botDecide(viewFor(st, id, true), undefined, 'normal');
     if (!a) break;
     const err = act(st, id, a);
     if (err) {

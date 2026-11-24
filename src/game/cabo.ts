@@ -321,6 +321,8 @@ function snap(st: State, pid: string, id: number): ActResult {
   const C = cb(st);
   if (!st.rules.cb?.snap) return 'Schnappen ist an diesem Tisch aus.';
   if (st.phase !== 'play') return 'Schnappen geht nur während der Runde.';
+  // Mitten im eigenen Zug nicht, sonst könnte man die letzte Karte loswerden und die gezogene nicht mehr tauschen
+  if (C.hold?.by === pid || C.power?.by === pid) return 'Spiel erst deinen Zug zu Ende.';
   const row = C.P[pid];
   const top = C.pile[C.pile.length - 1];
   const i = slotIdx(row, id);

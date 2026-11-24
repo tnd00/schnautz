@@ -306,6 +306,15 @@ describe('Cabo: Grenzfälle', () => {
     expect(cur(st)).not.toBe(a);
   });
 
+  it('mitten im eigenen Zug darf man nicht schnappen', () => {
+    const { st, C } = table(2, 39, { snap: true });
+    lookAll(st);
+    const a = cur(st);
+    act(st, a, { type: 'cbdraw', from: 'pile' });
+    expect(act(st, a, { type: 'cbsnap', id: C.P[a][0].id })).toBe('Spiel erst deinen Zug zu Ende.');
+    expect(act(st, a, { type: 'cbswap', ids: [C.P[a][0].id] })).toBeNull();
+  });
+
   it('leert falsches Schnappen den Stapel, bevor jemand zieht, ist die Runde vorbei', () => {
     const { st, C } = table(2, 31, { snap: true });
     lookAll(st);
@@ -455,7 +464,8 @@ function moves(st: State, pid: string): Action[] {
     return out;
   }
   if (st.phase !== 'play') return out;
-  if (st.rules.cb.snap && C.pile.length && row.length) out.push({ type: 'cbsnap', id: row[0].id });
+  const busy = C.hold?.by === pid || C.power?.by === pid;
+  if (st.rules.cb.snap && C.pile.length && row.length && !busy) out.push({ type: 'cbsnap', id: row[0].id });
   if (cur(st) !== pid) return out;
   const others = st.players.filter((p) => p.id !== pid && C.P[p.id]?.length);
   if (C.power) {
@@ -474,7 +484,7 @@ function moves(st: State, pid: string): Action[] {
     return out;
   }
   if (C.deck.length) out.push({ type: 'cbdraw', from: 'deck' });
-  if (C.pile.length) out.push({ type: 'cbdraw', from: 'pile' });
+  if (C.pile.length && row.length) out.push({ type: 'cbdraw', from: 'pile' });
   if (!C.cabo) out.push({ type: 'cbcabo' });
   return out;
 }
