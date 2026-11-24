@@ -8,15 +8,18 @@ import { SH_ORD } from '../../src/game/constants';
 import { dkTrump, dkWaiting } from '../../src/game/durak';
 import type { View } from '../../src/game/types';
 import {
+  chooseGame,
   closeAll,
   desktop,
   Errors,
   hostTable,
   joinTable,
+  lobbyTab,
   mustView,
   myId,
   phone,
   playerCount,
+  startGame,
   view,
   waitForPhase,
 } from './helpers';
@@ -156,9 +159,8 @@ test('Durak zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ b
   const host = errors.watch(await (await phone(browser)).newPage(), 'host');
   await hostTable(host, 'Tahna');
   // Am Handy liegt die Spielwahl im zweiten Reiter
-  await host.click('[data-act=ltab][data-t=game]');
-  await host.click('[data-act=game][data-g=durak]');
-  await host.click('[data-act=ltab][data-t=table]');
+  await chooseGame(host, 'durak');
+  await lobbyTab(host, 'table');
   for (let i = 0; i < 20 && (await playerCount(host)) < 8; i++) {
     const add = host.locator('[data-act=addbot]');
     if (await add.count()) await add.first().click();
@@ -166,7 +168,7 @@ test('Durak zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ b
     await host.waitForTimeout(100);
   }
   await expect.poll(() => playerCount(host), { timeout: 10_000 }).toBe(8);
-  await host.click('[data-act=start]');
+  await startGame(host);
   await waitForPhase(host, ['play'], 20_000);
   expect((await mustView(host)).dk?.size).toBe(52);
   await host.waitForTimeout(1500);

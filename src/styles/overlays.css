@@ -366,18 +366,19 @@ body.peeking #emotes {
  * Formular und Menü, auch wenn er über dem Tisch aufgeht.
  * Gerüst und Fokus kommen aus src/ui/dialog.ts (.dlg mit festem Kopf und eigenem Scrollbereich).
  * Jede Regel hängt an #modal und schlägt so die Filz-Regeln (.paper.sheet in shithead-flow.css) unabhängig
- * von der Reihenfolge. Ausgenommen sind Tipps (.betm, .bets), die zum Spiel gehören, und das Dev-Menü (.devm).
+ * von der Reihenfolge. Ausgenommen sind nur Tipps (.betm, .bets), die zum Spiel gehören. Das Dev-Menü (.devm)
+ * ist ein normaler Bogen, sein Inhalt steht in dev.css.
  * Ergebnisfenster am Tisch (#overlay) bleiben unverändert.
  * ========================================================================== */
 
-#modal > .modal:not(.betm, :has(> .devm)) {
+#modal > .modal:not(.betm) {
   padding: 24px;
   background: var(--st-dim);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 /* Der Bogen ist Trägerpapier wie Formular und Menü am Handy: Felder und Nebenknöpfe darauf sind weiß */
-#modal .paper.sheet:not(.bets, .devm) {
+#modal .paper.sheet:not(.bets) {
   --display: var(--ui);
   --st-field: var(--st-paper);
   width: min(600px, 100%);
@@ -402,21 +403,21 @@ body.peeking #emotes {
 #modal > .modal > .paper:focus-visible {
   outline: none;
 }
-#modal .paper.sheet:not(.bets, .devm) :focus-visible {
+#modal .paper.sheet:not(.bets) :focus-visible {
   outline: 3px solid var(--st-ink);
   outline-offset: 3px;
 }
-#modal .paper.sheet:not(.bets, .devm) ::selection {
+#modal .paper.sheet:not(.bets) ::selection {
   background: var(--st-ink);
   color: var(--st-paper);
 }
-#modal .paper.sheet:not(.bets, .devm) input {
+#modal .paper.sheet:not(.bets) input {
   caret-color: var(--st-ground);
 }
-#modal .paper.sheet:not(.bets, .devm) ::-webkit-scrollbar {
+#modal .paper.sheet:not(.bets) ::-webkit-scrollbar {
   width: 10px;
 }
-#modal .paper.sheet:not(.bets, .devm) ::-webkit-scrollbar-thumb {
+#modal .paper.sheet:not(.bets) ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 99px;
   background: rgba(26, 24, 48, 0.3) padding-box;
@@ -479,7 +480,7 @@ body.peeking #emotes {
 #modal .dlg-x {
   position: static;
 }
-#modal .paper.sheet:not(.bets, .devm) .x {
+#modal .paper.sheet:not(.bets) .x {
   display: grid;
   place-items: center;
   flex: none;
@@ -495,7 +496,7 @@ body.peeking #emotes {
   box-shadow:
     0 1px 1px rgba(26, 24, 48, 0.2),
     0 5px 10px -4px rgba(26, 24, 48, 0.35);
-  rotate: 4deg;
+  rotate: 2deg;
   cursor: pointer;
   transition:
     background-color 0.15s,
@@ -503,7 +504,7 @@ body.peeking #emotes {
     scale var(--st-lift-ms) var(--st-ease);
   -webkit-tap-highlight-color: transparent;
 }
-#modal .paper.sheet:not(.bets, .devm) .x svg {
+#modal .paper.sheet:not(.bets) .x svg {
   width: 20px;
   height: 20px;
   fill: none;
@@ -512,13 +513,73 @@ body.peeking #emotes {
   stroke-linecap: round;
 }
 @media (hover: hover) {
-  #modal .paper.sheet:not(.bets, .devm) .x:hover {
+  #modal .paper.sheet:not(.bets) .x:hover {
     background: var(--st-ink);
     color: var(--st-paper);
   }
 }
-#modal .paper.sheet:not(.bets, .devm) .x:active {
+#modal .paper.sheet:not(.bets) .x:active {
   scale: 0.92;
+}
+/* Werkzeug im Kopf links neben dem Kreuz (Zurücksetzen): dieselbe runde Form, ohne Neigung */
+/* Dunkle Hauptknöpfe im Fenster: violetter Fokusring statt eines zweiten schwarzen Rands */
+#modal .paper.sheet:not(.bets) .st-btn.st-primary:focus-visible {
+  outline-color: var(--st-ground);
+  outline-offset: 2px;
+}
+/* Im Fenster Tisch: Abstand zwischen Einladen und Verbindung */
+#modal .netinfo.invite .dlg-body > h3 {
+  margin-top: 26px;
+}
+#modal .dlg-tool {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0;
+  border: 3px solid var(--st-paper);
+  border-radius: 50%;
+  background: var(--st-field);
+  color: var(--st-ink);
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 5px 10px -4px rgba(26, 24, 48, 0.35);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    scale var(--st-lift-ms) var(--st-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+#modal .dlg-tool svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (hover: hover) {
+  #modal .dlg-tool:not(:disabled):hover {
+    background: var(--st-ink);
+    color: var(--st-paper);
+  }
+}
+#modal .dlg-tool:not(:disabled):active {
+  scale: 0.92;
+}
+/* Nichts zurückzusetzen: Der Knopf bleibt stehen, tritt aber zurück */
+#modal .dlg-tool:disabled {
+  opacity: 0.38;
+  box-shadow: none;
+  cursor: default;
+}
+/* Zurücksetzen sitzt rechts direkt neben dem Kreuz */
+#modal .paper.sheet:not(.bets) .dlg-tool + .x {
+  margin-left: 0;
 }
 #modal .paper.sheet .dlg-body:focus-visible {
   outline-offset: -3px;
@@ -534,10 +595,10 @@ body.peeking #emotes {
 }
 
 /* Grundtext im Bogen */
-#modal .paper.sheet:not(.bets, .devm) :is(h2, h3, p, .lead) {
+#modal .paper.sheet:not(.bets) :is(h2, h3, p, .lead) {
   padding-left: 0;
 }
-#modal .paper.sheet:not(.bets, .devm) .lead {
+#modal .paper.sheet:not(.bets) .lead {
   max-width: none;
   margin: 0 0 18px;
   color: var(--st-ink-soft);
@@ -545,7 +606,7 @@ body.peeking #emotes {
   line-height: 1.5;
   text-align: left;
 }
-#modal .paper.sheet:not(.bets, .devm) .botb {
+#modal .paper.sheet:not(.bets) .botb {
   display: inline-grid;
   place-items: center;
   min-height: 20px;
@@ -560,7 +621,7 @@ body.peeking #emotes {
 }
 
 /* ---------- Knöpfe im Bogen: Hauptknopf in Tinte, Nebenknopf in Weiß (wie .st-btn) ---------- */
-#modal .paper.sheet:not(.bets, .devm) .btn {
+#modal .paper.sheet:not(.bets) .btn {
   min-height: 56px;
   padding: 0 20px;
   border: 6px solid var(--st-paper);
@@ -574,24 +635,24 @@ body.peeking #emotes {
     translate var(--st-lift-ms) var(--st-ease),
     box-shadow var(--st-lift-ms) var(--st-ease);
 }
-#modal .paper.sheet:not(.bets, .devm) .btn.primary {
+#modal .paper.sheet:not(.bets) .btn.primary {
   background: var(--st-ink);
   background-clip: padding-box;
   color: var(--st-paper);
 }
 @media (hover: hover) {
-  #modal .paper.sheet:not(.bets, .devm) .btn:hover {
+  #modal .paper.sheet:not(.bets) .btn:hover {
     translate: 0 -2px;
     box-shadow: var(--st-shadow-lift);
   }
 }
-#modal .paper.sheet:not(.bets, .devm) .btn:active {
+#modal .paper.sheet:not(.bets) .btn:active {
   translate: 0 -4px;
   box-shadow: var(--st-shadow-lift);
 }
 
-/* ---------- Bogen ohne festen Kopf: Rückfragen (events.ts) und Verbindung (render/netinfo.ts) ---------- */
-#modal .paper.sheet:not(.dlg, .bets, .devm) {
+/* ---------- Bogen ohne festen Kopf: Rückfragen (events.ts). Das Fenster Tisch (render/netinfo.ts) hat einen ---------- */
+#modal .paper.sheet:not(.dlg, .bets) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-content: start;
@@ -599,10 +660,10 @@ body.peeking #emotes {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-#modal .paper.sheet:not(.dlg, .bets, .devm) > * {
+#modal .paper.sheet:not(.dlg, .bets) > * {
   grid-column: 1 / -1;
 }
-#modal .paper.sheet:not(.dlg, .bets, .devm) > h2 {
+#modal .paper.sheet:not(.dlg, .bets) > h2 {
   grid-column: 1;
   grid-row: 1;
   align-self: center;
@@ -618,7 +679,7 @@ body.peeking #emotes {
   letter-spacing: -0.02em;
   text-align: left;
 }
-#modal .paper.sheet:not(.dlg, .bets, .devm) > .x {
+#modal .paper.sheet:not(.dlg, .bets) > .x {
   position: sticky;
   top: 0;
   grid-column: 2;
@@ -635,7 +696,7 @@ body.peeking #emotes {
   letter-spacing: -0.015em;
   text-wrap: balance;
 }
-#modal .paper.sheet:not(.bets, .devm) .foot {
+#modal .paper.sheet:not(.bets) .foot {
   gap: 10px;
   padding-top: 8px;
 }
@@ -656,8 +717,8 @@ body.peeking #emotes {
   font-size: 14.5px;
 }
 #modal .netinfo .nrow span,
-#modal .paper.sheet:not(.bets, .devm) .npeople li span,
-#modal .paper.sheet:not(.bets, .devm) .nnote {
+#modal .paper.sheet:not(.bets) .npeople li span,
+#modal .paper.sheet:not(.bets) .nnote {
   color: var(--st-ink-soft);
 }
 #modal .netinfo .nrow b {
@@ -753,7 +814,7 @@ body.peeking #emotes {
   font: 800 12px/1 var(--ui);
   letter-spacing: 0;
   white-space: nowrap;
-  rotate: 6deg;
+  rotate: 3deg;
   box-shadow: 0 2px 5px -1px rgba(26, 24, 48, 0.4);
 }
 #modal .rjump {
@@ -891,13 +952,13 @@ body.peeking #emotes {
   background: var(--g);
   font-size: 21px;
   line-height: 1;
-  rotate: -2deg;
+  rotate: -1deg;
   box-shadow:
     inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
     var(--st-shadow);
 }
 #modal .lbs:nth-of-type(even) .lbg {
-  rotate: 2deg;
+  rotate: 1deg;
 }
 #modal .lbn {
   color: var(--st-ink-soft);
@@ -1154,11 +1215,11 @@ body.peeking #emotes {
 
 /* ---------- Handy: der Bogen kommt von unten, nur sein Inhalt scrollt ---------- */
 @media (max-width: 640px) {
-  #modal > .modal:not(.betm, :has(> .devm)) {
+  #modal > .modal:not(.betm) {
     place-items: end center;
     padding: max(28px, env(safe-area-inset-top)) 0 0;
   }
-  #modal .paper.sheet:not(.bets, .devm) {
+  #modal .paper.sheet:not(.bets) {
     width: 100%;
     max-height: calc(100dvh - max(28px, env(safe-area-inset-top)));
     padding-bottom: max(20px, env(safe-area-inset-bottom));
@@ -1186,7 +1247,7 @@ body.peeking #emotes {
   #modal .dlg-body {
     padding: 16px 20px max(24px, calc(env(safe-area-inset-bottom) + 12px));
   }
-  #modal .paper.sheet:not(.dlg, .bets, .devm) {
+  #modal .paper.sheet:not(.dlg, .bets) {
     padding: 20px 20px max(20px, env(safe-area-inset-bottom));
   }
   /* Bestenliste: Name oben, Zahlen darunter genau unter ihren Überschriften */
@@ -1213,10 +1274,10 @@ body.peeking #emotes {
   }
 }
 @media (max-height: 600px) and (max-width: 640px) {
-  #modal > .modal:not(.betm, :has(> .devm)) {
+  #modal > .modal:not(.betm) {
     padding-top: max(12px, env(safe-area-inset-top));
   }
-  #modal .paper.sheet:not(.bets, .devm) {
+  #modal .paper.sheet:not(.bets) {
     max-height: calc(100dvh - max(12px, env(safe-area-inset-top)));
   }
   #modal .dlg-title {
@@ -1228,18 +1289,18 @@ body.peeking #emotes {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #modal .paper.sheet:not(.bets, .devm) {
+  #modal .paper.sheet:not(.bets) {
     animation: fade 0.2s;
   }
   #modal .rtab[aria-pressed='true'] {
     animation: none;
   }
   #modal .rtab,
-  #modal .paper.sheet:not(.bets, .devm) .btn {
+  #modal .paper.sheet:not(.bets) .btn {
     transition: box-shadow var(--st-lift-ms) linear;
   }
   #modal .rtab:is(:hover, :active),
-  #modal .paper.sheet:not(.bets, .devm) .btn:is(:hover, :active) {
+  #modal .paper.sheet:not(.bets) .btn:is(:hover, :active) {
     translate: none;
   }
 }
@@ -1264,11 +1325,11 @@ body:not(.ingame) .toast {
   background: var(--st-paper);
   color: var(--st-ink);
   font: 700 14.5px/1.35 var(--ui);
-  rotate: -1deg;
+  rotate: -0.5deg;
   box-shadow: var(--st-shadow-lift);
 }
 body:not(.ingame) .toast:nth-child(even) {
-  rotate: 1deg;
+  rotate: 0.5deg;
 }
 body:not(.ingame) #updbar {
   gap: 8px;
@@ -1278,7 +1339,7 @@ body:not(.ingame) #updbar {
   background: var(--st-ink);
   color: var(--st-paper);
   font: 700 14.5px/1.3 var(--ui);
-  rotate: -1deg;
+  rotate: -0.5deg;
   box-shadow: var(--st-shadow-lift);
 }
 body:not(.ingame) #updbar .btn.small {
@@ -1306,6 +1367,6 @@ body:not(.ingame) #updbar :focus-visible {
 /* Beim Wechsel des Inhalts (anderer Regel-Reiter) fliegt das Fenster nicht neu ein. Steht am Ende und ist
  * spezifischer als jede Einblendung oben, auch die vom Handy und die für reduzierte Bewegung. */
 #modal > .modal.swap,
-#modal > .modal.swap > .paper.sheet:not(.bets, .devm) {
+#modal > .modal.swap > .paper.sheet:not(.bets) {
   animation: none;
 }

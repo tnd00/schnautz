@@ -5,17 +5,21 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { View } from '../../src/game/types';
 import {
+  chooseGame,
   closeAll,
   desktop,
   Errors,
   hostTable,
   joinTable,
+  lobbyTab,
   mustView,
   myId,
   phone,
   playerCount,
+  startGame,
   view,
   waitForPhase,
+  withSettings,
 } from './helpers';
 
 test.afterEach(closeAll);
@@ -93,15 +97,15 @@ async function playToEnd(pages: Page[], check?: (p: Page, v: View, me: string) =
 const noScroll = (page: Page): Promise<boolean> =>
   page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 2);
 
-/** Cabo wählen, kurze Partie bis 50. */
+/** Cabo wählen, kurze Partie bis 50. Danach ist am Handy der Reiter Tisch offen. */
 async function chooseCabo(host: Page, short = true): Promise<void> {
-  if (await host.locator('#lobby-tabs').isVisible()) await host.click('[data-act=ltab][data-t=game]');
-  await host.click('[data-act=game][data-g=cabo]');
-  if (short) {
-    await host.click('[data-act=cbtarget][data-v="50"]');
-    await expect.poll(async () => (await view(host))?.rules.cb?.target).toBe(50);
-  }
-  if (await host.locator('#lobby-tabs').isVisible()) await host.click('[data-act=ltab][data-t=table]');
+  await chooseGame(host, 'cabo');
+  if (short)
+    await withSettings(host, 'cabo', async (sheet) => {
+      await sheet.locator('[data-act=cbtarget][data-v="50"]').click();
+      await expect.poll(async () => (await view(host))?.rules.cb?.target).toBe(50);
+    });
+  await lobbyTab(host, 'table');
 }
 
 test('Cabo gegen drei KIs bis zum Ende', async ({ browser }) => {
@@ -166,10 +170,11 @@ test('Cabo zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ br
   await hostTable(host, 'Tahna');
   await chooseCabo(host, false);
   // Schnappen an, dann steht ein dritter Knopf am Platz
-  await host.click('[data-act=ltab][data-t=game]');
-  await host.locator('[data-cbrule=snap]').check();
-  await expect.poll(async () => (await view(host))?.rules.cb?.snap).toBe(true);
-  await host.click('[data-act=ltab][data-t=table]');
+  await withSettings(host, 'cabo', async (sheet) => {
+    await sheet.locator('[data-cbrule=snap]').check();
+    await expect.poll(async () => (await view(host))?.rules.cb?.snap).toBe(true);
+  });
+  await lobbyTab(host, 'table');
   for (let i = 0; i < 20 && (await playerCount(host)) < 8; i++) {
     const add = host.locator('[data-act=addbot]');
     if (await add.count()) await add.first().click();
@@ -177,7 +182,7 @@ test('Cabo zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ br
     await host.waitForTimeout(100);
   }
   await expect.poll(() => playerCount(host), { timeout: 10_000 }).toBe(8);
-  await host.click('[data-act=start]');
+  await startGame(host);
   await waitForPhase(host, ['peek'], 20_000);
   expect((await mustView(host)).cb?.decks).toBe(2);
   await host.waitForTimeout(1500);

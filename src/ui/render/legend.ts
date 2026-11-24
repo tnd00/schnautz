@@ -114,7 +114,7 @@ function legendSchnautz(rules: Rules): LegendItem[] {
     ['3×', '30,5', 'Drei gleiche Werte, etwa drei Buben.', 'e'],
     ['31', 'Schnautz', 'Sofort aufdecken, die Runde ist vorbei.', 'e'],
   ];
-  if (rules.feuer) it.push(['🔥', 'Feuer', 'Drei Asse zählen 33. Alle anderen verlieren einen Deckel.', 'e']);
+  if (rules.feuer) it.push(['🔥', 'Feuer', 'Drei Asse zählen 33. Alle anderen verlieren ein Leben.', 'e']);
   return it;
 }
 

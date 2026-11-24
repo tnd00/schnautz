@@ -15,9 +15,11 @@ import {
   phone,
   playerCount,
   START,
+  startGame,
   view,
   waitForChange,
   waitForPhase,
+  withSettings,
 } from './helpers';
 
 test.afterEach(closeAll);
@@ -76,14 +78,16 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
   });
 
   await test.step('Regeln des Hosts kommen beim Gast an', async () => {
-    await host.click('[data-act=lives][data-d="1"]');
-    await expect.poll(async () => (await view(guest))?.rules.lives).toBe(4);
-    await host.click('[data-act=lives][data-d="-1"]');
-    await host.click('[data-act=lives][data-d="-1"]');
-    await expect.poll(async () => (await view(guest))?.rules.lives).toBe(2);
+    await withSettings(host, 'schnautz', async (sheet) => {
+      await sheet.locator('[data-act=lives][data-d="1"]').click();
+      await expect.poll(async () => (await view(guest))?.rules.lives).toBe(4);
+      await sheet.locator('[data-act=lives][data-d="-1"]').click();
+      await sheet.locator('[data-act=lives][data-d="-1"]').click();
+      await expect.poll(async () => (await view(guest))?.rules.lives).toBe(2);
+    });
   });
 
-  await host.click('[data-act=start]');
+  await startGame(host);
   await expect(guest.locator('#scr-game')).toBeVisible();
   const ids = [await myId(host), await myId(guest)];
   const byId = new Map([
@@ -140,6 +144,10 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await host.click('#btn-rules');
     await expect(host.locator('#modal .paper')).toBeVisible();
     await host.keyboard.press('Escape');
+    // Punkt oben: ein Fenster mit Tischcode, Link und Verbindung
+    await host.click('#netchip');
+    await expect(host.locator('#modal .netinfo .icodev')).toHaveText(code);
+    await host.keyboard.press('Escape');
     await host.click('[data-act=unpeek]');
   });
 
@@ -150,7 +158,7 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await menuConfirm(guest, '#menu-leave');
     await expect.poll(isBot).toBe(true);
     expect((await mustView(host)).phase).not.toBe('over');
-    // Am Handy liegen Name und Code im Popup hinter "Spielen"
+    // Am Handy liegen Name und Code im Bogen hinter „Tisch aufmachen“
     if (await guest.locator('.playbtn').isVisible()) await guest.click('.playbtn');
     await guest.fill('#name', 'Lena');
     await guest.fill('#joincode', code);
@@ -167,6 +175,9 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await expect(guest.locator('#scr-lobby')).toBeVisible();
     await menuConfirm(host, '#menu-leave');
     await expect(guest.locator('#start-err')).toBeVisible();
+    // Nach dem aufgelösten Tisch ist keine Einladung mehr offen, Code-Feld und Tisch aufmachen sind wieder da
+    await expect(guest.locator('body')).not.toHaveClass(/invited/);
+    await expect(guest.locator('#joincode')).toBeVisible();
   });
 
   expect(errors.list).toEqual([]);

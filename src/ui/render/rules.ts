@@ -298,7 +298,7 @@ function rulesSchnautz(r: Rules, glance: string): string {
     glance +
     sec(
       'Worum es geht',
-      'Jeder hat drei Karten. Gezählt werden nur Karten derselben Farbe. Das Höchste ist 31. Wer am Ende einer Runde am wenigsten hat, verliert einen Bierdeckel.',
+      'Jeder hat drei Karten. Gezählt werden nur Karten derselben Farbe. Das Höchste ist 31. Wer am Ende einer Runde am wenigsten hat, verliert ein Leben.',
     ) +
     jsec(
       'Werte',
@@ -319,19 +319,19 @@ function rulesSchnautz(r: Rules, glance: string): string {
       'Klopfen',
       'Wer mit dem eigenen Blatt zufrieden ist, klopft. Alle anderen haben danach noch genau einen Zug. Dann wird aufgedeckt.' +
         (r.knockFirst ? '' : ' Klopfen geht erst, wenn jeder einmal dran war.') +
-        (r.knockDouble ? ' Wer klopft und am Ende am wenigsten hat, verliert zwei Bierdeckel.' : ''),
+        (r.knockDouble ? ' Wer klopft und am Ende am wenigsten hat, verliert zwei Leben.' : ''),
     ) +
     sec(
       'Schnautz' + (r.feuer ? ' und Feuer' : ''),
       'Wer 31 auf der Hand hat, deckt sofort auf und die Runde ist vorbei. Das Spiel merkt das automatisch.' +
-        (r.feuer ? ' Bei Feuer verlieren alle anderen einen Bierdeckel.' : ''),
+        (r.feuer ? ' Bei Feuer verlieren alle anderen ein Leben.' : ''),
     ) +
     jsec(
       'Ende',
       'Leben und Schwimmen',
       'Jeder startet mit ' +
         num(r.lives) +
-        ' Leben, hier als Bierdeckel. Wer den letzten verliert, schwimmt und darf weiterspielen. Wer schwimmend noch einmal verliert, ist raus. Wer als Letzter übrig bleibt, gewinnt.',
+        ' Leben. Wer das letzte verliert, schwimmt und darf weiterspielen. Wer schwimmend noch einmal verliert, ist raus. Wer als Letzter übrig bleibt, gewinnt.',
       'Haben alle gleich viel, verliert niemand. Bei Gleichstand am unteren Ende verlieren alle mit dem niedrigsten Wert.',
     ) +
     sec(

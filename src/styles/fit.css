@@ -638,9 +638,16 @@
   body.ingame .table .opp > .tossmark.bunny {
     font-size: max(28px, calc(var(--u) * 9));
   }
-  /* Kein Platz für den Code: Der Einladungslink steht im Menü, dafür heißt das Buch Regeln */
-  body.ingame #codechip {
+  /* Kein Platz für den Code: Am Handy zeigt der Knopf nur den Punkt, Code und Link stehen in seinem Fenster */
+  body.ingame #netcode {
     display: none;
+  }
+  /* Ohne Code ist der Knopf nur der Punkt: trotzdem so groß wie die Knöpfe daneben */
+  body.ingame #netchip {
+    min-width: 36px;
+    min-height: 36px;
+    justify-content: center;
+    padding: 0;
   }
   /* Der Hinweis im Chat zeigt, wenn man dran ist, denn der Chat verdeckt den eigenen Platz */
   .turnnote:not([hidden]) {

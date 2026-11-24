@@ -44,7 +44,7 @@ body:not(.ingame) .top {
   padding: 12px 16px;
   padding-top: max(12px, env(safe-area-inset-top));
 }
-/* Wortmarke als Sticker: Fraunces Black, weich, Limette auf Tinte */
+/* Wortmarke als Sticker: Fraunces Black, weich, Weiß auf Tinte. Limette gehört nur Cabo */
 body:not(.ingame) .top .brand {
   display: inline-flex;
   align-items: center;
@@ -52,7 +52,7 @@ body:not(.ingame) .top .brand {
   border: 4px solid var(--st-paper);
   border-radius: 14px;
   background: var(--st-ink);
-  color: var(--st-lime);
+  color: var(--st-paper);
   font-family: var(--st-display);
   font-style: normal;
   font-weight: 900;
@@ -62,7 +62,7 @@ body:not(.ingame) .top .brand {
   letter-spacing: -0.015em;
   text-shadow: none;
   box-shadow: var(--st-shadow);
-  rotate: -3deg;
+  rotate: -1.5deg;
   white-space: nowrap;
 }
 /* In der Lobby steht dort das gewählte Spiel, als Spiel-Sticker in seiner Farbe mit Tinte */
@@ -87,8 +87,9 @@ body.inlobby .top .brand {
 body:not(.ingame) .top .brand small {
   display: none;
 }
-/* Auf der Startseite trägt der große Logo-Sticker den Namen */
-body.onstart .top .brand {
+/* Auf der Startseite braucht es keine Kopfzeile: Den Namen trägt der große Logo-Sticker, die Regeln öffnen die
+ * Spiel-Sticker, Ton und Updates gibt es ab der Lobby im Menü */
+body.onstart .top {
   display: none;
 }
 /* Ohne den leeren Abstandshalter: ein Zwischenraum weniger, die Knöpfe rücken per margin nach rechts */
@@ -97,9 +98,6 @@ body:not(.ingame) .top .grow {
 }
 body:not(.ingame) .top .brand {
   margin-right: auto;
-}
-body.onstart .top #btn-rules {
-  margin-left: auto;
 }
 body:not(.ingame) .top .iconbtn,
 body:not(.ingame) .top .chip {
@@ -141,49 +139,26 @@ body:not(.ingame) .top .chip:active {
   box-shadow: var(--st-shadow-lift);
 }
 /* Feste Neigung pro Knopf */
-body:not(.ingame) #codechip {
-  rotate: -2deg;
-}
 body:not(.ingame) #netchip {
-  rotate: 2deg;
+  rotate: 1deg;
 }
 body:not(.ingame) #btn-rules {
-  rotate: -2deg;
+  rotate: -1deg;
   width: auto;
   padding: 0 13px 0 11px;
   gap: 7px;
   font-weight: 750;
 }
-body:not(.ingame) #btn-sound {
-  rotate: 3deg;
+/* Außerhalb des Tisches gibt es nichts zu hören: Der Ton-Schalter steht nur im Menü ⋯ */
+body:not(.ingame) .top #btn-sound {
+  display: none;
 }
 body:not(.ingame) #btn-menu {
-  rotate: -3deg;
+  rotate: -1.5deg;
 }
 body:not(.ingame) .top .iconbtn svg {
   width: 20px;
   height: 20px;
-}
-/* Auf der Startseite ist Platz: „Regeln“ steht auch am Handy als Wort da */
-body.onstart #btn-rules span {
-  display: inline;
-}
-body.onstart .top .iconbtn#btn-rules {
-  width: auto;
-  padding: 0 13px 0 11px;
-}
-/* Tischcode im Kopf als Zahlen-Sticker */
-body:not(.ingame) #codechip .lbl {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--st-ink-soft);
-}
-body:not(.ingame) #codechip b {
-  color: var(--st-ink);
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  font-variant-numeric: tabular-nums;
 }
 body:not(.ingame) #netchip {
   justify-content: center;
@@ -201,13 +176,6 @@ body:not(.ingame) #netchip {
     border-radius: 12px;
     font-size: 17px;
   }
-  body:not(.ingame) #codechip {
-    padding: 0 9px;
-  }
-  body:not(.ingame) #codechip b {
-    font-size: 15px;
-    letter-spacing: 0.08em;
-  }
 }
 
 /* ---------- Startseite ---------- */
@@ -223,29 +191,21 @@ body:not(.ingame) #netchip {
   font-size: inherit;
   line-height: 1;
 }
+/* Logo: Tinte auf sonnengelbem Sticker (Weiß auf Gelb wäre kaum lesbar) */
 #scr-start .st-logo-word {
+  --fill: var(--st-sun);
   --st-radius: 28px;
   display: inline-block;
   padding: 0.14em 0.3em 0.2em;
-  color: var(--st-lime);
+  color: var(--st-ink);
   font-size: 64px;
   line-height: 0.92;
   letter-spacing: -0.03em;
 }
-/* Abgezogene Ecke: Hier sieht man das Trägerpapier */
-#scr-start .st-logo-word::after {
-  content: '';
-  position: absolute;
-  right: calc(-1 * var(--st-cut));
-  bottom: calc(-1 * var(--st-cut));
-  width: 34px;
-  height: 34px;
-  border-radius: 0 0 var(--st-radius) 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0) 49%, #d9d7fb 50%, #f6f5ff 78%);
-  box-shadow: -3px -3px 6px -3px rgba(26, 24, 48, 0.35);
-}
+/* Slogan: Weiß auf Tinte, schaut unter dem gelben Logo hervor */
 #scr-start .st-claim {
-  --fill: var(--st-lime);
+  --fill: var(--st-ink);
+  color: var(--st-paper);
   --st-cut: 6px;
   --st-radius: 18px;
   align-self: flex-start;
@@ -260,7 +220,8 @@ body:not(.ingame) #netchip {
   text-wrap: balance;
 }
 
-/* Vier Spiel-Sticker 2x2 in ihren Farben */
+/* Vier Spiel-Sticker 2x2 in ihren Farben. Flacher Schatten, bis 5 Grad Neigung (siehe unten)
+ * und Abstände, die Stanzrand, Neigung, Schatten und das Anheben einrechnen, damit sich nie zwei berühren */
 #scr-start .st-games {
   list-style: none;
   margin: 0;
@@ -268,7 +229,7 @@ body:not(.ingame) #netchip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 20px 18px;
 }
 #scr-start .st-games > li {
   display: flex;
@@ -276,7 +237,8 @@ body:not(.ingame) #netchip {
   min-height: 0;
 }
 #scr-start .st-game {
-  --st-radius: 24px;
+  --st-radius: 22px;
+  --st-cut: 6px;
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -284,19 +246,39 @@ body:not(.ingame) #netchip {
   font: inherit;
   text-align: left;
   container: st-game / size;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(26, 24, 48, 0.07),
+    0 1px 1.5px rgba(26, 24, 48, 0.2),
+    0 7px 12px -7px rgba(26, 24, 48, 0.42);
 }
-.st-game-in {
+@media (hover: hover) {
+  #scr-start .st-game:hover {
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -2px 0 rgba(26, 24, 48, 0.07),
+      var(--st-shadow-lift-sm);
+  }
+}
+#scr-start .st-game:active {
+  translate: 0 -3px;
+  scale: 1.02;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(26, 24, 48, 0.07),
+    var(--st-shadow-lift-sm);
+}
+#scr-start .st-game-in {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  padding: 11px 13px 12px;
+  padding: var(--gs-pad, 10px 12px 11px);
   overflow: hidden;
   border-radius: calc(var(--st-radius) - var(--st-cut));
 }
-.st-game-top {
+#scr-start .st-game-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -305,81 +287,181 @@ body:not(.ingame) #netchip {
   margin-bottom: auto;
 }
 /* Emoji als Sticker mit weißem Stanzrand, der Rand wächst mit dem Zeichen */
-.st-mark {
-  font-size: 32px;
+#scr-start .st-mark {
+  font-size: 30px;
   line-height: 1;
   filter: drop-shadow(0.046em 0 0 #fff) drop-shadow(-0.046em 0 0 #fff) drop-shadow(0 0.046em 0 #fff)
     drop-shadow(0 -0.046em 0 #fff) drop-shadow(0 0.09em 0.09em rgba(26, 24, 48, 0.3));
 }
-.st-game .st-num {
-  font-size: 13px;
-  margin-top: 2px;
+/* „Neu“ klebt innen in der Ecke des eigenen Stickers, nie auf der Kante zum Nachbarn */
+#scr-start .st-game .st-tag {
+  flex: none;
+  margin: 1px 0 0;
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 3px 6px -2px rgba(26, 24, 48, 0.3);
 }
-.st-game-name {
-  font-family: var(--st-display);
-  font-weight: 900;
-  font-variation-settings: 'SOFT' 100;
-  font-size: min(28px, 17cqw);
-  line-height: 0.95;
-  letter-spacing: -0.02em;
+/* Spielname serifenlos und kräftig: Mit zweitem Namen und Halbsatz wäre Fraunces auf dem Sticker zu unruhig */
+#scr-start .st-game-name {
+  margin-top: 6px;
+  font-family: var(--ui);
+  font-weight: 850;
+  font-size: var(--gs-name, min(25px, 15.5cqw));
+  line-height: 0.98;
+  letter-spacing: -0.025em;
 }
-.st-game-tag {
-  font-size: 13px;
-  font-weight: 700;
+#scr-start .st-game-aka {
+  margin-top: 3px;
+  font-size: var(--gs-aka, 12.5px);
+  font-weight: 600;
   line-height: 1.2;
   text-wrap: balance;
 }
-.st-game .st-tag {
+/* Auf der Startseite dürfen die Spiel-Sticker kräftiger schief kleben als im übrigen Rahmen (der User wollte es so) */
+#scr-start .st-game.g-schnautz {
+  --tilt: -5deg;
+}
+#scr-start .st-game.g-shithead {
+  --tilt: 4deg;
+}
+#scr-start .st-game.g-durak {
+  --tilt: 3deg;
+}
+#scr-start .st-game.g-cabo {
+  --tilt: -4deg;
+}
+/* Fragezeichen unten rechts: nur ein Hinweis, der ganze Sticker öffnet die Regeln */
+#scr-start .st-help {
   position: absolute;
-  top: -15px;
-  right: 12px;
-  z-index: 1;
+  right: 9px;
+  bottom: 9px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font: 850 14px/1 var(--ui);
+  box-shadow:
+    0 0 0 2.5px var(--st-paper),
+    0 2px 4px rgba(26, 24, 48, 0.3);
+}
+/* Platz für das Fragezeichen nur in der untersten Zeile: der Halbsatz, oder die weiteren Namen, wenn er fehlt */
+#scr-start .st-game-tag {
+  padding-right: 26px;
+}
+#scr-start .st-game-tag {
+  margin-top: 5px;
+  font-size: var(--gs-tag, 13px);
+  font-weight: 800;
+  line-height: 1.2;
+  text-wrap: balance;
 }
 @container st-game (min-height: 150px) {
-  .st-mark {
-    font-size: 40px;
+  #scr-start .st-mark {
+    font-size: 38px;
   }
 }
-/* PC: breite Sticker tragen das Zeichen groß, bis 64 px. Es nimmt die Höhe, die Name, Satz und Ränder (88 px) übrig
- * lassen, auf flachen Fenstern also weniger */
-@container st-game (min-width: 230px) and (min-height: 110px) {
-  .st-mark {
-    font-size: clamp(40px, calc(100cqh - 88px), 64px);
+/* PC: breite Sticker tragen das Zeichen groß, bis 60 px. Es nimmt die Höhe, die Name, beide Zeilen und Ränder
+ * (112 px) übrig lassen, auf flachen Fenstern also weniger */
+@container st-game (min-width: 230px) and (min-height: 120px) {
+  #scr-start .st-mark {
+    font-size: clamp(36px, calc(100cqh - 112px), 60px);
   }
 }
-/* Wenig Höhe: erst der Satz weg, dann alles in eine Zeile */
-@container st-game (max-height: 124px) {
-  .st-game-tag {
+/* Der freche Halbsatz nur, wo er Platz hat: erst er weg, dann die weiteren Namen, dann alles in eine Zeile */
+@container st-game (max-height: 149px) {
+  #scr-start .st-game-tag {
     display: none;
   }
-}
-@container st-game (max-height: 84px) {
-  .st-game-in {
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
+  #scr-start .st-game-aka {
+    padding-right: 26px;
   }
-  .st-game-top {
+}
+/* Breite Sticker (PC) setzen den Satz in eine Zeile und brauchen dafür weniger Höhe */
+@container st-game (min-width: 230px) and (min-height: 142px) {
+  #scr-start .st-game-tag {
+    display: block;
+  }
+  #scr-start .st-game-aka {
+    padding-right: 0;
+  }
+}
+/* Schmale Sticker (Handy): nur Name und weitere Namen, der Halbsatz bräuchte dort drei Zeilen */
+@container st-game (max-width: 229.98px) {
+  #scr-start .st-game-tag {
+    display: none;
+  }
+  #scr-start .st-game-aka {
+    padding-right: 26px;
+  }
+}
+/* Flach: Zeichen und Name in einer Zeile, die weiteren Namen darunter über die ganze Breite. Die Werte stehen hier
+ * direkt, die PC-Größen kommen über Variablen (--gs-*) und überschreiben sie deshalb nicht */
+@container st-game (max-height: 119px) and (min-width: 150px) {
+  #scr-start .st-game-in {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: 7px;
+    row-gap: 5px;
+    padding: 7px 10px 8px;
+  }
+  #scr-start .st-game-top {
     display: contents;
   }
-  .st-mark {
+  #scr-start .st-mark {
+    grid-area: 1 / 1;
+    align-self: center;
     font-size: 24px;
-    order: -1;
   }
-  .st-game-name {
-    flex: 1;
+  #scr-start .st-game-name {
+    grid-area: 1 / 2;
+    align-self: center;
     min-width: 0;
-    font-size: min(22px, 14cqw);
+    margin: 0;
+    font-size: min(22px, 13.5cqw);
   }
-  .st-game .st-num {
-    order: 2;
+  #scr-start .st-game-aka {
+    grid-area: 2 / 1 / 3 / 4;
     margin: 0;
     font-size: 12px;
   }
+  /* „Neu“ steht am Ende der Namenszeile, so kann es den Namen nie überdecken */
+  #scr-start .st-game .st-tag {
+    grid-area: 1 / 3;
+    align-self: center;
+    margin: 0;
+    padding: 3px 7px 4px;
+    border-width: 2px;
+    border-radius: 8px;
+  }
+}
+/* Flach und schmal (PC-Fenster knapp über 820 px): Für Zeichen neben dem Namen reicht die Breite nicht, also nur
+ * Zeichen und Name übereinander */
+@container st-game (max-height: 119px) and (max-width: 149.98px) {
+  #scr-start .st-mark {
+    font-size: 24px;
+  }
+  #scr-start .st-game-in {
+    padding: 8px 10px 9px;
+  }
+  #scr-start .st-game-name {
+    font-size: min(22px, 15.5cqw);
+  }
+  #scr-start .st-game-aka {
+    display: none;
+  }
+}
+@container st-game (max-height: 66px) {
+  #scr-start .st-game-aka {
+    display: none;
+  }
 }
 
-/* Drei Versprechen als kleine Sticker */
+/* Vier Versprechen als kleine Sticker */
 #scr-start .st-promises {
   list-style: none;
   margin: 0;
@@ -443,18 +525,18 @@ body:not(.ingame) #netchip {
 #scr-start .st-input:focus-visible {
   outline: none;
 }
+/* Gegen die KI: Was passiert, steht klein darunter */
 #scr-start .st-bots {
-  gap: 10px;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 6px;
+  padding-bottom: 7px;
 }
-#scr-start .st-bots .st-chip {
-  min-height: 26px;
-  padding: 3px 10px 4px;
+#scr-start .st-bots-sub {
+  color: var(--st-ink-soft);
   font-size: 13px;
-  box-shadow: none;
-  rotate: 3deg;
-}
-#scr-start .st-bots .st-chip:empty {
-  display: none;
+  font-weight: 650;
+  line-height: 1.2;
 }
 #scr-start .st-or {
   display: flex;
@@ -512,7 +594,7 @@ body:not(.ingame) #netchip {
   color: var(--st-ink);
   font-size: 15px;
   font-weight: 650;
-  rotate: -1deg;
+  rotate: -0.5deg;
   box-shadow: 0 1px 1px rgba(26, 24, 48, 0.14);
 }
 #scr-start .st-filenote {
@@ -556,11 +638,7 @@ body:not(.ingame) #netchip {
   flex: none;
   font-size: 15px;
 }
-/* Mit einem Tisch zum Fortsetzen ist „Tisch aufmachen“ nur noch Nebenweg */
-#scr-start #resume:not([hidden]) ~ #btn-host {
-  --fill: var(--st-paper);
-  color: var(--st-ink);
-}
+/* „Tisch aufmachen“ bleibt immer Weiß auf Tinte, auch neben einer Fortsetzen-Karte (Wunsch des Users) */
 
 /* ---------- Einladung: Link mit Code geöffnet ---------- */
 #scr-start .st-invite {
@@ -596,27 +674,27 @@ body:not(.ingame) #netchip {
   color: var(--st-paper);
   border-radius: 14px;
 }
-body.invite #scr-start :is(#btn-host, #btn-bots, .st-or, #joincode, .startx) {
+body.invited #scr-start :is(#btn-host, #btn-bots, .st-or, #joincode, .startx) {
   display: none;
 }
-body.invite #scr-start .joinrow {
+body.invited #scr-start .joinrow {
   grid-template-columns: minmax(0, 1fr);
 }
-body.invite #scr-start #btn-join {
+body.invited #scr-start #btn-join {
   --fill: var(--st-ink);
   color: var(--st-paper);
   min-height: 60px;
   font-size: 18px;
 }
 /* Wer über den Link an den eigenen Platz zurückkommt: „Zurück an den Tisch“ ist die Hauptaktion */
-body.invite #scr-start .startbody:has(#resume:not([hidden])) #btn-join {
+body.invited #scr-start .startbody:has(#resume:not([hidden])) #btn-join {
   --fill: var(--st-paper);
   color: var(--st-ink);
 }
-body.invite #scr-start .st-own {
+body.invited #scr-start .st-own {
   display: inline-flex;
 }
-body.invite #scr-start .st-joinlink {
+body.invited #scr-start .st-joinlink {
   display: none;
 }
 
@@ -629,16 +707,13 @@ body.invite #scr-start .st-joinlink {
     height: 100dvh;
     min-height: 0;
   }
-  body.onstart .top {
-    min-height: 64px;
-  }
   #scr-start {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 0 16px max(10px, env(safe-area-inset-bottom));
+    padding: max(30px, calc(env(safe-area-inset-top) + 16px)) 16px max(10px, env(safe-area-inset-bottom));
   }
   #scr-start .st-hero {
     --gap: 14px;
@@ -661,22 +736,26 @@ body.invite #scr-start .st-joinlink {
     font-size: clamp(16px, min(5.4vw, 2.6dvh), 21px);
     max-width: 14.5em;
   }
+  /* Was die Sticker an Höhe übrig lassen, teilen sich drei Lücken gleich: über den Spielen, über den Chips und
+   * über dem Knopf. Auf großen Handys wird es so luftig, auf kleinen bleibt nur der Grundabstand */
   #scr-start .st-games {
     flex: 1 1 0;
     min-height: 0;
-    max-height: 380px;
-    gap: 12px 14px;
-    margin-top: 4px;
+    max-height: 360px;
+    gap: 22px 24px;
+    margin-top: auto;
   }
   #scr-start .st-promises {
     justify-content: center;
     gap: 8px 10px;
+    margin-top: auto;
   }
   #scr-start .st-cta {
     flex: none;
     margin-top: auto;
   }
-  /* Mittlere Höhe: eine kompakte Zeile ohne Zeichen, ganz kurze Handys lassen sie weg */
+  /* Mittlere Höhe: eine kompakte Zeile ohne Zeichen und mit kurzen Texten. Für vier Chips ist sie zu schmal, also
+   * tritt „Läuft im Browser“ zurück (wer das liest, ist ja schon im Browser). Ganz kurze Handys lassen sie weg */
   @media (max-height: 759px) {
     #scr-start .st-promises {
       flex-wrap: nowrap;
@@ -688,7 +767,8 @@ body.invite #scr-start .st-joinlink {
       font-size: 12.5px;
     }
     #scr-start .st-promises svg,
-    #scr-start .pr-long {
+    #scr-start .pr-long,
+    #scr-start .st-promises .pr-web {
       display: none;
     }
     #scr-start .pr-short {
@@ -768,13 +848,13 @@ body.invite #scr-start .st-joinlink {
     box-shadow:
       0 1px 1px rgba(26, 24, 48, 0.2),
       0 5px 10px -4px rgba(26, 24, 48, 0.35);
-    rotate: 4deg;
+    rotate: 2deg;
   }
   body.startform #scr-start .startx svg {
     width: 20px;
     height: 20px;
   }
-  body.invite.startform #scr-start .startx {
+  body.invited.startform #scr-start .startx {
     display: none;
   }
   #scr-start .st-invite-title {
@@ -817,7 +897,8 @@ body.invite #scr-start .st-joinlink {
   body.startform #scr-start .startpanel {
     animation: fade 0.2s;
   }
-  body:not(.ingame) .top :is(.iconbtn, .chip):is(:hover, :active) {
+  body:not(.ingame) .top :is(.iconbtn, .chip):is(:hover, :active),
+  #scr-start .st-game:active {
     translate: none;
     scale: none;
   }
@@ -899,17 +980,21 @@ body.invite #scr-start .st-joinlink {
   #scr-start .st-games {
     height: clamp(250px, 42dvh, 400px);
     max-width: 640px;
-    gap: 20px 24px;
+    gap: 26px 28px;
     margin-top: 6px;
   }
-  #scr-start .st-game-tag {
-    font-size: 14px;
+  /* Größere Schrift und Polster als Variablen, damit flache Sticker ihre eigenen Werte behalten */
+  #scr-start .st-games {
+    --gs-pad: 13px 16px 14px;
+    --gs-name: min(32px, 15cqw);
+    --gs-aka: 13.5px;
+    --gs-tag: 14px;
   }
-  #scr-start .st-game-in {
-    padding: 14px 16px 15px;
-  }
-  .st-game-name {
-    font-size: min(34px, 15cqw);
+  /* Vier Chips passen neben dem Formular nicht in eine Zeile: zwei Reihen zu zwei statt drei und eins */
+  #scr-start .st-promises {
+    display: grid;
+    grid-template-columns: repeat(2, max-content);
+    gap: 10px 12px;
   }
   #scr-start .st-cta {
     display: none;
@@ -928,23 +1013,19 @@ body.invite #scr-start .st-joinlink {
       0 2px 3px rgba(26, 24, 48, 0.14),
       0 18px 26px -12px rgba(26, 24, 48, 0.36),
       0 46px 70px -28px rgba(26, 24, 48, 0.5);
-    rotate: 1deg;
-  }
-  /* Abgezogene Ecke auch am Formular, im eigenen Rand unten rechts */
-  #scr-start .startpanel::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 0 0 var(--st-sheet-radius) 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0) 49%, #dedcfb 50%, #f4f3ff 80%);
-    box-shadow: -4px -4px 8px -4px rgba(26, 24, 48, 0.3);
-    pointer-events: none;
+    rotate: 0.5deg;
   }
   #scr-start .field label {
     font-size: 30px;
+  }
+}
+/* Schmale PC-Fenster: Die Spalte links ist schmal, die Chips nehmen ihre Kurztexte */
+@media (min-width: 821px) and (max-width: 979px) {
+  #scr-start .pr-long {
+    display: none;
+  }
+  #scr-start .pr-short {
+    display: inline;
   }
 }
 @media (min-width: 821px) and (max-height: 760px) {

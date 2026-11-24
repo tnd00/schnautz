@@ -139,7 +139,7 @@ export function runFlights(prev: View, v: View): void {
   App.holdUntil = Math.max(App.holdUntil, Date.now() + 900);
 }
 
-/** Lässt den Bereich von Spielern wackeln, die gerade einen Bierdeckel verloren haben. */
+/** Lässt den Bereich von Spielern wackeln, die gerade ein Leben verloren haben. */
 export function markLost(lost: Record<string, true>, v: View): void {
   Object.keys(lost).forEach((id) => {
     if (!pById(v, id)) return;

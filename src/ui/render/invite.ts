@@ -1,4 +1,4 @@
-/* Fenster hinter dem Tischcode oben: Code und Einladungslink zum Kopieren oder Teilen. */
+/* Fenster Einladen (Menü ⋯) und Einladeteil im Fenster Tisch: Code und Einladungslink zum Kopieren oder Teilen. */
 import { seatLimit } from '../../game/state';
 import { App } from '../app';
 import { esc } from '../dom';
@@ -24,20 +24,22 @@ function seatsHTML(): string {
   );
 }
 
-export function inviteHTML(): string {
+/** Code, Link zum Kopieren oder Teilen und freie Plätze. Steht im Fenster Einladen und im Fenster hinter dem Punkt oben. */
+export function inviteBody(): string {
   const link = shareLink();
   const code = esc(App.code);
-  return sheetHTML({
-    kind: 'invite',
-    title: 'Freunde einladen',
-    body:
-      '<p class="lead">Schick den Link oder sag den Code an, dann sitzt ihr am selben Tisch.</p>' +
-      `<p class="icode"><span class="sr">Tischcode </span><span class="icodev st-num st-l3">${code}</span></p>` +
-      `<div class="ilink"><input class="st-input" readonly value="${esc(link)}" aria-label="Einladungslink" />` +
-      '<button type="button" class="st-btn st-primary" data-act="copylink">Link kopieren</button></div>' +
-      (typeof navigator.share === 'function'
-        ? '<button type="button" class="st-btn st-secondary ishare" data-act="share">Link teilen</button>'
-        : '') +
-      seatsHTML(),
-  });
+  return (
+    '<p class="lead">Schick den Link oder sag den Code an, dann sitzt ihr am selben Tisch.</p>' +
+    `<p class="icode"><span class="sr">Tischcode </span><span class="icodev st-num st-l3">${code}</span></p>` +
+    `<div class="ilink"><input class="st-input" readonly value="${esc(link)}" aria-label="Einladungslink" />` +
+    '<button type="button" class="st-btn st-primary" data-act="copylink">Link kopieren</button></div>' +
+    (typeof navigator.share === 'function'
+      ? '<button type="button" class="st-btn st-secondary ishare" data-act="share">Link teilen</button>'
+      : '') +
+    seatsHTML()
+  );
+}
+
+export function inviteHTML(): string {
+  return sheetHTML({ kind: 'invite', title: 'Freunde einladen', body: inviteBody() });
 }

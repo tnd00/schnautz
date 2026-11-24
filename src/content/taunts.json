@@ -31,39 +31,39 @@
       "Du hast frei, die anderen haben Karten 🍿"
     ],
     "scLoseSelf": [
-      "Ein Deckel weniger. Der hat dir eh nicht gestanden.",
-      "Autsch. Da geht er hin, dein schöner Bierdeckel.",
-      "Deckel abgeben bitte. Quittung gibt es keine.",
+      "Ein Leben weniger. Das hat dir eh nicht gestanden.",
+      "Autsch. Da geht es hin, dein schönes Leben.",
+      "Ein Leben abgeben bitte. Quittung gibt es keine.",
       "Das war die schwächste Hand am Tisch. Leider deine.",
-      "Bierdeckel futsch. Wird langsam luftig bei dir 🍺",
-      "Nicht weinen, es ist nur Pappe.",
+      "Leben futsch. Wird langsam luftig bei dir 💨",
+      "Nicht weinen, es ist nur ein Leben. Ein kleines.",
       "Deine Karten hatten heute wohl was Besseres vor.",
-      "Einmal Deckel zum Mitnehmen, nur halt nicht für dich."
+      "Einmal Leben zum Mitnehmen, nur halt nicht für dich."
     ],
     "scLoseOther": [
-      "{name} gibt einen Deckel ab. Danke für die Spende 🍺",
-      "Ein Deckel weniger für {name}. Wir trauern kurz. Fertig.",
+      "{name} gibt ein Leben ab. Danke für die Spende 🙏",
+      "Ein Leben weniger für {name}. Wir trauern kurz. Fertig.",
       "{name} hatte die schwächste Hand. Kommt vor. Hier öfter.",
-      "Da schrumpft der Stapel von {name}. Wie schade aber auch.",
-      "{name} zahlt die Runde in Pappe.",
-      "Schon wieder {name}? Na gut, den Deckel nehmen wir gern.",
-      "{name} verliert einen Deckel. Die Fassung hoffentlich nicht.",
-      "Deckel adé, {name}. Der kommt nicht wieder 👋"
+      "Da schrumpft das Polster von {name}. Wie schade aber auch.",
+      "{name} zahlt die Runde mit einem Leben.",
+      "Schon wieder {name}? Na gut, das Leben nehmen wir gern.",
+      "{name} verliert ein Leben. Die Fassung hoffentlich nicht.",
+      "Leben adé, {name}. Das kommt nicht wieder 👋"
     ],
     "scSwimSelf": [
       "Du schwimmst. Schwimmflügel nicht vergessen 🏊",
-      "Alle Deckel weg. Ab jetzt wird gepaddelt.",
+      "Alle Leben weg. Ab jetzt wird gepaddelt.",
       "Willkommen im tiefen Wasser. Ist frisch, oder?",
       "Noch ein Patzer, dann gehst du unter. Kein Druck.",
       "Du schwimmst jetzt. Seepferdchen hast du hoffentlich.",
       "Letzte Chance. Das Wasser steht dir bis zum Hals 🌊",
-      "Deckel hast du keine mehr, dafür nasse Füße.",
+      "Leben hast du keine mehr, dafür nasse Füße.",
       "Bitte ruhig weiteratmen. Verlieren ist ab jetzt verboten."
     ],
     "scSwimOther": [
       "{name} schwimmt! Wirft wer einen Rettungsring? Nein? Gut.",
       "{name} paddelt jetzt um alles 🏊",
-      "Kein Deckel mehr bei {name}. Ab jetzt wird es nass.",
+      "Kein Leben mehr bei {name}. Ab jetzt wird es nass.",
       "{name} ist im tiefen Becken angekommen.",
       "Noch ein Fehler, dann geht {name} baden 🌊",
       "{name} schwimmt. Bitte nicht füttern.",
@@ -96,7 +96,7 @@
       "Du hast alle versenkt. Bleib ruhig kurz unerträglich.",
       "Partie gewonnen. Der Tisch gehört dir.",
       "So sieht Gewinnen aus. Die anderen wissen es jetzt auch.",
-      "Alle Deckel, aller Ruhm, alles deins 😎",
+      "Alle Leben, aller Ruhm, alles deins 😎",
       "Bitte nur ganz dezent angeben. Oder halt nicht.",
       "Das war eine Lehrstunde. Gern geschehen."
     ],
@@ -491,11 +491,11 @@
       "Kopf hoch, nächste Runde klappt vielleicht der vorletzte Platz."
     ],
     "mockLoseLife": [
-      "Ups, da war es ein Deckel weniger 🍺",
-      "Den Deckel nehm ich gern in Verwahrung.",
+      "Ups, da war es ein Leben weniger 💔",
+      "Dein Leben nehm ich gern in Verwahrung.",
       "Mit der Hand wolltest du gewinnen? Mutig.",
-      "Nicht traurig sein, es ist nur Pappe. Wertvolle Pappe.",
-      "Ich zähl mal kurz deine Deckel. Oh. Das ging schnell.",
+      "Nicht traurig sein, es war nur ein Leben. Ein wertvolles Leben.",
+      "Ich zähl mal kurz deine Leben. Oh. Das ging schnell.",
       "Soll ich dir schon mal die Schwimmflügel aufpusten?",
       "Das war knapp daneben. Na gut, es war weit daneben."
     ],

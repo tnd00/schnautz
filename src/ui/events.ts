@@ -23,6 +23,7 @@ import { renderEmotes } from './render/emotes';
 import { render } from './render/index';
 import { legendOn, renderLegend } from './render/legend';
 import { fitLobby, renderLobby, turnLabel, turnText } from './render/lobby';
+import { openGameSettings, resetRulesFor } from './render/gamesettings';
 import { renderLog } from './render/log';
 import { rulesHTML } from './render/rules';
 import { renderGame } from './render/schnautz';
@@ -431,6 +432,31 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       App.ltab = t.dataset.t === 'game' ? 'game' : 'table';
       if (v?.phase === 'lobby') renderLobby(v);
       break;
+    case 'lnext':
+      // Handy: vom Tisch weiter zur Spielwahl, gestartet wird erst dort. Der Knopf ist danach weg, der Fokus geht
+      // auf den Reiter, damit Tastatur und Vorleser wissen, wo sie sind
+      App.ltab = 'game';
+      if (v?.phase === 'lobby') renderLobby(v);
+      $('#ltab-game').focus({ preventScroll: true });
+      break;
+    case 'gsreset': {
+      const g = t.dataset.g as GameKind;
+      if (!v || v.phase !== 'lobby' || App.role !== 'host' || v.game !== g) break;
+      doAct({ type: 'rules', rules: resetRulesFor(g) });
+      break;
+    }
+    case 'gsettings': {
+      const g = t.dataset.g as GameKind;
+      if (!v || v.phase !== 'lobby') break;
+      // Der Gastgeber stellt ein, was gespielt wird: Ein anderes Spiel wird erst gewählt, dann eingestellt
+      if (App.role === 'host' && v.game !== g) {
+        doAct({ type: 'game', game: g });
+        // Abgelehnt (etwa zu viele Leute für das Spiel): Der Hinweis kam schon, der Bogen bleibt zu
+        if (App.view?.game !== g) break;
+      }
+      openGameSettings(App.view ?? v, g);
+      break;
+    }
     case 'peek':
       App.peek = true;
       render();
@@ -571,14 +597,18 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
   }
 }
 
-/** Neuen Tisch aufmachen. Läuft noch ein eigener Tisch, wird vorher gefragt. */
+/**
+ * Neuen Tisch aufmachen. Gefragt wird nur, wenn dabei etwas verloren geht: ein eigener Tisch, der noch nicht zu Ende
+ * ist und an dem außer dir noch ein Mensch sitzt. Ein Tisch nur mit KIs lässt sich jederzeit neu aufmachen.
+ */
 function openTable(go: (name: string) => void): void {
   const n = readName();
   if (!n) return;
   showStartError('');
   unlockAudio();
   const hs = asSavedHost(LS.get<unknown>('host', null));
-  if (hs && hs.st.phase !== 'lobby' && Date.now() - hs.ts < HOST_RESUME_MS) {
+  const others = !!hs && hs.st.players.some((p) => !p.bot && p.id !== hs.me);
+  if (hs && others && hs.st.phase !== 'over' && Date.now() - hs.ts < HOST_RESUME_MS) {
     confirmBox(`Dein laufender Tisch ${hs.code} geht dann verloren. Trotzdem neu anfangen?`, 'Neu anfangen', () =>
       go(n),
     );
@@ -589,7 +619,7 @@ function startHost(): void {
   openTable(hostNew);
 }
 
-/** Gegen die KI: Tisch mit dem zuletzt gespielten Spiel, freie Plätze füllt die KI, die Partie startet sofort. */
+/** Gegen die KI: Tisch mit dem zuletzt gespielten Spiel und drei KIs, gestartet wird in der Lobby. */
 function startBots(): void {
   openTable((n) => hostNewVsBots(n, lastGame()));
 }
@@ -789,9 +819,6 @@ export function initEvents(): void {
     attributes: true,
     attributeFilter: ['hidden'],
   });
-  $('#codechip').onclick = () => {
-    $('#modal').innerHTML = inviteHTML();
-  };
   $('#chatform').addEventListener('submit', (e) => {
     e.preventDefault();
     const inp = $<HTMLInputElement>('#chatin');

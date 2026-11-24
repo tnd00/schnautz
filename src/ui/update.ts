@@ -77,7 +77,10 @@ export function reloadApp(): void {
   location.reload();
 }
 
-/** Nach dem Start: War das ein Neuladen wegen einer neuen Version, gleich weiter am Tisch. */
+/**
+ * Nach dem Start: War das ein Neuladen wegen einer neuen Version, gleich weiter am Tisch. Zeigt der Link auf einen
+ * anderen Tisch, lässt initStart (start.ts) die Einladung weg, damit der Knopf zum Fortsetzen da ist.
+ */
 export function autoResume(): void {
   const role = SS.get<string>('autoresume', '');
   if (!role) return;
@@ -110,7 +113,7 @@ async function check(): Promise<void> {
       dlog('net', `Neue Version auf dem Server: ${j.build}`);
       showUpdate(
         !App.role
-          ? 'Neue Version da, kurz neu laden.'
+          ? 'Neue Version verfügbar. Lade kurz neu.'
           : App.role === 'host'
             ? 'Neue Version verfügbar. Lade neu, der Tisch läuft danach weiter.'
             : 'Neue Version verfügbar. Lade neu, dein Platz bleibt.',

@@ -49,12 +49,6 @@
   .brand small {
     display: none;
   }
-  .chip.code-chip .lbl {
-    display: none;
-  }
-  #nettext {
-    display: none;
-  }
   #netchip {
     padding: 8px 9px;
   }

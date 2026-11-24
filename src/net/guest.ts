@@ -6,7 +6,7 @@ import { $, num, type Timer } from '../ui/dom';
 import { toast } from '../ui/feedback';
 import { resetTableUI } from '../ui/reset';
 import { setNet, setWait, showScreen } from '../ui/screens';
-import { renderResume, showStartError } from '../ui/start';
+import { endInvite, renderResume, showStartError } from '../ui/start';
 import { LS, SS } from '../ui/storage';
 import { noteHostVersion } from '../ui/update';
 import { APP_VERSION } from '../content/version';
@@ -97,6 +97,7 @@ function guestPeer(): void {
       if (!G.ever && ++G.notFound >= 4) {
         guestFail(
           `Kein Tisch mit dem Code ${App.code} gefunden. Prüf den Code oder lass dir einen neuen Link schicken.`,
+          true,
         );
         return;
       }
@@ -257,7 +258,7 @@ function guestMsg(raw: unknown): void {
     }
     case 'reject':
       dlog('net', `Abgewiesen: ${m.msg ?? ''}`);
-      guestFail(m.msg || 'Beitreten hat nicht geklappt.');
+      guestFail(m.msg || 'Beitreten hat nicht geklappt.', !keepsInvite(m.msg));
       return;
     case 'err':
       dlog('game', `Gastgeber lehnt ab: ${m.msg}`);
@@ -267,7 +268,7 @@ function guestMsg(raw: unknown): void {
     case 'closed':
       dlog('net', 'Tisch aufgelöst');
       LS.del('guest');
-      guestFail('Der Gastgeber hat den Tisch aufgelöst.');
+      guestFail('Der Gastgeber hat den Tisch aufgelöst.', true);
       return;
     case 'replaced':
       guestFail('Du sitzt jetzt in einem anderen Tab oder auf einem anderen Gerät am Tisch.');
@@ -294,7 +295,16 @@ export function guestLeave(): void {
   guestStop();
 }
 
-function guestFail(msg: string): void {
+/**
+ * Abweisungen, nach denen die Einladung bleibt: Der Tisch ist voll (später klappt es vielleicht) oder die Seite soll
+ * neu laden (dann braucht es den Code im Link). Die Texte kommen aus src/game/state.ts, seats.ts und hostHello.
+ */
+function keepsInvite(msg: string | undefined): boolean {
+  return !!msg && /voll|alle Plätze sind besetzt|Lade die Seite neu/.test(msg);
+}
+
+/** Zurück zur Startseite mit Fehler. `endInv`: Der Tisch ist nicht zu erreichen, die Einladung endet. */
+function guestFail(msg: string, endInv = false): void {
   resetTableUI();
   guestStop();
   App.role = null;
@@ -303,5 +313,6 @@ function guestFail(msg: string): void {
   setNet('off');
   showScreen('start');
   renderResume();
+  if (endInv) endInvite();
   showStartError(msg);
 }

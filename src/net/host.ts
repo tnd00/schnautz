@@ -77,11 +77,24 @@ function info(conn: DataConnection): ConnInfo {
   return i;
 }
 
-/** Gegen die KI: Spiel, das gleich nach dem Öffnen des Tisches mit aufgefüllten Plätzen startet. */
+/** Gegen die KI: Spiel, das nach dem Öffnen des Tisches gewählt wird, freie Plätze füllt die KI. */
 let vsBots: GameKind | null = null;
+/** Der Tisch wurde über „Gegen die KI spielen“ aufgemacht und die Lobby hat das noch nicht abgeholt. */
+let vsBotsOpened = false;
+
+/**
+ * Für die Lobby: Kam dieser Tisch über „Gegen die KI spielen“? Liefert genau einmal true, beim ersten Abfragen
+ * nach dem Aufbau, danach false. Die Lobby zeigt dann gleich „Spiel und Regeln“.
+ */
+export function openedVsBots(): boolean {
+  const was = vsBotsOpened;
+  vsBotsOpened = false;
+  return was;
+}
 
 function resetHost(): void {
   vsBots = null;
+  vsBotsOpened = false;
   H.conns = new Map();
   H.alias = Object.create(null);
   H.keys = Object.create(null);
@@ -103,17 +116,23 @@ export function hostNew(name: string): void {
   hostOpen(false);
 }
 
-/** Neuer Tisch gegen die KI. Gestartet wird erst, wenn der Tisch offen ist (siehe hostOpen). */
+/** Neuer Tisch gegen die KI. Spiel und KI-Plätze kommen, sobald der Tisch offen ist (siehe hostOpen). */
 export function hostNewVsBots(name: string, game: GameKind): void {
   hostNew(name);
   vsBots = game;
 }
 
-/** Spiel wählen, freie Plätze mit KI füllen und starten, mit denselben Aktionen wie in der Lobby. */
+/**
+ * Zuletzt gespieltes Spiel wählen und drei KI-Plätze füllen, mit denselben Aktionen wie in der Lobby. Gestartet wird
+ * nicht: Der Host landet in der Lobby und kann Regeln und Plätze noch ändern.
+ */
 function startVsBots(st: State, game: GameKind): void {
   vsBots = null;
   if (st.phase !== 'lobby') return;
-  const steps: Action[] = [{ type: 'game', game }, { type: 'rules', rules: { fill: true } }, { type: 'start' }];
+  const steps: Action[] = [
+    { type: 'game', game },
+    { type: 'rules', rules: { fill: true, seats: 4 } },
+  ];
   for (const a of steps) {
     const e = act(st, App.me, a);
     if (e) {
@@ -121,6 +140,7 @@ function startVsBots(st: State, game: GameKind): void {
       return;
     }
   }
+  vsBotsOpened = true;
 }
 
 export function hostResume(saved: SavedHost): void {
@@ -225,6 +245,7 @@ function hostOpen(resume: boolean): void {
 
 function hostFail(msg: string): void {
   vsBots = null;
+  vsBotsOpened = false;
   resetTableUI();
   const p = H.peer;
   H.peer = null;
@@ -562,6 +583,7 @@ export function hostClose(): void {
 /** Abbrechen, während der Tisch noch aufgebaut wird. */
 export function hostCancel(): void {
   vsBots = null;
+  vsBotsOpened = false;
   safeDestroy(H.peer);
   H.peer = null;
   if (H.st && H.st.players.length === 1 && H.st.phase === 'lobby') LS.del('host');

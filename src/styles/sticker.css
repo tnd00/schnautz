@@ -41,6 +41,16 @@ body:not(.ingame) :is(#modal, .top) :focus-visible {
   outline: 3px solid var(--st-ink);
   outline-offset: 3px;
 }
+/* Dunkle Hauptknöpfe tragen schon einen weißen Rand: Ein Tintenring sähe wie ein zweiter schwarzer Rand aus.
+ * Auf hellen Bögen ist der Ring deshalb violett, auf dem violetten Grund weiß */
+:is(#scr-start, #scr-lobby, #modal) .st-btn.st-primary:focus-visible {
+  outline-color: var(--st-ground);
+  outline-offset: 2px;
+}
+#scr-start .st-btn.st-primary.playbtn:focus-visible {
+  outline-color: var(--st-paper);
+  outline-offset: 4px;
+}
 
 /* ---------- Schrift: Fraunces Black, weich gestellt ---------- */
 .st-display {
@@ -187,7 +197,7 @@ body:not(.ingame) :is(#modal, .top) :focus-visible {
 
 /* Kleine Aufkleber am Rand, etwa „Neu“ */
 .st-tag {
-  --tilt: 6deg;
+  --tilt: 3deg;
   display: inline-block;
   padding: 4px 9px 5px;
   border: 3px solid var(--st-paper);
@@ -416,41 +426,41 @@ body:not(.ingame) :is(#modal, .top) :focus-visible {
 }
 
 /* ---------- Neigung: fest pro Element, nie zufällig ----------
- * Steht am Ende, damit die Klassen die Grundneigung der Bausteine überschreiben. Jeder Baustein setzt --tilt
+ * Höchstens 3 Grad (der User fand 6 Grad zu unruhig). Steht am Ende, damit die Klassen die Grundneigung der Bausteine überschreiben. Jeder Baustein setzt --tilt
  * auf null zurück, sonst würde ein Zahl-Sticker auf einem schiefen Sticker dessen Winkel noch einmal draufrechnen. */
 .st-l6 {
-  --tilt: -6deg;
-}
-.st-l5 {
-  --tilt: -5deg;
-}
-.st-l4 {
-  --tilt: -4deg;
-}
-.st-l3 {
   --tilt: -3deg;
 }
-.st-l2 {
+.st-l5 {
+  --tilt: -2.5deg;
+}
+.st-l4 {
   --tilt: -2deg;
 }
-.st-l1 {
+.st-l3 {
+  --tilt: -1.5deg;
+}
+.st-l2 {
   --tilt: -1deg;
 }
+.st-l1 {
+  --tilt: -0.5deg;
+}
 .st-r1 {
-  --tilt: 1deg;
+  --tilt: 0.5deg;
 }
 .st-r2 {
-  --tilt: 2deg;
+  --tilt: 1deg;
 }
 .st-r3 {
-  --tilt: 3deg;
+  --tilt: 1.5deg;
 }
 .st-r4 {
-  --tilt: 4deg;
+  --tilt: 2deg;
 }
 .st-r5 {
-  --tilt: 5deg;
+  --tilt: 2.5deg;
 }
 .st-r6 {
-  --tilt: 6deg;
+  --tilt: 3deg;
 }

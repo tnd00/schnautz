@@ -302,7 +302,7 @@ export function renderOverlay(v: View): void {
   else if (r.reason === 'knock')
     lead = esc(nameOf(v, r.knocker)) + vb(r.knocker, ' hattest', ' hatte') + ' geklopft. Alle Karten liegen offen.';
   else if (r.reason === 'feuer')
-    lead = esc(nameOf(v, r.by)) + vb(r.by, ' hast', ' hat') + ' drei Asse. Alle anderen verlieren einen Bierdeckel.';
+    lead = esc(nameOf(v, r.by)) + vb(r.by, ' hast', ' hat') + ' drei Asse. Alle anderen verlieren ein Leben.';
   else lead = 'Mit 31 ist die Runde sofort vorbei.';
   const best = roundBest(v);
   const loserIds = Object.keys(r.changes || {});
@@ -317,13 +317,13 @@ export function renderOverlay(v: View): void {
         : myC.to === 'swim'
           ? 'Du schwimmst jetzt!'
           : myC.n === 2
-            ? 'Du verlierst zwei Bierdeckel.'
-            : 'Du verlierst einen Bierdeckel.') +
+            ? 'Du verlierst zwei Leben.'
+            : 'Du verlierst ein Leben.') +
       '</div>';
   else if (best.indexOf(App.me) >= 0 && loserIds.length)
     verdict = '<div class="verdict good">👑 Rundensieg! Du hattest die beste Hand.</div>';
   else if (!loserIds.length && r.reason !== 'quit')
-    verdict = '<div class="verdict">🤝 Gleichstand. Niemand verliert einen Bierdeckel.</div>';
+    verdict = '<div class="verdict">🤝 Gleichstand. Niemand verliert ein Leben.</div>';
   else if (loserIds.length)
     verdict =
       '<div class="verdict">' +
@@ -380,7 +380,7 @@ export function renderOverlay(v: View): void {
           ? '<span class="conseq">' + (mineRow ? 'bist raus' : 'ist raus') + '</span>'
           : c.to === 'swim'
             ? '<span class="conseq swim">' + (mineRow ? 'schwimmst jetzt' : 'schwimmt jetzt') + '</span>'
-            : '<span class="conseq">' + (c.n === 2 ? '2 Bierdeckel weg' : '1 Bierdeckel weg') + '</span>';
+            : '<span class="conseq">' + (c.n === 2 ? '2 Leben weg' : '1 Leben weg') + '</span>';
     const isBest = best.includes(p.id) && loserIds.length > 0;
     const isWin = v.phase === 'over' && v.winner === p.id;
     rows +=

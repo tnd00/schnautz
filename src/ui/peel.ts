@@ -54,9 +54,12 @@ function onScreen(el: Element | null): el is HTMLElement {
   return !!hit && el.contains(hit);
 }
 
-/** Der gewählte Spiel-Sticker, wenn er zu sehen ist, sonst der Spielname oben im Kopf. */
+/**
+ * Die gewählte Spielkarte unter „Spiel und Regeln“, wenn sie zu sehen ist (am PC immer, am Handy im zweiten Reiter),
+ * sonst der Spielname oben im Kopf.
+ */
 function anchor(): HTMLElement | null {
-  for (const sel of ['#scr-lobby .lgs.on', '#scr-lobby .lchosen .lgs', 'body.inlobby .top .brand']) {
+  for (const sel of ['#scr-lobby .lpane.on .lgc.on', '#scr-lobby .lgc.on', 'body.inlobby .top .brand']) {
     const el = $opt(sel);
     if (onScreen(el)) return el;
   }

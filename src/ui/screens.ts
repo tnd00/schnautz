@@ -23,9 +23,7 @@ export function showScreen(name: Screen): void {
   $('#btn-board').hidden = name !== 'game';
   document.body.classList.toggle('intable', name === 'lobby' || name === 'game');
   const inTable = name === 'lobby' || name === 'game';
-  // In der Lobby steht der Code als eigener Sticker mit Kopieren und Teilen, oben nur am Tisch
-  $('#codechip').hidden = name !== 'game';
-  // Das Menü gibt es überall, außerhalb des Tisches nur mit Ton und Updates
+  // Das Menü gibt es ab der Lobby, die Startseite hat keine Kopfzeile
   $('#btn-menu').hidden = name === 'wait';
   $('#netchip').hidden = name === 'start';
   if (!inTable) {
@@ -39,11 +37,22 @@ export function showScreen(name: Screen): void {
   }
 }
 
+/** Name des Knopfs oben für Screenreader: Tisch und Stand der Verbindung, sichtbar sind nur Punkt und Code. */
+export function labelNet(): void {
+  const s = App.net;
+  const state = s === 'online' ? 'verbunden' : s === 'off' ? 'getrennt' : 'verbinde';
+  $('#netchip').setAttribute(
+    'aria-label',
+    `${App.code ? `Tisch ${App.code}, ` : ''}${state}. Tisch und Verbindung ansehen`,
+  );
+}
+
 export function setNet(s: NetState): void {
   if (App.net !== s) dlog('net', `Netz ${s}`);
   App.net = s;
   $('#netdot').className = `dot ${s}`;
   $('#nettext').textContent = s === 'online' ? 'verbunden' : s === 'off' ? 'getrennt' : 'verbinde…';
+  labelNet();
   if (s === 'online') G.downSince = 0;
   else if (!G.downSince) G.downSince = Date.now();
   $('#netbar').hidden = !(App.role === 'guest' && App.view && s !== 'online');

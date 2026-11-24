@@ -34,17 +34,20 @@ function playOut(st: State, rng: () => number, check: () => void): void {
 }
 
 describe('Mehr Leute und zweites Deck', () => {
-  it('erlaubt bis zu 10 bei Shithead und 8 bei Schnautz', () => {
+  it('erlaubt bei allen Spielen bis zu 8 Leute', () => {
     const st = table(2, 'shithead', 1);
     act(st, 'h', { type: 'rules', rules: { seats: 12 } }, rngF(1));
-    expect(seatLimit(st)).toBe(10);
+    expect(seatLimit(st)).toBe(8);
     act(st, 'h', { type: 'game', game: 'schnautz' }, rngF(1));
     expect(seatLimit(st)).toBe(8);
 
-    // Neun Menschen passen nicht an einen Schnautz-Tisch, der Wechsel wird abgelehnt
-    const big = table(9, 'shithead', 2);
-    expect(act(big, 'h', { type: 'game', game: 'schnautz' }, rngF(2))).toMatch(/höchstens 8/);
-    expect(big.game).toBe('shithead');
+    // Ein neunter Mensch findet keinen Platz mehr
+    const full = table(8, 'shithead', 2);
+    expect(addPlayer(full, 'p9', 'P9')).toBe('Der Tisch ist voll.');
+    // Ein alter Shithead-Tisch aus 2.5 mit neun Menschen kann nicht zu Schnautz wechseln
+    full.players.push({ ...structuredClone(full.players[1]), id: 'p9', name: 'P9' });
+    expect(act(full, 'h', { type: 'game', game: 'schnautz' }, rngF(2))).toMatch(/höchstens 8/);
+    expect(full.game).toBe('shithead');
   });
 
   it('spielt Shithead ab 6 Leuten mit zwei Decks, ab 5 nur mit Einstellung', () => {
@@ -83,9 +86,9 @@ describe('Mehr Leute und zweites Deck', () => {
     expect(S.P[other.id].hand.filter((c) => rankOf(c) === '7')).toHaveLength(2);
   });
 
-  it('spielt Partien mit 6 bis 10 Leuten bis zum Ende, ohne Karten zu verlieren', () => {
+  it('spielt Partien mit 6 bis 8 Leuten bis zum Ende, ohne Karten zu verlieren', () => {
     for (let g = 0; g < 25; g++) {
-      const n = 6 + (g % 5);
+      const n = 6 + (g % 3);
       const st = table(n, 'shithead', 100 + g);
       const rng = rngF(100 + g);
       act(st, 'h', { type: 'start' }, rng);

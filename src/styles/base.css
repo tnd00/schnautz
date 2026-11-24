@@ -28,11 +28,11 @@
   --st-sheet: #f4f3ff;
   --st-field: #eeedff;
   --st-line: rgba(26, 24, 48, 0.14);
-  /* Limette gehört nur Logo und Claim. Cabo hat denselben Ton, das ist die Spielfarbe und nur dort erlaubt */
-  --st-lime: #c8f25c;
   --st-schnautz: #ff9a3c;
   --st-shithead: #ff7eb6;
   --st-durak: #5ee6c2;
+  /* Sonnengelb nur für das Logo auf der Startseite, kein Spiel nutzt es. Limette gehört nur Cabo */
+  --st-sun: #ffd84d;
   --st-cabo: #c8f25c;
   --st-display: 'Fraunces Soft', 'Fraunces Variable', Georgia, serif;
   --st-cut: 7px;
@@ -201,6 +201,18 @@ button.chip:hover {
 }
 button.chip#netchip {
   cursor: pointer;
+}
+/* Ein Knopf für Tisch und Verbindung: sichtbar sind Punkt und Code, der Status steht für Screenreader dabei */
+.top .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+#netcode:empty {
+  display: none;
 }
 .dot.connecting,
 .dot.reconnecting {

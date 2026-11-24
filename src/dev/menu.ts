@@ -23,6 +23,7 @@ import { ZER } from '../ui/ceremony';
 import { DEVLOG, dlog, type DevLogKind } from '../ui/devlog';
 import { playDevFx } from '../ui/devfx';
 import { $, $opt, esc, reduceMotion } from '../ui/dom';
+import { sheetHTML } from '../ui/dialog';
 import { ANN, toast } from '../ui/feedback';
 import { nameOf } from '../ui/helpers';
 import { resetTableUI } from '../ui/reset';
@@ -103,7 +104,7 @@ const DEV = {
 };
 
 const btn = (dev: string, label: string, data = ''): string =>
-  `<button class="btn ghost dbtn" data-act="dev" data-dev="${dev}"${data}>${esc(label)}</button>`;
+  `<button type="button" class="btn ghost dbtn" data-act="dev" data-dev="${dev}"${data}>${esc(label)}</button>`;
 
 const grid = (items: string[], cls = ''): string => `<div class="dgrid${cls ? ` ${cls}` : ''}">${items.join('')}</div>`;
 
@@ -180,9 +181,11 @@ function jumpsHTML(): string {
 function reactHTML(): string {
   const tosses = TOSS_ITEMS.map((t) => btn('toss', `${TOSS_ICON[t]} auf mich`, ` data-s="${t}"`));
   if (!host())
-    return grid(tosses, 'snd') + note('Als Gast fliegen die Würfe nur bei dir. KI-Reaktionen gibt es beim Gastgeber.');
+    return (
+      grid(tosses, 'snd toss') + note('Als Gast fliegen die Würfe nur bei dir. KI-Reaktionen gibt es beim Gastgeber.')
+    );
   return (
-    grid(tosses, 'snd') +
+    grid(tosses, 'snd toss') +
     grid([btn('botemote', 'KI-Reaktion'), btn('botsound', 'KI-Klang'), btn('botchat', 'KI-Spruch')]) +
     note('Kommt von einer KI am Tisch und läuft bei allen wie echt, ohne Sperre gegen Dauerfeuer.')
   );
@@ -337,11 +340,14 @@ function toolsHTML(): string {
   return grid(list);
 }
 
+/** Ein Bogen wie die anderen Fenster (dialog.ts): Kopf mit Titel und Schließen bleibt stehen, die Bereiche scrollen. */
 function devHTML(): string {
+  return sheetHTML({ kind: 'devm', title: 'Dev-Menü', body: devBody() });
+}
+
+function devBody(): string {
   return (
-    '<div class="modal"><div class="paper sheet devm" role="dialog" aria-labelledby="dev-h">' +
-    '<button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    '<h2 id="dev-h">Dev-Menü</h2><p class="lead">Testen, ohne jedes Mal eine ganze Partie zu spielen.</p>' +
+    '<p class="lead">Testen, ohne jedes Mal eine ganze Partie zu spielen.</p>' +
     section('jump', 'Abkürzungen', jumpsHTML()) +
     section('react', 'Würfe und Reaktionen', reactHTML()) +
     section('fx', 'Effekte', fxHTML()) +
@@ -353,8 +359,7 @@ function devHTML(): string {
     ) +
     section('raw', 'Verlauf roh', `<div id="dev-raw"></div>${grid([btn('copyraw', 'Verlauf kopieren')])}`) +
     section('info', 'Infos', `<div class="drows" id="dev-info"></div>${grid([btn('copyinfo', 'Infos kopieren')])}`) +
-    section('tools', 'Werkzeuge', toolsHTML()) +
-    '</div></div>'
+    section('tools', 'Werkzeuge', toolsHTML())
   );
 }
 

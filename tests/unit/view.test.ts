@@ -78,7 +78,7 @@ describe('Nachrichtengröße', () => {
 
   it.each([
     ['schnautz', 8],
-    ['shithead', 10],
+    ['shithead', 8],
     ['durak', 8],
     ['cabo', 8],
   ] as const)('%s zu %i bleibt mit Emoji-Chat unter der Grenze von PeerJS', (game, n) => {

@@ -363,14 +363,13 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
       if (e.reason === 'schnautz') parts.push('Schnautz! ' + who() + vb(p, ' hast 31.', ' hat 31.'));
       else if (e.reason === 'feuer') parts.push('Feuer! ' + who() + vb(p, ' hast drei Asse.', ' hat drei Asse.'));
       else parts.push('Aufgedeckt.');
-      if (e.tie) parts.push('Gleichstand, niemand verliert einen Bierdeckel.');
+      if (e.tie) parts.push('Gleichstand, niemand verliert ein Leben.');
       Object.keys(e.changes || {}).forEach((id) => {
         const c = e.changes[id],
           w = W(v, id, e.names?.[id]);
         if (c.to === 'out') parts.push(w + vb(id, ' bist raus.', ' ist raus.'));
         else if (c.to === 'swim') parts.push(w + vb(id, ' schwimmst jetzt.', ' schwimmt jetzt.'));
-        else
-          parts.push(w + vb(id, ' verlierst ', ' verliert ') + (c.n === 2 ? 'zwei Bierdeckel.' : 'einen Bierdeckel.'));
+        else parts.push(w + vb(id, ' verlierst ', ' verliert ') + (c.n === 2 ? 'zwei Leben.' : 'ein Leben.'));
       });
       return ['big', parts.join(' ')];
     }

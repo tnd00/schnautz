@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#6f6cf0" />
     <meta
       name="description"
-      content="Schnautz, Shithead, Durak und Cabo online, Schnautz, Durak und Cabo mit bis zu acht, Shithead mit bis zu zehn Leuten. Tisch eröffnen, Link schicken und losspielen."
+      content="Schnautz, Shithead, Durak und Cabo online für 2 bis 8 Leute. Tisch aufmachen, Link schicken, losspielen. Vier Spiele, deine Leute, null Gnade."
     />
     <title>Schnautz · Online</title>
     <meta property="og:type" content="website" />
@@ -30,11 +30,8 @@
       <header class="top">
         <div class="brand"><span id="brand-name">Schnautz</span> <small id="brand-badge">31</small></div>
         <div class="grow"></div>
-        <button class="chip code-chip" id="codechip" hidden title="Freunde einladen">
-          <span class="lbl">Tisch</span> <b id="codechip-code"></b>
-        </button>
-        <button class="chip" id="netchip" data-act="netinfo" title="Details zur Verbindung" hidden>
-          <span class="dot" id="netdot"></span><span id="nettext">getrennt</span>
+        <button class="chip" id="netchip" data-act="netinfo" title="Tisch und Verbindung" hidden>
+          <span class="dot" id="netdot"></span><span class="sr" id="nettext">getrennt</span><b id="netcode"></b>
         </button>
         <button class="iconbtn rulesbtn" id="btn-rules" title="Regeln und Sonderkarten" aria-label="Regeln">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -71,9 +68,23 @@
           <h1 class="st-logo">
             <span class="st st-ink st-l4 st-logo-word st-display">Schnautz</span>
           </h1>
-          <p class="st st-r2 st-claim st-display">Karten, Freunde und ein bisschen Gift.</p>
+          <p class="st st-r2 st-claim st-display">Vier Spiele, deine Leute, null Gnade.</p>
           <ul class="st-games" id="st-games" aria-label="Die vier Spiele, antippen für die Regeln"></ul>
           <ul class="st-promises" aria-label="Was dich erwartet">
+            <li class="st-chip st-r1 pr-seats">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="9" cy="8" r="3.2" />
+                <path d="M3 19.5a6 6 0 0 1 12 0M16 4.8a3.2 3.2 0 0 1 0 6.4M18.2 13.6a6 6 0 0 1 2.8 5.9" />
+              </svg>
+              <span class="pr-long">Für 2 bis 8 Leute</span><span class="pr-short">2 bis 8 Leute</span>
+            </li>
             <li class="st-chip st-l2">
               <svg
                 viewBox="0 0 24 24"
@@ -88,7 +99,7 @@
               </svg>
               Ohne Anmeldung
             </li>
-            <li class="st-chip st-r1">
+            <li class="st-chip st-r2">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -102,7 +113,7 @@
               </svg>
               <span class="pr-long">KI füllt freie Plätze</span><span class="pr-short">KI füllt auf</span>
             </li>
-            <li class="st-chip st-l1">
+            <li class="st-chip st-l1 pr-web">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -155,7 +166,7 @@
             </div>
             <button class="st-btn st-primary" id="btn-host">Tisch aufmachen</button>
             <button class="st-btn st-secondary st-bots" id="btn-bots" data-act="bots">
-              Gegen die KI spielen <span class="st-chip" id="bots-game"></span>
+              <span class="st-bots-l">Gegen die KI spielen</span><span class="st-bots-sub">Tisch mit drei KIs</span>
             </button>
             <div class="or st-or">Code bekommen?</div>
             <div class="joinbox" id="joinbox">
@@ -258,6 +269,7 @@
           <div class="seathead">
             <h3 class="seat-title" id="seat-title">Plätze</h3>
             <div class="seat-ctl" id="seat-ctl"></div>
+            <span class="sr" id="seat-live" aria-live="polite"></span>
           </div>
           <ul class="seats" id="seats" aria-labelledby="seat-title"></ul>
         </div>

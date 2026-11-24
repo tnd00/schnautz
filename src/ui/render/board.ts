@@ -21,7 +21,7 @@ interface Col {
 const avgPlace = (r: Row): number => (r.s.games ? num(r.s.places) / r.s.games : 99);
 const comma = (x: number): string => x.toFixed(1).replace('.', ',');
 
-/** Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt Deckel und 31. */
+/** Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt verlorene Leben und 31. */
 function placesGame(g: GameKind): boolean {
   switch (g) {
     case 'shithead':
@@ -47,7 +47,7 @@ function columns(g: GameKind, tips: boolean): Col[] {
   if (!placesGame(g))
     return [
       wins,
-      { h: 'Deckel', full: 'Verlorene Bierdeckel', val: (r) => String(num(r.s.coasters)) },
+      { h: 'Leben', full: 'Verlorene Leben', val: (r) => String(num(r.s.coasters)) },
       { h: '31', full: 'Runden mit 31 oder Feuer beendet', val: (r) => String(num(r.s.hot)) },
       games,
     ];

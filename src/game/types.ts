@@ -59,7 +59,7 @@ export interface Rules {
 export interface PlayerStats {
   games: number;
   wins: number;
-  /** Schnautz: verlorene Bierdeckel */
+  /** Schnautz: verlorene Leben (im Spiel als Bierdeckel gezeichnet) */
   coasters?: number;
   /** Schnautz: Runden, die man mit 31 oder Feuer beendet hat */
   hot?: number;

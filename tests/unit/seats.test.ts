@@ -6,7 +6,8 @@ import { quitPlayer, toBot } from '../../src/game/flow';
 import { finishRound } from '../../src/game/schnautz';
 import { reclaimSeat, seatGuest } from '../../src/game/seats';
 import { addPlayer, migrate, newState, pIdx } from '../../src/game/state';
-import { reignOf, setReign } from '../../src/game/games';
+import { GAMES, reignOf, resetRulesFor, setReign } from '../../src/game/games';
+import { DEFAULT_RULES } from '../../src/game/constants';
 import type { Card, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { rngF, shCardsOk } from './helpers';
@@ -230,5 +231,67 @@ describe('Kronen je Spiel', () => {
     setReign(st, 'schnautz', 'c');
     expect(reignOf(st, 'shithead')).toMatchObject({ win: 'a', lose: 'b' });
     expect(reignOf(st)).toMatchObject({ win: 'c', lose: null });
+  });
+
+  it('kürzt eine alte Shithead-Lobby mit 10 Plätzen auf 8 und startet sie', () => {
+    const rng = rngF(7);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 8 } }, rng);
+    expect(addPlayer(st, 'g', 'Gast')).toBe('Der Tisch ist voll.');
+    // So sah ein gespeicherter Tisch aus 2.5 aus: zehn Plätze, zwei mehr als heute erlaubt
+    const extra = bots(st)
+      .slice(0, 2)
+      .map((b, i) => ({ ...structuredClone(b), id: `alt${i}`, name: `Alt ${i}` }));
+    st.players.push(...extra);
+    st.rules.seats = 10;
+    const back = JSON.parse(JSON.stringify(st)) as State;
+    migrate(back);
+    expect(back.players).toHaveLength(10);
+    // Jeder nächste Schritt in der Lobby bringt Platzzahl und KIs in die neuen Grenzen, eine Regel genauso wie der Start
+    const viaRule = structuredClone(back);
+    expect(act(viaRule, 'h', { type: 'rules', rules: { fill: true } }, rng)).toBeNull();
+    expect(viaRule.rules.seats).toBe(8);
+    expect(viaRule.players).toHaveLength(8);
+    expect(act(back, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(back.players).toHaveLength(8);
+    expect(back.phase).not.toBe('lobby');
+  });
+
+  it('startet eine alte Shithead-Lobby mit neun Menschen nicht und sagt warum', () => {
+    const rng = rngF(8);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'rules', rules: { seats: 8 } }, rng);
+    for (let i = 1; i < 8; i++) expect(addPlayer(st, `g${i}`, `Gast ${i}`)).toBeNull();
+    st.players.push({ ...structuredClone(st.players[1]), id: 'g9', name: 'Gast 9' });
+    expect(act(st, 'h', { type: 'start' }, rng)).toMatch(/höchstens|Mehr als 8/);
+    expect(st.phase).toBe('lobby');
+  });
+
+  it('setzt die Einstellungen eines Spiels auf Standard zurück und lässt die anderen Spiele in Ruhe', () => {
+    const rng = rngF(9);
+    const st = newState('h', 'Host');
+    const changed = {
+      turnSecs: 45,
+      lives: 5,
+      feuer: false,
+      knockDouble: true,
+      sh: { eight: false, seven: false },
+      dk: { transfer: true },
+      cb: { target: 50, snap: true },
+    };
+    for (const g of GAMES) {
+      expect(act(st, 'h', { type: 'rules', rules: changed }, rng)).toBeNull();
+      expect(act(st, 'h', { type: 'rules', rules: resetRulesFor(g) }, rng)).toBeNull();
+      const r = st.rules;
+      expect(r.turnSecs).toBe(DEFAULT_RULES.turnSecs);
+      expect([r.lives, r.feuer, r.knockDouble]).toEqual(
+        g === 'schnautz' ? [DEFAULT_RULES.lives, DEFAULT_RULES.feuer, DEFAULT_RULES.knockDouble] : [5, false, true],
+      );
+      expect(r.sh).toEqual(g === 'shithead' ? DEFAULT_RULES.sh : { ...DEFAULT_RULES.sh, eight: false, seven: false });
+      expect(r.dk).toEqual(g === 'durak' ? DEFAULT_RULES.dk : { transfer: true });
+      expect(r.cb).toEqual(g === 'cabo' ? DEFAULT_RULES.cb : { target: 50, snap: true });
+    }
   });
 });

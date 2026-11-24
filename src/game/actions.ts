@@ -108,6 +108,8 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
     case 'start':
       if (!isHost) return 'Nur der Gastgeber startet die Partie.';
       if (st.phase !== 'lobby') return 'Die Partie läuft schon.';
+      // Alte Tische (Shithead bis 2.5 mit bis zu 10 Plätzen) erst in die heutigen Grenzen bringen
+      syncSeats(st, rng);
       if (st.players.length > maxSeats(st.game))
         return `Mehr als ${maxSeats(st.game)} Leute gehen bei diesem Spiel nicht.`;
       return beginGame(st, rng);

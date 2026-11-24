@@ -133,9 +133,7 @@ export function effects(prev: View, v: View, seqd = false): void {
           me2 = id === App.me;
         if (ch.to === 'out') return nmOf(id) + (me2 ? ' bist raus.' : ' ist raus.');
         if (ch.to === 'swim') return nmOf(id) + (me2 ? ' schwimmst jetzt.' : ' schwimmt jetzt.');
-        return (
-          nmOf(id) + (me2 ? ' verlierst ' : ' verliert ') + (ch.n === 2 ? 'zwei Bierdeckel.' : 'einen Bierdeckel.')
-        );
+        return nmOf(id) + (me2 ? ' verlierst ' : ' verliert ') + (ch.n === 2 ? 'zwei Leben.' : 'ein Leben.');
       });
       let title: string;
       let icon: string;
@@ -149,12 +147,12 @@ export function effects(prev: View, v: View, seqd = false): void {
         title = 'Feuer!';
         icon = '🔥';
         tone = 'red';
-        lines = [N(e.by) + vb(e.by, ' hast', ' hat') + ' drei Asse. Alle anderen verlieren einen Bierdeckel.'];
+        lines = [N(e.by) + vb(e.by, ' hast', ' hat') + ' drei Asse. Alle anderen verlieren ein Leben.'];
       } else {
         title = 'Aufgedeckt!';
         icon = '🃏';
       }
-      if (!ids.length && e.reason !== 'quit') lines.push('Gleichstand. Niemand verliert einen Bierdeckel.');
+      if (!ids.length && e.reason !== 'quit') lines.push('Gleichstand. Niemand verliert ein Leben.');
       let tt = '';
       if (c) tt = taunt(c.to === 'out' ? 'scOutSelf' : c.to === 'swim' ? 'scSwimSelf' : 'scLoseSelf', null, e.n);
       else if (ids.length && e.reason !== 'quit') {
@@ -522,10 +520,10 @@ function lobbyPeople(prev: View, v: View, fresh: LogEntry[]): void {
   });
   if (came.length) {
     sfxCalm('msg', 400);
-    toast(`${listJoin(came)} ${came.length === 1 ? 'sitzt' : 'sitzen'} jetzt mit am Tisch`);
+    toast(`${listJoin(came)} ${came.length === 1 ? 'sitzt' : 'sitzen'} jetzt mit am Tisch.`);
   }
   if (went.length) {
     sfxCalm('card', 400, 0.7);
-    toast(`${listJoin(went)} ${went.length === 1 ? 'ist' : 'sind'} gegangen`);
+    toast(`${listJoin(went)} ${went.length === 1 ? 'ist' : 'sind'} gegangen.`);
   }
 }

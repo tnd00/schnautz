@@ -19,8 +19,10 @@ import {
   phone,
   seqBusy,
   view,
+  startGame,
   waitForChange,
   waitForPhase,
+  withSettings,
 } from './helpers';
 
 test.afterEach(closeAll);
@@ -87,11 +89,13 @@ test('zwei Browser spielen Shithead bis zum Ende', async ({ browser }) => {
     await expect.poll(async () => (await view(guest))?.game).toBe('shithead');
     // 8 aussetzen ist vorausgewählt
     expect((await mustView(guest)).rules.sh.eight).toBe(true);
-    await host.click('[data-shrule=eight]');
-    await expect.poll(async () => (await view(guest))?.rules.sh.eight).toBe(false);
-    await host.click('[data-shrule=eight]');
-    await expect.poll(async () => (await view(guest))?.rules.sh.eight).toBe(true);
-    await host.click('[data-act=start]');
+    await withSettings(host, 'shithead', async (sheet) => {
+      await sheet.locator('[data-shrule=eight]').click();
+      await expect.poll(async () => (await view(guest))?.rules.sh.eight).toBe(false);
+      await sheet.locator('[data-shrule=eight]').click();
+      await expect.poll(async () => (await view(guest))?.rules.sh.eight).toBe(true);
+    });
+    await startGame(host);
     await expect(guest.locator('#scr-game')).toBeVisible();
   });
 

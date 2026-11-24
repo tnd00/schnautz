@@ -1,6 +1,6 @@
 # Schnautz Online
 
-Schnautz (Schwimmen, 31), Shithead, Durak und Cabo im Browser, Schnautz, Durak und Cabo mit bis zu acht, Shithead mit bis zu zehn Leuten. Einer eröffnet einen Tisch und schickt den Link, die anderen sitzen sofort mit am Tisch. Freie Plätze lassen sich mit KI-Mitspielern füllen, wer später kommt, übernimmt einen KI-Platz.
+Schnautz (Schwimmen, 31), Shithead, Durak und Cabo im Browser, alle vier mit bis zu acht Leuten. Einer eröffnet einen Tisch und schickt den Link, die anderen sitzen sofort mit am Tisch. Freie Plätze lassen sich mit KI-Mitspielern füllen, wer später kommt, übernimmt einen KI-Platz.
 
 Live unter <https://tnd00.github.io/schnautz/>.
 
@@ -75,4 +75,4 @@ In den Repository-Einstellungen muss unter Pages als Quelle „GitHub Actions“
 
 ## Spielregeln
 
-Die Regeln aller Spiele stehen in der App hinter dem Buch-Symbol oben rechts. Bei Shithead lässt sich in der Lobby einstellen, welche Sonderkarten gelten, bei Durak das Weiterschieben und bei Cabo Zielpunkte und Schnappen. Durak folgt den Regeln von [Pagat](https://pagat.com/beating/podkidnoy_durak.html) (Podkidnoy) mit 36 Karten bis sechs und 52 Karten ab sieben Leuten. Cabo folgt der zweiten Ausgabe von 2019, umgerechnet auf normale Karten: Ass 1, Bube 11, Dame 12, schwarzer König 13, roter König 0.
+Die Regeln aller Spiele öffnen auf der Startseite die Spiel-Sticker, ab der Lobby das Buch-Symbol oben rechts. Bei Shithead lässt sich in der Lobby einstellen, welche Sonderkarten gelten, bei Durak das Weiterschieben und bei Cabo Zielpunkte und Schnappen. Durak folgt den Regeln von [Pagat](https://pagat.com/beating/podkidnoy_durak.html) (Podkidnoy) mit 36 Karten bis sechs und 52 Karten ab sieben Leuten. Cabo folgt der zweiten Ausgabe von 2019, umgerechnet auf normale Karten: Ass 1, Bube 11, Dame 12, schwarzer König 13, roter König 0.

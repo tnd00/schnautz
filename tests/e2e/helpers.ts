@@ -1,5 +1,5 @@
-import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
-import type { View } from '../../src/game/types';
+import { expect, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test';
+import type { GameKind, View } from '../../src/game/types';
 
 /** Startseite mit lokalem PeerServer und ohne STUN (siehe playwright.config.ts). */
 export const START = './?peerhost=127.0.0.1&peerport=9000&noice=1';
@@ -75,10 +75,43 @@ export async function waitForPhase(page: Page, phases: string[], timeout = 20_00
     .toBe(true);
 }
 
-/** Tisch eröffnen und den Code zurückgeben. */
+/** Lobby am Handy: Reiter öffnen. Am PC stehen Tisch sowie Spiel und Regeln nebeneinander, dann passiert nichts. */
+export async function lobbyTab(page: Page, tab: 'table' | 'game'): Promise<void> {
+  if (await page.locator('#lobby-tabs').isVisible()) await page.click(`[data-act=ltab][data-t=${tab}]`);
+}
+
+/** Spiel wählen, am Handy im Reiter Spiel und Regeln. */
+export async function chooseGame(page: Page, game: GameKind): Promise<void> {
+  await lobbyTab(page, 'game');
+  await page.click(`[data-act=game][data-g=${game}]`);
+  await expect.poll(async () => (await view(page))?.game).toBe(game);
+}
+
+/**
+ * Regeln, Leben, Zielpunkte und Zeit stehen im Bogen Einstellungen einer Spielkarte: öffnen, fn darin ausführen,
+ * wieder schließen. Beim Gastgeber wählt das Öffnen das Spiel gleich mit.
+ */
+export async function withSettings(page: Page, game: GameKind, fn: (sheet: Locator) => Promise<void>): Promise<void> {
+  await lobbyTab(page, 'game');
+  await page.click(`[data-act=gsettings][data-g=${game}]`);
+  const sheet = page.locator(`#modal .gset[data-g=${game}]`);
+  await expect(sheet).toBeVisible();
+  await fn(sheet);
+  await sheet.locator('[data-act=closemodal]').click();
+  await expect(page.locator('#modal .gset')).toHaveCount(0);
+}
+
+/** Partie starten. Am Handy führt im Reiter Tisch erst „Weiter zum Spiel“ zu Spiel und Regeln, dort steht der Start. */
+export async function startGame(page: Page): Promise<void> {
+  const next = page.locator('[data-act=lnext]');
+  if (await next.isVisible()) await next.click();
+  await page.click('[data-act=start]');
+}
+
+/** Tisch eröffnen und den Code zurückgeben. Danach ist der Reiter Tisch offen und kein Fenster mehr. */
 export async function hostTable(page: Page, name: string): Promise<string> {
   await page.goto(START);
-  // Am Handy liegen Name und Knöpfe im Popup hinter "Spielen"
+  // Am Handy liegen Name und Knöpfe im Bogen hinter „Tisch aufmachen“
   if (await page.locator('.playbtn').isVisible()) await page.click('.playbtn');
   await page.fill('#name', name);
   await page.click('#btn-host');
@@ -86,12 +119,14 @@ export async function hostTable(page: Page, name: string): Promise<string> {
   const code = await page.evaluate(() => window.__schnautz?.App.code ?? '');
   expect(code).toMatch(/^[A-Z0-9]{5}$/);
   // Ohne Zeitlimit: Die Tests warten manchmal länger, als ein Zug dauern darf
-  if (await page.locator('#lobby-tabs').isVisible()) await page.click('[data-act=ltab][data-t=table]');
-  await page.locator('[data-range=turnSecs]').evaluate((el: HTMLInputElement) => {
-    el.value = '0';
-    el.dispatchEvent(new Event('change', { bubbles: true }));
+  await withSettings(page, (await mustView(page)).game, async (sheet) => {
+    await sheet.locator('[data-range=turnSecs]').evaluate((el: HTMLInputElement) => {
+      el.value = '0';
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await expect.poll(() => page.evaluate(() => window.__schnautz?.App.view?.rules.turnSecs)).toBe(0);
   });
-  await expect.poll(() => page.evaluate(() => window.__schnautz?.App.view?.rules.turnSecs)).toBe(0);
+  await lobbyTab(page, 'table');
   return code;
 }
 

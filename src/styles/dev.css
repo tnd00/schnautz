@@ -1,154 +1,246 @@
-/* Verstecktes Dev-Menü (src/dev/menu.ts) und die Versionszeile unter Updates, die es freischaltet */
-.devm .dsec {
-  margin-top: 8px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(246, 239, 223, 0.08);
-  padding: 0 10px;
+/*
+ * Verstecktes Dev-Menü (src/dev/menu.ts) und die Versionszeile unter Updates, die es freischaltet.
+ * Das Dev-Menü ist ein Bogen aus dialog.ts (.dlg.devm), Rahmen, Kopf und Schließen kommen aus overlays.css.
+ * Hier steht nur der Inhalt: aufklappbare Bereiche, weiße Knopf-Sticker, Zeilen und Protokoll.
+ * Jede Regel beginnt mit #modal .paper.sheet.devm und schlägt so die großen Bogen-Knöpfe aus overlays.css.
+ */
+#modal .paper.sheet.devm {
+  --dv-err: #b3261e;
+  --dv-warn: #8a5300;
+  width: min(640px, 100%);
 }
-.devm .dsec[open] {
-  padding-bottom: 10px;
+#modal .paper.sheet.devm .lead {
+  margin-bottom: 6px;
 }
-.devm .dsec summary {
+
+/* ---------- Bereiche: Überschrift zum Aufklappen, getrennt durch eine feine Linie ---------- */
+#modal .paper.sheet.devm .dsec {
+  border-bottom: 1.5px solid var(--st-line);
+}
+#modal .paper.sheet.devm .dsec:last-child {
+  border-bottom: 0;
+}
+#modal .paper.sheet.devm .dsec[open] {
+  padding-bottom: 18px;
+}
+#modal .paper.sheet.devm .dsec summary {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  cursor: pointer;
+  gap: 10px;
+  min-height: 52px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  border-radius: 14px;
+  color: var(--st-ink);
+  font: 800 17px/1.2 var(--ui);
+  letter-spacing: -0.01em;
   list-style: none;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.devm .dsec summary::-webkit-details-marker {
+#modal .paper.sheet.devm .dsec summary::-webkit-details-marker {
   display: none;
 }
-.devm .dsec summary::after {
-  content: '▾';
+#modal .paper.sheet.devm .dsec summary::after {
+  content: '';
+  flex: none;
+  width: 32px;
+  height: 32px;
   margin-left: auto;
-  font-size: 14px;
-  transition: transform 0.15s;
+  border-radius: 50%;
+  background: var(--st-paper)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1830' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    center / 18px 18px no-repeat;
+  box-shadow: var(--st-shadow-press);
+  transition: rotate var(--st-lift-ms) var(--st-ease);
 }
-.devm .dsec:not([open]) summary::after {
-  transform: rotate(-90deg);
+#modal .paper.sheet.devm .dsec:not([open]) summary::after {
+  rotate: -45deg;
 }
-.devm .dsec > .dgrid + .dgrid {
-  margin-top: 6px;
+@media (hover: hover) {
+  #modal .paper.sheet.devm .dsec summary:hover {
+    background: var(--st-field);
+  }
 }
-.devm .dall {
-  display: flex;
-  align-items: center;
+#modal .paper.sheet.devm .dsec summary:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ---------- Knöpfe: kleine weiße Sticker im Raster ---------- */
+#modal .paper.sheet.devm .dgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
-  margin: 0 0 8px;
-  font-size: 13px;
+}
+#modal .paper.sheet.devm .dgrid.snd {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+}
+#modal .paper.sheet.devm .dgrid + .dgrid,
+#modal .paper.sheet.devm .drows + .dgrid,
+#modal .paper.sheet.devm .dlog + .dgrid,
+#modal .paper.sheet.devm #dev-log + .dgrid,
+#modal .paper.sheet.devm #dev-raw + .dgrid {
+  margin-top: 10px;
+}
+/* Sechs Würfe: immer drei nebeneinander, damit keiner allein in der Zeile steht */
+#modal .paper.sheet.devm .dgrid.snd.toss {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#modal .paper.sheet.devm .dbtn {
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 4px solid var(--st-paper);
+  border-radius: 16px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font: 750 14.5px/1.2 var(--ui);
+  text-align: center;
+  text-wrap: balance;
+  box-shadow: var(--st-shadow-lift-sm);
   cursor: pointer;
 }
-.devm .dall input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--brass);
+@media (hover: hover) {
+  #modal .paper.sheet.devm .dbtn:hover {
+    translate: 0 -2px;
+    box-shadow: var(--st-shadow-lift);
+  }
 }
-.devm .dlog {
+#modal .paper.sheet.devm .dbtn:active {
+  translate: 0 -3px;
+  background: var(--st-field);
+  box-shadow: var(--st-shadow-lift);
+}
+#modal .paper.sheet.devm .dgrid.snd .dbtn {
+  min-height: 44px;
+  padding: 4px 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Effekte und Klänge bei allen: eine ganze Zeile zum Antippen */
+#modal .paper.sheet.devm .dall {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin: 0 0 10px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font: 700 15px/1.25 var(--ui);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#modal .paper.sheet.devm .dall input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--st-ink);
+}
+
+/* ---------- Infos: Schlüssel links, Wert rechts ---------- */
+#modal .paper.sheet.devm .drows {
+  display: grid;
+  gap: 4px;
+}
+#modal .paper.sheet.devm .drows:not(:empty) {
+  margin-top: 10px;
+}
+#modal .paper.sheet.devm .drow {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 12px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  background: var(--st-paper);
+  font: 400 14px/1.4 var(--ui);
+  font-variant-numeric: tabular-nums;
+}
+#modal .paper.sheet.devm .drow span {
+  color: var(--st-ink-soft);
+  overflow-wrap: anywhere;
+}
+#modal .paper.sheet.devm .drow b {
+  min-width: 0;
+  color: var(--st-ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Protokoll und Verlauf: Messdaten in Festbreite, scrollen mit dem Bogen ---------- */
+#modal .paper.sheet.devm .dlog {
+  margin: 0;
+  padding: 4px 0;
   list-style: none;
-  margin: 0 0 8px;
-  padding: 0;
-  max-height: 260px;
-  overflow: auto;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: 14px;
+  background: var(--st-paper);
+  color: var(--st-ink);
   font:
-    12px/1.35 ui-monospace,
+    12.5px/1.4 ui-monospace,
     'SF Mono',
     Menlo,
     Consolas,
     monospace;
 }
-.devm .dlog li {
+#modal .paper.sheet.devm .dlog li {
   display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 8px;
-  padding: 4px 8px;
-  border-bottom: 1px solid rgba(246, 239, 223, 0.05);
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 6px 12px;
 }
-.devm .dlog time {
-  color: var(--muted);
+#modal .paper.sheet.devm .dlog li + li {
+  border-top: 1px solid var(--st-line);
 }
-.devm .dlog i {
+#modal .paper.sheet.devm .dlog time {
+  color: var(--st-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+#modal .paper.sheet.devm .dlog i {
+  color: var(--st-ground-lo);
   font-style: normal;
-  color: var(--brass-hi);
+  font-weight: 700;
 }
-.devm .dlog span {
+#modal .paper.sheet.devm .dlog span {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.devm .dlog li.err i,
-.devm .dlog li.err span {
-  color: #ff8f84;
+#modal .paper.sheet.devm .dlog li.err i,
+#modal .paper.sheet.devm .dlog li.err span {
+  color: var(--dv-err);
 }
-.devm .dlog li.warn i {
-  color: #ffc46b;
+#modal .paper.sheet.devm .dlog li.warn i {
+  color: var(--dv-warn);
 }
-.devm .dgrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 6px;
+#modal .paper.sheet.devm .dnote {
+  margin: 10px 0 0;
+  color: var(--st-ink-soft);
+  font-size: 13.5px;
+  line-height: 1.45;
 }
-.devm .dgrid.snd {
-  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+#modal .paper.sheet.devm summary + .dnote {
+  margin-top: 0;
 }
-.devm .dbtn {
-  min-height: 38px;
-  padding: 6px 10px;
-  font-size: 13px;
-  line-height: 1.2;
-  text-align: center;
+
+@media (max-width: 640px) {
+  #modal .paper.sheet.devm .dgrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  #modal .paper.sheet.devm .dgrid.snd {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  }
 }
-.devm .dgrid.snd .dbtn {
-  min-height: 32px;
-  font-size: 12px;
-  font-weight: 600;
+@media (prefers-reduced-motion: reduce) {
+  #modal .paper.sheet.devm .dsec summary::after {
+    transition: none;
+  }
+  #modal .paper.sheet.devm .dbtn:is(:hover, :active) {
+    translate: none;
+  }
 }
-.devm .drows {
-  display: grid;
-  gap: 3px;
-  margin-top: 8px;
-}
-.devm .drow {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(246, 239, 223, 0.06);
-  font-size: 13px;
-}
-.devm .drow span {
-  flex: none;
-  color: var(--muted);
-}
-.devm .drow b {
-  min-width: 0;
-  font-weight: 600;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-.devm .dnote {
-  margin: 8px 0 0;
-  font-size: 12.5px;
-  color: var(--muted);
-}
-.devm .dfoot {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-.devm .dfoot .dbtn {
-  flex: 1;
-}
+
 .updates .relfoot {
   margin: 16px 0 0;
   text-align: center;

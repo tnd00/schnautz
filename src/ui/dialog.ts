@@ -17,6 +17,8 @@ export interface Sheet {
   title: string;
   /** Neben dem Titel, etwa die Versionsnummer als Zahl-Sticker */
   badge?: string;
+  /** Runde Knöpfe links neben dem Kreuz, etwa „Auf Standard zurücksetzen“ */
+  tools?: string;
   /** Im festen Kopf unter dem Titel, etwa Spiel-Reiter und Sprungmarken */
   head?: string;
   /** Der Inhalt, scrollt als Einziges */
@@ -28,7 +30,7 @@ export function sheetHTML(s: Sheet): string {
   return (
     `<div class="modal"><div class="paper sheet dlg ${s.kind}" role="dialog" aria-modal="true" aria-labelledby="dlg-t" tabindex="-1">` +
     '<div class="dlg-head"><div class="dlg-top">' +
-    `<h2 class="dlg-title" id="dlg-t">${s.title}</h2>${s.badge ?? ''}` +
+    `<h2 class="dlg-title" id="dlg-t">${s.title}</h2>${s.badge ?? ''}${s.tools ?? ''}` +
     `<button type="button" class="x dlg-x" data-act="closemodal" aria-label="Schließen">${CLOSE_ICON}</button>` +
     `</div>${s.head ?? ''}</div>` +
     // Scrollbereich per Tastatur erreichbar, damit man ohne Maus mit Pfeiltasten lesen kann
@@ -39,11 +41,23 @@ export function sheetHTML(s: Sheet): string {
 
 /* ---------- Verhalten ---------- */
 
+// summary gehört dazu: Die Bereiche im Dev-Menü sind aufklappbare details
 const FOCUSABLE =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+
+/** Bis hier kommt das Menü ⋯ als Bogen von unten (lobby.css), dann bleibt Tab darin wie im Fenster. */
+const MENU_SHEET = '(max-width: 820px)';
+
+type Key = { act: string; g: string };
+const keyOf = (t: HTMLElement | null): Key | null =>
+  t?.dataset.act ? { act: t.dataset.act, g: t.dataset.g ?? '' } : null;
+const keySel = (k: Key): string =>
+  `[data-act="${CSS.escape(k.act)}"]${k.g ? `[data-g="${CSS.escape(k.g)}"]` : ':not([data-g])'}`;
 
 /** Wer das Fenster geöffnet hat. Dorthin kehrt der Fokus beim Schließen zurück. */
 let trigger: HTMLElement | null = null;
+/** data-act und data-g des Auslösers, falls die Lobby ihn inzwischen neu gezeichnet hat */
+let triggerKey: Key | null = null;
 /** Zuletzt angetippt. Am Handy und in Safari bekommen Knöpfe beim Tippen keinen Fokus. */
 let pressed: HTMLElement | null = null;
 /** Zuletzt im Fenster fokussiert, um nach einem Inhaltswechsel (Regel-Reiter) an derselben Stelle zu bleiben. */
@@ -56,8 +70,14 @@ function shown(el: HTMLElement): boolean {
   return el.isConnected && el.getClientRects().length > 0;
 }
 
+/** In einem zugeklappten details ist nur die eigene summary erreichbar. Chrome liefert für den Rest trotzdem Rechtecke. */
+function folded(el: HTMLElement): boolean {
+  const d = el.closest('details:not([open])');
+  return !!d && !(el.tagName === 'SUMMARY' && el.parentElement === d);
+}
+
 function focusables(root: HTMLElement): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(shown);
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => shown(el) && !folded(el));
 }
 
 /** Rolle, Modalität und Titel ergänzen, ohne Vorhandenes zu überschreiben (Tipps und Dev-Menü bringen eigene mit). */
@@ -74,12 +94,25 @@ function decorate(paper: HTMLElement): void {
   if (!paper.hasAttribute('tabindex')) paper.tabIndex = -1;
 }
 
+/** Derselbe Knopf nach dem Neuzeichnen: sichtbar, mit gleichem data-act und data-g, nicht im Fenster oder Menü. */
+function twin(k: Key | null): HTMLElement | null {
+  if (!k) return null;
+  return (
+    [...document.querySelectorAll<HTMLElement>(keySel(k))].find((el) => shown(el) && !el.closest('#modal, #menu')) ??
+    null
+  );
+}
+
 function restore(): void {
-  let t = trigger;
+  const t = trigger;
+  const k = triggerKey;
   trigger = null;
-  // Einträge im Menü sind nach dem Tipp schon zu, dann zurück auf den Menüknopf
-  if (t && !shown(t) && t.closest('#menu')) t = $opt('#btn-menu');
-  if (t && shown(t)) t.focus({ preventScroll: true });
+  triggerKey = null;
+  const menuBtn = $opt('#btn-menu');
+  // Einträge im Menü sind nach dem Tipp schon zu, dann zurück auf den Menüknopf.
+  // Die Lobby zeichnet bei jeder Ansicht neu, dann der neue Knopf an derselben Stelle.
+  const to = t && shown(t) ? t : t?.closest('#menu') ? menuBtn : (twin(k) ?? menuBtn);
+  if (to && shown(to)) to.focus({ preventScroll: true });
 }
 
 function onChange(box: HTMLElement): void {
@@ -97,6 +130,7 @@ function onChange(box: HTMLElement): void {
     open = true;
     const a = document.activeElement;
     trigger = a instanceof HTMLElement && a !== document.body && !box.contains(a) ? a : pressed;
+    triggerKey = keyOf(trigger);
     paper.focus({ preventScroll: true });
   } else {
     // Inhalt gewechselt, etwa ein anderer Regel-Reiter: nicht neu einfliegen, Fokus bleibt an derselben Stelle
@@ -109,31 +143,96 @@ function onChange(box: HTMLElement): void {
   markJump(paper);
 }
 
-/** Tab und Umschalt+Tab bleiben im offenen Fenster. */
-function trap(e: KeyboardEvent): void {
-  if (e.key !== 'Tab' || !open) return;
-  const box = $opt('#modal');
-  const paper = box ? paperOf(box) : null;
-  if (!paper) return;
-  const list = focusables(paper);
+/** Nächstes (oder mit back vorheriges) Element der Liste nach a in Dokumentreihenfolge, sonst rundherum. */
+function step(list: HTMLElement[], a: Element, back: boolean): HTMLElement {
+  if (back) {
+    for (let i = list.length - 1; i >= 0; i--)
+      if (a.compareDocumentPosition(list[i]) & Node.DOCUMENT_POSITION_PRECEDING) return list[i];
+    return list[list.length - 1];
+  }
+  for (const el of list) if (a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) return el;
+  return list[0];
+}
+
+/** Tab und Umschalt+Tab bleiben in root. Auch von einer Überschrift aus, auf die eine Sprungmarke den Fokus gelegt hat. */
+function keepIn(e: KeyboardEvent, root: HTMLElement): void {
+  const list = focusables(root);
   const a = document.activeElement;
   if (!list.length) {
     e.preventDefault();
-    paper.focus();
+    root.focus();
     return;
   }
   const first = list[0];
   const last = list[list.length - 1];
-  if (!(a instanceof HTMLElement) || !paper.contains(a)) {
+  if (!(a instanceof HTMLElement) || !root.contains(a)) {
     e.preventDefault();
     (e.shiftKey ? last : first).focus();
-  } else if (e.shiftKey && (a === first || a === paper)) {
+  } else if (a === root) {
+    e.preventDefault();
+    (e.shiftKey ? last : first).focus();
+  } else if (!list.includes(a)) {
+    // Fokus liegt auf etwas, das Tab selbst nie erreicht (h3 mit tabindex -1): von dort aus weiterzählen
+    e.preventDefault();
+    step(list, a, e.shiftKey).focus();
+  } else if (e.shiftKey && a === first) {
     e.preventDefault();
     last.focus();
   } else if (!e.shiftKey && a === last) {
     e.preventDefault();
     first.focus();
   }
+}
+
+/** Tab und Umschalt+Tab bleiben im offenen Fenster. Ist keins offen, kümmert sich menuTab ums Menü ⋯. */
+function trap(e: KeyboardEvent): void {
+  if (e.key !== 'Tab') return;
+  const box = $opt('#modal');
+  const paper = open && box ? paperOf(box) : null;
+  if (paper) keepIn(e, paper);
+  else menuTab(e);
+}
+
+/* ---------- Menü ⋯ ----------
+ * Aufgehen und Schließen regelt events.ts (auch Escape). Hier: Fokus auf den ersten Eintrag, am Handy bleibt Tab
+ * im Bogen, am PC führt Tab hinter dem letzten Eintrag (und Umschalt+Tab vor dem ersten) zurück zum Menüknopf. */
+
+function menuTab(e: KeyboardEvent): void {
+  const menu = $opt('#menu');
+  if (!menu || menu.hidden) return;
+  if (window.matchMedia?.(MENU_SHEET).matches) {
+    keepIn(e, menu);
+    return;
+  }
+  const btn = $opt('#btn-menu');
+  const list = focusables(menu);
+  const a = document.activeElement;
+  if (!btn || !list.length) return;
+  if (a === btn && !e.shiftKey) {
+    e.preventDefault();
+    list[0].focus();
+  } else if (a instanceof HTMLElement && menu.contains(a)) {
+    const out = e.shiftKey ? a === list[0] : a === list[list.length - 1];
+    if (!out && list.includes(a)) return;
+    e.preventDefault();
+    if (out) btn.focus();
+    else step(list, a, e.shiftKey).focus();
+  }
+}
+
+function initMenu(): void {
+  const menu = $opt('#menu');
+  if (!menu) return;
+  menu.setAttribute('role', 'group');
+  if (!menu.hasAttribute('aria-label')) menu.setAttribute('aria-label', 'Menü');
+  let was = menu.hidden;
+  new MutationObserver(() => {
+    if (menu.hidden === was) return;
+    was = menu.hidden;
+    if (menu.hidden) return;
+    const first = focusables(menu).find((el) => el.classList.contains('mi'));
+    first?.focus({ preventScroll: true });
+  }).observe(menu, { attributes: true, attributeFilter: ['hidden'] });
 }
 
 /* ---------- Sprungmarken in langen Fenstern (Regeln) ----------
@@ -189,20 +288,20 @@ function onScroll(e: Event): void {
 function init(): void {
   // Toasts (src/ui/feedback.ts) liest der Vorleser höflich vor. Die Region muss vor dem ersten Toast stehen
   $opt('#toasts')?.setAttribute('aria-live', 'polite');
+  initMenu();
+  document.addEventListener('keydown', trap, true);
   const box = $opt('#modal');
   if (!box) return;
   new MutationObserver(() => onChange(box)).observe(box, { childList: true });
-  const keyOf = (t: HTMLElement | null) => (t?.dataset.act ? { act: t.dataset.act, g: t.dataset.g ?? '' } : null);
-  document.addEventListener(
-    'pointerdown',
-    (e) => {
-      const t = e.target instanceof Element ? e.target.closest<HTMLElement>(`${FOCUSABLE}, [data-act]`) : null;
-      if (!t) return;
-      if (box.contains(t)) inner = keyOf(t);
-      else pressed = t;
-    },
-    true,
-  );
+  // Tippen und Klicks, auch per Tastatur ausgelöste (Enter auf einem Menüeintrag, der dabei verschwindet)
+  const note = (e: Event) => {
+    const t = e.target instanceof Element ? e.target.closest<HTMLElement>(`${FOCUSABLE}, [data-act]`) : null;
+    if (!t) return;
+    if (box.contains(t)) inner = keyOf(t);
+    else pressed = t;
+  };
+  document.addEventListener('pointerdown', note, true);
+  document.addEventListener('click', note, true);
   box.addEventListener('focusin', (e) => {
     inner = keyOf(e.target instanceof HTMLElement ? e.target : null);
   });
@@ -212,7 +311,6 @@ function init(): void {
   });
   // Scroll steigt nicht auf, in der Einfangphase kommt er trotzdem an
   box.addEventListener('scroll', onScroll, { capture: true, passive: true });
-  document.addEventListener('keydown', trap, true);
 }
 
 if (typeof document !== 'undefined') init();

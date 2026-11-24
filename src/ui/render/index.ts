@@ -1,6 +1,6 @@
 import { App } from '../app';
 import { $, $opt } from '../dom';
-import { showScreen } from '../screens';
+import { labelNet, showScreen } from '../screens';
 import { rememberGame } from '../start';
 import { renderBetModal } from './bets';
 import { renderEmotes } from './emotes';
@@ -42,7 +42,8 @@ function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: bo
 export function render(): void {
   const v = App.view;
   if (!v) return;
-  $('#codechip-code').textContent = App.code;
+  $('#netcode').textContent = App.code;
+  labelNet();
   $('#menu-lobby').hidden = !(App.role === 'host' && v.phase !== 'lobby');
   $('#menu-leave').textContent = App.role === 'host' ? 'Tisch auflösen' : 'Tisch verlassen';
   const t = tableOf(v);

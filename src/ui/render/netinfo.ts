@@ -1,8 +1,13 @@
-/* Details zur Verbindung hinter dem Punkt „verbunden“: Rolle, Antwortzeit und wer gerade da ist. */
+/*
+ * Fenster hinter dem Punkt oben: Tischcode mit Link zum Einladen, darunter die Verbindung (Rolle, Antwortzeit und
+ * wer gerade da ist). Punkt und Code waren früher zwei Knöpfe, jetzt ist es einer.
+ */
 import { CHANGELOG } from '../../content/changelog';
 import { G } from '../../net/guest';
 import { App } from '../app';
+import { sheetHTML } from '../dialog';
 import { esc } from '../dom';
+import { inviteBody } from './invite';
 
 const STATE: Record<string, string> = {
   online: 'Verbunden',
@@ -29,7 +34,6 @@ export function netInfoHTML(): string {
   const v = App.view;
   const host = v?.players.find((p) => p.id === v.host);
   const rows: string[] = [row('Status', `<i class="dot ${App.net}"></i> ${STATE[App.net] ?? App.net}`)];
-  if (App.code) rows.push(row('Tisch', esc(App.code)));
   if (App.role === 'host') rows.push(row('Rolle', 'Du bist Gastgeber, alle sind direkt mit dir verbunden'));
   else if (App.role === 'guest') {
     rows.push(row('Rolle', `Gast bei ${esc(host?.name ?? 'dem Gastgeber')}`));
@@ -45,13 +49,15 @@ export function netInfoHTML(): string {
       return `<li><i class="dot ${on ? 'online' : 'off'}"></i>${esc(p.id === App.me ? 'Du' : p.name)}<span>${what}</span></li>`;
     })
     .join('');
-  return (
-    '<div class="modal"><div class="paper sheet netinfo"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    '<h2>Verbindung</h2><p class="lead">Ihr spielt direkt von Browser zu Browser, der Gastgeber hält den Tisch.</p>' +
-    `<div class="nrows">${rows.join('')}</div>` +
-    (list ? `<h3>Am Tisch</h3><ul class="npeople">${list}</ul>` : '') +
-    (bots ? `<p class="nnote">Dazu ${bots === 1 ? 'eine KI' : `${bots} KIs`}.</p>` : '') +
-    `<p class="nnote">Version ${esc(CHANGELOG[0]?.v ?? '')}</p>` +
-    '</div></div>'
-  );
+  return sheetHTML({
+    kind: 'netinfo invite',
+    title: 'Tisch',
+    body:
+      (App.code && App.view ? inviteBody() : '') +
+      '<h3>Verbindung</h3><p class="lead">Ihr spielt direkt von Browser zu Browser, der Gastgeber hält den Tisch.</p>' +
+      `<div class="nrows">${rows.join('')}</div>` +
+      (list ? `<h3>Am Tisch</h3><ul class="npeople">${list}</ul>` : '') +
+      (bots ? `<p class="nnote">Dazu ${bots === 1 ? 'eine KI' : `${bots} KIs`}.</p>` : '') +
+      `<p class="nnote">Version ${esc(CHANGELOG[0]?.v ?? '')}</p>`,
+  });
 }

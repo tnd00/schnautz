@@ -67,7 +67,8 @@ export const SOUND_HOST_WINDOW_MS = 2100;
 /** So lange wartet die Person am Zug bei einem neuen Stapel, damit alle ihre 4er reinwerfen können. */
 export const SH_WIN_MS = 2000;
 /** Höchstzahl am Tisch je Spiel. */
-export const MAX_SEATS: Readonly<Record<GameKind, number>> = { schnautz: 8, shithead: 10, durak: 8, cabo: 8 };
+/** Alle vier Spiele gehen mit 2 bis 8 Leuten (Shithead bis 2.5 mit bis zu 10) */
+export const MAX_SEATS: Readonly<Record<GameKind, number>> = { schnautz: 8, shithead: 8, durak: 8, cabo: 8 };
 /** Cabo: vier Karten je Person, ab so vielen Leuten zwei Decks, wählbare Zielpunkte */
 export const CB_HAND = 4;
 export const CB_TWO_DECKS = 7;

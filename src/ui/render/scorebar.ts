@@ -12,7 +12,7 @@ import { crownTitle, loserCount } from './marks';
 const count = (x: string[] | number) => (typeof x === 'number' ? x : x.length);
 const cardsLeft = (P: ShPlayerView) => count(P.hand) + P.up.length + count(P.down);
 
-/** Leben in einem Zeichen: Bierdeckel mit Zahl, Schwimmen oder raus. Für die schmale Leiste am Handy. */
+/** Leben in einem Zeichen: Bierdeckel-Grafik mit Zahl, Schwimmen oder raus. Für die schmale Leiste am Handy. */
 function livesCompact(v: View, p: Player): string {
   if (v.game !== 'schnautz') return '';
   if (p.out) return '<span class="sb-lc" title="raus">raus</span>';

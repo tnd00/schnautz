@@ -3,8 +3,9 @@
  * Neue Spiele kommen hier und in `GameKind` dazu. Weichen nach Spiel sind vollständige switch-Anweisungen
  * mit `unreachable` im default, dann meldet der Compiler jede Stelle, die das neue Spiel noch nicht kennt.
  */
-import type { GameKind, Reign, Result, SchnautzResult, State, Table } from './types';
+import type { GameKind, Reign, Result, Rules, SchnautzResult, State, Table } from './types';
 import { cmpVersion } from '../content/version';
+import { cloneRules, DEFAULT_RULES } from './constants';
 
 export const GAMES: readonly GameKind[] = ['schnautz', 'shithead', 'durak', 'cabo'];
 
@@ -77,4 +78,29 @@ export const reignOf = (t: Pick<Table, 'reigns' | 'game'>, game: GameKind = t.ga
 
 export function setReign(st: State, game: GameKind, win: string | null, lose: string | null = null): void {
   st.reigns = { ...(st.reigns ?? {}), [game]: { win, lose, game } };
+}
+
+/** Was „Auf Standard zurücksetzen“ im Einstellungsfenster schickt: die Regeln dieses Spiels und die Zeit pro Zug wie im Standard. */
+export function resetRulesFor(g: GameKind): Partial<Rules> {
+  const d = cloneRules(DEFAULT_RULES);
+  const base = { turnSecs: d.turnSecs };
+  switch (g) {
+    case 'schnautz':
+      return {
+        ...base,
+        lives: d.lives,
+        feuer: d.feuer,
+        dealerChoice: d.dealerChoice,
+        knockFirst: d.knockFirst,
+        knockDouble: d.knockDouble,
+      };
+    case 'shithead':
+      return { ...base, sh: d.sh };
+    case 'durak':
+      return { ...base, dk: d.dk };
+    case 'cabo':
+      return { ...base, cb: d.cb };
+    default:
+      return unreachable(g);
+  }
 }

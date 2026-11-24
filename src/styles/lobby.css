@@ -1,8 +1,9 @@
 /*
  * Lobby und Menü ⋯ im Sticker-Pack.
  * Lobby: am PC zwei Spalten (Tisch, Spiel), am Handy zwei Reiter, darunter immer die feste Startleiste.
- * Nichts scrollt: fitLobby (src/ui/render/lobby.ts) setzt pro Bereich die Stufen f1 bis f5, bis alles passt.
- * Der Tisch (#scr-game) nutzt nichts hiervon, alles hängt an #scr-lobby, #menu oder body.inlobby.
+ * Nichts scrollt: fitLobby (src/ui/render/lobby.ts) setzt pro Bereich die Stufen f1 bis f8, bis alles passt.
+ * Regeln und Zeit stehen im Bogen „Einstellungen“ in #modal, die Regeln dafür stehen hier unter #modal .gset.
+ * Der Tisch (#scr-game) nutzt nichts hiervon, alles hängt an #scr-lobby, #menu, #modal .gset oder body.inlobby.
  */
 
 /* ---------- Bildschirm ---------- */
@@ -16,8 +17,8 @@ body.inlobby #app {
   height: 100dvh;
   min-height: 0;
 }
-/* In der Lobby steht der Tischcode als eigener Sticker, der Kopf braucht ihn nicht */
-body.inlobby #codechip {
+/* Den Code zeigt der Knopf oben nur am Tisch: In der Lobby steht er als eigener Sticker, beim Warten gibt es noch keinen */
+body:not(.ingame) #netcode {
   display: none;
 }
 
@@ -81,7 +82,7 @@ body.inlobby #codechip {
 #scr-lobby .linvite {
   --st-cut: 6px;
   --st-radius: 22px;
-  --tilt: -1deg;
+  --tilt: -0.5deg;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -92,7 +93,7 @@ body.inlobby #codechip {
   display: none;
 }
 #scr-lobby .lcode {
-  --tilt: -3deg;
+  --tilt: -1.5deg;
   min-height: 44px;
   padding: 0 12px;
   border: 0;
@@ -231,14 +232,14 @@ body.inlobby #codechip {
   cursor: default;
 }
 #scr-lobby .snum {
-  --tilt: 2deg;
+  --tilt: 1deg;
   justify-content: center;
   min-width: 44px;
   min-height: 40px;
   font-size: 20px;
 }
 #scr-lobby .seat-ctl > .snum {
-  --tilt: -2deg;
+  --tilt: -1deg;
   font-size: 16px;
   min-height: 36px;
 }
@@ -282,8 +283,7 @@ body.inlobby #codechip {
   border-radius: 50%;
   background: var(--g, var(--st-field));
   color: var(--st-ink);
-  font: 900 17px/1 var(--st-display);
-  font-variation-settings: 'SOFT' 100;
+  font: 800 17px/1 var(--ui);
   box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.14);
 }
 #scr-lobby .av-bot {
@@ -345,7 +345,7 @@ body.inlobby #codechip {
 }
 /* „du“ und „Gastgeber“ kleben als kleine Sticker auf der Kante */
 #scr-lobby .lseat .stag {
-  --tilt: 5deg;
+  --tilt: 2.5deg;
   position: absolute;
   top: -14px;
   right: 10px;
@@ -454,95 +454,224 @@ body.inlobby #codechip {
   box-shadow: var(--st-shadow-lift);
 }
 
-/* ---------- Spielwahl: vier Spiel-Sticker, der gewählte ist angehoben und festgeklebt ---------- */
+/* ---------- Spielwahl: vier große Spielkarten, die gewählte ist angehoben, umrandet und abgehakt ----------
+ * Die Karte ist kein Knopf, sie trägt drei: die Fläche (wählt beim Gastgeber das Spiel), Regeln und Einstellungen.
+ * Neigung, Schatten und Rundung hängen an der Karte selbst, peel.ts liest sie dort ab. */
 #scr-lobby .lgames {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 14px;
-  padding: 6px 4px 2px;
+  grid-template-rows: repeat(2, minmax(min-content, 1fr));
+  gap: 18px 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 520px;
+  padding: 16px 8px 10px;
 }
-#scr-lobby .lgs {
-  --st-cut: 5px;
-  --st-radius: 18px;
-  container-type: inline-size;
+#scr-lobby .lgc {
+  --st-cut: 6px;
+  --st-radius: 22px;
+  container: lgc / inline-size;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  min-height: 56px;
-  padding: 0;
+  transition:
+    translate var(--st-lift-ms) var(--st-ease),
+    scale var(--st-lift-ms) var(--st-ease),
+    box-shadow var(--st-lift-ms) var(--st-ease);
+}
+#scr-lobby .lgc-face {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'mark' 'name' 'aka';
+  align-content: start;
+  justify-items: start;
+  row-gap: 3px;
+  flex: 1 1 auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 12px 6px;
+  border: 0;
+  border-radius: calc(var(--st-radius) - var(--st-cut));
+  background: none;
+  color: inherit;
   font: inherit;
   text-align: left;
+  -webkit-tap-highlight-color: transparent;
 }
-#scr-lobby .lg-in {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas: 'mark name' 'mark n';
-  align-items: center;
-  column-gap: 9px;
-  height: 100%;
-  padding: 6px 10px 6px 8px;
+#scr-lobby button.lgc-face {
+  cursor: pointer;
+}
+#scr-lobby .lgc-face:focus-visible {
+  outline-offset: -3px;
 }
 #scr-lobby .lg-mark {
   grid-area: mark;
-  font-size: 26px;
-  line-height: 1.15;
+  font-size: 34px;
+  line-height: 1.1;
   filter: drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff)
     drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 2px rgba(26, 24, 48, 0.3));
 }
 #scr-lobby .lg-name {
   grid-area: name;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--st-display);
-  font-size: min(19px, 11.5cqi);
+  font-size: min(26px, 17cqi);
   font-weight: 900;
   font-variation-settings: 'SOFT' 100;
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: -0.015em;
 }
-#scr-lobby .lg-n {
-  grid-area: n;
-  justify-self: start;
-  margin-top: 3px;
-  padding: 2px 6px;
-  font-size: 12px;
-  box-shadow: none;
-  background: rgba(255, 255, 255, 0.72);
+#scr-lobby .lg-aka {
+  grid-area: aka;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-wrap: balance;
 }
-#scr-lobby .lgs:not(.on) {
-  scale: 0.96;
+/* Regeln und Einstellungen: kleine weiße Pillen. Sichtbar 38 px, tippbar 44 px */
+#scr-lobby .lgc-acts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 8px 8px;
 }
-/* Angehoben heißt hier: kurzer, dichter Schatten. Der große Hubschatten fiele als grauer Fleck auf den Regelbogen */
-#scr-lobby .lgs.on,
-#scr-lobby .lgs.st-lift:active {
+#scr-lobby .lgc-b {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--st-ink);
+  font: 750 13px/1.1 var(--ui);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(26, 24, 48, 0.1),
+    0 1px 1px rgba(26, 24, 48, 0.12);
+  transition:
+    background-color 0.15s,
+    translate var(--st-lift-ms) var(--st-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+/* Tippfläche 44 px auch auf der etwas kleineren, nicht gewählten Karte (97 %) */
+#scr-lobby .lgc-b::before {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+#scr-lobby .lgc-b svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+#scr-lobby .lgc-l {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Regeln tritt zurück, Einstellungen ist der weiße Hauptknopf der Karte */
+#scr-lobby .lgc-b:not(.lgc-set) {
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 0 0 1.5px rgba(26, 24, 48, 0.12);
+}
+#scr-lobby .lgc-set {
+  background: var(--st-paper);
+  font-weight: 800;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(26, 24, 48, 0.08),
+    0 1px 2px rgba(26, 24, 48, 0.22),
+    0 3px 6px -3px rgba(26, 24, 48, 0.3);
+}
+/* Punkt in der Farbe des Spiels mit Tintenring: Hier weicht etwas vom Standard ab */
+#scr-lobby .lgc-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--g);
+  box-shadow:
+    0 0 0 2px var(--st-ink),
+    0 0 0 4px var(--st-paper);
+}
+@media (hover: hover) {
+  #scr-lobby .lgc-b:hover {
+    background: var(--st-paper);
+  }
+}
+#scr-lobby .lgc-b:active {
+  background: var(--st-paper);
+  translate: 0 -1px;
+}
+/* Breite Karten (PC): beide Knöpfe nebeneinander */
+@container lgc (min-width: 232px) {
+  #scr-lobby .lgc-acts {
+    flex-direction: row;
+    gap: 6px;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+  #scr-lobby .lgc-b {
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+  }
+  #scr-lobby .lgc-acts.one .lgc-b {
+    flex: 0 1 auto;
+  }
+}
+/* Nicht gewählt: liegt flach und etwas kleiner. Gewählt: angehoben, mit Ring und Haken */
+#scr-lobby .lgc:not(.on) {
+  scale: 0.97;
+}
+#scr-lobby .lgc.on {
+  z-index: 1;
+  translate: 0 -4px;
+  scale: 1.03;
+  outline: 3px solid var(--st-ink);
+  outline-offset: 3px;
   box-shadow:
     inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
     inset 0 -2px 0 rgba(26, 24, 48, 0.07),
     var(--st-shadow-lift-sm);
 }
 @media (hover: hover) {
-  #scr-lobby .lgs.st-lift:hover {
+  #scr-lobby .lgc:not(.on, .off):has(> button.lgc-face:hover) {
+    translate: 0 -2px;
     box-shadow:
       inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
       inset 0 -2px 0 rgba(26, 24, 48, 0.07),
       var(--st-shadow-lift-sm);
   }
 }
-#scr-lobby .lgs.on {
-  z-index: 1;
+#scr-lobby .lgc:not(.on, .off):has(> button.lgc-face:active) {
   translate: 0 -4px;
-  scale: 1.03;
+  scale: 1.02;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(26, 24, 48, 0.07),
+    var(--st-shadow-lift-sm);
 }
 /* Der Platsch kommt nur, wenn das Spiel gerade gewechselt hat, nicht bei jedem Neuzeichnen */
-#scr-lobby .lgs.on:not(.st-stick) {
+#scr-lobby .lgc:not(.st-stick) {
   animation: none;
 }
-#scr-lobby .lgs.on.st-stick {
+#scr-lobby .lgc.on.st-stick {
   animation: lg-slap 0.34s var(--st-ease);
 }
 @keyframes lg-slap {
   0% {
     translate: 0 -12px;
-    scale: 1.1;
+    scale: 1.08;
   }
   55% {
     translate: 0 0;
@@ -554,260 +683,70 @@ body.inlobby #codechip {
     scale: 1.03;
   }
 }
-#scr-lobby .lgs:disabled {
-  cursor: not-allowed;
+#scr-lobby .lgc.off {
   filter: grayscale(0.7);
   opacity: 0.6;
 }
+#scr-lobby .lgc.off .lgc-face {
+  cursor: not-allowed;
+}
 #scr-lobby .lg-check {
   position: absolute;
-  top: -12px;
-  right: -9px;
+  top: -15px;
+  right: -12px;
+  z-index: 1;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border: 3px solid var(--st-paper);
   border-radius: 50%;
   background: var(--st-ink);
   color: var(--st-paper);
   box-shadow: 0 3px 6px -2px rgba(26, 24, 48, 0.5);
+  pointer-events: none;
 }
 #scr-lobby .lg-check svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
 }
 
-/* Gäste: nur der gewählte Spiel-Sticker */
-#scr-lobby .lchosen {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 8px 4px 0;
-}
-#scr-lobby .lgs.big {
-  flex: none;
-  width: 132px;
-  height: 108px;
-  --st-cut: 6px;
-  --st-radius: 22px;
-}
-#scr-lobby .lgs.big .lg-in {
-  grid-template-columns: 1fr;
-  grid-template-areas: 'mark' 'name' 'n';
-  align-content: space-between;
-  align-items: start;
-  padding: 9px 11px 10px;
-}
-#scr-lobby .lgs.big .lg-mark {
-  font-size: 32px;
-}
-#scr-lobby .lgs.big .lg-name {
-  font-size: min(22px, 17cqi);
-}
-#scr-lobby .lh-chosen {
-  font-size: 26px;
-}
-
-/* ---------- Regeln: ein weißer Bogen mit Schaltern ---------- */
+/* ---------- Unter den Karten: was anders ist als sonst ---------- */
 #scr-lobby .rsheet {
   --st-cut: 6px;
-  --st-radius: 24px;
+  --st-radius: 22px;
   flex: none;
-  padding: 6px 16px 8px;
+  padding: 6px 16px 10px;
 }
-#scr-lobby .rs-h {
+#scr-lobby .rsheet.same {
+  padding-bottom: 6px;
+}
+#scr-lobby .rs-h,
+#modal .gset .rs-h {
   margin: 6px 0 2px;
   font-size: 15px;
   font-weight: 800;
   line-height: 1.2;
 }
-#scr-lobby .rlist {
-  display: flex;
-  flex-direction: column;
+#scr-lobby .rnote,
+#modal .gset .rnote {
+  margin: 4px 0 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--st-ink-soft);
 }
-#scr-lobby .rrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--st-line);
-  cursor: pointer;
+#scr-lobby .rgame {
+  margin-top: 8px;
+  border-top: 1px solid var(--st-line);
 }
-#scr-lobby div.rrow {
-  cursor: default;
-}
-#scr-lobby .rl {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-#scr-lobby .rt {
+#scr-lobby .rsame {
+  margin: 8px 0 4px;
   font-size: 15px;
   font-weight: 750;
-  line-height: 1.2;
-}
-#scr-lobby .rrow small,
-#scr-lobby .lfill small {
-  font-size: 12.5px;
   line-height: 1.3;
-  color: var(--st-ink-soft);
+  text-wrap: balance;
 }
-#scr-lobby .rnote {
-  margin: 8px 0 4px;
-  font-size: 13px;
-  line-height: 1.35;
-  color: var(--st-ink-soft);
-}
-#scr-lobby .rsheet .stp {
-  background: var(--st-field);
-  box-shadow: none;
-}
-#scr-lobby .rsheet .stp:disabled {
-  background: var(--st-sheet);
-}
-#scr-lobby .rsheet .snum {
-  --tilt: -2deg;
-  background: var(--st-ink);
-  color: var(--st-paper);
-}
-
-/* Schalter: Tinte, wenn an, der Knopf in der Farbe des Spiels. Zustand auch über die Lage des Knopfs */
-#scr-lobby .switch {
-  appearance: none;
-  -webkit-appearance: none;
-  position: relative;
-  flex: none;
-  width: 48px;
-  height: 28px;
-  margin: 0;
-  border: 0;
-  border-radius: 999px;
-  background: var(--st-field);
-  box-shadow: inset 0 0 0 2px var(--st-ink);
-  cursor: pointer;
-  transition: background-color 0.18s;
-}
-#scr-lobby .switch::after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--st-paper);
-  box-shadow:
-    0 0 0 2px var(--st-ink),
-    0 2px 3px rgba(26, 24, 48, 0.3);
-  transition: translate 0.22s var(--st-ease);
-}
-#scr-lobby .switch:checked {
-  background: var(--st-ink);
-}
-#scr-lobby .switch:checked::after {
-  translate: 20px 0;
-  background: var(--g, var(--st-paper));
-  box-shadow: 0 0 0 2px var(--st-paper);
-}
-#scr-lobby .switch:focus-visible {
-  outline: 3px solid var(--st-ink);
-  outline-offset: 3px;
-}
-
-/* Zielpunkte bei Cabo: zwei Zahl-Sticker */
-#scr-lobby .segs {
-  display: flex;
-  gap: 8px;
-}
-#scr-lobby .seg {
-  min-width: 52px;
-  min-height: 44px;
-  justify-content: center;
-  border: 0;
-  background: var(--st-field);
-  font-size: 16px;
-  box-shadow: none;
-  cursor: pointer;
-}
-#scr-lobby .seg.on {
-  --tilt: -3deg;
-  background: var(--st-ink);
-  color: var(--st-paper);
-  box-shadow:
-    0 1px 1px rgba(26, 24, 48, 0.2),
-    0 5px 10px -4px rgba(26, 24, 48, 0.45);
-}
-
-/* Zeit pro Zug: Regler mit Zahl-Sticker */
-#scr-lobby .rtime {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  column-gap: 12px;
-  row-gap: 0;
-  border-bottom: 0;
-}
-#scr-lobby .rtime small {
-  grid-column: 1 / -1;
-}
-#scr-lobby .tval {
-  --tilt: 2deg;
-  justify-content: center;
-  min-width: 56px;
-  min-height: 34px;
-  background: var(--st-ink);
-  color: var(--st-paper);
-  font-size: 15px;
-}
-#scr-lobby .range {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  min-width: 0;
-  height: 44px;
-  margin: 0;
-  background: transparent;
-  cursor: pointer;
-}
-#scr-lobby .range::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--st-field);
-  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.16);
-}
-#scr-lobby .range::-moz-range-track {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--st-field);
-  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.16);
-}
-#scr-lobby .range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 26px;
-  height: 26px;
-  margin-top: -9px;
-  border: 3px solid var(--st-ink);
-  border-radius: 50%;
-  background: var(--g, var(--st-paper));
-  box-shadow: 0 3px 6px -1px rgba(26, 24, 48, 0.4);
-}
-#scr-lobby .range::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border: 3px solid var(--st-ink);
-  border-radius: 50%;
-  background: var(--g, var(--st-paper));
-  box-shadow: 0 3px 6px -1px rgba(26, 24, 48, 0.4);
-}
-#scr-lobby .range:focus-visible {
-  outline: 3px solid var(--st-ink);
-  outline-offset: 2px;
-  border-radius: 10px;
-}
-
-/* Gäste: nur Abweichungen, als Chips in der Farbe des Spiels. Ohne Abweichung steht ein Satz da */
+/* Abweichungen als Chips in der Farbe des Spiels. Ohne Abweichung steht ein Satz da */
 #scr-lobby .rchips {
   list-style: none;
   margin: 6px 0 4px;
@@ -844,22 +783,381 @@ body.inlobby #codechip {
   font-size: 12px;
   font-weight: 800;
 }
-#scr-lobby .rgame {
-  margin-top: 8px;
-  border-top: 1px solid var(--st-line);
-}
-#scr-lobby .rgame .rnote {
-  margin-top: 2px;
-}
-#scr-lobby .rsame {
-  margin: 10px 0 6px;
-  font-size: 15px;
-  font-weight: 750;
-  line-height: 1.3;
-  text-wrap: balance;
-}
 #scr-lobby .rc.num {
   font-variant-numeric: tabular-nums;
+}
+#scr-lobby .rc-more {
+  background: var(--st-paper);
+}
+/* Gastgeber: was anders ist als sonst, als Stichpunkte auf einem weißen Streifen, der mitwächst */
+#scr-lobby .ldevline {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  flex: none;
+  min-width: 0;
+  min-height: 40px;
+  margin: 0 2px;
+  padding: 6px 14px 6px 8px;
+  border-radius: 16px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 5px 10px -4px rgba(26, 24, 48, 0.35);
+}
+#scr-lobby.guest .ldevline {
+  display: none;
+}
+#scr-lobby .ldev-tag {
+  flex: none;
+  padding: 3px 8px 4px;
+  border-radius: 8px;
+  background: var(--g, var(--st-ink));
+  color: var(--st-ink);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  box-shadow: inset 0 0 0 1.5px rgba(26, 24, 48, 0.14);
+  rotate: -1.5deg;
+}
+/* Jede Abweichung ein Stichpunkt, der Streifen wächst mit */
+#scr-lobby .ldev-t {
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0 0 16px;
+  list-style: disc;
+}
+#scr-lobby .ldev-t li + li {
+  margin-top: 2px;
+}
+#scr-lobby .ldev-t li::marker {
+  color: var(--st-ink-soft);
+}
+
+/* ---------- Einstellungen eines Spiels: Bogen in #modal (render/gamesettings.ts) ----------
+ * Zeilen mit Schaltern, Leben oder Zielpunkten und der Zeit pro Zug. Gäste sehen alles gesperrt (.ro), was vom
+ * Standard abweicht, ist in der Spielfarbe hinterlegt und trägt den Aufkleber „anders“. */
+#modal .gset .dlg-top {
+  gap: 10px;
+}
+#modal .gset .dlg-title {
+  font-family: var(--st-display);
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+}
+#modal .gset-mark {
+  order: -1;
+  flex: none;
+  font-size: 34px;
+  line-height: 1;
+  rotate: -3deg;
+  filter: drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff)
+    drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 2px rgba(26, 24, 48, 0.3));
+}
+#modal .gset .dlg-x {
+  margin-left: auto;
+}
+#modal .gset-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--st-ink-soft);
+}
+#modal .gset-note svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+#modal .gset .dlg-body {
+  padding-top: 6px;
+  padding-bottom: 18px;
+}
+#modal .gset .rlist {
+  display: flex;
+  flex-direction: column;
+}
+#modal .gset .rrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--st-line);
+  cursor: pointer;
+}
+#modal .gset div.rrow,
+#modal .gset.ro .rrow {
+  cursor: default;
+}
+#modal .gset.ro .rrow.dev {
+  margin: 4px -12px;
+  padding: 8px 12px;
+  border-bottom-color: transparent;
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--g) 34%, var(--st-paper));
+}
+#modal .gset .rl {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+#modal .gset .rt {
+  font-size: 15.5px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+#modal .gset .rrow small {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--st-ink-soft);
+}
+#modal .gset .rdev {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px 3px;
+  border-radius: 7px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  vertical-align: 1px;
+  rotate: -1.5deg;
+}
+#modal .gset .rgame {
+  margin-top: 14px;
+}
+#modal .gset .rgame .rnote {
+  margin-top: 2px;
+}
+
+/* Leben: Zahl-Sticker mit Minus und Plus */
+#modal .gset .stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#modal .gset .stp {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  cursor: pointer;
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 5px 10px -4px rgba(26, 24, 48, 0.4);
+  transition:
+    translate var(--st-lift-ms) var(--st-ease),
+    box-shadow var(--st-lift-ms) var(--st-ease);
+}
+#modal .gset .stp svg {
+  width: 18px;
+  height: 18px;
+}
+#modal .gset .stp:active:not(:disabled) {
+  translate: 0 -3px;
+  box-shadow: var(--st-shadow-lift);
+}
+#modal .gset .stp:disabled {
+  background: transparent;
+  color: rgba(26, 24, 48, 0.32);
+  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.14);
+  cursor: default;
+}
+#modal .gset .snum {
+  --tilt: -1deg;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 40px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font-size: 20px;
+}
+
+/* Zielpunkte bei Cabo: zwei Zahl-Sticker */
+#modal .gset .segs {
+  display: flex;
+  gap: 8px;
+}
+#modal .gset .seg {
+  min-width: 52px;
+  min-height: 44px;
+  justify-content: center;
+  border: 0;
+  background: var(--st-paper);
+  font-size: 16px;
+  box-shadow: inset 0 0 0 1.5px rgba(26, 24, 48, 0.12);
+  cursor: pointer;
+}
+#modal .gset .seg.on {
+  --tilt: -1.5deg;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 5px 10px -4px rgba(26, 24, 48, 0.45);
+}
+#modal .gset .seg:disabled {
+  cursor: default;
+}
+#modal .gset .seg:disabled:not(.on) {
+  color: rgba(26, 24, 48, 0.4);
+}
+
+/* Zeit pro Zug: Regler mit Zahl-Sticker */
+#modal .gset .rtime {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 0;
+  border-bottom: 0;
+}
+#modal .gset .rtime small {
+  grid-column: 1 / -1;
+}
+#modal .gset .tval {
+  --tilt: 1deg;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 34px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font-size: 15px;
+}
+#modal .gset .range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+#modal .gset .range:disabled {
+  cursor: default;
+}
+#modal .gset .range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--st-paper);
+  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.16);
+}
+#modal .gset .range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--st-paper);
+  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.16);
+}
+#modal .gset .range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -9px;
+  border: 3px solid var(--st-ink);
+  border-radius: 50%;
+  background: var(--g, var(--st-paper));
+  box-shadow: 0 3px 6px -1px rgba(26, 24, 48, 0.4);
+}
+#modal .gset .range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--st-ink);
+  border-radius: 50%;
+  background: var(--g, var(--st-paper));
+  box-shadow: 0 3px 6px -1px rgba(26, 24, 48, 0.4);
+}
+#modal .gset .range:focus-visible {
+  outline: 3px solid var(--st-ink);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* Schalter: Tinte, wenn an, der Knopf in der Farbe des Spiels. Zustand auch über die Lage des Knopfs.
+ * Gilt im Bogen und für „Freie Plätze mit KI füllen“ in der Startleiste */
+:is(#scr-lobby, #modal .gset) .switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--st-field);
+  box-shadow: inset 0 0 0 2px var(--st-ink);
+  cursor: pointer;
+  transition: background-color 0.18s;
+}
+/* Tippfläche 44 px hoch, ohne dass der Schalter größer aussieht */
+:is(#scr-lobby, #modal .gset) .switch::before {
+  content: '';
+  position: absolute;
+  inset: -8px -4px;
+}
+:is(#scr-lobby, #modal .gset) .switch::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--st-paper);
+  box-shadow:
+    0 0 0 2px var(--st-ink),
+    0 2px 3px rgba(26, 24, 48, 0.3);
+  transition: translate 0.22s var(--st-ease);
+}
+:is(#scr-lobby, #modal .gset) .switch:checked {
+  background: var(--st-ink);
+}
+:is(#scr-lobby, #modal .gset) .switch:checked::after {
+  translate: 20px 0;
+  background: var(--g, var(--st-paper));
+  box-shadow: 0 0 0 2px var(--st-paper);
+}
+:is(#scr-lobby, #modal .gset) .switch:focus-visible {
+  outline: 3px solid var(--st-ink);
+  outline-offset: 3px;
+}
+#modal .gset .switch:disabled {
+  cursor: default;
+}
+#modal .gset .switch:disabled:not(:checked) {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.45);
+}
+@media (max-width: 820px) {
+  #modal .gset .dlg-body {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  #modal .gset .rrow small {
+    font-size: 12.5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #modal .gset .switch,
+  #modal .gset .switch::after {
+    transition: none;
+  }
 }
 
 /* ---------- Startleiste: immer sichtbar, nie unter dem Rand ---------- */
@@ -879,8 +1177,21 @@ body.inlobby #codechip {
   min-height: 44px;
   cursor: pointer;
 }
+#scr-lobby .lfill .rl {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
 #scr-lobby .lfill .rt {
   font-size: 15px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+#scr-lobby .lfill small {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--st-ink-soft);
 }
 #scr-lobby .lgo {
   display: flex;
@@ -892,6 +1203,29 @@ body.inlobby #codechip {
   min-height: 56px;
   padding: 0 16px;
   font-size: 17px;
+}
+/* Die Startleiste ist schon ein angehobener Bogen: Der Knopf darauf braucht keinen zweiten Stanzrand und kaum Schatten */
+#scr-lobby .lbar .lstart.st-btn {
+  border-width: 0;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.16),
+    0 1px 2px rgba(26, 24, 48, 0.28);
+}
+#scr-lobby .lbar .lstart.st-btn:active {
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.16);
+}
+/* Weiter zum Spiel gibt es nur am Handy im Reiter Tisch, dort fehlt dafür der Startknopf */
+#scr-lobby .lnext {
+  display: none;
+}
+#scr-lobby .lnx {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+#scr-lobby .lnext svg {
+  width: 22px;
+  height: 22px;
 }
 #scr-lobby .lstart .lu {
   font-weight: 650;
@@ -936,8 +1270,19 @@ body.inlobby #codechip {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #scr-lobby .lgs.on.st-stick {
+  #scr-lobby .lgc.on.st-stick {
     animation: none;
+  }
+  #scr-lobby .lgc,
+  #scr-lobby .lgc-b {
+    transition: box-shadow var(--st-lift-ms) linear;
+  }
+  #scr-lobby .lgc:not(.on, .off):has(> button.lgc-face:is(:hover, :active)) {
+    translate: none;
+    scale: 0.97;
+  }
+  #scr-lobby .lgc-b:active {
+    translate: none;
   }
   #scr-lobby .switch,
   #scr-lobby .switch::after,
@@ -948,9 +1293,10 @@ body.inlobby #codechip {
 
 /* ---------- Handy: zwei Reiter, Startleiste als Bogen unten ---------- */
 @media (max-width: 820px) {
+  /* Etwas Luft zwischen Kopfzeile und Reitern, sonst überlappen sich die Schatten */
   body.inlobby .top {
     min-height: 0;
-    padding-bottom: 6px;
+    padding-bottom: 12px;
   }
   #scr-lobby {
     display: flex;
@@ -1062,32 +1408,11 @@ body.inlobby #codechip {
     grid-template-areas: 'head ctl' 'seats seats';
     gap: 8px 10px;
   }
-  /* Gäste: Der gewählte Sticker steht groß in der Mitte, alles zusammen senkrecht ausbalanciert.
-   * Automatische Ränder statt justify-content, damit zu viel Inhalt nie oben unerreichbar übersteht */
-  #scr-lobby.guest .lp-game.on > .rules-form {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    margin: auto 0;
+  #scr-lobby[data-ltab='table'] .lnext {
+    display: inline-flex;
   }
-  #scr-lobby.guest .lp-game:not(.f3) .lchosen {
-    flex-direction: column;
-    gap: 14px;
-    padding: 0;
-    text-align: center;
-  }
-  #scr-lobby.guest .lgs.big {
-    width: 188px;
-    height: 152px;
-  }
-  #scr-lobby.guest .lgs.big .lg-mark {
-    font-size: 44px;
-  }
-  #scr-lobby.guest .lgs.big .lg-name {
-    font-size: min(28px, 17cqi);
-  }
-  #scr-lobby.guest .lh-chosen {
-    font-size: 28px;
+  #scr-lobby[data-ltab='table'] .lgo-start {
+    display: none;
   }
 }
 /* Kurze Handys: Kopf und Startleiste rücken zusammen, die Zeile zum Start steht im Knopf */
@@ -1180,34 +1505,24 @@ body.inlobby #codechip {
     gap: 14px 16px;
   }
   #scr-lobby .lgames {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
+    gap: 24px 22px;
+    max-height: 520px;
+    padding: 18px 10px 12px;
   }
-  #scr-lobby .lgames .lgs {
-    min-height: 96px;
+  #scr-lobby .lgc-face {
+    padding: 12px 14px 8px;
   }
-  #scr-lobby .lgames .lg-in {
-    grid-template-columns: 1fr;
-    grid-template-areas: 'mark' 'name' 'n';
-    align-content: space-between;
-    align-items: start;
-    padding: 9px 11px 10px;
+  #scr-lobby .lg-mark {
+    font-size: 40px;
   }
-  #scr-lobby .lgames .lg-mark {
-    font-size: 28px;
+  #scr-lobby .lg-name {
+    font-size: min(30px, 14cqi);
   }
-  #scr-lobby .lgames .lg-name {
-    font-size: min(22px, 15.5cqi);
+  #scr-lobby .lg-aka {
+    font-size: 13px;
   }
-  #scr-lobby .lgs.big {
-    width: 168px;
-    height: 136px;
-  }
-  #scr-lobby .lgs.big .lg-mark {
-    font-size: 38px;
-  }
-  #scr-lobby .lgs.big .lg-name {
-    font-size: min(26px, 17cqi);
+  #scr-lobby .lgc-acts {
+    padding-bottom: 10px;
   }
   #scr-lobby .lfoot {
     grid-column: 1 / -1;
@@ -1245,12 +1560,6 @@ body.inlobby #codechip {
   #scr-lobby .lfill .rl {
     flex: 0 1 auto;
   }
-  /* Viele Regeln stehen am PC gleich in zwei Spalten */
-  #scr-lobby .rlist[data-n='8'] {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 22px;
-  }
 }
 /* Niedrige Fenster mit PC-Aufteilung (etwa Handy quer): Kopf, Code und Startleiste werden flacher */
 @media (min-width: 821px) and (max-height: 620px) {
@@ -1284,28 +1593,6 @@ body.inlobby #codechip {
     display: block;
   }
 }
-/* Schmale PC-Fenster: Die Spiel-Sticker stehen wie am Handy zu zweit nebeneinander */
-@media (min-width: 821px) and (max-width: 1040px) {
-  #scr-lobby .lgames {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  #scr-lobby .lgames .lgs {
-    min-height: 56px;
-  }
-  #scr-lobby .lgames .lg-in {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: 'mark name' 'mark n';
-    align-content: center;
-    align-items: center;
-    padding: 6px 10px 6px 8px;
-  }
-  #scr-lobby .lgames .lg-mark {
-    font-size: 24px;
-  }
-  #scr-lobby .lgames .lg-name {
-    font-size: min(20px, 11.5cqi);
-  }
-}
 
 /* ---------- Zusammenrücken (fitLobby): Stufe für Stufe weniger Erklärung, mehr Spalten ---------- */
 /* Tisch: erst der Satz zum Link, dann die Überschrift, dann mehr Spalten, zuletzt Code und Plätze in einer Zeile */
@@ -1334,8 +1621,26 @@ body.inlobby #codechip {
 #scr-lobby .lp-table.f4 .seats {
   gap: 8px;
 }
-#scr-lobby .lp-table.f5 :is(.lc-l, .lc-share, .seat-title) {
+/* Enge Plätze: Das Kreuz rückt nach innen, damit seine Tippfläche im eigenen Platz bleibt */
+#scr-lobby .lp-table.f4 .lx {
+  top: -16px;
+  right: -4px;
+}
+/* Dafür rückt das Schild „KI“ ein Stück unter dem Kreuz weg */
+#scr-lobby .lp-table.f4 .lseat:has(.lx) {
+  padding-right: 12px;
+}
+#scr-lobby .lp-table.f5 :is(.lc-share, .seat-title) {
   display: none;
+}
+/* Nur unsichtbar, nicht weg: Der Kopierknopf braucht seinen Namen auch ohne sichtbaren Text */
+#scr-lobby .lp-table.f5 .lc-l {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 #scr-lobby .lp-table.f5 .lc-btn {
   width: 44px;
@@ -1355,142 +1660,121 @@ body.inlobby #codechip {
   padding-top: 8px;
 }
 
-/* Spiel: erst Hinweise, dann Überschrift, dann Erklärzeilen, dann die Spiele in einer Reihe, dann zwei Spalten */
-#scr-lobby .lp-game.f1 .rnote,
-#scr-lobby .lp-game.f1 .rgame,
-#scr-lobby:not(.guest) .lp-game.f1 .rs-h {
+/* Spiel und Regeln: erst der Hinweis zum Spiel und eine kleinere Überschrift, dann Zeichen neben dem Namen, dann
+ * Knöpfe nur mit Zeichen, dann ohne Überschrift, dann engere Chips, dann bei Gästen die kurze Zeile statt der Chips,
+ * dann ohne Zeile beim Gastgeber (steht ja im Bogen), zuletzt die anderen Namen in einer Zeile */
+#scr-lobby .lp-game.f1 .rgame {
   display: none;
 }
-/* Gäste behalten „Anders als sonst“ länger, ohne die Zeile wären die Chips nur bunte Wörter */
-#scr-lobby.guest .lp-game.f3 .rs-h {
-  display: none;
-}
-#scr-lobby .lp-game.f1 .rsheet {
-  padding-top: 2px;
-}
-#scr-lobby .lp-game.f2 .lh-game {
-  display: none;
-}
-#scr-lobby .lp-game.f3 :is(.rrow small, .rtime small) {
-  display: none;
-}
-#scr-lobby .lp-game.f3 .rrow {
-  min-height: 44px;
-  padding: 0;
-}
-#scr-lobby .lp-game.f5 .rlist {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 14px;
-}
-#scr-lobby .lp-game.f5 .rlist .rrow {
-  gap: 8px;
-}
-#scr-lobby .lp-game.f5 .rlist .rt {
-  font-size: 13.5px;
-  line-height: 1.15;
-}
-#scr-lobby .lp-game.f5 .rlist .switch {
-  width: 44px;
-}
-#scr-lobby .lp-game.f5 .rlist .switch:checked::after {
-  translate: 16px 0;
-}
-/* Die Spiel-Sticker rücken am Handy und in schmalen Fenstern zusammen, am breiten PC werden sie nur flacher */
-@media (max-width: 1040px) {
-  #scr-lobby .lp-game.f2 .lgames .lg-n {
-    display: none;
-  }
-  #scr-lobby .lp-game.f2 .lgames .lg-in {
-    grid-template-areas: 'mark name';
-  }
-  #scr-lobby .lp-game.f4 .lgames {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px 8px;
-  }
-  #scr-lobby .lp-game.f4 .lgames .lgs {
-    min-height: 52px;
-  }
-  #scr-lobby .lp-game.f4 .lgames .lg-in {
-    grid-template-columns: 1fr;
-    grid-template-areas: 'mark' 'name';
-    justify-items: center;
-    row-gap: 1px;
-    padding: 4px 3px;
-  }
-  #scr-lobby .lp-game.f4 .lgames .lg-mark {
-    font-size: 20px;
-  }
-  #scr-lobby .lp-game.f4 .lgames .lg-name {
-    max-width: 100%;
-    font-size: max(12px, min(14px, 14.5cqi));
-  }
-  #scr-lobby .lp-game.f6 .lgames {
-    padding-top: 2px;
-  }
-  #scr-lobby .lp-game.f6 .lgames .lgs {
-    min-height: 44px;
-  }
-  #scr-lobby .lp-game.f6 .lgames .lg-name {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-  #scr-lobby .lp-game.f6 .lgames .lg-mark {
-    font-size: 24px;
-  }
-}
-@media (min-width: 1041px) {
-  #scr-lobby .lp-game.f2 .lgames .lg-n {
-    display: none;
-  }
-  #scr-lobby .lp-game.f2 .lgames .lgs {
-    min-height: 80px;
-  }
-  #scr-lobby .lp-game.f4 .lgames .lgs {
-    min-height: 64px;
-  }
-  #scr-lobby .lp-game.f4 .lgames .lg-mark {
-    font-size: 22px;
-  }
-}
-#scr-lobby .lp-game.f6 .rsheet {
-  padding: 0 12px 2px;
-}
-/* Gäste: der gewählte Sticker wird kleiner, die Chips enger */
-#scr-lobby.guest .lp-game.f2 .lgs.big .lg-n {
-  display: none;
-}
-#scr-lobby.guest .lp-game.f3 .lgs.big {
-  width: 116px;
-  height: 84px;
-}
-#scr-lobby.guest .lp-game.f3 .lgs.big .lg-mark {
+#scr-lobby .lp-game.f1 .lh-game {
   font-size: 24px;
 }
-#scr-lobby.guest .lp-game.f3 .lgs.big .lg-name {
-  font-size: min(18px, 17cqi);
+#scr-lobby .lp-game.f1 .lgames {
+  gap: 18px 14px;
 }
-#scr-lobby.guest .lp-game.f3 .lh-chosen {
-  font-size: 22px;
+#scr-lobby .lp-game.f2 .lgc-face {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'mark name' 'aka aka';
+  align-items: center;
+  column-gap: 7px;
+  padding: 8px 10px 4px;
 }
-#scr-lobby.guest .lp-game.f4 .rc {
+#scr-lobby .lp-game.f2 .lg-mark {
+  font-size: 26px;
+}
+#scr-lobby .lp-game.f2 .lg-name {
+  font-size: min(21px, 12.5cqi);
+}
+#scr-lobby .lp-game.f3 .lgc-acts {
+  flex-direction: row;
+}
+#scr-lobby .lp-game.f3 .lgc-b {
+  flex: 1 1 0;
+  justify-content: center;
+  padding: 0;
+}
+#scr-lobby .lp-game.f3 .lgc-acts.one .lgc-b {
+  flex: 0 1 calc(50% - 3px);
+}
+#scr-lobby .lp-game.f3 .lgc-l {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Der Ring der gewählten Karte ragt nach oben, die Überschrift hält Abstand */
+#scr-lobby .lh-game {
+  margin-bottom: 4px;
+}
+#scr-lobby:not(.guest) .lp-game.f4 .lh-game {
+  display: none;
+}
+#scr-lobby.guest .lp-game.f4 .lh-game {
+  font-size: 21px;
+}
+#scr-lobby .lp-game.f4 .rs-h {
+  display: none;
+}
+#scr-lobby .lp-game.f4 .lgames {
+  gap: 17px 12px;
+  padding-top: 14px;
+}
+#scr-lobby .lp-game.f4 .lgc-acts {
+  padding: 2px 6px 6px;
+}
+#scr-lobby .lp-game.f5 .rc {
   min-height: 30px;
   font-size: 12.5px;
   gap: 4px;
   padding: 3px 10px 4px 7px;
 }
-#scr-lobby.guest .lp-game.f4 .rchips {
+#scr-lobby .lp-game.f5 .rchips {
   gap: 6px;
+  margin: 4px 0 2px;
 }
-#scr-lobby.guest .lp-game.f5 .lgs.big {
-  width: 104px;
-  height: 64px;
+#scr-lobby .lp-game.f5 .rsheet {
+  padding: 4px 12px 6px;
 }
-#scr-lobby.guest .lp-game.f5 .lh-chosen {
-  font-size: 19px;
+#scr-lobby .lp-game.f5 .rsame {
+  margin: 4px 0 2px;
+  font-size: 14px;
+}
+#scr-lobby .lp-game.f6 .rsheet.same {
+  padding: 2px 12px 4px;
+}
+#scr-lobby .lp-game.f6 .rsame {
+  margin: 4px 0;
+  font-size: 13.5px;
+}
+/* Gäste: Statt der Chips kommt die kurze Zeile, alles Weitere steht im Bogen Einstellungen */
+#scr-lobby.guest .lp-game.f6 .ldev.has-devs {
+  display: none;
+}
+#scr-lobby.guest .lp-game.f6 .ldevline {
+  display: flex;
+}
+#scr-lobby .lp-game.f6 .lgc-face {
+  padding-top: 5px;
+}
+#scr-lobby .lp-game.f6 .lgames {
+  gap: 16px 12px;
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+#scr-lobby.guest .lp-game.f7 .lh-game,
+#scr-lobby:not(.guest) .lp-game.f7 .ldevline {
+  display: none;
+}
+#scr-lobby .lp-game.f8 .lg-aka {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#scr-lobby .lp-game.f8 .lgc-acts {
+  padding-top: 0;
 }
 
 /* ---------- Menü ⋯: Gruppen mit Trennlinien, Zeichen, Schalter mit sichtbarem Zustand ---------- */
