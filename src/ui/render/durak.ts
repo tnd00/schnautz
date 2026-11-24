@@ -366,14 +366,15 @@ export function renderDkOverlay(v: View): void {
       : loser
         ? `${nm(loser)} ist der <span class="r">Durak!</span>`
         : 'Unentschieden!';
-  const first = r.ranking[0];
+  // Nur wer allein zuerst fertig war, gilt als Erster
+  const first = v.winner;
   const lead = !loser
     ? 'Die Letzten sind gleichzeitig rausgegangen. Diesmal gibt es keinen Durak.'
     : first === App.me
       ? 'Du warst zuerst fertig.'
       : first
         ? `${nm(first)} war zuerst fertig.`
-        : '';
+        : 'Vorne sind mehrere gleichzeitig fertig geworden.';
   let tt = '';
   let good = false;
   if (loser) {
@@ -392,12 +393,17 @@ export function renderDkOverlay(v: View): void {
       const isL = id === loser;
       const P = v.dk?.P[id];
       const left: Card[] = isL && Array.isArray(P) ? P : [];
+      // Wer im selben Angriff fertig wurde, teilt sich den Platz. Die Krone gibt es nur für einen allein vorn
+      const place = num(p?.place) || i + 1;
+      const top = v.winner === id;
       const what = isL
         ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
-        : i === 0
+        : top
           ? 'zuerst fertig'
-          : 'fertig';
-      const hat = isL ? `<span class="hat">${LOSER_MARK.durak}</span>` : i === 0 ? '<span class="hat">👑</span>' : '';
+          : place === 1
+            ? 'gleichzeitig fertig'
+            : 'fertig';
+      const hat = isL ? `<span class="hat">${LOSER_MARK.durak}</span>` : top ? '<span class="hat">👑</span>' : '';
       const leftCards = left.length
         ? `<div class="mini shleft">${left
             .slice(0, 8)
@@ -405,7 +411,7 @@ export function renderDkOverlay(v: View): void {
             .join('')}${left.length > 8 ? `<span class="more">+${left.length - 8}</span>` : ''}</div>`
         : '';
       return (
-        `<div class="row${isL ? ' lose' : i === 0 ? ' win' : ''}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val" style="min-width:34px;text-align:left">${i + 1}.</div>` +
+        `<div class="row${isL ? ' lose' : top ? ' win' : ''}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val" style="min-width:34px;text-align:left">${place}.</div>` +
         `<div class="who"><b>${hat}${nm(id)}${rematchMark(v, id)}</b><span>${what}${p?.dkc ? ` · ${num(p.dkc)}× Durak` : ''}</span>${leftCards}</div></div>`
       );
     })
