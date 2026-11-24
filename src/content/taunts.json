@@ -179,6 +179,118 @@
       "{name} glaubt nicht an dich. Noch nicht.",
       "Laut {name} bist du heute der Shithead. Wirklich?",
       "{name} hat dich getippt. Mach daraus eine Pleite für {name}."
+    ],
+    "dkLoserSelf": [
+      "Du bist Durak. Die Narrenkappe passt wie angegossen 🤡",
+      "Alle sind raus, nur du hältst noch Karten. Schöner Fächer übrigens.",
+      "Durak heißt Narr. Das weißt du jetzt aus erster Hand.",
+      "Die anderen sind fertig. Du bist es auch, nur auf andere Art.",
+      "Die Kappe gehört dir, bis jemand anders patzt. Kann dauern.",
+      "Nicht so viel nicken, sonst fällt dir die Kappe runter.",
+      "Nächste Partie wirst du zuerst angegriffen. Nur damit du Bescheid weißt 😇",
+      "Am Ende blieben nur du und deine Karten. Ein rührendes Paar.",
+      "Du hast die Karten einfach am liebsten behalten. Sie mögen dich halt.",
+      "Revanche? Die Kappe hätte gern mal Abwechslung."
+    ],
+    "dkLoserOther": [
+      "{name} ist Durak. Die Narrenkappe sitzt schon 🤡",
+      "Großer Auftritt für {name}. Die Kappe ist da!",
+      "Alle sind fertig, nur {name} hält noch Karten fest. Treue Seele.",
+      "{name} wollte die Karten einfach nicht hergeben.",
+      "Durak ist {name}. Überrascht das hier wen?",
+      "Nächste Partie wird {name} zuerst angegriffen. Freut euch drauf 😈",
+      "{name} trägt jetzt die Kappe. Bis jemand anders patzt.",
+      "Sei nett zu {name}. Durak sein ist Strafe genug 😇",
+      "Die Karten haben {name} ins Herz geschlossen. Und nicht mehr losgelassen.",
+      "Für {name} gibt es heute die Narrenkappe. Größe passt."
+    ],
+    "dkWinSelf": [
+      "Platz eins! Die Kappe bleibt heute schön bei den anderen 😎",
+      "Keine Karten mehr. Ab jetzt schaust du entspannt zu 🍿",
+      "Die Narrenkappe sucht sich jemand anderen. Dich jedenfalls nicht.",
+      "Alles los, nichts mehr auf der Hand. So leicht kann Durak sein.",
+      "So geht Durak. Wer Fragen hat, meldet sich später.",
+      "Vor allen anderen fertig. Fast schon unverschämt.",
+      "Zuerst alle Karten los. Die Kappe holt sich jemand anders 👋",
+      "Raus aus der Nummer. Die Kappe hätte dir eh nicht gestanden.",
+      "Du bist durch. Die anderen verteidigen jetzt nur noch ihre Ehre."
+    ],
+    "dkTakeSelf": [
+      "Du nimmst auf. Die anderen legen sicher gleich noch was drauf 😈",
+      "Nicht zu schlagen? Dann halt alles mitnehmen.",
+      "Zu schwach zum Schlagen, stark genug zum Tragen.",
+      "Aufnehmen ist auch eine Strategie. Eine schlechte, aber immerhin.",
+      "Die Karten kommen zu dir. Freiwillig sind sie nicht.",
+      "Halt die Hand schön auf, da kommt noch mehr.",
+      "Wer nicht schlagen kann, muss nehmen. So steht es geschrieben.",
+      "Die anderen grinsen schon und kramen nach Nachschub.",
+      "Aufnehmen. Wird schon nicht so schlimm. Wird es doch."
+    ],
+    "dkTakeOther": [
+      "{name} nimmt auf. Wer hat noch was zum Nachlegen? 😈",
+      "{name} kann nicht schlagen. Jetzt schnell noch was draufpacken!",
+      "Bescherung bei {name}! Jeder darf noch ein Geschenk dazulegen 🎁",
+      "{name} nimmt. Die perfekte Gelegenheit für eure Ladenhüter.",
+      "{name} hat keine Antwort. Wir hätten da noch ein paar Fragen.",
+      "{name} öffnet die Arme. Zeit für eure schlechtesten Karten.",
+      "Aufnehmen bei {name}. Hilft wer beim Tragen? Nein? Dann legt was drauf.",
+      "{name} sammelt ein. Räumt ruhig noch eure Hände auf.",
+      "Das schlägt {name} nicht mehr. Der Tisch sagt danke."
+    ],
+    "dkBigPickupSelf": [
+      "{n} Karten auf einmal. Hast du dafür überhaupt genug Finger?",
+      "Du nimmst {n} Karten. Das wird ein langer Abend.",
+      "{n} Karten frisch geliefert. Unterschrift bitte hier 🧾",
+      "{n} Karten mehr. Die Narrenkappe winkt schon von weitem 🤡",
+      "Dein Fächer wächst um {n} Karten. Sieht fast schon festlich aus.",
+      "{n} Stück. Du legst wohl Vorräte für den Winter an.",
+      "Mit {n} neuen Karten bist du jetzt das Kartenlager am Tisch.",
+      "{n} Karten auf die Hand. Die anderen bedanken sich herzlich.",
+      "Das waren {n} Karten. Sortier in Ruhe, wir warten gern."
+    ],
+    "dkBigPickupOther": [
+      "{name} schleppt {n} Karten nach Hause 🛒",
+      "{n} Karten für {name}. Die Hand sieht langsam aus wie ein Pfau 🦚",
+      "{name} bekommt {n} neue Karten. Das wird eng auf der Hand.",
+      "Danke {name}! Unsere {n} Karten sind bei dir in guten Händen.",
+      "{name} nimmt {n} Karten. Die Narrenkappe rückt näher 🤡",
+      "{n} Karten ziehen bei {name} ein. Hoffentlich ist genug Platz.",
+      "{name} sammelt {n} Karten ein. Jeder braucht ein Hobby.",
+      "{name} hat jetzt {n} Karten mehr. Wir anderen haben endlich Platz.",
+      "{n} Stück auf einen Schlag. {name} räumt den Tisch ganz allein auf."
+    ],
+    "dkTransferOnMe": [
+      "{name} schiebt weiter. Überraschung, jetzt verteidigst du! 🎁",
+      "{name} reicht den Angriff einfach an dich weiter. Wie aufmerksam.",
+      "Weitergeschoben! {name} hat dir die Arbeit überlassen.",
+      "{name} hatte keine Lust. Jetzt liegt alles vor dir.",
+      "Heiße Kartoffel von {name}. Fang!",
+      "{name} spielt dir den Ball zu. Verteidige dich mal schön 😇",
+      "Danke {name}, sagt hier niemand. Du musst jetzt schlagen.",
+      "{name} schiebt dir den Angriff rüber. Das war persönlich.",
+      "Plötzlich verteidigst du. {name} lächelt ganz unschuldig."
+    ],
+    "dkBitoSelf": [
+      "Alles geschlagen. Weg damit 🧹",
+      "Abgewehrt! Die Angreifer dürfen sich warm anziehen 😏",
+      "Kein Kratzer. Die Karten wandern auf den Abwurf.",
+      "Sauber verteidigt. Die anderen schauen ganz bedröppelt.",
+      "Mauer gebaut, Angriff abgeprallt.",
+      "Das war eine Abwehr wie aus dem Lehrbuch.",
+      "Nichts kam durch. Die anderen brauchen einen neuen Plan.",
+      "Geschlagen, gestapelt, weggeräumt. Weiter geht's.",
+      "Das war alles? Da hast du schon Schlimmeres überlebt."
+    ],
+    "dkDurakAgain": [
+      "{name} ist zum {n}. Mal Durak. Die Kappe hat schon einen Stammplatz 🤡",
+      "Schon wieder {name}! Das {n}. Mal Durak, langsam wird es Tradition.",
+      "Zum {n}. Mal Durak. {name} gibt die Kappe wohl nicht mehr her.",
+      "{name} und die Narrenkappe, eine Liebesgeschichte in {n} Kapiteln.",
+      "Durak Nummer {n} für {name}. Wir haben aufgehört zu zählen. Fast.",
+      "{name} ist zum {n}. Mal Durak. Zeit für eine Kappe mit Namensschild.",
+      "Das {n}. Mal Durak. {name}, das ist kein Pech mehr, das ist Talent.",
+      "Die Kappe kennt den Weg zu {name} inzwischen auswendig. Zum {n}. Mal.",
+      "{name} sammelt Narrenkappen. Inzwischen sind es {n}."
     ]
   },
   "bot": {

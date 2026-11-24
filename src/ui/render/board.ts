@@ -2,8 +2,8 @@
 import type { Player, PlayerStats, View } from '../../game/types';
 import { App } from '../app';
 import { esc, num } from '../dom';
-import { reignHTML } from './shithead';
-import { unreachable } from '../../game/games';
+import { loserCount, reignHTML } from './marks';
+import { GAME_NAME, LOSER_MARK, LOSER_NAME, unreachable } from '../../game/games';
 
 interface Row {
   p: Player;
@@ -20,6 +20,7 @@ function cell(v: number | string, title: string): string {
 function placesGame(v: View): boolean {
   switch (v.game) {
     case 'shithead':
+    case 'durak':
       return true;
     case 'schnautz':
       return false;
@@ -30,14 +31,20 @@ function placesGame(v: View): boolean {
 
 export function boardHTML(v: View): string {
   const sh = placesGame(v);
+  const lost = (r: Row) => loserCount(v.game, r.p);
   const rows: Row[] = v.players.map((p) => ({ p, s: p.stats?.[v.game] ?? { games: 0, wins: 0 } }));
   rows.sort((a, b) =>
     sh
-      ? b.s.wins - a.s.wins || num(a.p.shc) - num(b.p.shc) || avgPlace(a) - avgPlace(b)
+      ? b.s.wins - a.s.wins || lost(a) - lost(b) || avgPlace(a) - avgPlace(b)
       : b.s.wins - a.s.wins || num(a.s.coasters) - num(b.s.coasters) || num(b.s.hot) - num(a.s.hot),
   );
   const head = sh
-    ? ['🏆<small>Siege</small>', '💩<small>Shithead</small>', 'Ø<small>Platz</small>', '#<small>Partien</small>']
+    ? [
+        '🏆<small>Siege</small>',
+        `${LOSER_MARK[v.game]}<small>${LOSER_NAME[v.game]}</small>`,
+        'Ø<small>Platz</small>',
+        '#<small>Partien</small>',
+      ]
     : [
         '🏆<small>Siege</small>',
         '🍺<small>Deckel weg</small>',
@@ -45,7 +52,7 @@ export function boardHTML(v: View): string {
         '#<small>Partien</small>',
       ];
   const played = rows.some((r) => r.s.games > 0);
-  // Tipp-Punkte als eigene Spalte, sobald bei Shithead jemand getippt hat
+  // Tipp-Punkte als eigene Spalte, sobald bei Shithead oder Durak jemand getippt hat
   const tips = sh && rows.some((r) => num(r.s.bets) > 0);
   if (tips) head.splice(3, 0, '🔮<small>Tipp-Punkte</small>');
   const MEDALS = ['🥇', '🥈', '🥉'];
@@ -55,7 +62,7 @@ export function boardHTML(v: View): string {
       const vals = sh
         ? [
             cell(s.wins, 'Gewonnene Partien'),
-            cell(num(r.p.shc), 'So oft Shithead'),
+            cell(lost(r), `So oft ${LOSER_NAME[v.game]}`),
             cell(s.games ? avgPlace(r).toFixed(1).replace('.', ',') : '·', 'Durchschnittlicher Platz'),
             ...(tips ? [cell(num(s.betPts), 'Punkte aus richtigen Tipps')] : []),
             cell(s.games, 'Gespielte Partien'),
@@ -77,7 +84,7 @@ export function boardHTML(v: View): string {
     .join('');
   return (
     '<div class="modal"><div class="paper sheet board"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    `<h2>Bestenliste <span class="r">${sh ? 'Shithead' : 'Schnautz'}</span></h2>` +
+    `<h2>Bestenliste <span class="r">${GAME_NAME[v.game]}</span></h2>` +
     `<p class="lead">${played ? 'Zählt alle fertigen Partien, seit dieser Tisch offen ist.' : 'Noch keine Partie fertig. Nach der ersten steht hier, wer vorne liegt.'}</p>` +
     `<div class="btable${tips ? ' c5' : ''}"><div class="brow bhead"><span class="bp"></span><span class="bn"></span>${head.map((h) => `<span class="bv">${h}</span>`).join('')}</div>${body}</div>` +
     '</div></div>'

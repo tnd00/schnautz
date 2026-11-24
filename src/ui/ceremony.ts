@@ -1,9 +1,11 @@
 /*
- * Shithead-Zeremonie: Die letzte Karte fliegt in Zeitlupe, dann wird es dunkel, ein Spotlicht fällt auf den
- * Platz des Shitheads, ein Kackhaufen plumpst darauf, die Posaune spielt und braunes Konfetti fällt.
- * Reine Darstellung, jeder Browser spielt sie selbst aus dem Logeintrag shend. Antippen beendet sie.
+ * Zeremonie für den Verlierer (Shithead, Durak): Bei Shithead fliegt die letzte Karte in Zeitlupe, dann wird es
+ * dunkel, ein Spotlicht fällt auf den Platz des Verlierers, sein Zeichen (💩 oder 🤡) plumpst darauf, die Posaune
+ * spielt und Konfetti fällt. Reine Darstellung, jeder Browser spielt sie selbst aus dem Logeintrag shend oder dkend.
+ * Antippen beendet sie.
  */
-import type { LogEntry, View } from '../game/types';
+import { LOSER_MARK, LOSER_NAME, unreachable } from '../game/games';
+import type { GameKind, LogEntry, View } from '../game/types';
 import { confetti, dropOn } from './animations';
 import { App } from './app';
 import { focusOpp, CAR_GLIDE_MS } from './carousel';
@@ -17,7 +19,9 @@ import { ZER_REVEAL_MS } from './shithead/ceremony-plan';
 import { sfx } from './sound';
 import { taunt } from './taunts';
 
-type EndEntry = Extract<LogEntry, { k: 'shend' }>;
+type EndEntry = Extract<LogEntry, { k: 'shend' | 'dkend' }>;
+
+const isEnd = (e: LogEntry): e is EndEntry => e.k === 'shend' || e.k === 'dkend';
 
 export const ZER = {
   /** Enthüllung läuft */
@@ -27,6 +31,8 @@ export const ZER = {
   gen: 0,
   /** Partie, zu der Balken, Warteschlange oder Enthüllung gehören, sonst -1 */
   games: -1,
+  /** Spiel dieser Partie */
+  game: 'shithead' as GameKind,
   pid: '',
   /** Ab diesem Eintrag hält der Verlauf zurück, damit er den Shithead nicht vorher verrät */
   logN: 0,
@@ -36,6 +42,44 @@ export const ZER = {
 };
 
 const BROWN = ['#9c6b3a', '#b07a42', '#c08a50', '#d9a96b', '#e8c9a0'];
+/** Narrenfarben für den Durak */
+const JESTER = ['#e0362b', '#f3cd7d', '#2e8b57', '#4a6fd1', '#f6efdf', '#b3312a'];
+
+interface Look {
+  colors: string[];
+  tone: 'brown' | 'red';
+  self: string;
+  other: string;
+  count: (v: View, pid: string) => number;
+}
+
+/** Wie die Zeremonie in diesem Spiel aussieht und klingt. */
+function lookOf(game: GameKind): Look {
+  switch (game) {
+    case 'durak':
+      return {
+        colors: JESTER,
+        tone: 'red',
+        self: 'dkLoserSelf',
+        other: 'dkLoserOther',
+        count: (v, id) => num(pById(v, id)?.dkc),
+      };
+    case 'shithead':
+    case 'schnautz':
+      return {
+        colors: BROWN,
+        tone: 'brown',
+        self: 'shLoserSelf',
+        other: 'shLoserOther',
+        count: (v, id) => num(pById(v, id)?.shc),
+      };
+    default:
+      return unreachable(game);
+  }
+}
+
+/** Wer zuerst fertig war, bei Shithead und Durak. */
+const firstOf = (v: View): string | undefined => (v.sh?.finished ?? v.dk?.finished)?.[0];
 
 function stage(): HTMLElement | null {
   return $opt('#zer');
@@ -46,11 +90,12 @@ function stage(): HTMLElement | null {
  * auch nicht während die letzte Karte in Zeitlupe fliegt. Endet die Partie anders, räumt ceremonyGuard auf.
  */
 export function hideShithead(v: View, fresh: readonly LogEntry[]): void {
-  if (v.game !== 'shithead' || v.phase !== 'over') return;
-  const e = fresh.find((x) => x.k === 'shend');
-  if (e?.k !== 'shend' || !e.p) return;
+  if (v.phase !== 'over') return;
+  const e = fresh.find(isEnd);
+  if (!e?.p) return;
   App.zerHide = e.p;
   ZER.games = v.games;
+  ZER.game = v.game;
 }
 
 /** Ab jetzt darf man es sehen. */
@@ -111,7 +156,7 @@ function track(): void {
 /** Bühne an: Abdunkeln, Spotlicht, Posaune, Haufen und Konfetti. */
 function reveal(v: View, pid: string, gen: number): void {
   const cur = App.view;
-  if (gen !== ZER.gen || !cur || cur.game !== 'shithead' || cur.phase !== 'over' || cur.games !== v.games) return;
+  if (gen !== ZER.gen || !cur || cur.game !== v.game || cur.phase !== 'over' || cur.games !== v.games) return;
   releaseLog();
   unhide();
   if (document.hidden) return;
@@ -132,7 +177,8 @@ function reveal(v: View, pid: string, gen: number): void {
     () => {
       if (gen !== ZER.gen || !ZER.on) return;
       const el = panelFor(pid);
-      if (el && !calm && z.classList.contains('hole')) dropOn(el, '💩', () => ring?.classList.add('mark'));
+      if (el && !calm && z.classList.contains('hole'))
+        dropOn(el, LOSER_MARK[v.game], () => ring?.classList.add('mark'));
       else ring?.classList.add('mark');
     },
     // Erst zoomt das Spotlicht heran, dann plumpst der Haufen
@@ -140,14 +186,15 @@ function reveal(v: View, pid: string, gen: number): void {
   );
   if (!calm) {
     const loser = pid === App.me;
-    const first = v.sh?.finished[0] === App.me;
+    const first = firstOf(v) === App.me;
+    const look = lookOf(v.game);
     setTimeout(() => {
       if (gen !== ZER.gen || !ZER.on) return;
       confetti({
-        colors: first ? [...BROWN, '#f3cd7d', '#f3cd7d'] : BROWN,
+        colors: first ? [...look.colors, '#f3cd7d', '#f3cd7d'] : look.colors,
         n: 80,
         dur: [3200, 1400],
-        extra: [{ ch: '💩', n: loser ? 12 : 4 }],
+        extra: [{ ch: LOSER_MARK[v.game], n: loser ? 12 : 4 }],
         cls: 'zerc',
       });
     }, 500);
@@ -196,7 +243,7 @@ export function resetCeremony(): void {
  */
 export function ceremonyGuard(v: View): void {
   if (ZER.games < 0) return;
-  if (v.game === 'shithead' && v.phase === 'over' && v.games === ZER.games) return;
+  if (v.game === ZER.game && v.phase === 'over' && v.games === ZER.games) return;
   ZER.gen++;
   // Die neue Ansicht zeichnet gleich ohnehin alles neu
   App.zerHide = '';
@@ -204,46 +251,49 @@ export function ceremonyGuard(v: View): void {
   stopCeremony(true);
 }
 
-/** Meldung für den Shithead, mit Spruch, Zähler und Ergebnis des eigenen Tipps. */
+/** Meldung für den Verlierer, mit Spruch, Zähler und Ergebnis des eigenen Tipps. */
 function message(v: View, e: EndEntry): { title: string; sub: string } {
   const pid = e.p ?? '';
   const mine = pid === App.me;
   const name = nameOf(v, pid, e.name);
-  const t = mine ? taunt('shLoserSelf', null, e.n) : taunt('shLoserOther', { name }, e.n);
-  const shc = num(pById(v, pid)?.shc);
+  const look = lookOf(v.game);
+  const what = LOSER_NAME[v.game];
+  const t = mine ? taunt(look.self, null, e.n) : taunt(look.other, { name }, e.n);
+  const cnt = look.count(v, pid);
   let sub = `<span class="tt">${esc(t)}</span>`;
-  if (shc >= 2) sub += `<span class="zer-n">Zum ${shc}. Mal Shithead an diesem Tisch.</span>`;
+  if (cnt >= 2) sub += `<span class="zer-n">Zum ${cnt}. Mal ${what} an diesem Tisch.</span>`;
   const hit = e.hits?.[App.me];
-  const bet = v.sh?.bets?.[App.me];
+  const bet = (v.sh?.bets ?? v.dk?.bets)?.[App.me];
   if (hit) sub += `<span class="tt bt">🔮 Richtig getippt! +${num(hit.q)} ${hit.q === 1 ? 'Punkt' : 'Punkte'}.</span>`;
   else if (bet && typeof bet.on === 'string') sub += '<span class="tt bt">🔮 Tipp daneben.</span>';
   sub += '<span class="zer-hint">Antippen zum Überspringen</span>';
   return {
     title: mine
-      ? 'Du bist der <span class="r">Shithead!</span>'
-      : `${esc(name)} ist der <span class="r">Shithead!</span>`,
+      ? `Du bist der <span class="r">${what}!</span>`
+      : `${esc(name)} ist der <span class="r">${what}!</span>`,
     sub,
   };
 }
 
-/** Startet die Zeremonie zum Eintrag shend. Die Enthüllung beginnt, wenn die Meldung dran ist. */
+/** Startet die Zeremonie zum Eintrag shend oder dkend. Die Enthüllung beginnt, wenn die Meldung dran ist. */
 export function shitheadCeremony(v: View, e: EndEntry): void {
   const pid = e.p;
   if (!pid) return;
   // Steht schon eine Ansicht aus einer anderen Partie an, lohnt sich nichts mehr
   const nx = SEQ.next;
-  if (nx && !(nx.game === 'shithead' && nx.phase === 'over' && nx.games === v.games)) {
+  if (nx && !(nx.game === v.game && nx.phase === 'over' && nx.games === v.games)) {
     unhide();
     return;
   }
   ZER.games = v.games;
+  ZER.game = v.game;
   const gen = ++ZER.gen;
   ZER.logN = e.n;
   renderLog(v);
   const m = message(v, e);
   announce({
-    icon: '💩',
-    tone: 'brown',
+    icon: LOSER_MARK[v.game],
+    tone: lookOf(v.game).tone,
     cls: 'zer',
     title: m.title,
     sub: m.sub,
@@ -260,10 +310,10 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
 /** Dev-Menü: Die Enthüllung der letzten Partie noch einmal zeigen, nur in diesem Browser. */
 export function replayCeremony(): boolean {
   const v = App.view;
-  if (!v || v.game !== 'shithead' || v.phase !== 'over' || ZER.on) return false;
+  if (!v || v.phase !== 'over' || ZER.on) return false;
   for (let i = v.log.length - 1; i >= 0; i--) {
     const e = v.log[i];
-    if (e.k !== 'shend' || !e.p) continue;
+    if (!isEnd(e) || !e.p) continue;
     shitheadCeremony(v, e);
     return true;
   }

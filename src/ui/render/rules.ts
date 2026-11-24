@@ -1,9 +1,9 @@
-import { DEFAULT_RULES, SH_WIN_MS } from '../../game/constants';
-import type { GameKind, Rules, ShRules } from '../../game/types';
+import { DEFAULT_RULES, DK_FULL_DECK, SH_WIN_MS } from '../../game/constants';
+import type { DkRules, GameKind, Rules, ShRules } from '../../game/types';
 import { App } from '../app';
 import { num } from '../dom';
 import { legendGrid, legendTitle } from './legend';
-import { GAME_NAME, GAMES, unreachable } from '../../game/games';
+import { GAME_NAME, GAMES, LOSER_MARK, unreachable } from '../../game/games';
 
 /* ---------- Regeln ---------- */
 const p = (t: string) => `<p>${t}</p>`;
@@ -28,20 +28,31 @@ export function rulesHTML(game?: GameKind): string {
     '<div class="modal"><div class="paper sheet rules"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
     (v ? '' : tabs) +
     rulesOf(g, r, glance) +
-    (r.turnSecs
-      ? sec(
-          'Zeitlimit',
-          `Jeder Zug hat ${r.turnSecs} Sekunden, die Tauschrunde ${r.turnSecs * 2}. Läuft die Zeit ab, macht die KI einen Zug für dich, danach spielst du ganz normal weiter. Solange Karten fliegen oder 4er reinkommen, steht die Uhr.`,
-        )
-      : '') +
+    (r.turnSecs ? sec('Zeitlimit', timeText(g, r.turnSecs)) : '') +
     '</div></div>'
   );
+}
+
+/** Zeitlimit je Spiel: Durak hat keine Tauschrunde und keine 4er. */
+function timeText(g: GameKind, s: number): string {
+  const ki = 'Läuft die Zeit ab, macht die KI einen Zug für dich, danach spielst du ganz normal weiter.';
+  switch (g) {
+    case 'durak':
+      return `Jeder Zug hat ${s} Sekunden. ${ki} Solange Karten fliegen, steht die Uhr.`;
+    case 'shithead':
+    case 'schnautz':
+      return `Jeder Zug hat ${s} Sekunden, die Tauschrunde ${s * 2}. ${ki} Solange Karten fliegen oder 4er reinkommen, steht die Uhr.`;
+    default:
+      return unreachable(g);
+  }
 }
 
 function rulesOf(g: GameKind, r: Rules, glance: string): string {
   switch (g) {
     case 'shithead':
       return rulesSh(r.sh || DEFAULT_RULES.sh, glance);
+    case 'durak':
+      return rulesDurak(r.dk ?? DEFAULT_RULES.dk, glance);
     case 'schnautz':
       return rulesSchnautz(r, glance);
     default:
@@ -99,6 +110,68 @@ function rulesSh(R: ShRules, glance: string): string {
     sec(
       'Revanche',
       'Der Shithead kann im Ergebnisfenster Revanche gegen den Sieger fordern. Das zählt als bereit, der Sieger muss annehmen. In der nächsten Partie gewinnt das Duell, wer den besseren Platz holt.',
+    )
+  );
+}
+
+function rulesDurak(R: DkRules, glance: string): string {
+  const small = DK_FULL_DECK - 1;
+  return (
+    '<h2>So geht <span class="r">Durak</span></h2>' +
+    `<p class="lead">Durak ist Russisch für Dummkopf. Den Titel will keiner haben. Bis ${small} Leute spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} mit allen 52. Das Ass ist am höchsten.</p>` +
+    glance +
+    sec(
+      'Worum es geht',
+      'Werde alle deine Karten los. Wer zuerst keine mehr hat, holt die Krone. Wer am Ende als Letzter noch Karten hat, ist der Durak.',
+    ) +
+    sec(
+      'Geben und Trumpf',
+      'Jeder bekommt sechs Karten. Die unterste Karte des Stapels liegt offen darunter. Ihre Farbe ist Trumpf für die ganze Partie, gezogen wird sie als letzte.',
+      'Spielen sechs Leute mit 36 Karten, bleibt kein Stapel übrig. Dann zeigt die zuletzt gegebene Karte den Trumpf und bleibt auf der Hand.',
+    ) +
+    sec(
+      'Angreifen und nachlegen',
+      'Wer angreift, legt eine Karte oder mehrere mit gleichem Wert vor den Verteidiger. Solange der Angriff läuft, dürfen alle außer dem Verteidiger nachlegen. Erlaubt sind nur Werte, die schon auf dem Tisch liegen, egal ob angegriffen oder geschlagen.',
+      'In einen Angriff passen höchstens sechs Karten und nie mehr, als der Verteidiger zu Beginn auf der Hand hatte.',
+    ) +
+    sec(
+      'Verteidigen und aufnehmen',
+      'Der Verteidiger schlägt jede Angriffskarte einzeln, mit einer höheren Karte derselben Farbe oder mit einem Trumpf. Gegen einen Trumpf hilft nur ein höherer Trumpf.',
+      'Kannst oder willst du nicht schlagen, nimmst du alles auf. Die anderen dürfen dir dann noch Karten dazulegen, die du gleich mit einsammelst.',
+    ) +
+    sec(
+      'Bito und nachziehen',
+      'Ist alles geschlagen und will niemand mehr nachlegen, ist der Angriff abgewehrt. Das heißt Bito. Die Karten sind aus dem Spiel und der Verteidiger greift als Nächstes an. Wer aufgenommen hat, setzt aus, dann greift die Person nach ihm an.',
+      'Danach ziehen alle wieder auf sechs Karten nach, solange der Stapel reicht. Zuerst der Angreifer, dann die anderen reihum, der Verteidiger zuletzt.',
+    ) +
+    (R.transfer
+      ? sec(
+          'Weiterschieben',
+          'Solange noch nichts geschlagen ist, darf der Verteidiger eine oder mehrere Karten mit demselben Wert dazulegen. Dann muss die nächste Person alles abwehren. Sie braucht dafür mindestens so viele Karten, wie dann auf dem Tisch liegen.',
+          'Auch sie darf wieder weiterschieben. Wer angegriffen hat, zieht trotzdem als Erster nach.',
+        )
+      : sec(
+          'Weiterschieben',
+          'Weiterschieben ist ein Schalter in der Lobby und normalerweise aus. Ist es an, darf der Verteidiger vor dem ersten Schlag den gleichen Wert dazulegen. Dann muss die nächste Person alles abwehren.',
+        )) +
+    sec(
+      'Wer anfängt',
+      'In der ersten Partie greift an, wer den niedrigsten Trumpf hat. Hat niemand einen, entscheidet der Zufall. Danach wird der Durak der letzten Partie zuerst angegriffen, von der Person rechts von ihm. Strafe muss sein.',
+    ) +
+    sec(
+      'Ende',
+      'Ist der Stapel leer, ist raus, wer keine Karten mehr hat. Wer als Letzter Karten hält, ist der Durak und trägt den ' +
+        LOSER_MARK.durak +
+        ', bis die nächste Partie Durak vorbei ist.',
+      'Werden die Letzten ihre Karten gleichzeitig los, ist es unentschieden. Dann gibt es keinen Durak und in der nächsten Partie fängt wieder der niedrigste Trumpf an.',
+    ) +
+    sec(
+      'Tippen',
+      'Wer fertig ist, tippt einmal pro Partie, wer Durak wird. Ein Treffer bringt so viele Punkte, wie beim Tippen noch Leute im Rennen sind, weniger einen. Früh lohnt sich also. Die Punkte stehen in der Bestenliste.',
+    ) +
+    sec(
+      'Revanche',
+      'Der Durak kann im Ergebnisfenster Revanche gegen den Sieger fordern. Das zählt als bereit, der Sieger muss annehmen. In der nächsten Partie gewinnt das Duell, wer den besseren Platz holt.',
     )
   );
 }

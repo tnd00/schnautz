@@ -41,6 +41,7 @@ import { renderSoundBtn, setSbVolume, sfx, unlockAudio } from './sound';
 import { initStart, readName, renderResume, showStartError } from './start';
 import { LS, SS } from './storage';
 import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
+import { dkButton, dkTapHand, dkTapTable } from './durak/input';
 
 /** Shithead: Karte antippen (Tauschrunde oder Auswahl zum Ausspielen). */
 function shTap(kind: 'h' | 'u', i: number): void {
@@ -187,6 +188,19 @@ function onAction(a: string, t: HTMLElement): void {
       break;
     case 'shh':
       shTap('h', i);
+      break;
+    case 'dkh':
+      dkTapHand(i);
+      break;
+    case 'dkt':
+      dkTapTable(i);
+      break;
+    case 'dkgo':
+    case 'dkbeat':
+    case 'dktransfer':
+    case 'dktake':
+    case 'dkpass':
+      dkButton(a);
       break;
     case 'shu':
       shTap('u', i);
@@ -589,10 +603,8 @@ export function initEvents(): void {
   $('#overlay').addEventListener('scroll', closePick, { capture: true, passive: true });
   window.addEventListener('resize', () => {
     const v = App.view;
-    if (v?.game === 'shithead' && v.phase !== 'lobby') {
-      fitHand();
-      layoutSwapOpps(v);
-    }
+    if ((v?.game === 'shithead' || v?.game === 'durak') && v.phase !== 'lobby') fitHand();
+    if (v?.game === 'shithead' && v.phase !== 'lobby') layoutSwapOpps(v);
     if (v && v.phase !== 'lobby') layoutOpps(v);
     if (v && v.phase !== 'lobby') renderLegend(v);
     fitDesktop();
@@ -644,6 +656,10 @@ export function initEvents(): void {
     const t = e.target as HTMLInputElement;
     if (t.dataset?.shrule) {
       doAct({ type: 'rules', rules: { sh: { [t.dataset.shrule]: t.checked } } });
+      return;
+    }
+    if (t.dataset?.dkrule) {
+      doAct({ type: 'rules', rules: { dk: { [t.dataset.dkrule]: t.checked } } });
       return;
     }
     if (t.dataset?.rule) doAct({ type: 'rules', rules: { [t.dataset.rule]: t.checked } });

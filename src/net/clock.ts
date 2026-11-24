@@ -68,7 +68,12 @@ function timeUp(key: string): void {
   if (App.role !== 'host' || !st) return;
   const turn = clockTurn(st);
   if (turn.key !== key) return;
-  turn.ids.forEach((id) => autoMove(st, id, turn.swap));
+  // Endet durch einen Ersatzzug der Angriff (Durak), haben die anderen im neuen Angriff wieder volle Zeit
+  const bout = st.dk?.bout;
+  turn.ids.forEach((id) => {
+    if (st.dk?.bout !== bout || !clockTurn(st).ids.includes(id)) return;
+    autoMove(st, id, turn.swap);
+  });
   hostCommit();
 }
 

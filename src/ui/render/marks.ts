@@ -1,14 +1,36 @@
-/* Zeichen vor dem Namen: Krone der letzten Partie, amtierender Shithead und KI. Am Handy teilen sie sich ein Feld. */
-import type { Player, View } from '../../game/types';
+/* Zeichen vor dem Namen: Krone der letzten Partie, amtierender Shithead oder Durak und KI. Am Handy teilen sie sich ein Feld. */
+import type { GameKind, Player, View } from '../../game/types';
 import { App } from '../app';
-import { esc } from '../dom';
-import { reignOf } from '../../game/games';
+import { esc, num } from '../dom';
+import { LOSER_MARK, LOSER_NAME, reignOf, unreachable } from '../../game/games';
 
 export function reignHTML(v: View, id: string): string {
   const rg = reignOf(v);
-  if (rg?.lose === id && App.zerHide !== id) return '<span class="reign" title="Amtierender Shithead">💩</span>';
+  const mark = LOSER_MARK[v.game];
+  if (mark && rg?.lose === id && App.zerHide !== id)
+    return `<span class="reign" title="Amtierender ${LOSER_NAME[v.game]}">${mark}</span>`;
   if (rg?.win === id) return '<span class="reign" title="Hat die letzte Partie gewonnen">👑</span>';
   return '';
+}
+
+/** Wie oft jemand in diesem Spiel schon Verlierer war (Shithead oder Durak). Schnautz kennt keinen Titel. */
+export function loserCount(game: GameKind, p: Pick<Player, 'shc' | 'dkc'>): number {
+  switch (game) {
+    case 'shithead':
+      return num(p.shc);
+    case 'durak':
+      return num(p.dkc);
+    case 'schnautz':
+      return 0;
+    default:
+      return unreachable(game);
+  }
+}
+
+/** Wie oft jemand schon Durak war. Das Mal der gerade beendeten Partie zählt erst nach der Enthüllung. */
+export function dkcHTML(p: Pick<Player, 'dkc' | 'id'>): string {
+  const n = num(p.dkc) - (App.zerHide === p.id ? 1 : 0);
+  return n > 0 ? `<span class="shc" title="So oft Durak gewesen">${LOSER_MARK.durak} ${n}</span>` : '';
 }
 
 /** KI-Zeichen als kleines Quadrat, so groß wie Krone oder 💩. */

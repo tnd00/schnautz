@@ -6,12 +6,16 @@ import { W, nameOf, vb } from '../helpers';
 import { SEQ } from '../shithead/sequence';
 import { rematchLog } from './rematch';
 import { ZER } from '../ceremony';
-import { GAME_NAME, isGame } from '../../game/games';
+import { GAME_NAME, LOSER_MARK, isGame } from '../../game/games';
 
 /** Eine Zeile im Verlauf: CSS-Klasse und HTML (Namen und Texte sind escaped). */
 export function logLine(v: View, e: LogEntry): [cls: string, html: string] | null {
   const p = e.p;
   const who = () => W(v, p, e.name);
+  /** Name in der Objektrolle: aus "Du" wird "dich" */
+  const whom = (id: string | null | undefined, fallback?: string) => (id === App.me ? 'dich' : W(v, id, fallback));
+  const chips = (cards: unknown) => (Array.isArray(cards) ? cards.map(cardChip).join(' ') : '');
+  const cards = (n: number) => num(n) + (num(n) === 1 ? ' Karte' : ' Karten');
   switch (e.k) {
     case 'join':
       return ['sys', who() + (e.bot ? ' (KI) setzt sich an den Tisch.' : ' sitzt jetzt mit am Tisch.')];
@@ -106,7 +110,84 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
     case 'shend':
       return [
         'big',
-        e.p ? '💩 ' + who() + vb(p, ' bist der Shithead!', ' ist der Shithead!') : 'Die Partie ist vorbei.',
+        e.p
+          ? LOSER_MARK.shithead + ' ' + who() + vb(p, ' bist der Shithead!', ' ist der Shithead!')
+          : 'Die Partie ist vorbei.',
+      ];
+    case 'dkdeal':
+      return e.prev
+        ? [
+            'big',
+            'Trumpf ist ' +
+              cardChip(e.trump) +
+              '. ' +
+              LOSER_MARK.durak +
+              ' ' +
+              W(v, e.def) +
+              vb(e.def, ' warst letztes Mal der Durak und kriegst ', ' war letztes Mal der Durak und kriegt ') +
+              'als Erstes eins drauf. ' +
+              W(v, e.att) +
+              vb(e.att, ' greifst an.', ' greift an.'),
+          ]
+        : [
+            '',
+            'Trumpf ist ' +
+              cardChip(e.trump) +
+              '. ' +
+              W(v, e.att) +
+              vb(e.att, ' greifst ', ' greift ') +
+              whom(e.def) +
+              ' als Erstes an.',
+          ];
+    case 'dkattack':
+      return [
+        '',
+        who() +
+          (e.lead
+            ? vb(p, ' greifst mit ', ' greift mit ') + chips(e.cards) + ' an.'
+            : vb(p, ' legst ', ' legt ') + chips(e.cards) + ' nach.'),
+      ];
+    case 'dkdefend':
+      return ['', who() + vb(p, ' schlägst ', ' schlägt ') + cardChip(e.a) + ' mit ' + cardChip(e.d) + '.'];
+    case 'dktransfer':
+      return ['', who() + vb(p, ' schiebst ', ' schiebt ') + chips(e.cards) + ' weiter an ' + whom(e.to, e.tn) + '.'];
+    case 'dktake':
+      return [
+        '',
+        who() +
+          vb(
+            p,
+            ' gibst auf und nimmst alles. Die anderen dürfen dir noch was dazulegen.',
+            ' gibt auf und nimmt alles. Jetzt noch schnell nachlegen!',
+          ),
+      ];
+    case 'dkpass':
+      return null;
+    case 'dkbito':
+      return [
+        '',
+        'Bito! ' +
+          who() +
+          vb(p, ' wehrst alles ab, ', ' wehrt alles ab, ') +
+          cards(e.cnt) +
+          (num(e.cnt) === 1 ? ' ist weg.' : ' sind weg.'),
+      ];
+    case 'dkpickup':
+      return [
+        '',
+        who() + vb(p, ' nimmst ', ' nimmt ') + cards(e.cnt) + ' auf.' + (num(e.cnt) >= 8 ? ' Schöner Fächer.' : ''),
+      ];
+    case 'dkout':
+      return [
+        'big',
+        who() + vb(p, ' hast keine Karten mehr! Platz ', ' hat keine Karten mehr! Platz ') + num(e.place) + '.',
+      ];
+    case 'dkend':
+      return [
+        'big',
+        e.p
+          ? LOSER_MARK.durak + ' ' + who() + vb(p, ' bist der Durak!', ' ist der Durak!')
+          : 'Unentschieden! Die Letzten sind gleichzeitig raus, einen Durak gibt es diesmal nicht.',
       ];
     case 'lobby':
       return ['sys', 'Zurück in der Lobby.'];

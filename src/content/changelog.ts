@@ -10,6 +10,30 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.4',
+    date: '2026-11-24',
+    title: 'Durak',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Neues Spiel: Durak für 2 bis 8 Leute. Bis sechs mit 36 Karten, ab sieben mit dem ganzen Deck.',
+          'Alle außer dem Verteidiger dürfen passende Werte nachlegen, höchstens sechs Karten pro Angriff. Wer nicht schlagen kann, nimmt auf und bekommt gern noch etwas obendrauf.',
+          'Weiterschieben lässt sich in der Lobby einschalten: Mit dem gleichen Wert gibst du den Angriff an den Nächsten weiter.',
+          'Wer zuletzt Karten hat, ist der Durak und bekommt eine Zeremonie mit Spotlicht, Narrenkappe und Konfetti. In der nächsten Partie wird er zuerst angegriffen.',
+          'Wer fertig ist, tippt, wer Durak wird. Revanche, Würfe, Soundboard und freche KIs gibt es auch bei Durak.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Ein Gast mit veralteter Seite kann kein Spiel öffnen, das seine Version noch nicht kennt. Dann kommt ein Hinweis zum Neuladen.',
+          'Krone und Verlierer-Zeichen gelten jetzt pro Spiel und bleiben, wenn zwischendurch ein anderes Spiel läuft.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.3',
     date: '2026-11-24',
     title: 'Partieende mit Pauke',

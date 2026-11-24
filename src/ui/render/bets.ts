@@ -10,6 +10,7 @@ import { floatLabel, tauntLabel } from '../feedback';
 import { myTurn, nameOf, seatOrder } from '../helpers';
 import { sfx } from '../sound';
 import { taunt } from '../taunts';
+import { LOSER_NAME } from '../../game/games';
 
 export const BETUI = { pend: null as { games: number; text: string } | null };
 
@@ -22,6 +23,7 @@ export function resetBetUI(): void {
 const count = (x: unknown): number => (Array.isArray(x) ? x.length : typeof x === 'number' ? x : 0);
 
 function cardsLeft(v: View, id: string): number {
+  if (v.dk) return count(v.dk.P[id]);
   const P = v.sh?.P[id];
   return P ? count(P.hand) + count(P.up) + count(P.down) : 0;
 }
@@ -35,7 +37,7 @@ export function betTagHTML(v: View, id: string): string {
 
 /** Untertitel für Fertige und für alle, auf die getippt wurde. */
 export function betSub(v: View, place: number): string | null {
-  if (shCanBet(v, App.me)) return `Platz ${num(place)}. Tipp jetzt, wer Shithead wird.`;
+  if (shCanBet(v, App.me)) return `Platz ${num(place)}. Tipp jetzt, wer ${LOSER_NAME[v.game]} wird.`;
   const mine = v.sh?.bets?.[App.me];
   if (mine && typeof mine.on === 'string') return `Platz ${num(place)}. Dein Tipp steht, jetzt heißt es mitfiebern.`;
   return null;
@@ -55,7 +57,7 @@ export function betsOnMeSub(v: View): string | null {
 export function betActionHTML(v: View): string {
   if (shCanBet(v, App.me)) {
     const pulse = App.betSeen !== v.games ? ' pulse' : '';
-    return `<button class="btn primary betbtn${pulse}" data-act="betopen"><span class="bl">🔮 Tippen, wer Shithead wird</span></button>`;
+    return `<button class="btn primary betbtn${pulse}" data-act="betopen"><span class="bl">🔮 Tippen, wer ${LOSER_NAME[v.game]} wird</span></button>`;
   }
   const mine = v.sh?.bets?.[App.me];
   if (v.phase === 'play' && mine && typeof mine.on === 'string')
@@ -70,7 +72,7 @@ export function openBetModal(v: View): void {
   $('#modal').innerHTML =
     '<div class="modal betm"><div class="paper sheet bets" role="dialog" aria-labelledby="bet-h">' +
     '<button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    '<h2 id="bet-h">Wer wird <span class="r">Shithead</span>?</h2><div class="betbody"></div></div></div>';
+    `<h2 id="bet-h">Wer wird <span class="r">${LOSER_NAME[v.game]}</span>?</h2><div class="betbody"></div></div></div>`;
   renderBetModal(v);
 }
 

@@ -3,6 +3,7 @@ import { MIN_SEATS } from './constants';
 import { addBot, addLog, addPlayer, MAX_SEATS_ALL, pIdx, seatLimit, uniqueName } from './state';
 import type { Player, Rng, State } from './types';
 import { forgetRematch } from './rematch';
+import { betPart } from './bets';
 
 export type SeatResult = { id: string } | { err: string };
 
@@ -32,7 +33,8 @@ function botSeatFor(st: State, name: string): Player | null {
   const lower = name.toLowerCase();
   const same = bots.find((p) => p.name.toLowerCase() === lower);
   if (same) return same;
-  const playing = bots.filter((p) => !p.out && !st.sh?.finished.includes(p.id));
+  const fin = betPart(st)?.finished ?? [];
+  const playing = bots.filter((p) => !p.out && !fin.includes(p.id));
   return (playing.length ? playing : bots)[(playing.length ? playing : bots).length - 1];
 }
 
@@ -53,6 +55,7 @@ export function takeSeat(st: State, seatId: string, name: string): void {
   p.stats = {};
   p.wins = 0;
   p.shc = 0;
+  p.dkc = 0;
   // Krone oder Shithead-Titel der KI gehen nicht auf den Menschen über
   Object.values(st.reigns ?? {}).forEach((rg) => {
     if (rg.win === p.id) rg.win = null;
@@ -60,7 +63,8 @@ export function takeSeat(st: State, seatId: string, name: string): void {
   });
   // Ebenso Forderung, Duell und Tipp der KI
   forgetRematch(st, p.id);
-  if (st.sh?.bets) delete st.sh.bets[p.id];
+  const bets = betPart(st)?.bets;
+  if (bets) delete bets[p.id];
   addLog(st, { k: 'takeover', p: p.id, name: p.name, from });
 }
 

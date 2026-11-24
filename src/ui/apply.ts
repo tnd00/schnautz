@@ -19,6 +19,8 @@ import { liveFx } from './livefx';
 import { syncNext } from './nextround';
 import { placePick } from './toss';
 import { viewSig } from './viewsig';
+import { dkSyncSelection } from './durak/input';
+import { dkFlights, dkSnap } from './durak/flights';
 
 function bumpSeen(v: View): void {
   App.seenN = v.log.reduce((mx, e) => Math.max(mx, e.n), App.seenN);
@@ -69,6 +71,7 @@ export function applyView(v: View): void {
   syncClock(v);
   syncNext(v);
   resetSelection(prev, v);
+  dkSyncSelection(prev, v);
   setAnimations(prev, v);
 
   const steps = prev ? shPlan(prev, v, fresh) : [];
@@ -81,8 +84,11 @@ export function applyView(v: View): void {
   });
   if (prev) effects(prev, v);
   bumpSeen(v);
+  // Durak: Wo lagen die Karten vor dem Zeichnen? Danach fliegen sie von dort
+  const dsnap = prev ? dkSnap(prev) : null;
   render();
   if (prev) runFlights(prev, v);
+  if (prev && dsnap) dkFlights(prev, v, dsnap, fresh);
   markLost(lostNow, v);
   placePick();
 }

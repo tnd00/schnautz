@@ -1,14 +1,15 @@
 /* Lobby: Plätze am Tisch, Spielauswahl und Regeln. Am Handy als zwei Reiter, damit nichts scrollt. */
-import { DEFAULT_RULES, MIN_SEATS, SH_WIN_MS, TURN_SECS } from '../../game/constants';
+import { DEFAULT_RULES, DK_FULL_DECK, MIN_SEATS, SH_WIN_MS, TURN_SECS } from '../../game/constants';
 import { maxSeats, seatLimit } from '../../game/state';
-import type { GameKind, Player, Rules, ShRules, View } from '../../game/types';
+import type { DkRules, GameKind, Player, Rules, ShRules, View } from '../../game/types';
 import { App } from '../app';
 import { BOT_TAG } from '../cards';
 import { $, esc, num } from '../dom';
 import { pById } from '../helpers';
 import { shareLink } from '../screens';
 import { shcHTML } from './shithead';
-import { GAME_NAME, GAMES, unreachable } from '../../game/games';
+import { dkcHTML } from './marks';
+import { GAME_NAME, GAMES, LOSER_MARK, unreachable } from '../../game/games';
 
 const ICON_MINUS =
   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 12h12"/></svg>';
@@ -35,7 +36,7 @@ function seatHTML(v: View, p: Player): string {
     (p.bot ? BOT_TAG : '') +
     '</span>' +
     (p.id === v.host ? '<span class="badge">Gastgeber</span>' : '') +
-    (v.game === 'shithead' ? shcHTML(p) : '') +
+    (v.game === 'shithead' ? shcHTML(p) : v.game === 'durak' ? dkcHTML(p) : '') +
     (p.bot && host
       ? `<button class="xbtn" data-act="rmbot" data-id="${esc(p.id)}" aria-label="KI entfernen">×</button>`
       : '') +
@@ -72,7 +73,7 @@ function seatControl(v: View): string {
 }
 
 function toggle(
-  attr: 'rule' | 'shrule',
+  attr: 'rule' | 'shrule' | 'dkrule',
   key: string,
   on: boolean,
   label: string,
@@ -96,6 +97,8 @@ function gameRules(v: View, host: boolean): string {
   switch (v.game) {
     case 'shithead':
       return shitheadRules(v.rules.sh ?? DEFAULT_RULES.sh, !host);
+    case 'durak':
+      return durakRules(v.rules.dk ?? DEFAULT_RULES.dk, host);
     case 'schnautz':
       return schnautzRules(v.rules, host);
     default:
@@ -119,6 +122,20 @@ function shitheadRules(sr: ShRules, dis: boolean): string {
     t('cut', 'Bombe einwerfen', 'Wer die fehlenden Karten zu vier gleichen hat, darf jederzeit reinwerfen') +
     t('deck5', 'Zwei Decks schon ab 5', 'Ab 6 Leuten wird immer mit zwei Decks gespielt') +
     '<p class="note" style="margin-top:8px">Vier gleiche Karten hintereinander sind immer eine Bombe und verbrennen den Stapel. Wer sie vollmacht, legt gleich nochmal.</p>'
+  );
+}
+
+function durakRules(dr: DkRules, host: boolean): string {
+  return (
+    toggle(
+      'dkrule',
+      'transfer',
+      dr.transfer,
+      'Weiterschieben',
+      'Vor dem ersten Schlag legt der Verteidiger den gleichen Wert dazu, dann muss der Nächste ran',
+      !host,
+    ) +
+    `<p class="note" style="margin-top:8px">Bis ${DK_FULL_DECK - 1} Leute spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} mit allen 52. Wer als Letzter Karten hat, ist der Durak und trägt den ${LOSER_MARK.durak}.</p>`
   );
 }
 

@@ -36,6 +36,8 @@ export const App = {
   ss: { src: null as 'hand' | 'up' | null, idx: [] as number[] },
   /** Tauschrunde bei Shithead. */
   sw: { h: null as number | null, u: null as number | null },
+  /** Durak: gewählte Handkarten und der Angriff, den der Verteidiger schlagen will. */
+  ds: { idx: [] as number[], pair: null as number | null },
   /** Lobby am Handy: welcher Reiter offen ist. */
   ltab: 'table' as 'table' | 'game',
   seenN: 0,

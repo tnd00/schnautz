@@ -8,6 +8,7 @@ import { clockTurn } from '../../src/game/clock';
 import { dkLive, dkWaiting } from '../../src/game/durak';
 import { reignOf } from '../../src/game/games';
 import { addPlayer, newState } from '../../src/game/state';
+import { seatGuest, takeSeat } from '../../src/game/seats';
 import type { Action, Card, DkState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { rngF } from './helpers';
@@ -66,7 +67,8 @@ function moves(st: State, pid: string): Action[] {
     return out;
   }
   const ranks = new Set(D.table.flatMap((p) => (p.d ? [rankOf(p.a), rankOf(p.d)] : [rankOf(p.a)])));
-  if (D.table.length < D.limit) hand.forEach((c, j) => ranks.has(rankOf(c)) && out.push({ type: 'dkattack', idx: [j] }));
+  if (D.table.length < D.limit)
+    hand.forEach((c, j) => ranks.has(rankOf(c)) && out.push({ type: 'dkattack', idx: [j] }));
   if ((D.take || !open.length) && hand.length && !D.done.includes(pid)) out.push({ type: 'dkpass' });
   return out;
 }
@@ -252,15 +254,22 @@ describe('Durak: Ende', () => {
     D.trump = 'H6';
     D.deck = [];
     D.P.h = ['C7'];
-    D.P.p1 = ['C8'];
+    D.P.p1 = ['C8', 'D9'];
     D.P.p2 = ['S6', 'S7', 'S8'];
-    D.discard = 36 - 5;
+    D.discard = 36 - 6;
     D.att = 'h';
     D.def = 'p1';
-    D.limit = 1;
+    D.limit = 2;
     act(st, 'h', { type: 'dkattack', idx: [0] });
     act(st, 'p1', { type: 'dkdefend', a: 0, i: 0 });
-    // Beide sind leer, der Stapel auch: beide fertig, p2 ist der Durak
+    // h ist leer, p2 legt nichts nach: Angriff abgewehrt, h allein als Erster raus
+    act(st, 'p2', { type: 'dkpass' });
+    expect(D.finished).toEqual(['h']);
+    expect(st.players.find((p) => p.id === 'h')?.place).toBe(1);
+    // p1 greift p2 mit der letzten Karte an, p2 hat weder Karo noch Trumpf
+    expect(D.att).toBe('p1');
+    act(st, 'p1', { type: 'dkattack', idx: [0] });
+    act(st, 'p2', { type: 'dktake' });
     expect(st.phase).toBe('over');
     expect(D.finished).toEqual(['h', 'p1']);
     expect(D.durak).toBe('p2');
@@ -270,14 +279,37 @@ describe('Durak: Ende', () => {
     expect(st.players.find((p) => p.id === 'p2')?.place).toBe(3);
     expect(st.players.find((p) => p.id === 'h')?.stats?.durak).toMatchObject({ games: 1, wins: 1, places: 1 });
     const ks = st.log.map((e) => e.k);
-    expect(ks.slice(-3)).toEqual(['dkout', 'dkout', 'dkend']);
+    expect(ks.slice(-3)).toEqual(['dkpickup', 'dkout', 'dkend']);
     expect(st.log.at(-1)).toMatchObject({ k: 'dkend', p: 'p2' });
     // Am Ende sieht jeder alle Hände
-    expect(viewFor(st, 'h').dk?.P.p2).toEqual(['S6', 'S7', 'S8']);
+    expect(viewFor(st, 'h').dk?.P.p2).toEqual(expect.arrayContaining(['S6', 'S7', 'S8', 'D9']));
   });
 
-  it('gehen die Letzten gleichzeitig raus, ist es unentschieden', () => {
+  it('wer im selben Angriff fertig wird, teilt sich den Platz, ohne Einzelsieger gibt es keine Krone', () => {
+    const { st, D } = table(3, 32);
+    D.trump = 'H6';
+    D.deck = [];
+    D.P.h = ['C7'];
+    D.P.p1 = ['C8'];
+    D.P.p2 = ['S6', 'S7', 'S8'];
+    D.discard = 36 - 5;
+    D.att = 'h';
+    D.def = 'p1';
+    D.limit = 1;
+    act(st, 'h', { type: 'dkattack', idx: [0] });
+    act(st, 'p1', { type: 'dkdefend', a: 0, i: 0 });
+    expect(st.phase).toBe('over');
+    expect(D.durak).toBe('p2');
+    expect(st.players.filter((p) => p.place === 1).map((p) => p.id)).toEqual(['h', 'p1']);
+    expect(st.players.find((p) => p.id === 'p2')?.place).toBe(3);
+    expect(st.winner).toBeNull();
+    expect(reignOf(st)).toMatchObject({ win: null, lose: 'p2' });
+    expect(st.players.find((p) => p.id === 'h')?.stats?.durak).toMatchObject({ games: 1, wins: 0 });
+  });
+
+  it('gehen die Letzten gleichzeitig raus, ist es unentschieden, auch im Revanche-Duell', () => {
     const { st, D } = table(2, 33);
+    st.rematchDuel = { by: 'p1', vs: 'h', game: st.games, n: 1 };
     D.trump = 'H6';
     D.deck = [];
     D.P.h = ['C7'];
@@ -290,8 +322,13 @@ describe('Durak: Ende', () => {
     act(st, 'p1', { type: 'dkdefend', a: 0, i: 0 });
     expect(st.phase).toBe('over');
     expect(D.durak).toBeNull();
-    expect(st.log.at(-1)).toMatchObject({ k: 'dkend' });
-    expect(st.log.at(-1)?.p).toBeUndefined();
+    const end = st.log.find((e) => e.k === 'dkend');
+    expect(end).toBeTruthy();
+    expect(end?.p).toBeUndefined();
+    // Keiner allein vorn: keine Krone, kein Sieg, das Duell ist unentschieden
+    expect(st.winner).toBeNull();
+    expect(reignOf(st)?.win).toBeNull();
+    expect(st.log.at(-1)).toMatchObject({ k: 'rematchend', res: 'tie' });
   });
 });
 
@@ -393,5 +430,59 @@ describe('Durak: KI', () => {
     expect(botDecide(viewFor(st, 'p1'), rngF(1), 'normal')).toEqual({ type: 'dktake' });
     act(st, 'p1', { type: 'dktake' });
     expect(botDecide(viewFor(st, 'p2'), rngF(1), 'normal')).toEqual({ type: 'dkattack', idx: [0] });
+  });
+});
+
+describe('Durak: Übernahme, Zeitablauf, Weiterschieben am Ende', () => {
+  it('ein Gast übernimmt einen KI-Platz, der noch spielt, ohne deren Tipp und Kappen', () => {
+    const { st, D } = table(4, 61);
+    st.players.slice(1).forEach((p) => (p.bot = true));
+    const [, b1, b2, b3] = st.players;
+    // b3 ist fertig und hat getippt, b2 hat schon drei Kappen
+    D.deck = [];
+    D.P[b3.id] = [];
+    D.finished = [b3.id];
+    b3.place = 1;
+    D.bets = { [b3.id]: { on: b1.id, q: 1, n: st.n } };
+    b2.dkc = 3;
+    const seat = seatGuest(st, 'p-lena00000000', 'Lena');
+    expect(seat && 'id' in seat ? seat.id : null).toBe(b2.id);
+    expect(b2.dkc).toBe(0);
+    // Übernimmt jemand den fertigen Platz direkt, gehört der Tipp nicht mit dazu
+    takeSeat(st, b3.id, 'Mia');
+    expect(D.bets[b3.id]).toBeUndefined();
+  });
+
+  it('beim Weiterschieben zählt nicht als Nächster, wer bei leerem Stapel schon leer ist', () => {
+    const { st, D } = table(3, 62, true);
+    D.trump = 'H6';
+    D.deck = [];
+    D.P.h = ['C7', 'S9', 'D10', 'SD'];
+    D.P.p1 = ['D7', 'CB', 'CD', 'DK', 'H9'];
+    D.P.p2 = ['S7'];
+    D.discard = 36 - 10;
+    D.att = 'h';
+    D.def = 'p1';
+    D.limit = 5;
+    act(st, 'h', { type: 'dkattack', idx: [0] });
+    act(st, 'p2', { type: 'dkattack', idx: [0] });
+    // p2 ist leer und damit raus, p1 schiebt an h weiter (h hat 3 Karten, Angriff dann 3)
+    expect(act(st, 'p1', { type: 'dktransfer', idx: [0] })).toBeNull();
+    expect(D.def).toBe('h');
+  });
+
+  it('st.turn zeigt auf jemanden, auf den die Partie wirklich wartet', () => {
+    const { st, D } = table(2, 63, true);
+    D.trump = 'H6';
+    D.P.h = ['C7', 'C9', 'SA', 'DB', 'SK', 'H7'];
+    D.P.p1 = ['D7', 'S8', 'D10', 'SD', 'CA', 'DD'];
+    D.att = 'h';
+    D.def = 'p1';
+    D.limit = 6;
+    act(st, 'h', { type: 'dkattack', idx: [0] });
+    expect(st.players[st.turn].id).toBe('p1');
+    act(st, 'p1', { type: 'dkdefend', a: 0, i: 4 });
+    expect(dkWaiting(st)).toEqual(['h']);
+    expect(st.players[st.turn].id).toBe('h');
   });
 });

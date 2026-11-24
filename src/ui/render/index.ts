@@ -14,6 +14,7 @@ import { markTosses } from '../toss';
 import { fitDesktop } from '../fit';
 import { GAME_NAME, unreachable } from '../../game/games';
 import type { View } from '../../game/types';
+import { renderDk, renderDkOverlay } from './durak';
 
 /** Was jedes Spiel am Tisch zeichnet und ob die Leiste oben und das Abzeichen am Namen dazugehören. */
 function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: boolean; badge: boolean } {
@@ -21,6 +22,9 @@ function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: bo
     case 'shithead':
       // Bei Shithead stehen alle schon auf dem Spielfeld, die Leiste wäre doppelt
       return { draw: () => renderSh(v), overlay: () => renderShOverlay(v), scorebar: false, badge: false };
+    case 'durak':
+      // Auch bei Durak zeigen die Kacheln alles, eine Leiste oben wäre doppelt
+      return { draw: () => renderDk(v), overlay: () => renderDkOverlay(v), scorebar: false, badge: false };
     case 'schnautz':
       return { draw: () => renderGame(v), overlay: () => renderOverlay(v), scorebar: true, badge: true };
     default:

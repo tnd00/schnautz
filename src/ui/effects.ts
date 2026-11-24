@@ -1,8 +1,9 @@
-import type { View } from '../game/types';
+import { suitOf } from '../game/cards';
+import type { LogEntry, View } from '../game/types';
 import { confetti, emojiFly } from './animations';
 import { App } from './app';
 import { $opt, esc, num } from './dom';
-import { REMATCH_ANN_MS } from '../game/constants';
+import { REMATCH_ANN_MS, SUIT_SYM } from '../game/constants';
 import {
   type Announcement,
   announce,
@@ -112,6 +113,7 @@ export function effects(prev: View, v: View, seqd = false): void {
     }
     // Der Shithead steht fest: Zeremonie statt einfacher Meldung
     if (e.k === 'shend' && e.p && prev.phase !== 'over' && v.phase === 'over') shitheadCeremony(v, e);
+    if (isDk(e)) durakEffect(prev, v, e, fresh, seqd);
     if (e.k === 'result') {
       const best = roundBest(v);
       const c = e.changes?.[App.me];
@@ -226,4 +228,93 @@ export function effects(prev: View, v: View, seqd = false): void {
     }
   }
   updateTitle();
+}
+
+type DkEntry = Extract<LogEntry, { k: `dk${string}` }>;
+
+const isDk = (e: LogEntry): e is DkEntry => e.k.startsWith('dk');
+
+const SUIT_NAME: Readonly<Record<string, string>> = { C: 'Kreuz', S: 'Pik', H: 'Herz', D: 'Karo' };
+
+/** Durak: Trumpf am Anfang, Klänge am Tisch, Aufnehmen, Weiterschieben, Raus und das Ende. */
+function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: boolean): void {
+  if (seqd) return;
+  const mine = e.p === App.me;
+  const N = (id: string | null | undefined, fb?: string) => esc(nameOf(v, id, fb));
+  switch (e.k) {
+    case 'dkdeal': {
+      const s = suitOf(e.trump);
+      let sub: string;
+      if (e.prev) {
+        sub =
+          e.def === App.me
+            ? 'Du warst zuletzt Durak. Rate mal, wer zuerst angegriffen wird.'
+            : `${N(e.def)} war zuletzt Durak und wird zuerst angegriffen.`;
+      } else sub = `${N(e.att)} hat den kleinsten Trumpf und greift ${N(e.def)} an.`;
+      announce({ icon: SUIT_SYM[s], tone: 'gold', title: `Trumpf ist ${SUIT_NAME[s]}`, sub, ms: 2400 });
+      return;
+    }
+    case 'dkattack':
+    case 'dkdefend':
+      if (!mine) sfx('card');
+      return;
+    case 'dktransfer':
+      sfx('knock');
+      setTimeout(() => floatLabel(e.p, `schiebt weiter an ${e.tn ?? 'den Nächsten'}`, 'schiebst weiter'), 60);
+      if (e.to === App.me && !mine) tauntLabel(taunt('dkTransferOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
+      return;
+    case 'dktake':
+      setTimeout(() => floatLabel(e.p, 'nimmt auf', 'nimmst auf'), 60);
+      // Ist der Tisch schon voll, folgt das Aufnehmen sofort, dann spricht der Spruch dort
+      if (fresh.some((x) => x.k === 'dkpickup' && x.n > e.n)) return;
+      if (mine) tauntLabel(taunt('dkTakeSelf', null, e.n));
+      else if (e.n % 3 === 0) tauntLabel(taunt('dkTakeOther', { name: nameOf(v, e.p, e.name) }, e.n));
+      return;
+    case 'dkpickup': {
+      const n = num(e.cnt);
+      sfx(mine ? 'lose' : 'pop');
+      setTimeout(() => floatLabel(e.p, `nimmt ${n} Karten`, `nimmst ${n} Karten`), 60);
+      if (n >= 6)
+        tauntLabel(
+          mine
+            ? taunt('dkBigPickupSelf', { n }, e.n)
+            : taunt('dkBigPickupOther', { name: nameOf(v, e.p, e.name), n }, e.n),
+        );
+      return;
+    }
+    case 'dkbito':
+      sfx('deal');
+      setTimeout(() => floatLabel(e.p, 'wehrt alles ab', 'wehrst alles ab'), 60);
+      if (mine && num(e.cnt) >= 6) tauntLabel(taunt('dkBitoSelf', null, e.n));
+      return;
+    case 'dkout': {
+      // Direkt vor der Zeremonie nur kurz
+      const toEnd = fresh.some((x) => x.k === 'dkend' && x.p);
+      announce({
+        icon: e.place === 1 ? '🥇' : '✅',
+        tone: 'gold',
+        title: N(e.p, e.name) + vb(e.p, ' bist raus!', ' ist raus!'),
+        sub:
+          'Platz ' +
+          num(e.place) +
+          '.' +
+          (mine && e.place === 1 && !toEnd ? '<span class="tt">' + esc(taunt('dkWinSelf', null, e.n)) + '</span>' : ''),
+        ms: toEnd ? ZER_SHDONE_MS : mine ? 2200 : 1600,
+      });
+      if (mine && e.place === 1) setTimeout(() => sfx('win'), 200);
+      return;
+    }
+    case 'dkend':
+      if (prev.phase === 'over' || v.phase !== 'over') return;
+      if (e.p) shitheadCeremony(v, e);
+      else
+        announce({
+          icon: '🤝',
+          tone: 'gold',
+          title: 'Unentschieden!',
+          sub: 'Die Letzten sind gleichzeitig raus. Diesmal gibt es keinen Durak.',
+          ms: 2600,
+        });
+      return;
+  }
 }

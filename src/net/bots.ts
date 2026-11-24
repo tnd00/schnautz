@@ -4,11 +4,12 @@
  * Chat-Sprüche und Emoji-Reaktionen.
  */
 import { act, fallbackMove, soundOk } from '../game/actions';
-import { shBetsOn, shCanBet } from '../game/bets';
+import { hasBets, shBetsOn, shCanBet } from '../game/bets';
 import { botRematchSeat } from '../game/rematch';
+import { rankOf, suitOf } from '../game/cards';
 import { handValue } from '../game/schnautz';
 import { pIdx } from '../game/state';
-import type { Action, Player, State, TossItem } from '../game/types';
+import type { Action, Card, LogEntry, Player, State, TossItem } from '../game/types';
 import { viewFor } from '../game/view';
 import { gateAct, H, hostCommit } from './host';
 import { tableQuiet } from './rate';
@@ -71,7 +72,7 @@ function clearRematch(): void {
   BOTS.rematchKey = '';
 }
 
-/** Fertige KIs tippen nach einer Weile, wer Shithead wird. */
+/** Fertige KIs tippen nach einer Weile, wer Shithead oder Durak wird. */
 function botBets(st: State): void {
   st.players.forEach((p) => {
     if (!p.bot || p.out || !shCanBet(st, p.id)) {
@@ -86,7 +87,7 @@ function botBets(st: State): void {
     BOTS.bet[p.id] = setTimeout(() => {
       delete BOTS.bet[p.id];
       const s = H.st;
-      if (App.role !== 'host' || !s || s.game !== 'shithead' || s.phase !== 'play') return;
+      if (App.role !== 'host' || !s || !hasBets(s.game) || s.phase !== 'play') return;
       if (!s.players[pIdx(s, p.id)]?.bot || !shCanBet(s, p.id)) return;
       const a = botBet(viewFor(s, p.id));
       if (a && !act(s, p.id, a)) hostCommit();
@@ -292,13 +293,11 @@ export function botTick(): void {
     clearRematch();
     return;
   }
-  if (st.game === 'shithead' && st.phase === 'play') {
-    botReact(st);
-    botBets(st);
-  } else {
-    clearReactions();
-    clearBets();
-  }
+  // Reaktionen außer der Reihe gibt es nur bei Shithead, Tipps bei allen Spielen mit Verlierer
+  if (st.game === 'shithead' && st.phase === 'play') botReact(st);
+  else clearReactions();
+  if (hasBets(st.game) && st.phase === 'play') botBets(st);
+  else clearBets();
   planBotRematch(st);
   if (st.game === 'shithead' && st.phase === 'swap') {
     botSwapRound(st);
@@ -384,6 +383,25 @@ function pickLine(cat: string): string | null {
   return text;
 }
 
+/**
+ * Durak: Hatte beim Eintrag `n` schon jemand Aufnehmen gesagt? Dann war der Angriff ein Nachlegen auf diese Person.
+ * Der Verlauf zählt, nicht `st.dk.take`: Füllt die Karte den Angriff, ist längst aufgenommen, wenn die KI schaut.
+ */
+function dkTakerAt(log: readonly LogEntry[], n: number): string | null {
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i];
+    if (e.n >= n) continue;
+    if (e.k === 'dktake') return e.p ?? null;
+    if (e.k === 'dkbito' || e.k === 'dkpickup' || e.k === 'dkdeal' || e.k === 'game') return null;
+    if (e.k === 'dkattack' && e.lead) return null;
+  }
+  return null;
+}
+
+/** Durak: König oder Ass in Trumpf */
+const dkHighTrump = (c: Card, trump: Card | undefined): boolean =>
+  !!trump && suitOf(c) === suitOf(trump) && (rankOf(c) === 'K' || rankOf(c) === 'A');
+
 export function botChatter(): void {
   const st = H.st;
   if (!st) return;
@@ -401,8 +419,11 @@ export function botChatter(): void {
     const bs = st.players.filter((p) => p.bot && !p.gone);
     return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null;
   };
-  // Am Partieende reagiert die KI erst, wenn die Zeremonie den Shithead enthüllt hat
-  const endWait = fresh.some((e) => e.k === 'shend') ? zerRevealDelay(fresh, seqMsOf(fresh)) : 0;
+  // Am Partieende reagiert die KI erst, wenn die Zeremonie den Shithead oder Durak enthüllt hat
+  const endWait = fresh.some((e) => e.k === 'shend' || e.k === 'dkend') ? zerRevealDelay(fresh, seqMsOf(fresh)) : 0;
+  // Durak: Letzter Angriff, Rausgehen und Ende kommen zusammen. Dann gehört die Bühne dem Ende,
+  // Sprüche wie "Wer bleibt übrig?" passen nicht mehr, auch nicht bei Unentschieden
+  const dkOver = fresh.some((e) => e.k === 'dkend');
   const games = st.games;
   /** Noch dieselbe Partie in derselben Phase? Sonst landet Spott in der nächsten Tauschrunde. */
   const still = (phase?: string) => !!H.st && H.st.games === games && (!phase || H.st.phase === phase);
@@ -504,6 +525,7 @@ export function botChatter(): void {
         if (bot(e.p) && shBetsOn(st, e.on)[0]?.n === e.n) say(bot(e.p), 'betOn', 0.4);
         break;
       case 'shend':
+      case 'dkend':
         Object.keys(e.hits ?? {}).forEach((id) => emo(realBot(id), '👏', 0.5, endWait));
         break;
     }
@@ -560,6 +582,29 @@ export function botChatter(): void {
         break;
       case 'shdone':
         if (e.place === 1 && e.p && !bot(e.p)) toss(tossBot(), 'crown', e.p, 0.3);
+        break;
+      case 'dkpickup':
+        // Nimmt der Mensch zuletzt auf und wird Durak, wartet der Spott auf die Zeremonie
+        if (bot(e.p) || dkOver) break;
+        if (num(e.cnt) >= 6) {
+          say(anyBot(), 'mockDkTake', 0.35);
+          emo(anyBot(), '😂', 0.3);
+        }
+        if (num(e.cnt) >= 10) {
+          toss(tossBot(), 'tomato', e.p, 0.2);
+          snd(tossBot(), 'ooh', 0.25);
+        }
+        break;
+      case 'dkout':
+        if (e.place === 1 && e.p && !bot(e.p)) toss(tossBot(), 'crown', e.p, 0.3);
+        break;
+      case 'dkend':
+        if (e.p && !bot(e.p)) {
+          say(anyBot(), 'mockDurak', 0.8, endWait);
+          emo(anyBot(), '🤡', 0.3, endWait);
+          toss(tossBot(), 'poo', e.p, 0.5);
+          snd(tossBot(), 'sad', 0.4);
+        }
         break;
       case 'toss': {
         // Nur Treffer von Menschen auf KIs, so gibt es kein Hin und Her zwischen KIs
@@ -625,6 +670,35 @@ export function botChatter(): void {
         break;
       case 'shend':
         say(bot(e.p), 'shShithead', 0.8, endWait);
+        break;
+      case 'dkattack': {
+        if (e.lead || dkOver || !bot(e.p)) break;
+        const taker = dkTakerAt(st.log, e.n);
+        if (!taker) break;
+        say(bot(e.p), 'dkThrowIn', bot(taker) ? 0.2 : 0.35);
+        if (!bot(taker)) emo(bot(e.p), '🫵', 0.15);
+        break;
+      }
+      case 'dkdefend':
+        if (!dkOver && bot(e.p) && dkHighTrump(e.d, st.dk?.trump)) say(bot(e.p), 'dkTrump', 0.25);
+        break;
+      case 'dktransfer':
+        say(bot(e.p), 'dkTransfer', 0.3);
+        break;
+      case 'dkbito':
+        if (!dkOver) say(bot(e.p), 'dkBito', num(e.cnt) >= 6 ? 0.35 : 0.15);
+        break;
+      case 'dkpickup':
+        if (!dkOver) say(bot(e.p), 'dkTake', num(e.cnt) >= 6 ? 0.45 : 0.2);
+        break;
+      case 'dkout':
+        if (dkOver) break;
+        say(bot(e.p), e.place === 1 ? 'dkWin' : 'dkOut', e.place === 1 ? 0.7 : 0.45);
+        if (e.place === 1) snd(realBot(e.p), 'horn', 0.3);
+        break;
+      case 'dkend':
+        say(bot(e.p), 'dkDurak', 0.8, endWait);
+        emo(bot(e.p), '😭', 0.25, endWait);
         break;
     }
   });

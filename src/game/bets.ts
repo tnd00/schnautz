@@ -70,13 +70,7 @@ export function shBetsOn(t: Table, on: string): ShBet[] {
 /** Darf diese Person gerade tippen? Fertig, noch kein Tipp und mindestens zwei im Rennen. */
 export function shCanBet(t: Table, pid: string): boolean {
   const S = betPart(t);
-  return (
-    t.phase === 'play' &&
-    !!S &&
-    S.finished.includes(pid) &&
-    !S.bets?.[pid] &&
-    shBetCandidates(t).length >= 2
-  );
+  return t.phase === 'play' && !!S && S.finished.includes(pid) && !S.bets?.[pid] && shBetCandidates(t).length >= 2;
 }
 
 export function shPlaceBet(st: State, pid: string, raw: unknown): ActResult {

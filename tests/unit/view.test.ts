@@ -79,6 +79,7 @@ describe('Nachrichtengröße', () => {
   it.each([
     ['schnautz', 8],
     ['shithead', 10],
+    ['durak', 8],
   ] as const)('%s zu %i bleibt mit Emoji-Chat unter der Grenze von PeerJS', (game, n) => {
     const { raw, sent, rest } = stress(game, n);
     // Ohne Kürzen wäre die Grenze gerissen, der Test prüft also den Ernstfall

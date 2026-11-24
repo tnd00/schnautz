@@ -5,6 +5,8 @@ import { dealerId, myTurn } from '../helpers';
 import { quickHTML } from './shithead';
 import { CLK } from '../clock';
 import { shCanBet } from '../../game/bets';
+import { LOSER_NAME } from '../../game/games';
+import { dkWaiting } from '../../game/durak';
 
 export function renderTurnNote(): void {
   const el = $('#turnnote');
@@ -13,7 +15,11 @@ export function renderTurnNote(): void {
   if (v && v.phase !== 'lobby' && document.body.classList.contains('logopen')) {
     // 4er und Bombe gehen nur kurz, deshalb liegt der Knopf direkt hier
     const quick = quickHTML(v);
-    const mine = myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me);
+    // Bei Durak ist dran, auf wen die Partie wartet, auch wer nur noch fertig sagen soll
+    const mine =
+      v.game === 'durak'
+        ? v.phase === 'play' && dkWaiting(v).includes(App.me)
+        : myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me);
     // Läuft ein Zeitlimit, steht die Restzeit gleich im Knopf
     const clk = CLK.ids.includes(App.me) ? ' <span class="clkn"></span>' : '';
     const turnBtn = `<button class="btn primary pulse" data-act="closelog">Du bist dran! Zurück zum Tisch${clk}</button>`;
@@ -26,8 +32,7 @@ export function renderTurnNote(): void {
       html = `<button class="btn primary pulse" data-act="closelog">Tauschrunde läuft! Zurück zum Tisch${CLK.ids.includes(App.me) ? ' <span class="clkn"></span>' : ''}</button>`;
     // Fertig, aber noch nicht getippt: Auch aus dem Chat heraus geht der Tipp
     else if (shCanBet(v, App.me))
-      html =
-        '<button class="btn ghost betbtn" data-act="betopen"><span class="bl">🔮 Tippen, wer Shithead wird</span></button>';
+      html = `<button class="btn ghost betbtn" data-act="betopen"><span class="bl">🔮 Tippen, wer ${LOSER_NAME[v.game]} wird</span></button>`;
   }
   if (el.innerHTML !== html) el.innerHTML = html;
   el.hidden = !html;

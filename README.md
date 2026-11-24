@@ -1,6 +1,6 @@
 # Schnautz Online
 
-Schnautz (Schwimmen, 31) und Shithead im Browser, Schnautz mit bis zu acht und Shithead mit bis zu zehn Leuten. Einer eröffnet einen Tisch und schickt den Link, die anderen sitzen sofort mit am Tisch. Freie Plätze lassen sich mit KI-Mitspielern füllen, wer später kommt, übernimmt einen KI-Platz.
+Schnautz (Schwimmen, 31), Shithead und Durak im Browser, Schnautz und Durak mit bis zu acht, Shithead mit bis zu zehn Leuten. Einer eröffnet einen Tisch und schickt den Link, die anderen sitzen sofort mit am Tisch. Freie Plätze lassen sich mit KI-Mitspielern füllen, wer später kommt, übernimmt einen KI-Platz.
 
 Live unter <https://tnd00.github.io/schnautz/>.
 
@@ -75,4 +75,4 @@ In den Repository-Einstellungen muss unter Pages als Quelle „GitHub Actions“
 
 ## Spielregeln
 
-Die Regeln beider Spiele stehen in der App hinter dem Buch-Symbol oben rechts. Bei Shithead lässt sich in der Lobby einstellen, welche Sonderkarten gelten.
+Die Regeln aller Spiele stehen in der App hinter dem Buch-Symbol oben rechts. Bei Shithead lässt sich in der Lobby einstellen, welche Sonderkarten gelten, bei Durak das Weiterschieben. Durak folgt den Regeln von [Pagat](https://pagat.com/beating/podkidnoy_durak.html) (Podkidnoy) mit 36 Karten bis sechs und 52 Karten ab sieben Leuten.

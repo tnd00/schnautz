@@ -197,6 +197,115 @@
       "Ich sag nur 🔮",
       "Mal sehen, ob ich recht behalte.",
       "Der Tipp ist raus, ich lehn mich zurück."
+    ],
+    "dkTake": [
+      "Na gut, dann nehm ich halt. Zufrieden?",
+      "Ich nehme. Aber merkt euch das.",
+      "Gebt schon her. Ich wollte eh mehr Karten.",
+      "Toll. Ganz toll 😤",
+      "Das wird ein Nachspiel haben.",
+      "Ihr seid gemein. Ich nehm's trotzdem.",
+      "Ich sammle nur Kraft für später.",
+      "Wer mir das eingebrockt hat, kriegt es zurück.",
+      "Jetzt hab ich wenigstens Auswahl."
+    ],
+    "dkThrowIn": [
+      "Wenn du eh nimmst, hier noch was Schönes.",
+      "Nimm die auch noch mit, ich brauch sie nicht.",
+      "Ich leg noch was drauf. Gern geschehen 😇",
+      "Ach, du nimmst? Dann räum ich mal meine Hand auf.",
+      "Eine geht noch. Die passt doch perfekt zu dir.",
+      "Kleines Extra vom Haus 🎁",
+      "Weil du es bist, gleich noch eine.",
+      "Die wollte ich schon lange loswerden. Danke!",
+      "Nachschub ist unterwegs 📦"
+    ],
+    "dkBito": [
+      "Alles geschlagen. Nächster Versuch?",
+      "War das alles? Da geht mehr 😏",
+      "Abgewehrt. Ich bin eine Festung.",
+      "Weg damit. Wer traut sich als Nächstes?",
+      "Nichts kommt durch. Gar nichts.",
+      "Schön versucht. Wirklich, ganz süß.",
+      "Geschlagen und weggeräumt. Weiter.",
+      "Da müsst ihr schon früher aufstehen.",
+      "Das war jetzt fast anstrengend. Fast."
+    ],
+    "dkOut": [
+      "Keine Karten mehr. Ich bin raus aus dem Elend.",
+      "Fertig! Macht das mit der Kappe mal unter euch aus.",
+      "Hände leer. Ich schau euch beim Raufen zu 🍿",
+      "Ich bin durch. Durak werde ich heute nicht.",
+      "Raus. Die Kappe passt mir eh nicht.",
+      "So, ich bin weg. Viel Glück, ihr braucht es.",
+      "Geschafft. Wer bleibt übrig?",
+      "Ohne Karten fühlt man sich so leicht."
+    ],
+    "dkDurak": [
+      "Ich bin Durak? Das muss ein Rechenfehler sein.",
+      "Das Spiel ist kaputt. Ich will den Hersteller sprechen.",
+      "Die Kappe trag ich nur aus Höflichkeit 🤡",
+      "Das war Absicht. Ich wollte euch eine Freude machen.",
+      "Durak. Na toll. Das bleibt aber unter uns.",
+      "Ich verlange eine Neuauszählung.",
+      "Wer hat die Karten gemischt? Ich will Namen hören.",
+      "Nächste Partie werde ich zuerst angegriffen? Na wartet.",
+      "Die Karten haben mich verraten. Alle.",
+      "Mut zum Aufnehmen muss man erst mal haben."
+    ],
+    "dkWin": [
+      "Platz eins. War jetzt nicht so schwer 😎",
+      "Ich bin raus. Ihr dürft jetzt um die Kappe spielen.",
+      "Fertig, bevor ihr richtig angefangen habt.",
+      "Ich nehme Glückwünsche gern schriftlich entgegen.",
+      "So spielt man Durak. Gern geschehen.",
+      "Keine Karten, keine Sorgen. Viel Spaß noch!",
+      "Das war zu einfach. Nächstes Mal bitte mit Gegenwehr.",
+      "Ich lehn mich zurück. Ruft mich, wenn die Kappe vergeben ist."
+    ],
+    "dkTransfer": [
+      "Nö. Weiter damit.",
+      "Nicht mein Problem. Jetzt deins.",
+      "Ich reich das mal weiter.",
+      "Zu heiß für mich. Bitte weiterreichen.",
+      "Danke, ich hab schon genug Ärger.",
+      "Weitergeschoben. Teilen macht Freude.",
+      "Das passt besser zu dir als zu mir.",
+      "Paket umgeleitet. Bitte unterschreiben.",
+      "Ich bin nicht zuständig. Nächster Schalter."
+    ],
+    "mockDkTake": [
+      "Na, wird die Hand langsam schwer?",
+      "So viele Karten. Machst du einen Laden auf?",
+      "Schön gesammelt! Das kommt ins Fotoalbum.",
+      "Brauchst du einen zweiten Tisch für die Karten?",
+      "Wird das eine Sammlung oder ein Umzug?",
+      "Ich seh die Kappe schon auf deinem Kopf 🤡",
+      "Aufnehmen kannst du. Das muss man dir lassen.",
+      "Danke, dass du meine Karten aufbewahrst.",
+      "Mit der Hand kannst du dir Luft zufächeln."
+    ],
+    "mockDurak": [
+      "Die Kappe steht dir. Ehrlich 🤡",
+      "Gegen eine KI Durak geworden? Das bleibt unser kleines Geheimnis.",
+      "Ich sag nichts. Ich zeig nur auf die Kappe.",
+      "Jemand musste es werden. Du warst halt sehr überzeugend.",
+      "Die Kappe hat lange nach dir gesucht. Jetzt hat sie dich.",
+      "Mein Beileid. Also fast.",
+      "Ich klatsche innerlich. Ganz laut 👏",
+      "Glückwunsch zum Titel. Den gibst du so schnell nicht wieder her.",
+      "Du hast so schön gesammelt. Jetzt gibt es auch was dafür."
+    ],
+    "dkTrump": [
+      "Trumpf! Und zwar ein dicker 💪",
+      "Da kommt die schwere Artillerie.",
+      "Für dich hol ich gern den großen Trumpf raus.",
+      "Den hab ich extra aufgehoben.",
+      "Trumpf sticht. War schon immer so.",
+      "Eigentlich wollte ich ihn behalten. Aber für dich mach ich eine Ausnahme.",
+      "Hoher Trumpf. Ich schäme mich kein bisschen 😎",
+      "Das war mein bester Trumpf. Hoffentlich lohnt es sich.",
+      "Schachmatt. Falsches Spiel, gleiche Wirkung."
     ]
   }
 }

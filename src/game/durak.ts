@@ -48,6 +48,21 @@ export function dkNext(t: Table, id: string): string {
   return id;
 }
 
+/**
+ * Wer den Angriff beim Weiterschieben bekäme: der Nächste, der noch Karten hat. Bei leerem Stapel ist schon raus,
+ * wer gerade seine letzte Karte gelegt hat, auch wenn das erst am Ende des Angriffs eingetragen wird.
+ */
+export function dkNextTarget(t: Table, id: string): string {
+  const n = t.players.length;
+  const i = pIdx(t, id);
+  const deck = count(t.dk?.deck as Card[] | number | undefined);
+  for (let k = 1; k <= n; k++) {
+    const p = t.players[(i + k) % n];
+    if (p && p.id !== id && dkLive(t, p.id) && (deck > 0 || dkCount(t, p.id) > 0)) return p.id;
+  }
+  return id;
+}
+
 /** Person vor `id` im Uhrzeigersinn, die noch mitspielt. */
 export function dkPrev(t: Table, id: string): string {
   const n = t.players.length;
@@ -105,10 +120,13 @@ export function dkAttackError(t: Table, pid: string, cards: Card[]): string | nu
     if (!cards.every((c) => rankOf(c) === r)) return 'Angreifen geht nur mit gleichen Werten.';
   } else {
     const ranks = dkTableRanks(D);
-    if (!cards.every((c) => ranks.has(rankOf(c)))) return 'Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.';
+    if (!cards.every((c) => ranks.has(rankOf(c))))
+      return 'Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.';
   }
   if (cards.length > dkRoom(D))
-    return dkRoom(D) ? `Es passen nur noch ${dkRoom(D)} Karten in diesen Angriff.` : 'In diesen Angriff passt nichts mehr.';
+    return dkRoom(D)
+      ? `Es passen nur noch ${dkRoom(D)} Karten in diesen Angriff.`
+      : 'In diesen Angriff passt nichts mehr.';
   return null;
 }
 
@@ -125,7 +143,7 @@ export function dkTransferError(t: Table, pid: string, cards: Card[]): string | 
   if (!cards.every((c) => rankOf(c) === r)) return 'Weiterschieben geht nur mit dem gleichen Wert.';
   const total = D.table.length + cards.length;
   if (total > DK_MAX_ATTACK) return 'Mehr als sechs Karten gehen in keinen Angriff.';
-  const nd = dkNext(t, pid);
+  const nd = dkNextTarget(t, pid);
   if (nd === pid || dkCount(t, nd) < total) return 'Der Nächste hat dafür zu wenige Karten.';
   return null;
 }
@@ -146,10 +164,10 @@ function lowestTrump(st: State, D: DkState): string | null {
   return best;
 }
 
-/** `st.turn` zeigt auf die Person, auf die es am meisten ankommt: Angreifer am leeren Tisch, sonst Verteidiger. */
+/** `st.turn` zeigt auf die erste Person, auf die die Partie wartet (Zug-Ton, Tab-Hinweis). */
 function syncTurn(st: State): void {
   const D = dk(st);
-  const who = !D.table.length || D.take || !dkOpen(D).length ? D.att : D.def;
+  const who = dkWaiting(st)[0] ?? (D.table.length ? D.def : D.att);
   st.turn = pIdx(st, who);
 }
 
@@ -312,7 +330,7 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       const cards = idx.map((i) => hand[i]);
       const err = dkTransferError(st, pid, cards);
       if (err) return err;
-      const nd = dkNext(st, pid);
+      const nd = dkNextTarget(st, pid);
       takeAt(hand, idx);
       D.table.push(...cards.map((c) => ({ a: c, by: pid })));
       // Der ursprüngliche Angreifer bleibt, er zieht weiter zuerst nach
@@ -394,15 +412,19 @@ function draw(st: State): void {
   }
 }
 
-/** Ist der Stapel leer, ist fertig, wer keine Karten mehr hat. */
+/**
+ * Ist der Stapel leer, ist fertig, wer keine Karten mehr hat. Wer im selben Angriff fertig wird, teilt sich den
+ * Platz, die Sitzreihenfolge entscheidet nichts.
+ */
 function finish(st: State): void {
   const D = dk(st);
   if (D.deck.length) return;
+  const place = D.finished.length + 1;
   st.players.forEach((p) => {
     if (!dkLive(st, p.id) || D.P[p.id].length) return;
     D.finished.push(p.id);
-    p.place = D.finished.length;
-    addLog(st, { k: 'dkout', p: p.id, place: p.place });
+    p.place = place;
+    addLog(st, { k: 'dkout', p: p.id, place });
   });
 }
 
@@ -421,7 +443,9 @@ function dkEnd(st: State, durak: string | null): void {
   }
   const names = Object.fromEntries(st.players.map((p) => [p.id, p.name]));
   st.result = { reason: 'durak', ranking: D.finished.slice(), durak, names };
-  st.winner = D.finished[0] ?? null;
+  // Sieger nur, wenn jemand allein als Erster fertig war. Geteilter erster Platz heißt keine Krone
+  const firsts = st.players.filter((p) => p.place === 1 && D.finished.includes(p.id));
+  st.winner = firsts.length === 1 ? firsts[0].id : null;
   setReign(st, 'durak', st.winner, durak);
   if (st.winner) {
     const wp = st.players[pIdx(st, st.winner)];

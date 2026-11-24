@@ -1,5 +1,5 @@
 /* Übersicht, was die Karten können. Am Desktop an der Seite, außerdem oben im Regelfenster. */
-import { DEFAULT_RULES, SH_WIN_MS } from '../../game/constants';
+import { DEFAULT_RULES, DK_FULL_DECK, DK_MAX_ATTACK, SH_WIN_MS } from '../../game/constants';
 import type { GameKind, Rules, View } from '../../game/types';
 import { $, esc, isMobile } from '../dom';
 import { LS } from '../storage';
@@ -17,6 +17,8 @@ function legendItems(game: GameKind, rules: Rules): LegendItem[] {
   switch (game) {
     case 'shithead':
       return legendSh(rules);
+    case 'durak':
+      return legendDurak(rules);
     case 'schnautz':
       return legendSchnautz(rules);
     default:
@@ -57,6 +59,41 @@ function legendSh(rules: Rules): LegendItem[] {
   return it;
 }
 
+function legendDurak(rules: Rules): LegendItem[] {
+  const R = rules.dk ?? DEFAULT_RULES.dk;
+  const it: LegendItem[] = [
+    [
+      '★',
+      'Trumpf',
+      'Die Farbe der Karte unter dem Stapel sticht alles. Gegen Trumpf hilft nur ein höherer Trumpf.',
+      'e',
+    ],
+    ['K', 'Schlagen', 'Mit einer höheren Karte derselben Farbe oder mit Trumpf. Sonst nimmst du alles auf.'],
+    ['+', 'Nachlegen', 'Alle außer dem Verteidiger dürfen Werte nachlegen, die schon auf dem Tisch liegen.'],
+    [
+      `${DK_MAX_ATTACK}×`,
+      'Höchstens sechs',
+      'Nie mehr Angriffskarten, als der Verteidiger zu Beginn auf der Hand hatte.',
+      'e',
+    ],
+  ];
+  if (R.transfer) {
+    it.push([
+      '↪',
+      'Weiterschieben',
+      'Solange nichts geschlagen ist, gleichen Wert dazulegen. Dann muss der Nächste alles abwehren.',
+      'e',
+    ]);
+  }
+  it.push(['✓', 'Bito', 'Alles geschlagen, die Karten sind weg und der Verteidiger greift als Nächstes an.', 'e']);
+  it.push([
+    'A',
+    'Reihenfolge',
+    `6 bis 10, dann Bube, Dame, König und Ass. Ab ${DK_FULL_DECK} Leuten geht es schon bei der 2 los.`,
+  ]);
+  return it;
+}
+
 function legendSchnautz(rules: Rules): LegendItem[] {
   const it: LegendItem[] = [
     ['A', '11 Punkte', 'Das Ass ist die stärkste Karte.'],
@@ -83,6 +120,8 @@ export function legendTitle(game: GameKind): string {
   switch (game) {
     case 'shithead':
       return 'Sonderkarten';
+    case 'durak':
+      return 'Das Wichtigste';
     case 'schnautz':
       return 'Kartenwerte';
     default:
