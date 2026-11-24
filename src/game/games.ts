@@ -6,17 +6,33 @@
 import type { GameKind, Reign, Result, SchnautzResult, State, Table } from './types';
 import { cmpVersion } from '../content/version';
 
-export const GAMES: readonly GameKind[] = ['schnautz', 'shithead'];
+export const GAMES: readonly GameKind[] = ['schnautz', 'shithead', 'durak'];
 
 export const GAME_NAME: Readonly<Record<GameKind, string>> = {
   schnautz: 'Schnautz',
   shithead: 'Shithead',
+  durak: 'Durak',
+};
+
+/** Zeichen für den Verlierer der letzten Partie, wo es einen gibt: Shithead und Durak */
+export const LOSER_MARK: Readonly<Record<GameKind, string>> = {
+  schnautz: '',
+  shithead: '💩',
+  durak: '🤡',
+};
+
+/** Wie der Verlierer heißt */
+export const LOSER_NAME: Readonly<Record<GameKind, string>> = {
+  schnautz: '',
+  shithead: 'Shithead',
+  durak: 'Durak',
 };
 
 /** Ältere Seiten kennen spätere Spiele nicht und würden sie als Schnautz zeichnen */
 export const GAME_SINCE: Readonly<Record<GameKind, string>> = {
   schnautz: '1.0.0',
   shithead: '1.0.0',
+  durak: '2.4.0',
 };
 
 /** Seiten vor 2.2.1 schicken keine Version mit, sie gelten als diese */

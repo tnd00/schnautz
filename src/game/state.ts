@@ -154,6 +154,7 @@ export function removePlayer(st: State, id: string): void {
 
 const BOOL_RULES = ['feuer', 'dealerChoice', 'knockFirst', 'knockDouble'] as const;
 const SH_BOOL_RULES = ['two', 'three', 'seven', 'ten', 'eight', 'four', 'cut', 'deck5'] as const;
+const DK_BOOL_RULES = ['transfer'] as const;
 
 /** Übernimmt nur bekannte Regeln mit gültigen Werten, alles andere bleibt wie vorher. */
 export function sanitizeRules(r: unknown, old?: Rules): Rules {
@@ -183,6 +184,12 @@ export function sanitizeRules(r: unknown, old?: Rules): Rules {
       if (k in sh) o.sh[k] = !!sh[k];
     });
   }
+  if (src.dk && typeof src.dk === 'object') {
+    const dk = src.dk as Record<string, unknown>;
+    DK_BOOL_RULES.forEach((k) => {
+      if (k in dk) o.dk[k] = !!dk[k];
+    });
+  }
   return o;
 }
 
@@ -200,6 +207,8 @@ export function migrate(st: State): void {
   if (typeof st.rules.fill !== 'boolean') st.rules.fill = DEFAULT_RULES.fill;
   if (typeof st.rules.turnSecs !== 'number') st.rules.turnSecs = DEFAULT_RULES.turnSecs;
   if (!st.rules.sh) st.rules.sh = { ...DEFAULT_RULES.sh };
+  if (!st.rules.dk || typeof st.rules.dk !== 'object') st.rules.dk = { ...DEFAULT_RULES.dk };
+  if (typeof st.rules.dk.transfer !== 'boolean') st.rules.dk.transfer = DEFAULT_RULES.dk.transfer;
   (Object.keys(DEFAULT_RULES.sh) as (keyof ShRules)[]).forEach((k) => {
     if (!(k in st.rules.sh)) st.rules.sh[k] = DEFAULT_RULES.sh[k];
   });

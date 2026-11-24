@@ -1,16 +1,51 @@
 /*
- * Tipps bei Shithead: Wer fertig ist, tippt einmal pro Partie, wer Shithead wird. Früh lohnt sich, die Punkte
- * schreibt der Host beim Tippen fest. Alles ist öffentlich. Nur Imports aus state.ts, sonst entsteht ein Kreis.
+ * Tipps bei Shithead und Durak: Wer fertig ist, tippt einmal pro Partie, wer verliert. Früh lohnt sich, die Punkte
+ * schreibt der Host beim Tippen fest. Alles ist öffentlich. Nur Imports aus state.ts und games.ts, sonst entsteht
+ * ein Kreis. Die Namen mit sh stammen aus der Zeit, als es Tipps nur bei Shithead gab.
  */
 import { MAX_SEATS } from './constants';
+import { unreachable } from './games';
 import { addLog, pIdx, statsOf } from './state';
-import type { ActResult, Player, ShBet, ShBetResult, State, Table } from './types';
+import type { ActResult, GameKind, Player, ShBet, ShBetResult, State, Table } from './types';
 
-/** Wer noch Karten hat, kann Shithead werden. */
+/** Der Teil des Spielzustands mit Fertigen, Plätzen und Tipps. Spiele ohne Verlierer am Ende haben keinen. */
+interface BetPart {
+  finished: string[];
+  P: Record<string, unknown>;
+  bets?: Record<string, ShBet>;
+}
+
+/** Spiele, bei denen am Ende ein Verlierer feststeht und Fertige tippen dürfen. */
+export function hasBets(game: GameKind): boolean {
+  switch (game) {
+    case 'shithead':
+    case 'durak':
+      return true;
+    case 'schnautz':
+      return false;
+    default:
+      return unreachable(game);
+  }
+}
+
+export function betPart(t: Table): BetPart | null {
+  switch (t.game) {
+    case 'shithead':
+      return t.sh;
+    case 'durak':
+      return t.dk ?? null;
+    case 'schnautz':
+      return null;
+    default:
+      return unreachable(t.game);
+  }
+}
+
+/** Wer noch Karten hat, kann verlieren. */
 export function shBetCandidates(t: Table): Player[] {
-  const S = t.sh;
+  const S = betPart(t);
   if (!S) return [];
-  return t.players.filter((p) => !p.out && !S.finished.includes(p.id) && !!S.P[p.id]);
+  return t.players.filter((p) => !p.out && !S.finished.includes(p.id) && p.id in S.P);
 }
 
 /** Punkte für einen Treffer, wenn jetzt getippt wird: Kandidaten minus eins, mindestens einer. */
@@ -25,7 +60,7 @@ const validBet = (b: unknown): b is ShBet =>
 
 /** Alle Tipps auf diese Person, der erste zuerst. */
 export function shBetsOn(t: Table, on: string): ShBet[] {
-  const bets = t.sh?.bets;
+  const bets = betPart(t)?.bets;
   if (!bets || typeof bets !== 'object') return [];
   return Object.values(bets)
     .filter((b) => validBet(b) && b.on === on)
@@ -34,9 +69,8 @@ export function shBetsOn(t: Table, on: string): ShBet[] {
 
 /** Darf diese Person gerade tippen? Fertig, noch kein Tipp und mindestens zwei im Rennen. */
 export function shCanBet(t: Table, pid: string): boolean {
-  const S = t.sh;
+  const S = betPart(t);
   return (
-    t.game === 'shithead' &&
     t.phase === 'play' &&
     !!S &&
     S.finished.includes(pid) &&
@@ -46,7 +80,7 @@ export function shCanBet(t: Table, pid: string): boolean {
 }
 
 export function shPlaceBet(st: State, pid: string, raw: unknown): ActResult {
-  const S = st.sh;
+  const S = betPart(st);
   if (!S || st.phase !== 'play') return 'Tippen geht nur während der Partie.';
   if (!S.finished.includes(pid)) return 'Tippen kannst du, sobald du fertig bist.';
   if (S.bets?.[pid]) return 'Du hast schon getippt.';
@@ -65,7 +99,7 @@ export function shPlaceBet(st: State, pid: string, raw: unknown): ActResult {
 
 /** Abrechnung am Partieende: Treffer bringen die festgeschriebenen Punkte. */
 export function shSettleBets(st: State, loser: string | null): ShBetResult[] {
-  const bets = st.sh?.bets;
+  const bets = betPart(st)?.bets;
   if (!bets || typeof bets !== 'object') return [];
   const out: ShBetResult[] = [];
   Object.entries(bets)
@@ -74,9 +108,9 @@ export function shSettleBets(st: State, loser: string | null): ShBetResult[] {
     .forEach(([pid, b]) => {
       const p = st.players[pIdx(st, pid)];
       if (!p || p.gone) return;
-      const q = Math.min(Math.max(1, Math.round(b.q)), MAX_SEATS.shithead - 2);
+      const q = Math.min(Math.max(1, Math.round(b.q)), MAX_SEATS[st.game] - 2);
       const ok = !!loser && b.on === loser;
-      const ps = statsOf(p, 'shithead');
+      const ps = statsOf(p, st.game);
       ps.bets = (ps.bets ?? 0) + 1;
       if (ok) {
         ps.betHits = (ps.betHits ?? 0) + 1;

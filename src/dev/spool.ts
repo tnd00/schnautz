@@ -5,7 +5,7 @@
  */
 import { botDecide } from '../bots/index';
 import { act } from '../game/actions';
-import { shCanBet } from '../game/bets';
+import { betPart, hasBets, shCanBet } from '../game/bets';
 import { addLog } from '../game/state';
 import type { Action, Rng, State } from '../game/types';
 import { viewFor } from '../game/view';
@@ -73,6 +73,10 @@ function wanted(want: SpoolWant, st: State, me: string): boolean {
       const r = st.result?.reason === 'shithead' ? st.result : null;
       return want === 'lose' ? r?.shithead === me : st.sh?.finished[0] === me;
     }
+    case 'durak': {
+      const r = st.result?.reason === 'durak' ? st.result : null;
+      return want === 'lose' ? r?.durak === me : st.dk?.finished[0] === me;
+    }
     case 'schnautz':
       return want === 'win' ? st.winner === me : st.winner !== me;
     default:
@@ -95,11 +99,11 @@ function run(st: State, rng: Rng, goal: SpoolGoal, want: SpoolWant, me: string):
 /** Geht dieses Ziel an diesem Tisch überhaupt? Sonst die Erklärung. */
 export function spoolCheck(st: State, goal: SpoolGoal, me: string): string | null {
   if (goal === 'round' && st.game !== 'schnautz') return 'Runden gibt es nur bei Schnautz.';
-  if (goal === 'done' && st.game !== 'shithead') return 'Tippen gibt es nur bei Shithead.';
+  if (goal === 'done' && !hasBets(st.game)) return 'Tippen gibt es nur bei Shithead und Durak.';
   const active = st.phase === 'lobby' || st.phase === 'over' ? st.players : st.players.filter((p) => !p.out);
   if (active.length < 2) return 'Dafür braucht es mindestens zwei Plätze.';
   if (goal === 'done' && active.length < 3) return 'Tippen geht erst ab drei Plätzen.';
-  if (goal === 'done' && st.phase === 'play' && st.sh?.finished.includes(me)) return 'Du bist schon fertig.';
+  if (goal === 'done' && st.phase === 'play' && betPart(st)?.finished.includes(me)) return 'Du bist schon fertig.';
   if (!st.players.some((p) => p.id === me)) return 'Du sitzt nicht am Tisch.';
   return null;
 }

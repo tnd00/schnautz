@@ -53,7 +53,8 @@ export function settleDuel(st: State): void {
   }
   let res: 'won' | 'lost' | 'tie';
   switch (st.game) {
-    case 'shithead': {
+    case 'shithead':
+    case 'durak': {
       const pb = by.place || Infinity;
       const pv = vs.place || Infinity;
       res = pb < pv ? 'won' : pb > pv ? 'lost' : 'tie';

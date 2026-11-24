@@ -1,5 +1,6 @@
 /* Zeitlimit: Wer hat gerade die Uhr? Die Uhr selbst läuft beim Host (src/net/clock.ts). */
-import { addLog } from './state';
+import { dkWaiting } from './durak';
+import { addLog, pIdx } from './state';
 import type { State } from './types';
 
 export interface ClockTurn {
@@ -18,6 +19,15 @@ export function clockTurn(st: State): ClockTurn {
   if (st.phase === 'swap') {
     const ids = st.players.filter((p) => !p.bot && !p.out && !p.ready).map((p) => p.id);
     return ids.length ? { ids, key: base, swap: true } : none;
+  }
+  // Durak: Es können mehrere gleichzeitig dran sein, etwa alle, die noch fertig sagen müssen
+  if (st.game === 'durak') {
+    if (st.phase !== 'play' || !st.dk) return none;
+    const ids = dkWaiting(st).filter((id) => {
+      const p = st.players[pIdx(st, id)];
+      return !!p && !p.bot;
+    });
+    return ids.length ? { ids, key: `${base}|${st.dk.bout}|${st.last?.n ?? 0}`, swap: false } : none;
   }
   const i = st.phase === 'choose' ? st.dealer : st.phase === 'play' ? st.turn : -1;
   const p = st.players[i];

@@ -11,7 +11,7 @@ export type Card = string;
 export type Rank = string;
 export type Rng = () => number;
 
-export type GameKind = 'schnautz' | 'shithead';
+export type GameKind = 'schnautz' | 'shithead' | 'durak';
 export type Phase = 'lobby' | 'choose' | 'play' | 'end' | 'over' | 'swap';
 
 export interface ShRules {
@@ -24,6 +24,11 @@ export interface ShRules {
   cut: boolean;
   /** Zweites Deck schon ab 5 Leuten (ab 6 immer) */
   deck5: boolean;
+}
+
+/** Durak: Weiterschieben (Perevodnoy) an oder aus */
+export interface DkRules {
+  transfer: boolean;
 }
 
 export interface Rules {
@@ -39,6 +44,7 @@ export interface Rules {
   knockFirst: boolean;
   knockDouble: boolean;
   sh: ShRules;
+  dk: DkRules;
 }
 
 /** Bilanz in einem Spiel, seit der Tisch offen ist. Wie oft jemand Shithead war, steht in `Player.shc`. */
@@ -49,9 +55,9 @@ export interface PlayerStats {
   coasters?: number;
   /** Schnautz: Runden, die man mit 31 oder Feuer beendet hat */
   hot?: number;
-  /** Shithead: Summe der Plätze, für den Schnitt */
+  /** Shithead und Durak: Summe der Plätze, für den Schnitt */
   places?: number;
-  /** Shithead: abgegebene Tipps, Treffer und Punkte daraus */
+  /** Shithead und Durak: abgegebene Tipps, Treffer und Punkte daraus */
   bets?: number;
   betHits?: number;
   betPts?: number;
@@ -74,6 +80,8 @@ export interface Player {
   /** Schnautz: In dieser Runde ist der Platz rausgeflogen (für Revanche und Duelle) */
   outRound?: number;
   shc?: number;
+  /** So oft Durak gewesen */
+  dkc?: number;
   stats?: Partial<Record<GameKind, PlayerStats>>;
 }
 
@@ -142,7 +150,17 @@ export interface RematchDuel {
   res?: 'won' | 'lost' | 'tie';
 }
 
-export type Result = SchnautzResult | ShitheadResult;
+export interface DurakResult {
+  reason: 'durak';
+  /** Reihenfolge, in der alle fertig wurden */
+  ranking: string[];
+  /** null heißt unentschieden: Die Letzten sind gleichzeitig fertig geworden */
+  durak: string | null;
+  names: Record<string, string>;
+  bets?: ShBetResult[];
+}
+
+export type Result = SchnautzResult | ShitheadResult | DurakResult;
 
 /**
  * Neuer Stapel bei Shithead: Ist der Stapel leer, dürfen alle außer der Person am Zug ihre 4er
@@ -184,6 +202,46 @@ export interface ShState {
 }
 
 /** Krone für den letzten Sieger, Titel für den letzten Verlierer (Shithead), je Spiel */
+/** Ein Angriff bei Durak: Angriffskarte, wer sie gelegt hat, und die Karte, die sie geschlagen hat. */
+export interface DkPair {
+  a: Card;
+  by: string;
+  d?: Card;
+}
+
+export interface DkState {
+  /** Nachziehstapel, gezogen wird vom Ende. Die erste Karte ist der offene Trumpf und kommt zuletzt */
+  deck: Card[];
+  /** Offene Trumpfkarte. Bei sechs Leuten mit 36 Karten bleibt sie in der Hand der letzten Person */
+  trump: Card;
+  P: Record<string, Card[]>;
+  table: DkPair[];
+  /** Wer angreift (zuerst legt und als Erster nachzieht) und wer verteidigt */
+  att: string;
+  def: string;
+  /** Der Verteidiger gibt auf und nimmt, die anderen dürfen noch nachlegen */
+  take: boolean;
+  /** Wer seit der letzten Änderung am Tisch nichts mehr nachlegen will */
+  done: string[];
+  /** Höchstens so viele Angriffskarten in diesem Angriff */
+  limit: number;
+  /** Zählt die Angriffe der Partie */
+  bout: number;
+  /** Karten, die nach geglückter Verteidigung weg sind */
+  discard: number;
+  finished: string[];
+  durak: string | null;
+  /** 36 oder 52 Karten */
+  size: number;
+  /** Tipps der Fertigen wie bei Shithead */
+  bets?: Record<string, ShBet>;
+}
+
+export interface DkView extends Omit<DkState, 'deck' | 'P'> {
+  deck: number;
+  P: Record<string, Card[] | number>;
+}
+
 export interface Reign {
   win: string | null;
   lose?: string | null;
@@ -269,6 +327,16 @@ export type LogEntry = LogBase &
     | { k: 'shbet'; on: string; onName: string; q: number }
     | { k: 'rematch'; to: string | null; tn?: string; c: number }
     | { k: 'rematchend'; to: string; tn: string; res: 'won' | 'lost' | 'tie'; c: number }
+    | { k: 'dkdeal'; trump: Card; att: string; def: string; prev?: boolean }
+    | { k: 'dkattack'; cards: Card[]; lead?: boolean }
+    | { k: 'dkdefend'; a: Card; d: Card }
+    | { k: 'dktransfer'; cards: Card[]; to: string; tn?: string }
+    | { k: 'dktake' }
+    | { k: 'dkpass' }
+    | { k: 'dkbito'; cnt: number }
+    | { k: 'dkpickup'; cnt: number }
+    | { k: 'dkout'; place: number }
+    | { k: 'dkend'; hits?: Record<string, { q: number; name: string }> }
     // Nur der Host schreibt ihn direkt, es gibt keine Aktion dafür. Der Verlauf zeigt ihn nicht
     | { k: 'dev'; fx: DevFx; s?: string; to?: string }
   );
@@ -302,6 +370,7 @@ export interface State {
   log: LogEntry[];
   n: number;
   games: number;
+  dk?: DkState | null;
   /** Krone und Verlierer-Titel je Spiel, sie bleiben, bis dort jemand Neues gewinnt (src/game/games.ts) */
   reigns?: Partial<Record<GameKind, Reign>>;
   /** Nach der Partie: Revanche anbieten */
@@ -325,12 +394,13 @@ export interface ShView extends Omit<ShState, 'deck' | 'burned' | 'P'> {
   P: Record<string, ShPlayerView>;
 }
 
-export interface View extends Omit<State, 'deck' | 'discard' | 'spare' | 'hands' | 'sh'> {
+export interface View extends Omit<State, 'deck' | 'discard' | 'spare' | 'hands' | 'sh' | 'dk'> {
   deck: number;
   discard: number;
   spare: number;
   hands: Record<string, Card[] | number>;
   sh: ShView | null;
+  dk?: DkView | null;
   me: string;
   /** Zeitlimit: wer gerade die Uhr hat, Restzeit und volle Zeit in ms (beim Host auch das Ende als `at`) */
   clock?: { ids: string[]; left: number; total: number; at?: number } | null;
@@ -348,7 +418,7 @@ export type Action =
   | { type: 'toss'; item: TossItem; to: string; bot?: boolean }
   /** Klang vom Soundboard für alle am Tisch. `quiet` setzt nur der Host, wenn am Tisch gerade zu viel los ist */
   | { type: 'sound'; s: string; bot?: boolean; quiet?: boolean }
-  | { type: 'rules'; rules: Partial<Omit<Rules, 'sh'>> & { sh?: Partial<ShRules> } }
+  | { type: 'rules'; rules: Partial<Omit<Rules, 'sh' | 'dk'>> & { sh?: Partial<ShRules>; dk?: Partial<DkRules> } }
   | { type: 'game'; game: GameKind }
   | { type: 'start' }
   | { type: 'addbot' }
@@ -375,8 +445,17 @@ export type Action =
   | { type: 'shthrow' }
   | { type: 'shbomb' }
   | { type: 'shunlock'; id: number }
-  /** Wer fertig ist, tippt, wer Shithead wird */
-  | { type: 'shbet'; on: string };
+  /** Wer fertig ist, tippt, wer Shithead oder Durak wird */
+  | { type: 'shbet'; on: string }
+  /** Durak: angreifen oder passende Karten nachlegen */
+  | { type: 'dkattack'; idx: number[] }
+  /** Durak: Angriffskarte `a` mit der Handkarte `i` schlagen */
+  | { type: 'dkdefend'; a: number; i: number }
+  | { type: 'dktake' }
+  /** Durak: nichts mehr nachlegen */
+  | { type: 'dkpass' }
+  /** Durak mit Weiterschieben: gleiche Werte dazulegen und an den Nächsten geben */
+  | { type: 'dktransfer'; idx: number[] };
 
 export type ActionType = Action['type'];
 

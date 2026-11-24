@@ -1,5 +1,5 @@
 import { DEFAULT_RULES } from './constants';
-import type { ShView, State, View } from './types';
+import type { DkView, ShView, State, View } from './types';
 
 const VIEW_LOG_LIMIT = 90;
 
@@ -46,15 +46,31 @@ export function viewFor(st: State, pid: string): View {
     });
     sh = { ...S, deck: S.deck.length, burned: S.burned.length, P };
   }
+  let dk: DkView | null = null;
+  if (copy.dk) {
+    const D = copy.dk;
+    // Am Ende liegen alle Hände offen, vorher sieht jeder nur die eigene
+    const reveal = st.phase === 'over';
+    const P: DkView['P'] = {};
+    Object.entries(D.P).forEach(([id, h]) => {
+      P[id] = reveal || id === pid ? h : h.length;
+    });
+    dk = { ...D, deck: D.deck.length, P };
+  }
   return {
     ...copy,
     game: copy.game || 'schnautz',
-    rules: { ...copy.rules, sh: copy.rules.sh ?? { ...DEFAULT_RULES.sh } },
+    rules: {
+      ...copy.rules,
+      sh: copy.rules.sh ?? { ...DEFAULT_RULES.sh },
+      dk: copy.rules.dk ?? { ...DEFAULT_RULES.dk },
+    },
     deck: st.deck.length,
     discard: st.discard.length,
     spare: st.spare ? st.spare.length : 0,
     hands,
     sh,
+    dk,
     log: copy.log.slice(-VIEW_LOG_LIMIT),
     me: pid,
   };

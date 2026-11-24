@@ -4,6 +4,7 @@ import type { Player, SchnautzResult, View } from '../game/types';
 import { App } from './app';
 import { esc } from './dom';
 import { szResult, unreachable } from '../game/games';
+import { dkLive } from '../game/durak';
 
 export function schnautzResult(v: View): SchnautzResult | null {
   return szResult(v.result);
@@ -59,6 +60,8 @@ export function livePlayers(v: View): Player[] {
   switch (v.game) {
     case 'shithead':
       return v.players.filter((p) => !p.out && !!v.sh?.P[p.id] && !v.sh.finished.includes(p.id));
+    case 'durak':
+      return v.players.filter((p) => dkLive(v, p.id));
     case 'schnautz':
       return v.players.filter((p) => !p.out);
     default:

@@ -83,3 +83,18 @@ describe('Zeitraffer im Dev-Menü', () => {
     expect(spool(table('shithead', 0), 'h', 'end', 'any', 1)).toBeNull();
   });
 });
+
+describe('Zeitraffer bei Durak', () => {
+  it('spult bis vor das Ende, ich werde Durak oder gewinne, oder bis ich tippen darf', () => {
+    const lose = ok(spool(table('durak', 3), 'h', 'end', 'lose', 41));
+    expect(act(lose.st, lose.last!.pid, lose.last!.a)).toBeNull();
+    expect(lose.st.result).toMatchObject({ reason: 'durak', durak: 'h' });
+    expect(lose.st.log.at(-1)).toMatchObject({ k: 'dkend', p: 'h' });
+    const win = ok(spool(table('durak', 3), 'h', 'end', 'win', 42));
+    act(win.st, win.last!.pid, win.last!.a);
+    expect(win.st.dk!.finished[0]).toBe('h');
+    const done = ok(spool(table('durak', 4), 'h', 'done', 'any', 43));
+    expect(shCanBet(done.st, 'h')).toBe(true);
+    expect(spoolCheck(table('durak', 2), 'round', 'h')).toMatch(/nur bei Schnautz/);
+  });
+});

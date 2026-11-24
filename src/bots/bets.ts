@@ -1,16 +1,26 @@
-/* Tipp der KI, wer Shithead wird. Nur auf Basis der eigenen Ansicht, gewichtet nach Kartenzahl. */
+/* Tipp der KI, wer Shithead oder Durak wird. Nur auf Basis der eigenen Ansicht, gewichtet nach Kartenzahl. */
 import { shBetCandidates, shBetsOn, shCanBet } from '../game/bets';
 import { rnd } from '../game/cards';
 import type { Action, Rng, View } from '../game/types';
 
 const count = (x: unknown): number => (Array.isArray(x) ? x.length : typeof x === 'number' ? x : 0);
 
-/** Viele Karten heißt eher Shithead. Wer schon viele Tipps hat, wird etwas seltener gewählt. */
+/** Karten einer Person aus Sicht der KI: Hand und Tischkarten bei Shithead, nur die Hand bei Durak. */
+function cardsOf(v: View, id: string): { all: number; hand: number } {
+  if (v.dk) {
+    const n = count(v.dk.P[id]);
+    return { all: n, hand: n };
+  }
+  const P = v.sh?.P[id];
+  const hand = count(P?.hand);
+  return { all: hand + count(P?.up) + count(P?.down), hand };
+}
+
+/** Viele Karten heißt eher Verlierer. Wer schon viele Tipps hat, wird etwas seltener gewählt. */
 export function botBetWeights(v: View): { id: string; w: number }[] {
   return shBetCandidates(v).map((p) => {
-    const P = v.sh?.P[p.id];
-    const hand = count(P?.hand);
-    let w = hand + count(P?.up) + count(P?.down) + 0.5 * Math.max(0, hand - 3);
+    const c = cardsOf(v, p.id);
+    let w = c.all + 0.5 * Math.max(0, c.hand - 3);
     w = Math.max(0.5, w - 1.5 * shBetsOn(v, p.id).length);
     return { id: p.id, w: w * w };
   });

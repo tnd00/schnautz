@@ -17,6 +17,7 @@ export const DEFAULT_RULES: Readonly<Rules> = {
   knockFirst: false,
   knockDouble: false,
   sh: { two: true, three: true, seven: true, ten: true, eight: true, four: true, cut: true, deck5: false },
+  dk: { transfer: false },
 };
 
 export const EMOTES: readonly string[] = ['😂', '🫵', '🤡', '💩', '🔥', '😭', '👏', '🙈'];
@@ -65,7 +66,13 @@ export const SOUND_HOST_WINDOW_MS = 2100;
 /** So lange wartet die Person am Zug bei einem neuen Stapel, damit alle ihre 4er reinwerfen können. */
 export const SH_WIN_MS = 2000;
 /** Höchstzahl am Tisch je Spiel. */
-export const MAX_SEATS: Readonly<Record<GameKind, number>> = { schnautz: 8, shithead: 10 };
+export const MAX_SEATS: Readonly<Record<GameKind, number>> = { schnautz: 8, shithead: 10, durak: 8 };
+/** Durak: so viele Karten auf der Hand, höchstens so viele Angriffskarten, ab so vielen Leuten das volle Deck */
+export const DK_HAND = 6;
+export const DK_MAX_ATTACK = 6;
+export const DK_FULL_DECK = 7;
+/** Durak mit 36 Karten spielt von der 6 aufwärts */
+export const DK_RANKS: readonly Rank[] = ['6', '7', '8', '9', '10', 'B', 'D', 'K', 'A'];
 /** Ab so vielen Leuten spielt Shithead immer mit zwei Decks, eins weniger auf Wunsch. */
 export const SH_TWO_DECKS = 6;
 /** Wählbare Zeiten pro Zug in Sekunden, 0 heißt aus. */
@@ -95,5 +102,5 @@ export const SH_ORD: Readonly<Record<Rank, number>> = {
 export const SUIT_ORD: Readonly<Record<Suit, number>> = { C: 0, S: 1, H: 2, D: 3 };
 
 export function cloneRules(r: Readonly<Rules> = DEFAULT_RULES): Rules {
-  return { ...r, sh: { ...r.sh } };
+  return { ...r, sh: { ...r.sh }, dk: { ...(r.dk ?? DEFAULT_RULES.dk) } };
 }

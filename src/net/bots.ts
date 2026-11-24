@@ -232,6 +232,20 @@ function thinkTime(st: State, who: Player, a: Action): number {
     case 'shblind':
       d = 1100 + r * 700;
       break;
+    case 'dkattack':
+      // Den ersten Angriff überlegt sie, Nachlegen geht schnell
+      d = (st.dk?.table.length ? 700 : 1300) + r * 900;
+      break;
+    case 'dkdefend':
+    case 'dktransfer':
+      d = 900 + r * 900;
+      break;
+    case 'dktake':
+      d = 1300 + r * 900;
+      break;
+    case 'dkpass':
+      d = 600 + r * 600;
+      break;
     default:
       d = a.type === 'pass' && passIsObvious(st, who.id) ? 800 + r * 600 : 1200 + r * 1400;
   }

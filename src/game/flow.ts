@@ -5,6 +5,7 @@ import { shBegin, shStart } from './shithead';
 import { addLog, pIdx, removePlayer } from './state';
 import type { ActResult, Rng, State } from './types';
 import { unreachable } from './games';
+import { dkStart } from './durak';
 
 export function checkReady(st: State, rng?: Rng): ActResult {
   if (st.phase === 'swap') {
@@ -27,8 +28,13 @@ export function checkReady(st: State, rng?: Rng): ActResult {
 export function beginGame(st: State, rng?: Rng): ActResult {
   switch (st.game) {
     case 'shithead':
+      st.dk = null;
       return shStart(st, rng);
+    case 'durak':
+      return dkStart(st, rng);
     case 'schnautz':
+      st.sh = null;
+      st.dk = null;
       return startGame(st, rng);
     default:
       return unreachable(st.game);
@@ -91,6 +97,7 @@ export function toLobby(st: State): void {
     passes: 0,
     turns: 0,
     sh: null,
+    dk: null,
     rematch: null,
     rematchDuel: null,
   } satisfies Partial<State>);

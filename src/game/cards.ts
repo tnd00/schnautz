@@ -1,4 +1,4 @@
-import { RANKS, SH_ORD, SH_RANKS, SUIT_ORD, SUITS } from './constants';
+import { DK_FULL_DECK, DK_RANKS, RANKS, SH_ORD, SH_RANKS, SUIT_ORD, SUITS } from './constants';
 import type { Card, Rank, Rng, Suit } from './types';
 
 /** Karten aus dem zweiten Deck tragen hinten `:2`, damit jede Karte eindeutig bleibt. */
@@ -38,4 +38,22 @@ export function shDeck(rng?: Rng, decks = 1): Card[] {
 /** Sortiert Shithead-Karten nach Wert, bei gleichem Wert nach Farbe. */
 export function shSort(a: Card[]): Card[] {
   return a.sort((x, y) => SH_ORD[rankOf(x)] - SH_ORD[rankOf(y)] || SUIT_ORD[suitOf(x)] - SUIT_ORD[suitOf(y)]);
+}
+
+/** Durak: 36 Karten von der 6 bis zum Ass, ab sieben Leuten das volle Deck. */
+export const dkDeck = (players: number, rng?: Rng): Card[] =>
+  shuffle(buildDeck(players >= DK_FULL_DECK ? SH_RANKS : DK_RANKS), rng);
+
+/** Schlägt `d` die Angriffskarte `a`? Höher in derselben Farbe oder Trumpf gegen Nicht-Trumpf. */
+export function dkBeats(d: Card, a: Card, trump: Suit): boolean {
+  const sd = suitOf(d);
+  const sa = suitOf(a);
+  if (sd === sa) return SH_ORD[rankOf(d)] > SH_ORD[rankOf(a)];
+  return sd === trump;
+}
+
+/** Durak-Hand: Trümpfe ans Ende, sonst nach Wert und Farbe. */
+export function dkSort(a: Card[], trump: Suit): Card[] {
+  const key = (c: Card) => (suitOf(c) === trump ? 100 : 0) + SH_ORD[rankOf(c)];
+  return a.sort((x, y) => key(x) - key(y) || SUIT_ORD[suitOf(x)] - SUIT_ORD[suitOf(y)]);
 }

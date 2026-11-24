@@ -4,6 +4,7 @@ import type { BotLevel } from './config';
 import { botSchnautz } from './schnautz';
 import { botShithead } from './shithead';
 import { unreachable } from '../game/games';
+import { botDurak } from './durak';
 
 export function botReady(v: View): Action | null {
   const p = v.players[pIdx(v, v.me)];
@@ -19,6 +20,8 @@ export function botDecide(v: View | null, rng?: Rng, lvl: BotLevel = 'normal'): 
   switch (v.game) {
     case 'shithead':
       return botShithead(v, rng, lvl);
+    case 'durak':
+      return botDurak(v, rng, lvl);
     case 'schnautz':
       return botSchnautz(v, rng, lvl);
     default:

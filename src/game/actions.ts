@@ -19,6 +19,7 @@ import {
 } from './state';
 import type { Action, ActResult, LogEntry, Rng, State } from './types';
 import { GAME_NAME, isGame, unreachable } from './games';
+import { dkAct, dkAuto, dkWaiting } from './durak';
 
 const MAX_EMOTES_IN_LOG = 6;
 const MAX_TOSSES_IN_LOG = 6;
@@ -158,6 +159,8 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
   switch (st.game) {
     case 'shithead':
       return a.type.startsWith('sh') ? shAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
+    case 'durak':
+      return a.type.startsWith('dk') || a.type === 'shbet' ? dkAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
     case 'schnautz':
       return schnautzMove(st, pid, pi, a, rng);
     default:
@@ -171,6 +174,9 @@ export function fallbackMove(st: State, pid: string, rng?: Rng): void {
     case 'shithead':
       if (st.phase === 'swap') act(st, pid, { type: 'shready' }, rng);
       else shAuto(st, pid, rng);
+      return;
+    case 'durak':
+      dkAuto(st, pid, rng);
       return;
     case 'schnautz':
       act(st, pid, st.phase === 'choose' ? { type: 'keep' } : { type: 'pass' }, rng);
@@ -189,6 +195,13 @@ function skipOffline(st: State, rng?: Rng): ActResult {
       if (!who) return null;
       if (who.online) return `${who.name} ist wieder da.`;
       return shAuto(st, who.id, rng);
+    }
+    case 'durak': {
+      // Wer gerade aufhält und offline ist, bekommt einen einfachen Zug
+      const ids = dkWaiting(st);
+      const who = st.players.find((p) => ids.includes(p.id) && !p.online && !p.bot);
+      if (!who) return ids.length ? 'Alle sind da.' : null;
+      return dkAuto(st, who.id, rng);
     }
     case 'schnautz': {
       const who = st.phase === 'choose' ? st.players[st.dealer] : st.phase === 'play' ? st.players[st.turn] : null;
