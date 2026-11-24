@@ -10,7 +10,9 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.PW_PORT ?? 4173);
 const PEER_PORT = Number(process.env.PEER_PORT ?? 9000);
 const DIST = process.env.PW_DIST ?? 'dist';
-const BUILD = process.env.PW_FAST ? `npx vite build --outDir ${DIST} --emptyOutDir` : `npm run build -- --outDir ${DIST}`;
+const BUILD = process.env.PW_FAST
+  ? `npx vite build --outDir ${DIST} --emptyOutDir`
+  : `npm run build -- --outDir ${DIST}`;
 // Chrome verweigert seine Sandbox als root (CI-Container); auf dem Mac bleibt sie an
 const noSandbox = !!process.env.CI || process.getuid?.() === 0;
 
