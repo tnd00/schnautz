@@ -3,7 +3,9 @@
  * Sperre gegen Dauerfeuer, Soundboard bei beiden und kein Nachspielen nach dem Neuverbinden.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { desktop, Errors, hostTable, joinTable, myId, phone, seqBusy, view } from './helpers';
+import { closeAll, desktop, Errors, hostTable, joinTable, myId, phone, seqBusy, view } from './helpers';
+
+test.afterEach(closeAll);
 
 const logKinds = async (p: Page, k: string): Promise<number> =>
   ((await view(p))?.log ?? []).filter((e) => e.k === k).length;

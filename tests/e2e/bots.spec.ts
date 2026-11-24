@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import { rankOf } from '../../src/game/cards';
 import { shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
 import {
+  closeAll,
   desktop,
   Errors,
   hostTable,
@@ -14,6 +15,8 @@ import {
   waitForChange,
   waitForPhase,
 } from './helpers';
+
+test.afterEach(closeAll);
 
 test('Schnautz gegen zwei KI-Gegner', async ({ browser }) => {
   const errors = new Errors();

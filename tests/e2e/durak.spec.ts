@@ -8,6 +8,7 @@ import { SH_ORD } from '../../src/game/constants';
 import { dkTrump, dkWaiting } from '../../src/game/durak';
 import type { View } from '../../src/game/types';
 import {
+  closeAll,
   desktop,
   Errors,
   hostTable,
@@ -19,6 +20,8 @@ import {
   view,
   waitForPhase,
 } from './helpers';
+
+test.afterEach(closeAll);
 
 /** Billigste Karte, die `a` schlägt: erst ohne Trumpf, dann der kleinste Trumpf. */
 function cheapest(hand: string[], a: string, ts: string): number {

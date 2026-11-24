@@ -75,7 +75,7 @@ export function applyView(v: View): void {
   resetSelection(prev, v);
   dkSyncSelection(prev, v);
   cbSyncSelection(prev, v);
-  cbSyncReveal(prev, v);
+  cbSyncReveal(prev, v, fresh);
   setAnimations(prev, v);
 
   const steps = prev ? shPlan(prev, v, fresh) : [];

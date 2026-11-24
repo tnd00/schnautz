@@ -191,8 +191,11 @@ export function carouselRelease(): void {
   if (el.classList.contains('car') && !CAR.drag && !CAR.wheeling) snapBack(el);
 }
 
-/** Wischen mit Finger oder Maus und seitliches Scrollen am Trackpad. `onTap`: Tipp ohne Wischen auf eine Kachel. */
-export function initCarousel(onTap?: (pid: string) => void): void {
+/**
+ * Wischen mit Finger oder Maus und seitliches Scrollen am Trackpad. `onTap`: Tipp ohne Wischen auf eine Kachel, die
+ * Wurfziel ist. `onAct`: Tipp ohne Wischen auf etwas anderes Antippbares in einer Kachel (Cabo: fremde Karte).
+ */
+export function initCarousel(onTap?: (pid: string) => void, onAct?: (el: HTMLElement) => void): void {
   const el = $('#opps');
   el.addEventListener('pointerdown', (e) => {
     if (!el.classList.contains('car') || (e.pointerType === 'mouse' && e.button !== 0)) return;
@@ -218,9 +221,19 @@ export function initCarousel(onTap?: (pid: string) => void): void {
       return;
     }
     // Mit Festhalten erreicht der Klick die Kachel nicht immer, deshalb hier selbst nachsehen
-    if (e.type !== 'pointerup' || !onTap) return;
-    const box = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('.opp[data-pid]');
+    if (e.type !== 'pointerup') return;
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const box = hit?.closest<HTMLElement>('.opp[data-pid]');
     if (!box?.dataset.pid) return;
+    // Liegt unter dem Finger etwas anderes als das Wurfziel, gilt der Tipp dem (etwa eine fremde Karte bei Cabo)
+    const target = hit?.closest<HTMLElement>('[data-act]');
+    if (target && target.dataset.act !== 'aim' && box.contains(target)) {
+      onAct?.(target);
+      // Erst danach: Der Klick, den der Browser vielleicht noch hinterherschickt, zählt dann nicht doppelt
+      CAR.tapAt = Date.now();
+      return;
+    }
+    if (!onTap || box.dataset.act !== 'aim') return;
     CAR.tapAt = Date.now();
     onTap(box.dataset.pid);
   };

@@ -1,5 +1,5 @@
 /* Revanche in der Oberfläche: Knöpfe, Zeile im Ergebnisfenster, Ansagen und Verlauf. */
-import type { LogEntry, RematchDuel, RematchOffer, View } from '../../game/types';
+import type { GameKind, LogEntry, RematchDuel, RematchOffer, View } from '../../game/types';
 import { App } from '../app';
 import { esc } from '../dom';
 import { nameOf } from '../helpers';
@@ -44,14 +44,22 @@ export function rematchLine(v: View): string {
   return `⚔️ ${duelResult(v, d)}`;
 }
 
+/** Wie ein Duell unentschieden ausgeht, je Spiel für „Ihr“ und für zwei andere */
+const TIE_TEXT: Readonly<Record<GameKind, readonly [string, string]>> = {
+  schnautz: ['fliegt beide in derselben Runde raus', 'fliegen in derselben Runde raus'],
+  shithead: ['seid gleichzeitig fertig geworden', 'sind gleichzeitig fertig geworden'],
+  durak: ['seid gleichzeitig fertig geworden', 'sind gleichzeitig fertig geworden'],
+  cabo: ['habt gleich viele Punkte', 'haben gleich viele Punkte'],
+};
+
 /** Ausgang eines Duells aus Sicht der jeweiligen Person. */
 export function duelResult(v: View, d: { by: string; vs: string; res?: string }, bn?: string, vn?: string): string {
   const by = d.by === App.me;
   const vs = d.vs === App.me;
-  if (d.res === 'tie')
-    return by || vs
-      ? 'Unentschieden! Ihr fliegt beide in derselben Runde raus.'
-      : `Unentschieden! ${N(v, d.by, bn)} und ${N(v, d.vs, vn)} fliegen in derselben Runde raus.`;
+  if (d.res === 'tie') {
+    const [du, er] = TIE_TEXT[v.game];
+    return by || vs ? `Unentschieden! Ihr ${du}.` : `Unentschieden! ${N(v, d.by, bn)} und ${N(v, d.vs, vn)} ${er}.`;
+  }
   if (d.res === 'won')
     return by
       ? `Revanche geglückt! Du schlägst ${N(v, d.vs, vn)}.`

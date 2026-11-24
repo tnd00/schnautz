@@ -21,6 +21,14 @@ export class Errors {
   }
 }
 
+/**
+ * Nach jedem Test alle Fenster schließen. Sonst spielen die Partien früherer Tests im selben Browser weiter und
+ * bremsen die späteren aus. In jeder Spec-Datei: test.afterEach(closeAll).
+ */
+export async function closeAll({ browser }: { browser: Browser }): Promise<void> {
+  await Promise.all(browser.contexts().map((c) => c.close().catch(() => undefined)));
+}
+
 export async function desktop(browser: Browser): Promise<BrowserContext> {
   return browser.newContext({ viewport: { width: 1280, height: 860 } });
 }

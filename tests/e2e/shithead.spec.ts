@@ -8,6 +8,7 @@ import { SH_ORD } from '../../src/game/constants';
 import { shAlways, shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
 import type { View } from '../../src/game/types';
 import {
+  closeAll,
   desktop,
   Errors,
   hostTable,
@@ -21,6 +22,8 @@ import {
   waitForChange,
   waitForPhase,
 } from './helpers';
+
+test.afterEach(closeAll);
 
 /** Schnelle Aktion außerhalb der Reihe: 4er einwerfen oder Bombe legen. */
 async function quickMove(page: Page): Promise<'shthrow' | 'shbomb' | null> {

@@ -207,7 +207,15 @@ function skipOffline(st: State, rng?: Rng): ActResult {
       const ids = cbWaiting(st);
       const who = st.players.find((p) => ids.includes(p.id) && !p.online && !p.bot);
       if (!who) return ids.length ? 'Alle sind da.' : null;
-      return cbAuto(st, who.id, rng);
+      // Ein Tipp spielt den ganzen Zug: ziehen, ablegen oder tauschen, eine Fähigkeit auslassen
+      const t0 = st.cb?.t;
+      const phase = st.phase;
+      let err: ActResult = null;
+      for (let i = 0; i < 4 && !err; i++) {
+        err = cbAuto(st, who.id, rng);
+        if (st.phase !== phase || st.cb?.t !== t0 || phase !== 'play') break;
+      }
+      return err;
     }
     case 'durak': {
       // Wer gerade aufhält und offline ist, bekommt einen einfachen Zug

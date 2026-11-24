@@ -365,7 +365,7 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
   const ending = fresh.some((x) => x.k === 'cbend');
   switch (e.k) {
     case 'cbdeal': {
-      sfx('deal');
+      // Den Austeilklang spielt schon das Austeilen selbst (src/ui/apply.ts)
       const first = e.r === 1;
       announce({
         icon: '🃏',

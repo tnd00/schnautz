@@ -8,7 +8,7 @@ import { renderLobby } from './lobby';
 import { renderLog } from './log';
 import { renderGame, renderOverlay } from './schnautz';
 import { renderScore } from './scorebar';
-import { renderSh, renderShOverlay } from './shithead';
+import { clearSwapGrid, renderSh, renderShOverlay } from './shithead';
 import { renderTurnNote } from './turnnote';
 import { markTosses } from '../toss';
 import { fitDesktop } from '../fit';
@@ -52,6 +52,8 @@ export function render(): void {
     const tbl = $('#table');
     tbl.dataset.game = v.game;
     tbl.classList.toggle('swap', v.game === 'shithead' && v.phase === 'swap');
+    // Das Raster der Shithead-Tauschrunde gehört nur dorthin, sonst bliebe das Karussell aus
+    if (v.game !== 'shithead') clearSwapGrid();
     t.draw();
   }
   $('#brand-name').textContent = GAME_NAME[v.game];

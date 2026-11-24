@@ -207,6 +207,8 @@ function onAction(a: string, t: HTMLElement): void {
       cbTapMine(Number(t.dataset.sid));
       break;
     case 'cbo':
+      // Im Karussell kam der Tipp schon über initCarousel, der Klick danach zählt nicht doppelt
+      if (Date.now() - CAR.tapAt < 400 && t.closest('.opps.car')) break;
       cbTapOpp(t.dataset.o ?? '', Number(t.dataset.sid));
       break;
     case 'cbdeck':
@@ -608,7 +610,7 @@ function aimAt(pid: string): void {
 
 /** Alle Ereignis-Listener einmal beim Start registrieren. */
 export function initEvents(): void {
-  initCarousel(aimAt);
+  initCarousel(aimAt, (el) => el.dataset.act && onAction(el.dataset.act, el));
   document.addEventListener('visibilitychange', () => {
     updateTitle();
     if (!document.hidden) {
@@ -672,7 +674,9 @@ export function initEvents(): void {
     const t = e.target as HTMLElement;
     if (
       (e.key === 'Enter' || e.key === ' ') &&
-      t.matches?.('.card[data-act], [data-act="aim"][role="button"], .dkpair[data-act]')
+      t.matches?.(
+        '.card[data-act], [data-act="aim"][role="button"], .dkpair[data-act], .cbslot[data-act], .cbdeck[data-act], .cbpile[data-act]',
+      )
     ) {
       e.preventDefault();
       t.click();

@@ -411,6 +411,14 @@ const SWAP_GAP_Y = 16;
 const SWAP_MIN_W = 92;
 const SWAP_MIN_H = 80;
 
+/** Raster der Tauschrunde weg, damit andere Spiele wieder das Karussell bekommen. */
+export function clearSwapGrid(): void {
+  const el = $('#opps');
+  delete el.dataset.grid;
+  el.style.removeProperty('--cols');
+  el.style.removeProperty('--rowh');
+}
+
 /**
  * Tauschrunde am Handy: Die Mitte wird noch nicht gebraucht, also füllen die Gegner den Platz.
  * Alle Kacheln sind gleich groß. Gewählt wird die Aufteilung in eine bis drei Reihen mit den größten Karten,
@@ -419,13 +427,8 @@ const SWAP_MIN_H = 80;
 export function layoutSwapOpps(v: View): void {
   const el = $('#opps');
   const n = el.children.length;
-  const off = () => {
-    delete el.dataset.grid;
-    el.style.removeProperty('--cols');
-    el.style.removeProperty('--rowh');
-  };
   if (v.phase !== 'swap' || !isMobile() || !n) {
-    off();
+    clearSwapGrid();
     return;
   }
   // Als Raster ausmessen: Das Karussell gibt den Platz frei, den das Raster füllen würde
@@ -447,7 +450,7 @@ export function layoutSwapOpps(v: View): void {
     if (!best || tw > best.tw + 2) best = { tw, cols, rowh: Math.min(h, tw * 1.5 + 54) };
   }
   if (!best) {
-    off();
+    clearSwapGrid();
     return;
   }
   el.style.setProperty('--cols', String(best.cols));

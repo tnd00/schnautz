@@ -39,5 +39,7 @@ export const slowExtraMs = (e: { cards?: Card[] }): number =>
 /** Ungefähr ab hier läuft die Enthüllung. Die KI wartet so lange mit Spott und Würfen. */
 export function zerRevealDelay(fresh: readonly LogEntry[], seqMs: number): number {
   const d = seqMs > 0 ? decisivePlay(fresh) : null;
-  return seqMs + (d ? slowExtraMs(d) : 0) + ZER_SHDONE_MS + 240 + 600;
+  // Lief im letzten Zug die Uhr ab, steht vorher noch „Zeit um!“ da (src/ui/effects.ts, 2000 ms plus Pause)
+  const late = fresh.some((e) => e.k === 'timeout') ? 2240 : 0;
+  return seqMs + (d ? slowExtraMs(d) : 0) + late + ZER_SHDONE_MS + 240 + 600;
 }

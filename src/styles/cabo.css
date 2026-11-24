@@ -140,7 +140,8 @@
   box-shadow:
     0 0 0 3px var(--sea),
     0 0 24px rgba(143, 211, 232, 0.75);
-  animation: cbFlip 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+  /* Wie der Balken läuft auch das Eindrehen beim Neuzeichnen weiter statt von vorn */
+  animation: cbFlip 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.2) calc(var(--cbgone, 0ms) * -1) both;
 }
 .cbslot.seen::after {
   content: '';
@@ -203,8 +204,12 @@
 .opps.car .opp.cb .cbrow.many {
   --tw: clamp(14px, calc((100cqw - 16px) / 4.4), 38px);
 }
-.opp.cb .cbrow.many .cbslot + .cbslot {
-  margin-left: calc(var(--tw) * -0.35);
+/* Strafkarten: Ab fünf Karten rücken sie zusammen (--ov aus src/ui/render/cabo.ts), die Reihe bleibt so breit */
+.cbrow.many .cbslot + .cbslot {
+  margin-left: calc(var(--tw) * var(--ov, 0));
+}
+.opp.cb .cbrow.many {
+  gap: 0;
 }
 .opp.cb .cbv {
   min-width: 16px;
@@ -271,17 +276,27 @@
   display: none;
 }
 
-/* Ergebnis */
+/* Ergebnis: Karten in derselben Zeile wie Name und Punkte, damit auch acht Zeilen passen */
+.cbres .row {
+  gap: 10px;
+}
 .cbres .row .cbpl {
-  min-width: 34px;
+  min-width: 30px;
   text-align: left;
 }
 .cbres .row .cbtot {
-  margin-left: auto;
+  min-width: 40px;
   font-size: 22px;
 }
-.cbres .mini.shleft .card {
+.cbres .mini.cbhand {
+  flex: none;
+  gap: 0;
+}
+.cbres .mini.cbhand .card {
   --cw: 30px;
+}
+.cbres .mini.cbhand .card + .card {
+  margin-left: -9px;
 }
 .paper h2 .g {
   color: var(--brass);
@@ -349,8 +364,28 @@
     --tw: calc(var(--u) * 11);
     gap: calc(var(--u) * 1.5);
   }
-  .cbres .mini.shleft .card {
-    --cw: 24px;
+  .cbres .row {
+    gap: 6px;
+    padding: 7px 9px;
+  }
+  .cbres .row .who > span {
+    font-size: 12px;
+  }
+  .cbres .mini.cbhand .card {
+    --cw: 21px;
+  }
+  .cbres .mini.cbhand .card + .card {
+    margin-left: -7px;
+  }
+  /* Alle Knöpfe in einer Zeile, sonst springt die eigene Reihe, sobald man dran ist */
+  .cbme .actions {
+    flex-wrap: nowrap;
+  }
+  .cbme .actions .btn {
+    flex: 1 1 0;
+  }
+  .cbme .actions .btn.snapb {
+    flex: 0 0 auto;
   }
 }
 

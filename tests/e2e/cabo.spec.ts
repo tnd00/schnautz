@@ -5,6 +5,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { View } from '../../src/game/types';
 import {
+  closeAll,
   desktop,
   Errors,
   hostTable,
@@ -16,6 +17,8 @@ import {
   view,
   waitForPhase,
 } from './helpers';
+
+test.afterEach(closeAll);
 
 /** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (src/ui/cabo/input.ts). */
 async function button(page: Page, act: string): Promise<boolean> {
@@ -195,5 +198,56 @@ test('Cabo zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ br
   }
   expect(held).toBe(true);
   expect(await noScroll(host)).toBe(true);
+  expect(errors.list).toEqual([]);
+});
+
+test('Spionieren und Blindtausch gehen auch im Karussell mit der Maus', async ({ browser }) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  await hostTable(host, 'Tahna');
+  await chooseCabo(host, false);
+  for (let i = 0; i < 6; i++) await host.click('[data-act=addbot]');
+  await expect.poll(() => playerCount(host)).toBe(7);
+  await host.click('[data-act=start]');
+  await waitForPhase(host, ['peek'], 20_000);
+  const me = await myId(host);
+  // KIs anhalten, alle sehen an, dann bin ich mit einer abgelegten 9 dran
+  const power = async (kind: 'spy' | 'swap', c: string) =>
+    host.evaluate(
+      ({ me, kind, c }) => {
+        const S = window.__schnautz!;
+        S.BOTS.hold = true;
+        const st = S.H.st!;
+        st.players.forEach((p) => {
+          if (!p.ready && st.phase === 'peek')
+            S.act(st, p.id, { type: 'cblook', ids: st.cb!.P[p.id].slice(0, 2).map((s) => s.id) });
+        });
+        st.turn = st.players.findIndex((p) => p.id === me);
+        st.cb!.t += 1;
+        st.cb!.hold = null;
+        st.cb!.power = { by: me, kind, c };
+        st.cb!.pile.push(c);
+        S.hostCommit();
+      },
+      { me, kind, c },
+    );
+  await power('spy', 'H9');
+  await expect(host.locator('#opps.car')).toHaveCount(1);
+  await expect(host.locator('#announce .ann')).toHaveCount(0, { timeout: 20_000 });
+  // Eine Karte der mittleren Kachel anklicken
+  const mid = host.locator('#opps .opp[data-slot="0"] .cbslot[data-act=cbo]').first();
+  await mid.click();
+  await expect.poll(async () => (await view(host))?.cb?.power ?? null).toBeNull();
+  await expect(host.locator('#tosspick:not([hidden])')).toHaveCount(0);
+  // Die angesehene Karte bleibt im Bild, obwohl schon die nächste Person dran ist
+  await expect(host.locator('#opps .cbslot.seen')).toHaveCount(1);
+  // Blindtausch: eigene und fremde Karte wählen, dann tauschen
+  await power('swap', 'HB');
+  await expect(host.locator('#announce .ann')).toHaveCount(0, { timeout: 20_000 });
+  await host.locator('#me .cbslot[data-act=cbm]').first().click();
+  await host.locator('#opps .opp[data-slot="0"] .cbslot[data-act=cbo]').first().click();
+  await host.waitForTimeout(450);
+  await host.click('#me [data-act=cbblind]:not([disabled])');
+  await expect.poll(async () => (await view(host))?.log.some((e) => e.k === 'cbblind' && e.p === me)).toBe(true);
   expect(errors.list).toEqual([]);
 });

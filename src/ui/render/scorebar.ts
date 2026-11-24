@@ -6,6 +6,7 @@ import { $, esc, num } from '../dom';
 import { dealerId, turnId } from '../helpers';
 import { dkCount } from '../../game/durak';
 import { GAME_NAME, LOSER_MARK, LOSER_NAME, reignOf } from '../../game/games';
+import { cbShownPoints } from './cabo';
 import { crownTitle, loserCount } from './marks';
 
 const count = (x: string[] | number) => (typeof x === 'number' ? x : x.length);
@@ -21,7 +22,8 @@ function livesCompact(v: View, p: Player): string {
 
 /** Cabo: Punkte in dieser Partie, im Titel steht dazu das Ziel. */
 function caboPoints(v: View, p: Player): string {
-  const n = num(p.cbp);
+  // Bis zur Krönung der Stand vor der letzten Runde (src/ui/render/cabo.ts)
+  const n = cbShownPoints(v, p);
   const target = v.rules.cb?.target ?? 100;
   const title = `${n} ${n === 1 ? 'Punkt' : 'Punkte'}, über ${target} ist Schluss`;
   return `<span class="sb-c" title="${title}">${n}<span class="sb-l"> ${n === 1 ? 'Punkt' : 'Punkte'}</span></span>`;

@@ -5,9 +5,10 @@
  * Einblendungen kommen vom Host in `v.cb.reveal` und sind nach CB_REVEAL_MS wieder verdeckt.
  */
 import { CB_REVEAL_MS } from '../../game/constants';
-import type { Action, View } from '../../game/types';
+import type { Action, LogEntry, View } from '../../game/types';
 import { doAct } from '../../net/dispatch';
 import { App } from '../app';
+import { CAR, carouselRelease } from '../carousel';
 import type { Timer } from '../dom';
 import { render } from '../render/index';
 import { cbCanSnap, cbMine, cbRole } from '../render/cabo';
@@ -36,9 +37,11 @@ function send(a: Action): void {
   clearSel();
   App.busy = true;
   if (a.type === 'cbdraw' || a.type === 'cbswap' || a.type === 'cbdiscard' || a.type === 'cbsnap') sfx('card');
+  const v0 = App.view;
   doAct(a);
-  // Beim Gast dauert die Antwort, die Auswahl soll trotzdem sofort verschwinden
-  if (App.busy) redraw();
+  // Beim Gast dauert die Antwort, und lehnt der Host selbst ab, kommt keine neue Ansicht: Die Auswahl soll trotzdem
+  // sofort verschwinden
+  if (App.view === v0) redraw();
 }
 
 /** Eigene Karte angetippt. */
@@ -108,7 +111,8 @@ export function cbButton(kind: string, fromButton = true): void {
       if (role === 'draw' && C.deck > 0) send({ type: 'cbdraw', from: 'deck' });
       return;
     case 'cbpile':
-      if (role === 'draw' && C.pile.length) send({ type: 'cbdraw', from: 'pile' });
+      // Ohne eigene Karten lässt sich die Ablage nicht tauschen
+      if (role === 'draw' && C.pile.length && cbMine(v)?.length) send({ type: 'cbdraw', from: 'pile' });
       return;
     case 'cbcabo':
       if (role === 'draw' && !C.cabo) send({ type: 'cbcabo' });
@@ -155,25 +159,64 @@ export function cbSyncSelection(prev: View | null, v: View): void {
     P.power?.kind === C.power?.kind &&
     rowSig(P) === rowSig(C);
   const snap = App.cs.snap && cbCanSnap(v);
-  if (!same) App.cs = { ids: [], opp: null, snap };
-  else App.cs.snap = snap;
+  if (!same) {
+    App.cs = { ids: [], opp: null, snap };
+    return;
+  }
+  App.cs.snap = snap;
+  // Inzwischen weggeschnappte Karten sind nicht mehr gewählt, eigene wie fremde
+  const mine = new Set((C?.P[App.me] ?? []).map((s) => s.id));
+  App.cs.ids = App.cs.ids.filter((id) => mine.has(id));
+  const o = App.cs.opp;
+  if (o && !C?.P[o.to]?.some((s) => s.id === o.id)) App.cs.opp = null;
+}
+
+/** Plätze, die nach Logeintrag `from` eine andere Karte bekommen haben oder verschwunden sind. */
+function changedSlots(fresh: readonly LogEntry[], from: number): Set<string> {
+  const out = new Set<string>();
+  fresh.forEach((e) => {
+    if (e.n <= from) return;
+    const add = (owner: string | undefined, id: number | undefined) => owner && id != null && out.add(`${owner}:${id}`);
+    if (e.k === 'cbswap' && e.ok) (e.ids ?? []).forEach((id) => add(e.p, id));
+    else if (e.k === 'cbblind') {
+      add(e.p, e.id);
+      add(e.to, e.oid);
+    } else if (e.k === 'cbsnap' && e.ok) add(e.p, e.id);
+  });
+  return out;
 }
 
 /**
  * Neue Einblendung vom Host: kurz zeigen, danach wieder verdecken. Nach dem Laden oder Neuverbinden wird nichts
  * nachgezeigt, sonst könnte man sich Karten durch Neuladen noch einmal ansehen.
  */
-export function cbSyncReveal(prev: View | null, v: View): void {
+export function cbSyncReveal(prev: View | null, v: View, fresh: readonly LogEntry[] = []): void {
+  if (v.game !== 'cabo') return;
+  // Jede Partie zählt ihre Einblendungen von vorn, und in einer neuen Runde gehören die Platz-IDs anderen Karten
+  const S = App.cbShow;
+  if (S.g !== v.games) App.cbShow = { rid: 0, g: v.games, round: v.round, until: 0, items: [] };
+  else if (S.round !== v.round) App.cbShow = { ...S, round: v.round, until: 0, items: [] };
   const r = v.cb?.reveal;
-  if (v.game !== 'cabo' || !r) return;
-  // Jede Partie zählt ihre Einblendungen von vorn
-  if (App.cbShow.g !== v.games) App.cbShow = { rid: 0, g: v.games, until: 0, items: [] };
-  if (r.id <= App.cbShow.rid) return;
-  if (!prev || prev.game !== 'cabo') {
-    App.cbShow = { rid: r.id, g: v.games, until: 0, items: [] };
+  if (!r || r.id <= App.cbShow.rid) {
+    dropChanged(fresh, 0);
     return;
   }
-  App.cbShow = { rid: r.id, g: v.games, until: Date.now() + CB_REVEAL_MS, items: r.items.map((x) => ({ ...x })) };
+  if (!prev || prev.game !== 'cabo') {
+    App.cbShow = { ...App.cbShow, rid: r.id, until: 0, items: [] };
+    return;
+  }
+  App.cbShow = {
+    rid: r.id,
+    g: v.games,
+    round: v.round,
+    until: Date.now() + CB_REVEAL_MS,
+    items: r.items.map((x) => ({ ...x })),
+  };
+  // Was jemand gleich nach dem Ansehen tauscht oder wegschnappt, ist nicht mehr die gezeigte Karte
+  const own = fresh.filter((e) => e.p === App.me && (e.k === 'cblook' || e.k === 'cbpeek' || e.k === 'cbspy'));
+  dropChanged(fresh, own.length ? own[own.length - 1].n : 0);
+  // Eine fremde Karte soll nicht gleich aus dem Karussell gleiten, weil schon die nächste Person dran ist
+  if (App.cbShow.items.some((x) => x.owner !== App.me)) CAR.hold = App.cbShow.until;
   // Schaut man sich dieselbe Karte noch einmal an, hat man sie wohl vergessen
   const round = `${v.games}.${v.round}`;
   if (SEEN.key !== round) SEEN.cards.clear();
@@ -185,15 +228,24 @@ export function cbSyncReveal(prev: View | null, v: View): void {
   if (CBT.t) clearTimeout(CBT.t);
   CBT.t = setTimeout(() => {
     CBT.t = null;
+    if (CAR.hold === App.cbShow.until) carouselRelease();
     if (App.view?.game === 'cabo') redraw();
   }, CB_REVEAL_MS + 30);
+}
+
+/** Einblendung auf Plätzen beenden, die seitdem eine andere Karte haben. */
+function dropChanged(fresh: readonly LogEntry[], from: number): void {
+  const S = App.cbShow;
+  if (!S.items.length || !fresh.length) return;
+  const gone = changedSlots(fresh, from);
+  if (gone.size) S.items = S.items.filter((x) => !gone.has(`${x.owner}:${x.slot}`));
 }
 
 /** Neuer Tisch oder Verlassen: nichts mehr zeigen. */
 export function resetCaboUI(): void {
   if (CBT.t) clearTimeout(CBT.t);
   CBT.t = null;
-  App.cbShow = { rid: 0, g: -1, until: 0, items: [] };
+  App.cbShow = { rid: 0, g: -1, round: 0, until: 0, items: [] };
   SEEN.cards.clear();
   SEEN.key = '';
   clearSel();

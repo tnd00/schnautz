@@ -4,6 +4,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import {
+  closeAll,
   desktop,
   Errors,
   hostTable,
@@ -18,6 +19,8 @@ import {
   waitForChange,
   waitForPhase,
 } from './helpers';
+
+test.afterEach(closeAll);
 
 type Prefer = 'swap' | 'pass' | 'knock';
 
