@@ -1,4 +1,4 @@
-/* Zeichen vor dem Namen: Krone der letzten Partie, amtierender Shithead oder Durak und KI. Am Handy teilen sie sich ein Feld. */
+/* Zeichen vor dem Namen: Krone der letzten Partie oder des Cabo-Königs, amtierender Shithead oder Durak und KI. Am Handy teilen sie sich ein Feld. */
 import type { GameKind, Player, View } from '../../game/types';
 import { App } from '../app';
 import { esc, num } from '../dom';
@@ -9,11 +9,26 @@ export function reignHTML(v: View, id: string): string {
   const mark = LOSER_MARK[v.game];
   if (mark && rg?.lose === id && App.zerHide !== id)
     return `<span class="reign" title="Amtierender ${LOSER_NAME[v.game]}">${mark}</span>`;
-  if (rg?.win === id) return '<span class="reign" title="Hat die letzte Partie gewonnen">👑</span>';
+  // Bei Cabo ist der neue König bis zur Enthüllung noch geheim
+  if (rg?.win === id && App.zerHide !== id) return `<span class="reign" title="${crownTitle(v.game)}">👑</span>`;
   return '';
 }
 
-/** Wie oft jemand in diesem Spiel schon Verlierer war (Shithead oder Durak). Schnautz kennt keinen Titel. */
+/** Wofür die Krone steht: Bei Cabo ist es ein Titel, der bleibt, bis jemand anderes gewinnt. */
+export function crownTitle(game: GameKind): string {
+  switch (game) {
+    case 'cabo':
+      return 'Amtierender Cabo-König';
+    case 'shithead':
+    case 'durak':
+    case 'schnautz':
+      return 'Hat die letzte Partie gewonnen';
+    default:
+      return unreachable(game);
+  }
+}
+
+/** Wie oft jemand in diesem Spiel schon Verlierer war (Shithead oder Durak). Schnautz und Cabo kennen keinen Titel. */
 export function loserCount(game: GameKind, p: Pick<Player, 'shc' | 'dkc'>): number {
   switch (game) {
     case 'shithead':
@@ -21,6 +36,7 @@ export function loserCount(game: GameKind, p: Pick<Player, 'shc' | 'dkc'>): numb
     case 'durak':
       return num(p.dkc);
     case 'schnautz':
+    case 'cabo':
       return 0;
     default:
       return unreachable(game);

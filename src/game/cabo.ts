@@ -43,13 +43,18 @@ export function cbKamikaze(cards: Card[]): boolean {
 
 const slotIdx = (row: CbSlot[], id: number): number => row.findIndex((s) => s.id === Number(id));
 
+/** Gültige fremde Person aus einer Aktion vom Netz: nur echte Reihen, nie man selbst. */
+function otherId(C: CbState, pid: string, raw: unknown): string | null {
+  return typeof raw === 'string' && raw !== pid && Object.hasOwn(C.P, raw) ? raw : null;
+}
+
 /** Merkt sich, was `pid` gerade über einen Platz erfährt, und blendet es ihm kurz ein. */
 function learn(st: State, pid: string, items: { owner: string; slot: number; c: Card }[]): void {
   const C = cb(st);
   const know = (C.know[pid] ??= {});
   items.forEach((x) => (know[x.slot] = { c: x.c, t: C.t }));
   C.rid++;
-  const r: CbReveal = { id: C.rid, items };
+  const r: CbReveal = { id: C.rid, t: C.t, items };
   C.reveal[pid] = r;
 }
 
@@ -145,7 +150,7 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       ids.map((id) => ({ owner: pid, slot: id, c: row[slotIdx(row, id)].c })),
     );
     me.ready = true;
-    addLog(st, { k: 'cblook', p: pid });
+    addLog(st, { k: 'cblook', p: pid, ids });
     if (st.players.every((p) => p.ready || !C.P[p.id])) cbBegin(st);
     return null;
   }
@@ -156,6 +161,9 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
     case 'cbdraw': {
       if (C.hold || C.power) return 'Du hast schon gezogen.';
       const from = a.from === 'pile' ? 'pile' : 'deck';
+      // Die Ablage muss man tauschen, ohne eigene Karten geht das nicht
+      if (from === 'pile' && !row.length)
+        return 'Ohne eigene Karten kannst du die Ablage nicht nehmen. Zieh vom Stapel.';
       const src = from === 'pile' ? C.pile : C.deck;
       if (!src.length) return from === 'pile' ? 'Die Ablage ist leer.' : 'Der Stapel ist leer.';
       const c = src.pop() as Card;
@@ -199,25 +207,27 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       const i = slotIdx(row, a.id);
       if (i < 0) return 'Wähle eine deiner Karten.';
       learn(st, pid, [{ owner: pid, slot: row[i].id, c: row[i].c }]);
-      addLog(st, { k: 'cbpeek', p: pid });
+      addLog(st, { k: 'cbpeek', p: pid, id: row[i].id });
       endTurn(st, rng);
       return null;
     }
     case 'cbspy': {
       if (C.power?.kind !== 'spy') return 'Ausspionieren geht nur mit einer 9 oder 10.';
-      const other = C.P[String(a.to)];
-      if (!other || a.to === pid) return 'Wähle eine Karte von jemand anderem.';
+      const to = otherId(C, pid, a.to);
+      const other = to ? C.P[to] : null;
+      if (!to || !other) return 'Wähle eine Karte von jemand anderem.';
       const i = slotIdx(other, a.id);
       if (i < 0) return 'Wähle eine Karte von jemand anderem.';
-      learn(st, pid, [{ owner: a.to, slot: other[i].id, c: other[i].c }]);
-      addLog(st, { k: 'cbspy', p: pid, to: a.to, tn: st.players[pIdx(st, a.to)]?.name });
+      learn(st, pid, [{ owner: to, slot: other[i].id, c: other[i].c }]);
+      addLog(st, { k: 'cbspy', p: pid, to, tn: st.players[pIdx(st, to)]?.name, id: other[i].id });
       endTurn(st, rng);
       return null;
     }
     case 'cbblind': {
       if (C.power?.kind !== 'swap') return 'Blind tauschen geht nur mit Bube oder Dame.';
-      const other = C.P[String(a.to)];
-      if (!other || a.to === pid) return 'Wähle eine Karte von jemand anderem.';
+      const to = otherId(C, pid, a.to);
+      const other = to ? C.P[to] : null;
+      if (!to || !other) return 'Wähle eine Karte von jemand anderem.';
       const i = slotIdx(row, a.id);
       const j = slotIdx(other, a.oid);
       if (i < 0 || j < 0) return 'Wähle eine eigene und eine fremde Karte.';
@@ -239,8 +249,8 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       addLog(st, {
         k: 'cbblind',
         p: pid,
-        to: a.to,
-        tn: st.players[pIdx(st, a.to)]?.name,
+        to,
+        tn: st.players[pIdx(st, to)]?.name,
         id: mine.id,
         oid: theirs.id,
       });
@@ -283,7 +293,7 @@ function swap(st: State, pid: string, raw: unknown, rng?: Rng): ActResult {
     // Die übrigen Plätze fallen weg, die Reihe wird kürzer
     C.P[pid] = row.filter((s) => s === first || !slots.includes(s));
     (C.know[pid] ??= {})[first.id] = { c: hold.c, t: C.t };
-    addLog(st, { k: 'cbswap', p: pid, out, ok: true, slots: slots.length, ...(up ? { up: true } : {}) });
+    addLog(st, { k: 'cbswap', p: pid, out, ok: true, slots: slots.length, ids, ...(up ? { up: true } : {}) });
     st.last = { k: 'cbswap', p: pid, n: st.n, cards: out };
   } else {
     // Daneben: Die Karten liegen jetzt offen, die gezogene geht auf die Ablage, dazu eine Strafkarte
@@ -297,6 +307,7 @@ function swap(st: State, pid: string, raw: unknown, rng?: Rng): ActResult {
       out: slots.map((s) => s.c),
       ok: false,
       slots: slots.length,
+      ids,
       ...(pen ? { pen: true } : {}),
     });
     st.last = { k: 'cbswap', p: pid, n: st.n };
@@ -319,14 +330,16 @@ function snap(st: State, pid: string, id: number): ActResult {
     row.splice(i, 1);
     C.pile.push(s.c);
     forget(st, s.id);
-    addLog(st, { k: 'cbsnap', p: pid, c: s.c, ok: true });
+    addLog(st, { k: 'cbsnap', p: pid, c: s.c, ok: true, id: s.id });
   } else {
     // Daneben: Die Karte liegt offen und es gibt eine Strafkarte
     s.up = true;
     if (C.deck.length) row.push({ id: C.sid++, c: C.deck.pop() as Card });
-    addLog(st, { k: 'cbsnap', p: pid, c: s.c, ok: false });
+    addLog(st, { k: 'cbsnap', p: pid, c: s.c, ok: false, id: s.id });
   }
-  st.last = { k: 'cbsnap', p: pid, n: st.n };
+  // Absichtlich kein st.last: Schnappen ist kein Zug, Uhr und Denkpause der Person am Zug laufen weiter
+  // Hat die Strafkarte den Stapel geleert, bevor die Person am Zug gezogen hat, ist die Runde vorbei
+  if (!C.deck.length && !C.hold && !C.power) endRound(st);
   return null;
 }
 
@@ -354,11 +367,13 @@ function endRound(st: State): void {
   const ids = st.players.map((p) => p.id).filter((id) => C.P[id]);
   const hands = Object.fromEntries(ids.map((id) => [id, C.P[id].map((s) => s.c)]));
   const sums = Object.fromEntries(ids.map((id) => [id, hands[id].reduce((s, c) => s + cbVal(c), 0)]));
-  const kami = ids.find((id) => cbKamikaze(hands[id])) ?? null;
+  // Mit zwei Decks können zwei Leute gleichzeitig Kamikaze haben, dann bekommen beide 0
+  const kamis = ids.filter((id) => cbKamikaze(hands[id]));
+  const kami = kamis[0] ?? null;
   const caller = C.cabo;
   const scores: Record<string, number> = {};
   let ok: boolean | null = null;
-  if (kami) ids.forEach((id) => (scores[id] = id === kami ? 0 : CB_KAMI));
+  if (kami) ids.forEach((id) => (scores[id] = kamis.includes(id) ? 0 : CB_KAMI));
   else {
     ids.forEach((id) => (scores[id] = sums[id]));
     if (caller && caller in sums) {
@@ -381,7 +396,7 @@ function endRound(st: State): void {
       s.cabos = (s.cabos ?? 0) + 1;
       if (ok) s.cabosOk = (s.cabosOk ?? 0) + 1;
     }
-    if (p.id === kami) s.kami = (s.kami ?? 0) + 1;
+    if (kamis.includes(p.id)) s.kami = (s.kami ?? 0) + 1;
   });
   const totals = Object.fromEntries(st.players.filter((p) => p.id in scores).map((p) => [p.id, p.cbp ?? 0]));
   const names = Object.fromEntries(st.players.map((p) => [p.id, p.name]));
@@ -424,15 +439,19 @@ function cbEnd(st: State, r: CaboResult): void {
     best = best.filter((id) => r.scores[id] === ls);
   }
   const winner = best.length === 1 ? best[0] : null;
+  // Verteidigt der König seine Krone?
+  const again = !!winner && st.reigns?.cabo?.win === winner;
   st.winner = winner;
   r.winner = winner;
-  // Plätze nach Punkten, Gleichstand teilt sich den Platz
-  const order = ids.slice().sort((a, b) => r.totals[a] - r.totals[b]);
-  order.forEach((id) => {
+  // Plätze wie beim Sieger: erst die Gesamtpunkte, dann die letzte Runde. Nur wer in beidem gleich ist, teilt
+  const better = (x: string, id: string) =>
+    r.totals[x] < r.totals[id] || (r.totals[x] === r.totals[id] && r.scores[x] < r.scores[id]);
+  ids.forEach((id) => {
     const p = st.players[pIdx(st, id)];
-    if (p) p.place = 1 + order.filter((x) => r.totals[x] < r.totals[id]).length;
+    if (p) p.place = 1 + ids.filter((x) => better(x, id)).length;
   });
-  setReign(st, 'cabo', winner);
+  // Ohne klaren Sieger bleibt der bisherige König im Amt
+  if (winner) setReign(st, 'cabo', winner);
   if (winner) {
     const wp = st.players[pIdx(st, winner)];
     if (wp) wp.wins = (wp.wins || 0) + 1;
@@ -443,14 +462,15 @@ function cbEnd(st: State, r: CaboResult): void {
     const ps = statsOf(p, 'cabo');
     ps.places = (ps.places ?? 0) + p.place;
   });
-  addLog(st, { k: 'cbend', p: winner ?? undefined });
+  addLog(st, { k: 'cbend', p: winner ?? undefined, ...(again ? { again: true } : {}) });
   settleDuel(st);
-  // Wer am meisten hat, darf den König herausfordern
+  // Wer am meisten hat, darf den neuen König herausfordern. Ohne Sieger gibt es niemanden zum Fordern
   const high = Math.max(...ids.map((id) => r.totals[id]));
-  offerRematch(
-    st,
-    ids.filter((id) => r.totals[id] === high),
-  );
+  if (winner)
+    offerRematch(
+      st,
+      ids.filter((id) => r.totals[id] === high),
+    );
 }
 
 /** Nächste Runde, wenn alle bereit sind. */
@@ -477,7 +497,7 @@ export function cbAuto(st: State, pid: string, rng?: Rng): ActResult {
       st,
       pid,
       pi,
-      C.hold.from === 'pile' ? { type: 'cbswap', ids: [row[0].id] } : { type: 'cbdiscard' },
+      C.hold.from === 'pile' && row.length ? { type: 'cbswap', ids: [row[0].id] } : { type: 'cbdiscard' },
       rng,
     );
   // Hat eine Strafkarte den Stapel geleert, bleibt die Ablage
@@ -485,7 +505,9 @@ export function cbAuto(st: State, pid: string, rng?: Rng): ActResult {
 }
 
 /** Auf wen die Runde wartet: zu Beginn alle, die noch nicht angesehen haben, sonst die Person am Zug. */
-export function cbWaiting(st: Pick<State, 'phase' | 'players' | 'turn'> & { cb?: { P: Record<string, unknown> } | null }): string[] {
+export function cbWaiting(
+  st: Pick<State, 'phase' | 'players' | 'turn'> & { cb?: { P: Record<string, unknown> } | null },
+): string[] {
   if (!st.cb) return [];
   if (st.phase === 'peek') return st.players.filter((p) => !p.ready && st.cb && p.id in st.cb.P).map((p) => p.id);
   if (st.phase !== 'play') return [];

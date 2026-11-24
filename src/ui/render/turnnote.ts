@@ -1,12 +1,11 @@
 /* Hinweis im Chat-Fenster: Mobil verdeckt der Chat den eigenen Platz, also sagt er Bescheid, wenn man gefragt ist. */
 import { App } from '../app';
 import { $ } from '../dom';
-import { dealerId, myTurn } from '../helpers';
+import { dealerId, myMoveNow } from '../helpers';
 import { quickHTML } from './shithead';
 import { CLK } from '../clock';
 import { shCanBet } from '../../game/bets';
 import { LOSER_NAME } from '../../game/games';
-import { dkWaiting } from '../../game/durak';
 
 export function renderTurnNote(): void {
   const el = $('#turnnote');
@@ -16,10 +15,7 @@ export function renderTurnNote(): void {
     // 4er und Bombe gehen nur kurz, deshalb liegt der Knopf direkt hier
     const quick = quickHTML(v);
     // Bei Durak ist dran, auf wen die Partie wartet, auch wer nur noch fertig sagen soll
-    const mine =
-      v.game === 'durak'
-        ? v.phase === 'play' && dkWaiting(v).includes(App.me)
-        : myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me);
+    const mine = myMoveNow(v) || (v.phase === 'choose' && dealerId(v) === App.me);
     // Läuft ein Zeitlimit, steht die Restzeit gleich im Knopf
     const clk = CLK.ids.includes(App.me) ? ' <span class="clkn"></span>' : '';
     const turnBtn = `<button class="btn primary pulse" data-act="closelog">Du bist dran! Zurück zum Tisch${clk}</button>`;
@@ -28,6 +24,8 @@ export function renderTurnNote(): void {
     else if (quick) html = `<span>Schnell, sonst ist es weg!</span>${quick}`;
     else if (mine) html = turnBtn;
     // In der Tauschrunde sind alle gleichzeitig dran, bis sie auf Fertig drücken
+    else if (v.phase === 'peek' && v.players.some((p) => p.id === App.me && !p.ready && !!v.cb?.P[p.id]))
+      html = `<button class="btn primary pulse" data-act="closelog">Karten ansehen! Zurück zum Tisch${CLK.ids.includes(App.me) ? ' <span class="clkn"></span>' : ''}</button>`;
     else if (v.phase === 'swap' && v.players.some((p) => p.id === App.me && !p.ready && !p.out))
       html = `<button class="btn primary pulse" data-act="closelog">Tauschrunde läuft! Zurück zum Tisch${CLK.ids.includes(App.me) ? ' <span class="clkn"></span>' : ''}</button>`;
     // Fertig, aber noch nicht getippt: Auch aus dem Chat heraus geht der Tipp

@@ -7,6 +7,16 @@ import { SEQ } from '../shithead/sequence';
 import { rematchLog } from './rematch';
 import { ZER } from '../ceremony';
 import { GAME_NAME, LOSER_MARK, isGame } from '../../game/games';
+import { CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO } from '../../game/constants';
+
+/** Cabo: Zahlwort für mehrere gleiche Karten auf einmal */
+const NUM_WORD: Readonly<Record<number, string>> = { 2: 'zwei', 3: 'drei', 4: 'vier', 5: 'fünf', 6: 'sechs' };
+/** Cabo: was die abgelegte Karte erlaubt, nach "darf" */
+const CB_POWER: Readonly<Record<'peek' | 'spy' | 'swap', string>> = {
+  peek: 'eine eigene Karte ansehen',
+  spy: 'bei jemand anderem spicken',
+  swap: 'blind tauschen',
+};
 
 /** Eine Zeile im Verlauf: CSS-Klasse und HTML (Namen und Texte sind escaped). */
 export function logLine(v: View, e: LogEntry): [cls: string, html: string] | null {
@@ -16,6 +26,8 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
   const whom = (id: string | null | undefined, fallback?: string) => (id === App.me ? 'dich' : W(v, id, fallback));
   const chips = (cards: unknown) => (Array.isArray(cards) ? cards.map(cardChip).join(' ') : '');
   const cards = (n: number) => num(n) + (num(n) === 1 ? ' Karte' : ' Karten');
+  /** Name nach "mit" oder "von": aus "Du" wird "dir" */
+  const toWhom = (id: string | null | undefined, fallback?: string) => (id === App.me ? 'dir' : W(v, id, fallback));
   switch (e.k) {
     case 'join':
       return ['sys', who() + (e.bot ? ' (KI) setzt sich an den Tisch.' : ' sitzt jetzt mit am Tisch.')];
@@ -188,6 +200,124 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
         e.p
           ? LOSER_MARK.durak + ' ' + who() + vb(p, ' bist der Durak!', ' ist der Durak!')
           : 'Unentschieden! Die Letzten sind gleichzeitig raus, einen Durak gibt es diesmal nicht.',
+      ];
+    case 'cbdeal':
+      return ['round', 'Runde ' + num(e.r) + ' · ' + esc(nameOf(v, e.start)) + vb(e.start, ' fängst an', ' fängt an')];
+    case 'cblook':
+    case 'cbskip':
+      return null;
+    case 'cbdraw':
+      return e.from === 'pile'
+        ? ['', who() + vb(p, ' nimmst ', ' nimmt ') + cardChip(e.c) + ' von der Ablage.']
+        : ['', who() + vb(p, ' ziehst vom Stapel.', ' zieht vom Stapel.')];
+    case 'cbswap': {
+      const n = num(e.slots);
+      if (!e.ok)
+        return [
+          'big',
+          who() +
+            vb(p, ' willst ', ' will ') +
+            chips(e.out) +
+            ' zusammen loswerden. Daneben! Die Karten liegen jetzt offen' +
+            (e.pen ? vb(p, ', dazu kriegst du eine Strafkarte.', ', dazu gibt es eine Strafkarte.') : '.'),
+        ];
+      if (n > 1)
+        return [
+          '',
+          who() +
+            vb(p, ' wirfst ', ' wirft ') +
+            (NUM_WORD[n] ?? String(n)) +
+            ' gleiche auf einmal ab (' +
+            chips(e.out) +
+            ').',
+        ];
+      return ['', who() + vb(p, ' tauschst und wirfst ', ' tauscht und wirft ') + chips(e.out) + ' ab.'];
+    }
+    case 'cbdiscard':
+      return [
+        '',
+        who() +
+          vb(p, ' legst ', ' legt ') +
+          cardChip(e.c) +
+          ' ab' +
+          (e.power ? vb(p, ' und darfst ', ' und darf ') + CB_POWER[e.power] : '') +
+          '.',
+      ];
+    case 'cbpeek':
+      return ['', who() + vb(p, ' schaust dir eine eigene Karte an.', ' schaut sich eine eigene Karte an.')];
+    case 'cbspy':
+      return ['', '👀 ' + who() + vb(p, ' spionierst ', ' spioniert ') + whom(e.to, e.tn) + ' aus.'];
+    case 'cbblind':
+      return [
+        '',
+        who() +
+          vb(p, ' tauschst blind eine Karte mit ', ' tauscht blind eine Karte mit ') +
+          toWhom(e.to, e.tn) +
+          (e.to === App.me ? '. Hoffentlich war es nicht dein roter König.' : '.'),
+      ];
+    case 'cbcabo':
+      return [
+        'big',
+        '📣 ' +
+          who() +
+          vb(p, ' rufst CABO! Alle anderen haben noch einen Zug.', ' ruft CABO! Alle anderen haben noch einen Zug.'),
+      ];
+    case 'cbsnap':
+      return e.ok
+        ? ['', '⚡ ' + who() + vb(p, ' schnappst ', ' schnappt ') + cardChip(e.c) + ' auf die Ablage.']
+        : [
+            'big',
+            who() +
+              vb(p, ' schnappst mit ', ' schnappt mit ') +
+              cardChip(e.c) +
+              ' daneben. Zu gierig! Die Karte bleibt offen liegen, dazu gibt es eine Strafkarte.',
+          ];
+    case 'cbround': {
+      const c = e.caller;
+      let head: string;
+      if (e.kami)
+        head =
+          '💥 Kamikaze! ' +
+          W(v, e.kami) +
+          vb(e.kami, ' hast', ' hat') +
+          ' zwei Damen und zwei schwarze Könige, alle anderen kassieren ' +
+          CB_KAMI +
+          '.';
+      else if (c && e.ok === true)
+        head = W(v, c) + vb(c, ' hattest mit Cabo recht, 0 Punkte.', ' hatte mit Cabo recht, 0 Punkte.');
+      else if (c && e.ok === false)
+        head =
+          W(v, c) +
+          vb(c, ' hast dich mit Cabo verzockt, ', ' hat sich mit Cabo verzockt, ') +
+          CB_PENALTY +
+          ' Strafpunkte obendrauf.';
+      else head = c ? 'Aufgedeckt!' : 'Der Stapel ist leer, alle decken auf.';
+      const list = Object.keys(e.scores || {})
+        .sort((a, b) => num(e.scores[a]) - num(e.scores[b]))
+        .map((id) => esc(nameOf(v, id)) + ' +' + num(e.scores[id]))
+        .join(' · ');
+      return ['big', head + (list ? ' ' + list : '')];
+    }
+    case 'cbreset':
+      return [
+        'big',
+        who() +
+          vb(p, ' landest genau auf ', ' landet genau auf ') +
+          CB_RESET_AT +
+          vb(p, ' und fällst zurück auf ', ' und fällt zurück auf ') +
+          CB_RESET_TO +
+          '. Glück gehabt!',
+      ];
+    case 'cbend':
+      return [
+        'big',
+        e.p
+          ? e.again
+            ? '👑 ' +
+              who() +
+              vb(p, ' verteidigst die Krone und bleibst Cabo-König!', ' verteidigt die Krone und bleibt Cabo-König!')
+            : '👑 ' + who() + vb(p, ' bist der neue Cabo-König!', ' ist der neue Cabo-König!')
+          : 'Gleichstand ganz vorne! Diesmal gibt es keinen neuen Cabo-König.',
       ];
     case 'lobby':
       return ['sys', 'Zurück in der Lobby.'];

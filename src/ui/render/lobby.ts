@@ -1,7 +1,15 @@
 /* Lobby: Plätze am Tisch, Spielauswahl und Regeln. Am Handy als zwei Reiter, damit nichts scrollt. */
-import { DEFAULT_RULES, DK_FULL_DECK, MIN_SEATS, SH_WIN_MS, TURN_SECS } from '../../game/constants';
+import {
+  CB_TARGETS,
+  CB_TWO_DECKS,
+  DEFAULT_RULES,
+  DK_FULL_DECK,
+  MIN_SEATS,
+  SH_WIN_MS,
+  TURN_SECS,
+} from '../../game/constants';
 import { maxSeats, seatLimit } from '../../game/state';
-import type { DkRules, GameKind, Player, Rules, ShRules, View } from '../../game/types';
+import type { CbRules, DkRules, GameKind, Player, Rules, ShRules, View } from '../../game/types';
 import { App } from '../app';
 import { BOT_TAG } from '../cards';
 import { $, esc, num } from '../dom';
@@ -46,8 +54,11 @@ function seatHTML(v: View, p: Player): string {
 
 /** Zeit pro Zug als Regler (Gastgeber) oder als Angabe (Gäste). */
 export const turnLabel = (s: number): string => (s ? `${s} s` : 'aus');
-const turnSub = (s: number): string =>
-  s ? `Danach zieht die KI einen Zug, in der Tauschrunde nach ${s * 2} s` : 'Niemand wird gehetzt';
+/** Doppelte Zeit gibt es in der Tauschrunde, bei Cabo beim Ansehen zu Beginn jeder Runde. */
+const turnSub = (s: number, game: GameKind): string =>
+  s
+    ? `Danach zieht die KI einen Zug, ${game === 'cabo' ? 'beim Ansehen' : 'in der Tauschrunde'} nach ${s * 2} s`
+    : 'Niemand wird gehetzt';
 
 function timeControl(v: View, host: boolean): string {
   const s = v.rules.turnSecs;
@@ -56,7 +67,7 @@ function timeControl(v: View, host: boolean): string {
   const range = host
     ? `<input type="range" class="range" min="0" max="${TURN_SECS.length - 1}" step="1" value="${i}" data-range="turnSecs" aria-label="Zeit pro Zug">`
     : '';
-  return `<div class="toggle tslider"><span>Zeit pro Zug<small id="tsub">${turnSub(s)}</small></span>${range}<b class="tval" id="tval">${turnLabel(s)}</b></div>`;
+  return `<div class="toggle tslider"><span>Zeit pro Zug<small id="tsub">${turnSub(s, v.game)}</small></span>${range}<b class="tval" id="tval">${turnLabel(s)}</b></div>`;
 }
 
 /** Platzzahl für den Gastgeber: nie weniger als die Menschen am Tisch, nie mehr als das Spiel erlaubt. */
@@ -73,7 +84,7 @@ function seatControl(v: View): string {
 }
 
 function toggle(
-  attr: 'rule' | 'shrule' | 'dkrule',
+  attr: 'rule' | 'shrule' | 'dkrule' | 'cbrule',
   key: string,
   on: boolean,
   label: string,
@@ -101,6 +112,8 @@ function gameRules(v: View, host: boolean): string {
       return durakRules(v.rules.dk ?? DEFAULT_RULES.dk, host);
     case 'schnautz':
       return schnautzRules(v.rules, host);
+    case 'cabo':
+      return caboRules(v.rules.cb ?? DEFAULT_RULES.cb, host);
     default:
       return unreachable(v.game);
   }
@@ -136,6 +149,25 @@ function durakRules(dr: DkRules, host: boolean): string {
       !host,
     ) +
     `<p class="note" style="margin-top:8px">Bis ${DK_FULL_DECK - 1} Leute spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} mit allen 52. Wer als Letzter Karten hat, ist der Durak und trägt den ${LOSER_MARK.durak}.</p>`
+  );
+}
+
+/** Cabo: Zielpunkte als Auswahl aus zwei (auf kurzen Handys über beide Spalten), dazu der Schalter fürs Schnappen. */
+function caboRules(cr: CbRules, host: boolean): string {
+  const btn = (n: number) =>
+    `<button data-act="cbtarget" data-v="${n}" class="${cr.target === n ? 'on' : ''}"${host ? '' : ' disabled'} style="padding:5px 12px">${num(n)}</button>`;
+  return (
+    `<div class="toggle cbtarget" style="cursor:default;grid-column:1/-1"><span>Zielpunkte<small>Wer drüber kommt, beendet die Partie</small></span>` +
+    `<div class="gamesel" style="margin:0;padding:3px;flex:none">${CB_TARGETS.map(btn).join('')}</div></div>` +
+    toggle(
+      'cbrule',
+      'snap',
+      cr.snap,
+      'Schnappen',
+      'Gleichen Wert wie oben auf der Ablage jederzeit draufwerfen, daneben kostet eine Strafkarte',
+      !host,
+    ) +
+    `<p class="note" style="margin-top:8px">Ab ${CB_TWO_DECKS} Leuten wird mit zwei Decks gespielt. Wer am Ende die wenigsten Punkte hat, wird Cabo-König und behält die Krone, bis jemand anderes gewinnt.</p>`
   );
 }
 

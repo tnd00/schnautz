@@ -42,6 +42,7 @@ import { initStart, readName, renderResume, showStartError } from './start';
 import { LS, SS } from './storage';
 import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
 import { dkButton, dkTapHand, dkTapTable } from './durak/input';
+import { cbButton, cbTapMine, cbTapOpp } from './cabo/input';
 
 /** Shithead: Karte antippen (Tauschrunde oder Auswahl zum Ausspielen). */
 function shTap(kind: 'h' | 'u', i: number): void {
@@ -201,6 +202,28 @@ function onAction(a: string, t: HTMLElement): void {
     case 'dktake':
     case 'dkpass':
       dkButton(a);
+      break;
+    case 'cbm':
+      cbTapMine(Number(t.dataset.sid));
+      break;
+    case 'cbo':
+      cbTapOpp(t.dataset.o ?? '', Number(t.dataset.sid));
+      break;
+    case 'cbdeck':
+    case 'cbpile':
+    case 'cbdiscard':
+      // In der Tischmitte gibt es keinen Knopf, der wechseln könnte, deshalb ohne Sperre
+      cbButton(a, t.tagName === 'BUTTON');
+      break;
+    case 'cbcabo':
+    case 'cbswap':
+    case 'cbskip':
+    case 'cbblind':
+    case 'cbsnapmode':
+      cbButton(a);
+      break;
+    case 'cbtarget':
+      doAct({ type: 'rules', rules: { cb: { target: Number(t.dataset.v) } } });
       break;
     case 'shu':
       shTap('u', i);
@@ -663,6 +686,10 @@ export function initEvents(): void {
     }
     if (t.dataset?.dkrule) {
       doAct({ type: 'rules', rules: { dk: { [t.dataset.dkrule]: t.checked } } });
+      return;
+    }
+    if (t.dataset?.cbrule) {
+      doAct({ type: 'rules', rules: { cb: { [t.dataset.cbrule]: t.checked } } });
       return;
     }
     if (t.dataset?.rule) doAct({ type: 'rules', rules: { [t.dataset.rule]: t.checked } });

@@ -65,6 +65,11 @@ export function takeSeat(st: State, seatId: string, name: string): void {
   forgetRematch(st, p.id);
   const bets = betPart(st)?.bets;
   if (bets) delete bets[p.id];
+  // Was die KI bei Cabo gerade gesehen hat, sieht der Mensch nicht. Läuft noch das Ansehen, sieht er selbst zwei an
+  if (st.cb) {
+    delete st.cb.reveal[p.id];
+    if (st.phase === 'peek') p.ready = false;
+  }
   addLog(st, { k: 'takeover', p: p.id, name: p.name, from });
 }
 

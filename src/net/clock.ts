@@ -1,6 +1,7 @@
 /*
  * Zeitlimit beim Host: Für jeden Menschen am Zug läuft eine Uhr. Sie steht, solange Animation oder 4er-Sperre laufen.
- * Ist sie abgelaufen, macht die normale KI genau einen Zug (in der Tauschrunde: tauschen und fertig).
+ * Ist sie abgelaufen, macht die normale KI genau einen Zug (in der Tauschrunde: tauschen und fertig, bei Cabo den
+ * ganzen Zug).
  * Das gilt auch für den Host selbst und für alle, die gerade offline sind.
  */
 import { botDecide } from '../bots/index';
@@ -77,18 +78,31 @@ function timeUp(key: string): void {
   hostCommit();
 }
 
-/** Die normale KI zieht für jemanden. Klappt ihr Zug nicht, gibt es einen einfachen Ersatzzug. */
+/**
+ * Die normale KI zieht für jemanden. Klappt ihr Zug nicht, gibt es einen einfachen Ersatzzug. Bei Cabo spielt sie den
+ * ganzen Zug zu Ende, denn die Uhr läuft erst mit dem nächsten Zug neu (src/game/clock.ts).
+ */
 function autoMove(st: State, id: string, swap: boolean): void {
   noteTimeout(st, id);
+  const t0 = st.cb?.t;
+  const caboTurn = () => st.game === 'cabo' && st.phase === 'play' && st.cb?.t === t0 && st.players[st.turn]?.id === id;
   for (let i = 0; i < 12; i++) {
     const a = botDecide(viewFor(st, id), undefined, 'normal');
     if (!a) break;
     const err = act(st, id, a);
     if (err) {
       fallbackMove(st, id);
-      return;
+      if (!caboTurn()) return;
+      continue;
     }
-    // Ein Zug reicht, nur die Tauschrunde geht bis "fertig"
-    if (!swap || a.type === 'shready') return;
+    // Ein Zug reicht, nur die Tauschrunde geht bis "fertig". Bei Cabo ist nach dem Ansehen Schluss, auch wenn
+    // dadurch die Runde beginnt und dieselbe Person als Erste dran ist
+    if (swap) {
+      if (a.type === 'shready' || a.type === 'cblook') return;
+      continue;
+    }
+    if (!caboTurn()) return;
   }
+  // Notfalls einfache Ersatzzüge, bis der Cabo-Zug wirklich vorbei ist, sonst liefe keine Uhr mehr
+  for (let i = 0; i < 4 && caboTurn(); i++) fallbackMove(st, id);
 }

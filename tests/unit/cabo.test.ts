@@ -1,12 +1,14 @@
 import { strict as assert } from 'node:assert';
 import { describe, expect, it } from 'vitest';
 import { botDecide } from '../../src/bots/index';
-import { act } from '../../src/game/actions';
+import { act, fallbackMove } from '../../src/game/actions';
+import { takeSeat } from '../../src/game/seats';
+import { clockTurn } from '../../src/game/clock';
 import { cbKamikaze, cbPower } from '../../src/game/cabo';
 import { cbVal } from '../../src/game/cards';
 import { reignOf } from '../../src/game/games';
 import { addPlayer, newState } from '../../src/game/state';
-import type { Action, Card, CbState, State } from '../../src/game/types';
+import type { Action, CaboResult, Card, CbState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { rngF } from './helpers';
 
@@ -40,7 +42,9 @@ const cur = (st: State) => st.players[st.turn].id;
 
 describe('Cabo: Werte und Fähigkeiten', () => {
   it('zählt wie Cabo: Ass 1, Bube 11, Dame 12, schwarzer König 13, roter König 0', () => {
-    expect(['HA', 'C2', 'S10', 'DB', 'HD', 'CK', 'SK', 'HK', 'DK'].map(cbVal)).toEqual([1, 2, 10, 11, 12, 13, 13, 0, 0]);
+    expect(['HA', 'C2', 'S10', 'DB', 'HD', 'CK', 'SK', 'HK', 'DK'].map(cbVal)).toEqual([
+      1, 2, 10, 11, 12, 13, 13, 0, 0,
+    ]);
     expect(['H7', 'C8', 'S9', 'D10', 'HB', 'CD', 'SK', 'D6'].map(cbPower)).toEqual([
       'peek',
       'peek',
@@ -238,6 +242,31 @@ describe('Cabo: Runde', () => {
     expect(st.rematch?.can).toEqual([b]);
   });
 
+  it('merkt im Verlauf, welche Plätze angesehen oder getauscht wurden und ob der König die Krone verteidigt', () => {
+    const { st, C } = table(2, 16, { target: 50 });
+    const a = cur(st);
+    const b = st.players.find((p) => p.id !== a)!.id;
+    const ids = C.P[a].slice(0, 2).map((s) => s.id);
+    act(st, a, { type: 'cblook', ids });
+    expect([...st.log].reverse().find((e) => e.k === 'cblook')).toMatchObject({ p: a, ids });
+    act(st, b, { type: 'cblook', ids: C.P[b].slice(0, 2).map((s) => s.id) });
+    act(st, a, { type: 'cbdraw', from: 'deck' });
+    const sid = C.P[a][3].id;
+    act(st, a, { type: 'cbswap', ids: [sid] });
+    expect([...st.log].reverse().find((e) => e.k === 'cbswap')).toMatchObject({ ids: [sid], ok: true });
+    // Der amtierende König gewinnt noch einmal
+    st.reigns = { cabo: { win: a, lose: null, game: 'cabo' } };
+    st.players.find((p) => p.id === b)!.cbp = 45;
+    C.P[a].forEach((s) => (s.c = 'HK'));
+    C.P[b].forEach((s) => (s.c = 'S10'));
+    act(st, b, { type: 'cbcabo' });
+    act(st, a, { type: 'cbdraw', from: 'deck' });
+    act(st, a, { type: 'cbdiscard' });
+    if (C.power) act(st, a, { type: 'cbskip' });
+    expect(st.phase).toBe('over');
+    expect(st.log.find((e) => e.k === 'cbend')).toMatchObject({ p: a, again: true });
+  });
+
   it('Schnappen: gleiche Karte fliegt raus, daneben offen plus Strafkarte, ohne Schalter gar nicht', () => {
     const { st, C } = table(2, 17, { snap: true });
     lookAll(st);
@@ -262,6 +291,158 @@ describe('Cabo: Runde', () => {
   });
 });
 
+describe('Cabo: Grenzfälle', () => {
+  it('ohne eigene Karten gibt es keine Ablage, nur den Stapel, und der Ersatzzug bleibt nicht hängen', () => {
+    const { st, C } = table(2, 30, { snap: true });
+    lookAll(st);
+    const a = cur(st);
+    C.P[a] = [];
+    expect(act(st, a, { type: 'cbdraw', from: 'pile' })).toMatch(/Ablage nicht/);
+    expect(act(st, a, { type: 'cbdraw', from: 'deck' })).toBeNull();
+    expect(act(st, a, { type: 'cbswap', ids: [1] })).not.toBeNull();
+    // Der Ersatzzug legt ab und überspringt eine Fähigkeit
+    fallbackMove(st, a);
+    if (C.power) fallbackMove(st, a);
+    expect(cur(st)).not.toBe(a);
+  });
+
+  it('leert falsches Schnappen den Stapel, bevor jemand zieht, ist die Runde vorbei', () => {
+    const { st, C } = table(2, 31, { snap: true });
+    lookAll(st);
+    const b = st.players.find((p) => p.id !== cur(st))!.id;
+    const top = C.pile.at(-1)!;
+    const wrong = C.P[b].find((s) => cbVal(s.c) !== cbVal(top))!;
+    // Bis auf eine Karte wandert der Stapel unter die oberste Ablage
+    C.pile.splice(C.pile.length - 1, 0, ...C.deck.splice(0, C.deck.length - 1));
+    expect(C.pile.at(-1)).toBe(top);
+    expect(C.deck).toHaveLength(1);
+    expect(act(st, b, { type: 'cbsnap', id: wrong.id })).toBeNull();
+    expect(C.deck).toHaveLength(0);
+    expect(st.phase === 'end' || st.phase === 'over').toBe(true);
+    cardsOk(st);
+  });
+
+  it('zeigt die Einblendung nur bis zum Ende des nächsten Zugs, bei Übernahme gar nicht', () => {
+    const { st } = table(3, 32);
+    lookAll(st);
+    const h = 'h';
+    expect(viewFor(st, h).cb?.reveal?.items).toHaveLength(2);
+    // Zwei Züge später ist sie weg
+    for (let k = 0; k < 2; k++) {
+      const p = cur(st);
+      act(st, p, { type: 'cbdraw', from: 'deck' });
+      act(st, p, { type: 'cbdiscard' });
+      if (st.cb?.power) act(st, p, { type: 'cbskip' });
+    }
+    expect(viewFor(st, h).cb?.reveal).toBeUndefined();
+    const { st: s2 } = table(3, 33);
+    lookAll(s2);
+    s2.players[1].bot = true;
+    takeSeat(s2, s2.players[1].id, 'Neu');
+    expect(viewFor(s2, s2.players[1].id).cb?.reveal).toBeUndefined();
+  });
+
+  it('nimmt beim Spionieren und Blindtauschen nur echte fremde Reihen', () => {
+    const { st, C } = table(2, 34);
+    lookAll(st);
+    const a = cur(st);
+    C.power = { by: a, kind: 'spy', c: 'S9' };
+    const id = C.P[a][0].id;
+    for (const to of ['constructor', '__proto__', 'toString', [a], a] as unknown[])
+      expect(act(st, a, { type: 'cbspy', to, id } as unknown as Action)).toBe('Wähle eine Karte von jemand anderem.');
+    C.power = { by: a, kind: 'swap', c: 'SB' };
+    expect(act(st, a, { type: 'cbblind', id, to: [a], oid: C.P[a][1].id } as unknown as Action)).toBe(
+      'Wähle eine Karte von jemand anderem.',
+    );
+  });
+
+  it('Gleichstand: Stichentscheid bestimmt auch die Plätze, ganz gleich bleibt der alte König im Amt', () => {
+    /** Runde endet mit leerem Stapel, ohne Cabo: Die Summen sind die Punkte dieser Runde */
+    const end = (sums: [number, number], before: [number, number]) => {
+      const { st, C } = table(2, 35, { target: 50 });
+      lookAll(st);
+      const a = cur(st);
+      const b = st.players.find((p) => p.id !== a)!.id;
+      st.reigns = { cabo: { win: 'alt', lose: null, game: 'cabo' } };
+      st.players.find((p) => p.id === a)!.cbp = before[0];
+      st.players.find((p) => p.id === b)!.cbp = before[1];
+      const hand = (n: number) => (n === 0 ? ['HK', 'DK', 'HK:2', 'DK:2'] : ['SA', 'CA', 'HA', `S${n - 3}`]);
+      C.P[a].forEach((s, i) => (s.c = hand(sums[0])[i]));
+      C.P[b].forEach((s, i) => (s.c = hand(sums[1])[i]));
+      C.deck.splice(0, C.deck.length - 1);
+      act(st, a, { type: 'cbdraw', from: 'deck' });
+      act(st, a, { type: 'cbdiscard' });
+      if (C.power) act(st, a, { type: 'cbskip' });
+      return { st, a, b };
+    };
+    // Gleiche Gesamtpunkte, a hatte in der letzten Runde weniger
+    const t1 = end([0, 7], [55, 48]);
+    expect(t1.st.phase).toBe('over');
+    expect(t1.st.winner).toBe(t1.a);
+    expect(t1.st.players.map((p) => [p.id, p.place])).toEqual(
+      expect.arrayContaining([
+        [t1.a, 1],
+        [t1.b, 2],
+      ]),
+    );
+    // Ganz gleich: kein Sieger, die Krone bleibt beim alten König, niemand darf fordern
+    const t2 = end([7, 7], [48, 48]);
+    expect(t2.st.phase).toBe('over');
+    expect(t2.st.winner).toBeNull();
+    expect(reignOf(t2.st)?.win).toBe('alt');
+    expect(t2.st.players.every((p) => p.place === 1)).toBe(true);
+  });
+
+  it('die Uhr gilt für den ganzen Zug, Schnappen setzt sie nicht zurück', () => {
+    const { st, C } = table(3, 37, { snap: true });
+    st.rules.turnSecs = 20;
+    lookAll(st);
+    const a = cur(st);
+    const k0 = clockTurn(st).key;
+    expect(clockTurn(st).ids).toEqual([a]);
+    act(st, a, { type: 'cbdraw', from: 'deck' });
+    expect(clockTurn(st).key).toBe(k0);
+    // Jemand anderes schnappt daneben
+    const b = st.players.find((p) => p.id !== a)!.id;
+    const top = C.pile.at(-1)!;
+    const wrong = C.P[b].find((s) => cbVal(s.c) !== cbVal(top));
+    if (wrong) act(st, b, { type: 'cbsnap', id: wrong.id });
+    expect(clockTurn(st).key).toBe(k0);
+    act(st, a, { type: 'cbdiscard' });
+    if (C.power) act(st, a, { type: 'cbskip' });
+    expect(clockTurn(st).key).not.toBe(k0);
+  });
+
+  it('wer beim Ansehen einen KI-Platz übernimmt, sieht selbst zwei Karten an', () => {
+    const { st } = table(3, 38);
+    const seat = st.players[1];
+    seat.bot = true;
+    act(st, seat.id, { type: 'cblook', ids: st.cb!.P[seat.id].slice(0, 2).map((s) => s.id) });
+    expect(seat.ready).toBe(true);
+    takeSeat(st, seat.id, 'Neu');
+    expect(seat.ready).toBe(false);
+    expect(st.phase).toBe('peek');
+  });
+
+  it('zwei Kamikaze-Hände mit zwei Decks bekommen beide 0', () => {
+    const { st, C } = table(7, 36);
+    lookAll(st);
+    const [x, y] = st.players.map((p) => p.id);
+    C.P[x].forEach((s, i) => (s.c = ['HD', 'DD', 'SK', 'CK'][i]));
+    C.P[y].forEach((s, i) => (s.c = ['HD:2', 'DD:2', 'SK:2', 'CK:2'][i]));
+    // Alle anderen rufen nichts, der Stapel ist gleich leer
+    C.deck.splice(0, C.deck.length - 1);
+    const p = cur(st);
+    act(st, p, { type: 'cbdraw', from: 'deck' });
+    act(st, p, { type: 'cbdiscard' });
+    if (C.power) act(st, p, { type: 'cbskip' });
+    const r = st.result as CaboResult;
+    expect(r.scores[x]).toBe(0);
+    expect(r.scores[y]).toBe(0);
+    st.players.slice(2).forEach((q) => expect(r.scores[q.id]).toBe(50));
+  });
+});
+
 /** Alle erlaubten Züge (zufällig, ohne Wissen). */
 function moves(st: State, pid: string): Action[] {
   const C = st.cb as CbState;
@@ -269,7 +450,8 @@ function moves(st: State, pid: string): Action[] {
   const out: Action[] = [];
   if (!row) return out;
   if (st.phase === 'peek') {
-    if (!st.players.find((p) => p.id === pid)?.ready) out.push({ type: 'cblook', ids: row.slice(0, 2).map((s) => s.id) });
+    if (!st.players.find((p) => p.id === pid)?.ready)
+      out.push({ type: 'cblook', ids: row.slice(0, 2).map((s) => s.id) });
     return out;
   }
   if (st.phase !== 'play') return out;
@@ -279,7 +461,8 @@ function moves(st: State, pid: string): Action[] {
   if (C.power) {
     out.push({ type: 'cbskip' });
     if (C.power.kind === 'peek' && row.length) out.push({ type: 'cbpeek', id: row[0].id });
-    if (C.power.kind === 'spy' && others.length) out.push({ type: 'cbspy', to: others[0].id, id: C.P[others[0].id][0].id });
+    if (C.power.kind === 'spy' && others.length)
+      out.push({ type: 'cbspy', to: others[0].id, id: C.P[others[0].id][0].id });
     if (C.power.kind === 'swap' && others.length && row.length)
       out.push({ type: 'cbblind', id: row[0].id, to: others[0].id, oid: C.P[others[0].id][0].id });
     return out;
@@ -314,7 +497,9 @@ describe('Cabo: zufällige Partien', () => {
         const all = st.players.flatMap((p) => moves(st, p.id).map((a) => [p.id, a] as const));
         assert.ok(all.length, `festgefahren in ${st.phase}`);
         // Schnappen und Cabo selten, sonst endet nie etwas oder alles sofort
-        const pool = all.filter(([, a]) => a.type !== 'cbsnap' || rng() < 0.05).filter(([, a]) => a.type !== 'cbcabo' || rng() < 0.08);
+        const pool = all
+          .filter(([, a]) => a.type !== 'cbsnap' || rng() < 0.05)
+          .filter(([, a]) => a.type !== 'cbcabo' || rng() < 0.08);
         const [pid, a] = (pool.length ? pool : all)[Math.floor(rng() * (pool.length || all.length))];
         assert.equal(act(st, pid, a, rng), null, `${a.type} von ${pid}`);
         if (a.type === 'cbsnap') stats.snaps++;

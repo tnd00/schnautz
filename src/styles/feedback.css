@@ -968,7 +968,8 @@ body.logopen #fly .bubble {
   display: block;
 }
 .zer-ring.mark::after {
-  content: '💩';
+  /* Zeichen je Spiel (💩, 🤡, 👑) setzt src/ui/ceremony.ts */
+  content: var(--zmark, '💩');
   position: absolute;
   right: -16px;
   top: -20px;

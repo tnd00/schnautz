@@ -10,6 +10,31 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.5',
+    date: '2026-11-24',
+    title: 'Cabo',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Neues Spiel: Cabo für 2 bis 8 Leute, ab sieben mit zwei Decks. Wer am Ende die wenigsten Punkte hat, gewinnt.',
+          'Vier verdeckte Karten, zu Beginn siehst du dir zwei davon an. Sie blitzen nur kurz auf, danach musst du sie dir merken. Die KIs vergessen auch mal etwas.',
+          'Ziehen, tauschen oder ablegen: 7 und 8 zeigen dir eine eigene Karte, mit 9 und 10 spionierst du bei anderen, mit Bube und Dame tauschst du blind. Mehrere gleiche Karten wirfst du auf einmal ab, aber wehe, sie passen nicht.',
+          'Ruf Cabo, wenn du glaubst, du hast am wenigsten. Liegst du falsch, gibt es 10 Strafpunkte obendrauf. Dazu Kamikaze und die Rettung von genau 100 auf 50.',
+          'In der Lobby stellst du ein, ob bis 100 oder nur bis 50 gespielt wird, und ob man außer der Reihe schnappen darf.',
+          'Wer gewinnt, wird Cabo-König: Krönung mit goldenem Spotlicht, fallender Krone und Fanfare. Die Krone bleibt, bis jemand anderes gewinnt.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Durak: Bei der Zeremonie fällt jetzt wirklich die Narrenkappe auf den Platz.',
+          'Ist eine Revanche offen, steht zu Beginn der nächsten Partie auch bei Durak der Hinweis zum Duell.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.4',
     date: '2026-11-24',
     title: 'Durak',

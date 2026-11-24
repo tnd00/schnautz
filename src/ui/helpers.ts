@@ -5,6 +5,7 @@ import { App } from './app';
 import { esc } from './dom';
 import { szResult, unreachable } from '../game/games';
 import { dkLive, dkWaiting } from '../game/durak';
+import { cbWaiting } from '../game/cabo';
 
 export function schnautzResult(v: View): SchnautzResult | null {
   return szResult(v.result);
@@ -32,8 +33,19 @@ export const turnId = (v: View): string | null => (v.turn >= 0 ? (v.players[v.tu
 export const dealerId = (v: View): string | null => (v.dealer >= 0 ? (v.players[v.dealer]?.id ?? null) : null);
 export const myTurn = (v: View): boolean => v.phase === 'play' && turnId(v) === App.me;
 /** Muss ich gerade etwas tun? Bei Durak können mehrere dran sein, auch wer nur fertig sagen soll. */
-export const myMoveNow = (v: View): boolean =>
-  v.game === 'durak' ? v.phase === 'play' && dkWaiting(v).includes(App.me) : myTurn(v);
+export function myMoveNow(v: View): boolean {
+  switch (v.game) {
+    case 'durak':
+      return v.phase === 'play' && dkWaiting(v).includes(App.me);
+    case 'cabo':
+      return v.phase === 'play' && cbWaiting(v).includes(App.me);
+    case 'shithead':
+    case 'schnautz':
+      return myTurn(v);
+    default:
+      return unreachable(v.game);
+  }
+}
 
 /** Verbform passend zu "Du" oder einem Namen, zum Beispiel vb(id, ' legst', ' legt'). */
 export const vb = (id: string | null | undefined, du: string, er: string): string => (id === App.me ? du : er);
@@ -53,7 +65,7 @@ export function seatOrder(v: View): Player[] {
 
 /** Spielen gerade nur noch KIs? Dann darf der Host die Partie abkürzen. */
 export function onlyBotsPlaying(v: View): boolean {
-  if (v.phase !== 'play' && v.phase !== 'choose' && v.phase !== 'swap') return false;
+  if (v.phase !== 'play' && v.phase !== 'choose' && v.phase !== 'swap' && v.phase !== 'peek') return false;
   const live = livePlayers(v);
   return live.length > 0 && live.every((p) => p.bot);
 }
@@ -65,6 +77,8 @@ export function livePlayers(v: View): Player[] {
       return v.players.filter((p) => !p.out && !!v.sh?.P[p.id] && !v.sh.finished.includes(p.id));
     case 'durak':
       return v.players.filter((p) => dkLive(v, p.id));
+    case 'cabo':
+      return v.players.filter((p) => !!v.cb?.P[p.id]);
     case 'schnautz':
       return v.players.filter((p) => !p.out);
     default:

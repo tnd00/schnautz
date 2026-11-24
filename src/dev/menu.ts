@@ -160,7 +160,9 @@ function jumpsHTML(): string {
   }
   const list = JUMPS[st.game].map((j) => btn(j.id, j.label));
   if (st.game === 'shithead' && st.phase === 'swap') list.push(btn('force', 'Tauschrunde beenden'));
-  if (st.game === 'schnautz' && st.phase === 'end') list.push(btn('force', 'Nächste Runde sofort'));
+  if ((st.game === 'schnautz' || st.game === 'cabo') && st.phase === 'end')
+    list.push(btn('force', 'Nächste Runde sofort'));
+  if (st.game === 'cabo' && st.phase === 'peek') list.push(btn('force', 'Ansehen beenden'));
   list.push(...mine);
   if (CLOCK.key) list.push(btn('timeup', 'Zeit sofort ablaufen lassen'));
   if (rematchBot(st)) list.push(btn('rematch-bot', 'KI fordert Revanche'));

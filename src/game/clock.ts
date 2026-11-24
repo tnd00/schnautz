@@ -33,6 +33,8 @@ export function clockTurn(st: State): ClockTurn {
   const i = st.phase === 'choose' ? st.dealer : st.phase === 'play' ? st.turn : -1;
   const p = st.players[i];
   if (!p || p.bot || p.out || st.sh?.finished.includes(p.id)) return none;
+  // Cabo: Die Uhr gilt für den ganzen Zug (ziehen, tauschen oder ablegen, Fähigkeit), Schnappen ändert nichts
+  if (st.game === 'cabo') return { ids: [p.id], key: `${base}|${i}|t${st.cb?.t ?? 0}`, swap: false };
   // Jeder Zug setzt `last` neu, auch wenn dieselbe Person nochmal dran ist (etwa nach einer 10)
   return { ids: [p.id], key: `${base}|${i}|${st.last?.n ?? 0}`, swap: false };
 }

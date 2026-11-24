@@ -66,7 +66,8 @@ export function viewFor(st: State, pid: string): View {
     Object.entries(C.P).forEach(([id, row]) => {
       P[id] = row.map((s) => (reveal || s.up ? { ...s } : { id: s.id }));
     });
-    const hold = C.hold && (C.hold.by === pid || C.hold.from === 'pile') ? C.hold : C.hold && { by: C.hold.by, from: C.hold.from };
+    const hold =
+      C.hold && (C.hold.by === pid || C.hold.from === 'pile') ? C.hold : C.hold && { by: C.hold.by, from: C.hold.from };
     const bot = !!st.players.find((p) => p.id === pid)?.bot;
     const { know, reveal: shows, ...rest } = C;
     cb = {
@@ -75,7 +76,8 @@ export function viewFor(st: State, pid: string): View {
       P,
       hold,
       ...(bot ? { know: know[pid] ?? {} } : {}),
-      ...(shows[pid] ? { reveal: shows[pid] } : {}),
+      // Nur kurz: Danach muss man es sich merken, auch nach Neuladen steht es nicht mehr in der Ansicht
+      ...(shows[pid] && C.t <= shows[pid].t + 1 ? { reveal: shows[pid] } : {}),
     };
   }
   return {

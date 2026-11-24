@@ -306,6 +306,135 @@
       "Hoher Trumpf. Ich schäme mich kein bisschen 😎",
       "Das war mein bester Trumpf. Hoffentlich lohnt es sich.",
       "Schachmatt. Falsches Spiel, gleiche Wirkung."
+    ],
+    "cbCabo": [
+      "Cabo! Ich hab alles im Kopf 😎",
+      "Cabo. Ihr dürft nochmal, aber es bringt nichts.",
+      "Cabo! Ich hab nachgezählt. Zweimal.",
+      "Ich ruf Cabo. Viel Glück euch, ihr braucht es.",
+      "Cabo. Meine Karten sind so klein, die sieht man kaum.",
+      "Cabo! Jetzt wird abgerechnet.",
+      "Ich glaub, das reicht. Cabo!",
+      "Cabo. Bitte nicht weinen, wenn ihr aufdeckt.",
+      "Cabo! Rechnet schon mal nach, ich warte.",
+      "Cabo. Ich bin mir sicher. Ziemlich sicher. Ja."
+    ],
+    "cbCaboFail": [
+      "Wie, ihr habt weniger? Das ist doch Betrug.",
+      "Ich war mir so sicher. Ehrlich.",
+      "Zehn Punkte extra. Na toll 😤",
+      "Ich hab mich nicht verzählt. Die Karten haben sich verzählt.",
+      "Okay, das Cabo war etwas voreilig.",
+      "Wer hat an meinen Karten rumgefummelt?",
+      "Mein Gedächtnis hatte heute frei.",
+      "Das war ein Test. Ihr habt bestanden.",
+      "Ich nehm die zehn Punkte. Mit Würde.",
+      "Nächstes Mal zähl ich vorher. Vielleicht."
+    ],
+    "cbForgot": [
+      "Ich musste nachgucken. Hatte ich glatt vergessen 🙈",
+      "Ich hatte es mir gemerkt. Also bis eben.",
+      "Mein Gedächtnis ist wie ein Sieb. Ein sehr großes Sieb.",
+      "Die kannte ich eigentlich schon. Eigentlich.",
+      "Nur zur Sicherheit nachgeschaut. Ich hatte keine Ahnung mehr.",
+      "Wer hat meine Erinnerung gelöscht?",
+      "Ich wusste es! Dann hab ich es vergessen. Jetzt weiß ich es wieder.",
+      "Kurz nachschauen schadet nie. Außer meinem Ruf.",
+      "Ups. Die hatte ich ganz anders in Erinnerung.",
+      "Mein Arbeitsspeicher war voll. Mit Snacks."
+    ],
+    "cbSpy": [
+      "Ich hab nur ganz kurz geguckt 👀",
+      "Interessant. Sehr interessant.",
+      "Aha! Das erklärt einiges.",
+      "Keine Sorge, dein Geheimnis ist bei mir sicher. Fast.",
+      "Danke für den Einblick 😏",
+      "Ich sag nichts. Ich merk es mir nur.",
+      "Oh. Oh nein. Für dich, nicht für mich.",
+      "Gespickt und gespeichert.",
+      "Schöne Karte hast du da. Wäre schade, wenn ihr was passiert.",
+      "Spion im Einsatz. Mission erfüllt 🕵️"
+    ],
+    "cbBlind": [
+      "Tausch! Ich hoffe, du hängst nicht an der Karte 😈",
+      "Die nehm ich mal mit. Du kriegst dafür meine.",
+      "Viel Spaß mit deiner neuen Karte. Hab ich extra für dich ausgesucht.",
+      "Blind getauscht. Hingucken ist was für Feiglinge.",
+      "Ich hab dir was Schönes dagelassen. Oder was Schlimmes.",
+      "Dein Gedächtnis kannst du jetzt wegwerfen.",
+      "Wer nicht aufpasst, wird umsortiert.",
+      "Ein kleiner Tausch unter Freunden. Na ja, unter Gegnern.",
+      "Hoppla, da hab ich wohl was vertauscht 😇",
+      "Merk dir das. Ach nee, geht ja nicht mehr."
+    ],
+    "cbKing": [
+      "Die Krone steht mir, oder? 👑",
+      "Ihr dürft mich ab jetzt Majestät nennen.",
+      "Cabo-König. Ich wusste es von Anfang an.",
+      "Verbeugen geht auch im Sitzen.",
+      "Gedächtnis wie ein Elefant, Krone wie ein König.",
+      "Der Thron ist bequem. Ich bleib noch ein bisschen.",
+      "Untertanen, ich danke euch für dieses Spiel.",
+      "Wer mich stürzen will, darf es gern versuchen 😏",
+      "Kleinste Summe, größtes Ego. Passt doch.",
+      "Ein König braucht Untertanen. Schön, dass ihr da seid."
+    ],
+    "cbKamikaze": [
+      "Kamikaze! Bitte alle fünfzig Punkte aufschreiben 💥",
+      "Tut mir leid für eure Punkte. Tut es nicht.",
+      "Bumm. Das war für alle Blindtausche.",
+      "Null für mich, fünfzig für euch 😈",
+      "Kleines Mitbringsel für jeden. Fünfzig Stück, bitte nicht bedanken.",
+      "Das hab ich die ganze Runde geplant. Na gut, seit zwei Zügen.",
+      "Kamikaze! Ich wollte schon immer mal etwas sprengen.",
+      "Schaut nicht so. Das sind nur Punkte.",
+      "Weltuntergang am Tisch. Ich hab gute Plätze.",
+      "Einmal Kamikaze für alle, bitte. Geht aufs Haus."
+    ],
+    "mockCaboFail": [
+      "Popcorn raus, das war großes Kino 🍿",
+      "Zehn Punkte extra! Gut gemacht. Also für uns.",
+      "So selbstbewusst und so viele Punkte. Respekt.",
+      "War das Cabo oder ein Schluckauf?",
+      "Mutig, mutig. Ich hätte noch gewartet. Also ewig.",
+      "Ich hab es geahnt. Ich sag ja nie was 😏",
+      "Kopfrechnen ist nicht jedermanns Sache.",
+      "Rufen kann jeder. Gewinnen ist die Kür.",
+      "Danke für die Unterhaltung. Und für die zehn Punkte.",
+      "Voll daneben. Aber selbstbewusst daneben."
+    ],
+    "mockReset": [
+      "Genau hundert? So viel Glück sollte verboten sein.",
+      "Auf den Punkt genau. Hast du da etwa gezielt? 🎯",
+      "Das Spiel mag dich wohl. Mich mag es nie.",
+      "Ich will auch so ein Glück. Wo kann man das kaufen?",
+      "Das war kein Können, das war Glück. Reines Glück.",
+      "Glückspilz! Aber nur einmal pro Partie, merk dir das.",
+      "Wo ist hier die Beschwerdestelle? Das war geschenkt.",
+      "Frechheit. Ich hätte auch gern genau hundert.",
+      "Fast raus und plötzlich wieder mittendrin. Unfassbar."
+    ],
+    "cbSnap": [
+      "Schnapp! Zu langsam, ihr Lieben ⚡",
+      "Die passte. Weg damit.",
+      "Schnelle Finger, kleine Hand 😎",
+      "Geschnappt! Wer blinzelt, verliert.",
+      "Eine Karte weniger. Danke für die Vorlage.",
+      "Ich hab aufgepasst. Ihr offenbar nicht.",
+      "Zack, die ist weg.",
+      "Schnappen kann ich im Schlaf.",
+      "Die lag da so einladend."
+    ],
+    "cbSnapFail": [
+      "Oh. Die passte gar nicht.",
+      "Zu schnell geschnappt. Das kommt vor.",
+      "Hat das jemand gesehen? Nein? Gut.",
+      "Strafkarte. Ich nenne das Investition.",
+      "Meine Finger waren schneller als mein Kopf.",
+      "Das war ein Reflex. Ein schlechter.",
+      "Ups. Ich wollte nur mal testen, ob ihr aufpasst.",
+      "Falsche Karte, richtige Blamage 🙈",
+      "Nicht lachen. Ich seh euch."
     ]
   }
 }

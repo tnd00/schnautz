@@ -293,6 +293,8 @@ export interface CbKnow {
 /** Eine kurze Einblendung: diese Plätze sehe nur ich für ein paar Sekunden */
 export interface CbReveal {
   id: number;
+  /** Zug, in dem es gezeigt wurde: Die Ansicht schickt es nur bis zum Ende des nächsten Zugs mit */
+  t: number;
   items: { owner: string; slot: number; c: Card }[];
 }
 
@@ -438,19 +440,19 @@ export type LogEntry = LogBase &
     | { k: 'dkout'; place: number }
     | { k: 'dkend'; hits?: Record<string, { q: number; name: string }> }
     | { k: 'cbdeal'; r: number; start: string }
-    | { k: 'cblook' }
+    | { k: 'cblook'; ids?: number[] }
     | { k: 'cbdraw'; from: 'deck' | 'pile'; c?: Card }
-    | { k: 'cbswap'; out: Card[]; ok: boolean; slots: number; up?: boolean; pen?: boolean }
+    | { k: 'cbswap'; out: Card[]; ok: boolean; slots: number; ids?: number[]; up?: boolean; pen?: boolean }
     | { k: 'cbdiscard'; c: Card; power?: 'peek' | 'spy' | 'swap' }
-    | { k: 'cbpeek' }
-    | { k: 'cbspy'; to: string; tn?: string }
+    | { k: 'cbpeek'; id?: number }
+    | { k: 'cbspy'; to: string; tn?: string; id?: number }
     | { k: 'cbblind'; to: string; tn?: string; id: number; oid: number }
     | { k: 'cbskip' }
     | { k: 'cbcabo' }
-    | { k: 'cbsnap'; c: Card; ok: boolean }
+    | { k: 'cbsnap'; c: Card; ok: boolean; id?: number }
     | { k: 'cbround'; scores: Record<string, number>; caller: string | null; ok: boolean | null; kami: string | null }
     | { k: 'cbreset' }
-    | { k: 'cbend' }
+    | { k: 'cbend'; again?: boolean }
     // Nur der Host schreibt ihn direkt, es gibt keine Aktion dafür. Der Verlauf zeigt ihn nicht
     | { k: 'dev'; fx: DevFx; s?: string; to?: string }
   );

@@ -441,11 +441,23 @@ export function botChatter(): void {
     const bs = st.players.filter((p) => p.bot && !p.gone);
     return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null;
   };
-  // Am Partieende reagiert die KI erst, wenn die Zeremonie den Shithead oder Durak enthüllt hat
-  const endWait = fresh.some((e) => e.k === 'shend' || e.k === 'dkend') ? zerRevealDelay(fresh, seqMsOf(fresh)) : 0;
+  /** Eine KI außer `id`, damit niemand über sich selbst spottet */
+  const otherBot = (id: string | null | undefined): Player | null => {
+    const bs = st.players.filter((p) => p.bot && !p.gone && p.id !== id);
+    return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null;
+  };
+  // Am Partieende reagiert die KI erst, wenn die Zeremonie den Shithead, Durak oder Cabo-König enthüllt hat
+  const endWait = fresh.some((e) => e.k === 'shend' || e.k === 'dkend' || e.k === 'cbend')
+    ? zerRevealDelay(fresh, seqMsOf(fresh))
+    : 0;
   // Durak: Letzter Angriff, Rausgehen und Ende kommen zusammen. Dann gehört die Bühne dem Ende,
   // Sprüche wie "Wer bleibt übrig?" passen nicht mehr, auch nicht bei Unentschieden
   const dkOver = fresh.some((e) => e.k === 'dkend');
+  // Cabo: Die letzte Runde, der Rückfall auf 50 und das Ende kommen zusammen. Wird eine KI König,
+  // gehört ihr die Bühne und Sprüche zur Runde bleiben aus
+  const cbKing = bot(fresh.find((e) => e.k === 'cbend')?.p);
+  const cbKingTalks = !!cbKing && !cbKing.left;
+  const cbKami = fresh.some((e) => e.k === 'cbround' && !!e.kami);
   const games = st.games;
   /** Noch dieselbe Partie in derselben Phase? Sonst landet Spott in der nächsten Tauschrunde. */
   const still = (phase?: string) => !!H.st && H.st.games === games && (!phase || H.st.phase === phase);
@@ -628,6 +640,33 @@ export function botChatter(): void {
           snd(tossBot(), 'sad', 0.4);
         }
         break;
+      case 'cbround':
+        // Kamikaze hat kein Ergebnis für den Cabo-Ruf (ok bleibt null), genauso wie eine Runde ohne Ruf
+        if (e.kami && !bot(e.kami)) {
+          emo(anyBot(), '😭', 0.45, endWait);
+          snd(tossBot(), 'sad', 0.3);
+        }
+        if (e.caller && e.ok === false && !bot(e.caller)) {
+          if (!cbKingTalks) say(anyBot(), 'mockCaboFail', 0.6, endWait);
+          emo(anyBot(), '😂', 0.35, endWait);
+          toss(tossBot(), 'tomato', e.caller, 0.25);
+          snd(tossBot(), 'ooh', 0.2);
+        }
+        break;
+      case 'cbreset':
+        // Schiebt eine Kamikaze jemanden genau auf 100, gehört der Spruch der Kamikaze
+        if (!cbKingTalks && !cbKami) say(otherBot(e.p), 'mockReset', 0.35, endWait);
+        break;
+      case 'cbsnap':
+        if (!e.ok && !bot(e.p)) emo(anyBot(), '😂', 0.25);
+        break;
+      case 'cbend':
+        if (e.p && !bot(e.p)) {
+          emo(anyBot(), '👏', 0.45, endWait);
+          toss(tossBot(), 'crown', e.p, 0.35);
+          snd(tossBot(), 'clap', 0.3);
+        }
+        break;
       case 'toss': {
         // Nur Treffer von Menschen auf KIs, so gibt es kein Hin und Her zwischen KIs
         const hit = realBot(e.to);
@@ -721,6 +760,38 @@ export function botChatter(): void {
       case 'dkend':
         say(bot(e.p), 'dkDurak', 0.8, endWait);
         emo(bot(e.p), '😭', 0.25, endWait);
+        break;
+      case 'cbcabo':
+        snd(realBot(e.p), 'roll', 0.2);
+        say(bot(e.p), 'cbCabo', 0.7);
+        break;
+      // Endet mit diesem Zug die Partie und wird eine KI König, gehört der Chat ihrem Spruch
+      case 'cbpeek':
+        // Die KI vergisst mit Absicht und muss ab und zu zugeben, dass sie nachschauen musste
+        if (!cbKingTalks) say(bot(e.p), 'cbForgot', 0.1);
+        break;
+      case 'cbspy':
+        if (!cbKingTalks) say(bot(e.p), 'cbSpy', 0.2);
+        break;
+      case 'cbblind':
+        if (!bot(e.p)) break;
+        if (!cbKingTalks) say(bot(e.p), 'cbBlind', 0.3);
+        if (!bot(e.to)) emo(bot(e.p), '🫵', 0.2);
+        break;
+      case 'cbsnap':
+        say(bot(e.p), e.ok ? 'cbSnap' : 'cbSnapFail', e.ok ? 0.4 : 0.6);
+        break;
+      case 'cbround':
+        // Kamikaze geht vor, dann der eigene Cabo-Ruf
+        if (e.kami) {
+          say(bot(e.kami), 'cbKamikaze', 0.85, endWait);
+          snd(realBot(e.kami), 'horn', 0.3);
+        } else if (!cbKingTalks && e.caller && e.ok === false) say(bot(e.caller), 'cbCaboFail', 0.7, endWait);
+        else if (!cbKingTalks && e.caller && e.ok) say(bot(e.caller), 'roundWin', 0.3, endWait);
+        break;
+      case 'cbend':
+        say(bot(e.p), 'cbKing', 0.8, endWait);
+        snd(realBot(e.p), 'horn', 0.4);
         break;
     }
   });

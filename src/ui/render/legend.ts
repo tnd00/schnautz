@@ -1,5 +1,14 @@
 /* Übersicht, was die Karten können. Am Desktop an der Seite, außerdem oben im Regelfenster. */
-import { DEFAULT_RULES, DK_FULL_DECK, DK_MAX_ATTACK, SH_WIN_MS } from '../../game/constants';
+import {
+  CB_KAMI,
+  CB_PENALTY,
+  CB_RESET_AT,
+  CB_RESET_TO,
+  DEFAULT_RULES,
+  DK_FULL_DECK,
+  DK_MAX_ATTACK,
+  SH_WIN_MS,
+} from '../../game/constants';
 import type { GameKind, Rules, View } from '../../game/types';
 import { $, esc, isMobile } from '../dom';
 import { LS } from '../storage';
@@ -21,6 +30,8 @@ function legendItems(game: GameKind, rules: Rules): LegendItem[] {
       return legendDurak(rules);
     case 'schnautz':
       return legendSchnautz(rules);
+    case 'cabo':
+      return legendCabo(rules);
     default:
       return unreachable(game);
   }
@@ -107,6 +118,34 @@ function legendSchnautz(rules: Rules): LegendItem[] {
   return it;
 }
 
+function legendCabo(rules: Rules): LegendItem[] {
+  const R = rules.cb ?? DEFAULT_RULES.cb;
+  const it: LegendItem[] = [
+    ['A', 'Wenig ist gut', 'Ass 1, 2 bis 10 wie draufsteht, Bube 11, Dame 12.'],
+    ['K', 'König 13 oder 0', 'Schwarz zählt 13, Rot zählt 0 und ist Gold wert.', 'r'],
+    ['7/8', 'Eigene ansehen', 'Vom Stapel ziehen, ablegen und eine eigene Karte ansehen.'],
+    ['9/10', 'Fremde ansehen', 'Ablegen und bei jemand anderem eine Karte ansehen.'],
+    ['B/D', 'Blind tauschen', 'Ablegen und eine eigene Karte ungesehen gegen eine fremde tauschen.'],
+    ['2×', 'Gleiche zusammen', 'Gleiche Werte auf einmal tauschen. Daneben kostet eine Strafkarte.', 'e'],
+    [
+      '📣',
+      'Cabo rufen',
+      `Statt zu ziehen. Alle anderen sind noch einmal dran. Nicht am wenigsten heißt ${CB_PENALTY} obendrauf.`,
+      'e',
+    ],
+    ['💥', 'Kamikaze', `Zwei Damen und zwei schwarze Könige geben allen anderen ${CB_KAMI}, dir 0.`, 'e'],
+    [
+      `${CB_RESET_AT}`,
+      `Zurück auf ${CB_RESET_TO}`,
+      `Genau ${CB_RESET_AT} Punkte fallen einmal pro Partie auf ${CB_RESET_TO}.`,
+      'e',
+    ],
+  ];
+  if (R.snap)
+    it.push(['⚡', 'Schnappen', 'Gleichen Wert jederzeit auf die Ablage werfen. Daneben kostet eine Strafkarte.', 'e']);
+  return it;
+}
+
 /** Raster mit Kartensymbol und Erklärung, für Seitenleiste und Regelfenster. */
 export function legendGrid(game: GameKind, rules: Rules): string {
   const rows = legendItems(game, rules).map(
@@ -124,6 +163,8 @@ export function legendTitle(game: GameKind): string {
       return 'Das Wichtigste';
     case 'schnautz':
       return 'Kartenwerte';
+    case 'cabo':
+      return 'Werte und Fähigkeiten';
     default:
       return unreachable(game);
   }

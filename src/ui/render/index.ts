@@ -15,6 +15,7 @@ import { fitDesktop } from '../fit';
 import { GAME_NAME, unreachable } from '../../game/games';
 import type { View } from '../../game/types';
 import { renderDk, renderDkOverlay } from './durak';
+import { renderCb, renderCbOverlay } from './cabo';
 
 /** Was jedes Spiel am Tisch zeichnet und ob die Leiste oben und das Abzeichen am Namen dazugehören. */
 function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: boolean; badge: boolean } {
@@ -25,6 +26,9 @@ function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: bo
     case 'durak':
       // Auch bei Durak zeigen die Kacheln alles, eine Leiste oben wäre doppelt
       return { draw: () => renderDk(v), overlay: () => renderDkOverlay(v), scorebar: false, badge: false };
+    case 'cabo':
+      // Die Leiste oben zeigt den Punktestand aller, das ist bei Cabo das Wichtigste
+      return { draw: () => renderCb(v), overlay: () => renderCbOverlay(v), scorebar: true, badge: false };
     case 'schnautz':
       return { draw: () => renderGame(v), overlay: () => renderOverlay(v), scorebar: true, badge: true };
     default:

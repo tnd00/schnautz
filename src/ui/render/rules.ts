@@ -1,5 +1,16 @@
-import { DEFAULT_RULES, DK_FULL_DECK, SH_WIN_MS } from '../../game/constants';
-import type { DkRules, GameKind, Rules, ShRules } from '../../game/types';
+import {
+  CB_HAND,
+  CB_KAMI,
+  CB_PENALTY,
+  CB_RESET_AT,
+  CB_RESET_TO,
+  CB_TARGETS,
+  CB_TWO_DECKS,
+  DEFAULT_RULES,
+  DK_FULL_DECK,
+  SH_WIN_MS,
+} from '../../game/constants';
+import type { CbRules, DkRules, GameKind, Rules, ShRules } from '../../game/types';
 import { App } from '../app';
 import { num } from '../dom';
 import { legendGrid, legendTitle } from './legend';
@@ -33,12 +44,14 @@ export function rulesHTML(game?: GameKind): string {
   );
 }
 
-/** Zeitlimit je Spiel: Durak hat keine Tauschrunde und keine 4er. */
+/** Zeitlimit je Spiel: Durak hat keine Tauschrunde und keine 4er, Cabo hat statt der Tauschrunde das Ansehen. */
 function timeText(g: GameKind, s: number): string {
   const ki = 'Läuft die Zeit ab, macht die KI einen Zug für dich, danach spielst du ganz normal weiter.';
   switch (g) {
     case 'durak':
       return `Jeder Zug hat ${s} Sekunden. ${ki} Solange Karten fliegen, steht die Uhr.`;
+    case 'cabo':
+      return `Jeder Zug hat ${s} Sekunden, das Ansehen zu Beginn jeder Runde ${s * 2}. ${ki} Solange Karten fliegen, steht die Uhr.`;
     case 'shithead':
     case 'schnautz':
       return `Jeder Zug hat ${s} Sekunden, die Tauschrunde ${s * 2}. ${ki} Solange Karten fliegen oder 4er reinkommen, steht die Uhr.`;
@@ -55,6 +68,8 @@ function rulesOf(g: GameKind, r: Rules, glance: string): string {
       return rulesDurak(r.dk ?? DEFAULT_RULES.dk, glance);
     case 'schnautz':
       return rulesSchnautz(r, glance);
+    case 'cabo':
+      return rulesCabo(r.cb ?? DEFAULT_RULES.cb, glance);
     default:
       return unreachable(g);
   }
@@ -172,6 +187,80 @@ function rulesDurak(R: DkRules, glance: string): string {
     sec(
       'Revanche',
       'Der Durak kann im Ergebnisfenster Revanche gegen den Sieger fordern. Das zählt als bereit, der Sieger muss annehmen. In der nächsten Partie gewinnt das Duell, wer den besseren Platz holt.',
+    )
+  );
+}
+
+function rulesCabo(R: CbRules, glance: string): string {
+  const targets = CB_TARGETS.join(' oder ');
+  return (
+    '<h2>So geht <span class="r">Cabo</span></h2>' +
+    `<p class="lead">Ein Spiel fürs Gedächtnis und für Pokerfaces. Gespielt wird mit 52 Karten, ab ${CB_TWO_DECKS} Leuten mit zwei Decks.</p>` +
+    glance +
+    sec(
+      'Worum es geht',
+      'Sammle so wenig Punkte wie möglich. Deine Karten liegen verdeckt vor dir und du siehst sie fast nie. Wer sich merkt, was wo liegt, wird die teuren Karten los.',
+    ) +
+    sec(
+      'Kartenwerte',
+      'Das Ass zählt 1, die 2 bis 10 zählen, was draufsteht. Der Bube zählt 11, die Dame 12, der schwarze König 13.',
+      'Der rote König zählt 0 und ist die beste Karte im Spiel. Wer einen hat, sollte ihn nicht hergeben.',
+    ) +
+    sec(
+      'Aufbau',
+      `Jeder bekommt ${CB_HAND} verdeckte Karten in einer Reihe, eine Karte liegt offen auf der Ablage. Zu Beginn jeder Runde suchst du dir zwei deiner Karten aus und siehst sie dir an.`,
+      'Gezeigt werden sie nur ein paar Sekunden, danach musst du sie dir merken. Mitschreiben gilt nicht.',
+    ) +
+    sec(
+      'Dein Zug',
+      'Du ziehst vom Stapel oder nimmst die oberste Karte der Ablage. Die Karte tauschst du gegen eine deiner Karten, die alte kommt offen auf die Ablage. Eine Karte von der Ablage musst du tauschen, sie liegt danach offen vor dir.',
+      'Du darfst auch mehrere Karten mit gleichem Wert auf einmal gegen die gezogene tauschen. Dann liegen weniger Karten vor dir. Haben sie nicht alle den gleichen Wert, bleiben sie offen liegen, die gezogene geht auf die Ablage und du bekommst eine Strafkarte.',
+      'Eine Karte vom Stapel darfst du auch gleich wieder ablegen. Hat sie eine Fähigkeit, darfst du sie nutzen.',
+    ) +
+    sec(
+      'Fähigkeiten',
+      'Mit einer 7 oder 8 siehst du dir eine eigene Karte an.',
+      'Mit einer 9 oder 10 schaust du dir eine Karte von jemand anderem an.',
+      'Mit Bube oder Dame tauschst du eine deiner Karten blind gegen eine fremde. Angesehen wird dabei keine der beiden. Kanntest du deine Karte, weißt du danach, was jetzt drüben liegt.',
+      'Das geht nur mit Karten, die du vom Stapel ziehst und gleich ablegst. Du darfst die Fähigkeit auch verfallen lassen.',
+    ) +
+    sec(
+      'Cabo rufen',
+      'Glaubst du, dass du am wenigsten hast, rufst du statt zu ziehen Cabo. Alle anderen sind dann noch genau einmal dran, danach wird aufgedeckt.',
+      'Ist der Stapel leer, endet die Runde auch ohne Cabo.',
+    ) +
+    sec(
+      'Wertung',
+      `Am Ende zählt die Summe deiner Karten. Wer Cabo ruft und am wenigsten hat, bekommt 0 Punkte. Gleichstand reicht dafür. Hat jemand weniger, gibt es die eigene Summe plus ${CB_PENALTY} Strafpunkte. Großes Maul, große Strafe.`,
+      `Liegen bei jemandem genau zwei Damen und zwei schwarze Könige und sonst nichts, ist das Kamikaze. Alle anderen bekommen ${CB_KAMI} Punkte, die Person selbst 0. Das schlägt jeden Cabo-Ruf.`,
+      `Wer genau auf ${CB_RESET_AT} Punkte kommt, fällt auf ${CB_RESET_TO} zurück. Das klappt einmal pro Partie.`,
+    ) +
+    sec(
+      'Nächste Runde',
+      'Sind alle bereit oder sind 10 Sekunden um, geht es von selbst weiter. In der ersten Runde entscheidet der Zufall, wer anfängt. Danach fängt an, wer in der letzten Runde die wenigsten Punkte bekommen hat.',
+    ) +
+    sec(
+      'Ende',
+      `Kommt jemand über ${R.target} Punkte, ist die Partie vorbei. Wer dann die wenigsten Punkte hat, gewinnt und wird Cabo-König. Die Krone bleibt, bis jemand anderes eine Partie Cabo gewinnt.`,
+      `Bei Gleichstand entscheidet die letzte Runde. Ist auch die gleich, gibt es keinen Sieger und die Krone bleibt, wo sie ist. Die Zielpunkte (${targets}) stellt der Gastgeber in der Lobby ein.`,
+    ) +
+    (R.snap
+      ? sec(
+          'Schnappen',
+          'Liegt oben auf der Ablage eine Karte und du hast eine mit dem gleichen Wert, darfst du sie während der Runde jederzeit draufwerfen, auch wenn du nicht dran bist. Dann liegt eine Karte weniger vor dir.',
+          'Liegst du daneben, bleibt deine Karte offen liegen und du bekommst eine Strafkarte. Also erst denken, dann schnappen.',
+        )
+      : sec(
+          'Schnappen',
+          'Schnappen ist ein Schalter in der Lobby und normalerweise aus. Ist es an, darf jeder eine Karte mit dem gleichen Wert wie oben auf der Ablage jederzeit draufwerfen, auch außer der Reihe. Daneben kostet eine Strafkarte.',
+        )) +
+    sec(
+      'Die KI',
+      'Die KI schummelt nicht und vergisst auch mal was. Je länger sie eine Karte nicht gesehen hat, desto eher ist die Karte vergessen. Manchmal merkt sie sich sogar einen falschen Wert. Genau wie ihr nach dem dritten Bier.',
+    ) +
+    sec(
+      'Revanche',
+      'Wer am Ende die meisten Punkte hat, kann im Ergebnisfenster Revanche gegen den Cabo-König fordern. Das zählt als bereit, der König muss annehmen. In der nächsten Partie gewinnt das Duell, wer weniger Punkte holt.',
     )
   );
 }

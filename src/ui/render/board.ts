@@ -16,11 +16,15 @@ function cell(v: number | string, title: string): string {
   return `<span class="bv" title="${esc(title)}">${v}</span>`;
 }
 
-/** Bestenliste: Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt Deckel und 31. */
+/**
+ * Bestenliste: Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt Deckel und 31.
+ * Cabo hat Plätze, aber keinen Verlierer-Titel. An dessen Stelle stehen die Cabo-Rufe, die aufgingen.
+ */
 function placesGame(v: View): boolean {
   switch (v.game) {
     case 'shithead':
     case 'durak':
+    case 'cabo':
       return true;
     case 'schnautz':
       return false;
@@ -29,8 +33,16 @@ function placesGame(v: View): boolean {
   }
 }
 
+/** Cabo-Rufe: richtig gerufen von allen Rufen, kurz genug für die schmale Spalte. */
+function caboCalls(s: PlayerStats): string {
+  const n = num(s.cabos);
+  if (!n) return cell('·', 'Noch nie Cabo gerufen');
+  return cell(`${num(s.cabosOk)}/${n}`, `${num(s.cabosOk)} von ${n} Cabo-Rufen gingen auf`);
+}
+
 export function boardHTML(v: View): string {
   const sh = placesGame(v);
+  const cbo = v.game === 'cabo';
   const lost = (r: Row) => loserCount(v.game, r.p);
   const rows: Row[] = v.players.map((p) => ({ p, s: p.stats?.[v.game] ?? { games: 0, wins: 0 } }));
   rows.sort((a, b) =>
@@ -41,7 +53,7 @@ export function boardHTML(v: View): string {
   const head = sh
     ? [
         '🏆<small>Siege</small>',
-        `${LOSER_MARK[v.game]}<small>${LOSER_NAME[v.game]}</small>`,
+        cbo ? '📣<small>Cabo-Rufe</small>' : `${LOSER_MARK[v.game]}<small>${LOSER_NAME[v.game]}</small>`,
         'Ø<small>Platz</small>',
         '#<small>Partien</small>',
       ]
@@ -62,7 +74,7 @@ export function boardHTML(v: View): string {
       const vals = sh
         ? [
             cell(s.wins, 'Gewonnene Partien'),
-            cell(lost(r), `So oft ${LOSER_NAME[v.game]}`),
+            cbo ? caboCalls(s) : cell(lost(r), `So oft ${LOSER_NAME[v.game]}`),
             cell(s.games ? avgPlace(r).toFixed(1).replace('.', ',') : '·', 'Durchschnittlicher Platz'),
             ...(tips ? [cell(num(s.betPts), 'Punkte aus richtigen Tipps')] : []),
             cell(s.games, 'Gespielte Partien'),

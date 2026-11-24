@@ -1,10 +1,10 @@
 /*
- * Zeremonie für den Verlierer (Shithead, Durak): Bei Shithead fliegt die letzte Karte in Zeitlupe, dann wird es
- * dunkel, ein Spotlicht fällt auf den Platz des Verlierers, sein Zeichen (💩 oder 🤡) plumpst darauf, die Posaune
- * spielt und Konfetti fällt. Reine Darstellung, jeder Browser spielt sie selbst aus dem Logeintrag shend oder dkend.
- * Antippen beendet sie.
+ * Zeremonie am Partieende: Bei Shithead fliegt die letzte Karte in Zeitlupe, dann wird es dunkel, ein Spotlicht
+ * fällt auf den Platz des Verlierers, sein Zeichen (💩 oder 🤡) plumpst darauf, die Posaune spielt und Konfetti
+ * fällt. Bei Cabo ist es eine Krönung: goldener Ring um den neuen Cabo-König, die Krone fällt, Fanfare. Reine
+ * Darstellung, jeder Browser spielt sie selbst aus dem Logeintrag shend, dkend oder cbend. Antippen beendet sie.
  */
-import { LOSER_MARK, LOSER_NAME, unreachable } from '../game/games';
+import { LOSER_NAME, unreachable } from '../game/games';
 import type { GameKind, LogEntry, View } from '../game/types';
 import { confetti, dropOn } from './animations';
 import { App } from './app';
@@ -19,9 +19,9 @@ import { ZER_REVEAL_MS } from './shithead/ceremony-plan';
 import { sfx } from './sound';
 import { taunt } from './taunts';
 
-type EndEntry = Extract<LogEntry, { k: 'shend' | 'dkend' }>;
+type EndEntry = Extract<LogEntry, { k: 'shend' | 'dkend' | 'cbend' }>;
 
-const isEnd = (e: LogEntry): e is EndEntry => e.k === 'shend' || e.k === 'dkend';
+const isEnd = (e: LogEntry): e is EndEntry => e.k === 'shend' || e.k === 'dkend' || e.k === 'cbend';
 
 export const ZER = {
   /** Enthüllung läuft */
@@ -44,10 +44,18 @@ export const ZER = {
 const BROWN = ['#9c6b3a', '#b07a42', '#c08a50', '#d9a96b', '#e8c9a0'];
 /** Narrenfarben für den Durak */
 const JESTER = ['#e0362b', '#f3cd7d', '#2e8b57', '#4a6fd1', '#f6efdf', '#b3312a'];
+/** Gold für den Cabo-König */
+const GOLD = ['#f3cd7d', '#e8b64c', '#fff1c7', '#c9962e', '#f6efdf'];
 
 interface Look {
   colors: string[];
-  tone: 'brown' | 'red';
+  tone: 'brown' | 'red' | 'gold';
+  /** Was auf den Platz fällt */
+  mark: string;
+  /** Titel in der Meldung */
+  what: string;
+  /** Krönung statt Schande: Fanfare statt Posaune, der Ring leuchtet golden */
+  crown: boolean;
   self: string;
   other: string;
   count: (v: View, pid: string) => number;
@@ -56,10 +64,24 @@ interface Look {
 /** Wie die Zeremonie in diesem Spiel aussieht und klingt. */
 function lookOf(game: GameKind): Look {
   switch (game) {
+    case 'cabo':
+      return {
+        colors: GOLD,
+        tone: 'gold',
+        mark: '👑',
+        what: 'Cabo-König',
+        crown: true,
+        self: 'cbKingSelf',
+        other: 'cbKingOther',
+        count: (v, id) => num(pById(v, id)?.stats?.cabo?.wins),
+      };
     case 'durak':
       return {
         colors: JESTER,
         tone: 'red',
+        mark: '🤡',
+        what: LOSER_NAME.durak,
+        crown: false,
         self: 'dkLoserSelf',
         other: 'dkLoserOther',
         count: (v, id) => num(pById(v, id)?.dkc),
@@ -69,6 +91,9 @@ function lookOf(game: GameKind): Look {
       return {
         colors: BROWN,
         tone: 'brown',
+        mark: '💩',
+        what: LOSER_NAME.shithead,
+        crown: false,
         self: 'shLoserSelf',
         other: 'shLoserOther',
         count: (v, id) => num(pById(v, id)?.shc),
@@ -168,33 +193,35 @@ function reveal(v: View, pid: string, gen: number): void {
   z.hidden = false;
   z.classList.remove('slow');
   void z.offsetWidth;
+  const look = lookOf(v.game);
+  z.classList.toggle('crown', look.crown);
+  $opt<HTMLElement>('#zer .zer-ring')?.style.setProperty('--zmark', `'${look.mark}'`);
   z.classList.add('reveal');
   track();
-  ZER.stop = sfx('trombone');
+  ZER.stop = look.crown ? sfx('crown') : sfx('trombone');
+  if (look.crown) setTimeout(() => gen === ZER.gen && ZER.on && sfx('win'), 650);
   const calm = reduceMotion();
   const ring = $opt('#zer .zer-ring');
   setTimeout(
     () => {
       if (gen !== ZER.gen || !ZER.on) return;
       const el = panelFor(pid);
-      if (el && !calm && z.classList.contains('hole'))
-        dropOn(el, LOSER_MARK[v.game], () => ring?.classList.add('mark'));
+      if (el && !calm && z.classList.contains('hole')) dropOn(el, look.mark, () => ring?.classList.add('mark'));
       else ring?.classList.add('mark');
     },
     // Erst zoomt das Spotlicht heran, dann plumpst der Haufen
     moved ? CAR_GLIDE_MS + 300 : 500,
   );
   if (!calm) {
-    const loser = pid === App.me;
-    const first = firstOf(v) === App.me;
-    const look = lookOf(v.game);
+    const loser = pid === App.me && !look.crown;
+    const first = firstOf(v) === App.me || (look.crown && pid === App.me);
     setTimeout(() => {
       if (gen !== ZER.gen || !ZER.on) return;
       confetti({
         colors: first ? [...look.colors, '#f3cd7d', '#f3cd7d'] : look.colors,
         n: 80,
         dur: [3200, 1400],
-        extra: [{ ch: LOSER_MARK[v.game], n: loser ? 12 : 4 }],
+        extra: [{ ch: look.mark, n: loser || (look.crown && pid === App.me) ? 12 : 4 }],
         cls: 'zerc',
       });
     }, 500);
@@ -214,7 +241,7 @@ export function stopCeremony(skipped: boolean): void {
   unhide();
   const z = stage();
   if (z) {
-    z.classList.remove('reveal', 'hole', 'nohole', 'slow');
+    z.classList.remove('reveal', 'hole', 'nohole', 'slow', 'crown');
     $opt('#zer .zer-ring')?.classList.remove('mark');
     setTimeout(() => !ZER.on && !ZER.slow && (z.hidden = true), 260);
   }
@@ -257,25 +284,28 @@ function message(v: View, e: EndEntry): { title: string; sub: string } {
   const mine = pid === App.me;
   const name = nameOf(v, pid, e.name);
   const look = lookOf(v.game);
-  const what = LOSER_NAME[v.game];
-  const t = mine ? taunt(look.self, null, e.n) : taunt(look.other, { name }, e.n);
+  const what = look.what;
+  // Verteidigt der Cabo-König die Krone, gibt es dafür einen eigenen Spruch
+  const stays = e.k === 'cbend' && !!e.again && !mine;
+  const t = mine ? taunt(look.self, null, e.n) : taunt(stays ? 'cbKingStays' : look.other, { name }, e.n);
   const cnt = look.count(v, pid);
   let sub = `<span class="tt">${esc(t)}</span>`;
   if (cnt >= 2) sub += `<span class="zer-n">Zum ${cnt}. Mal ${what} an diesem Tisch.</span>`;
-  const hit = e.hits?.[App.me];
+  const hit = 'hits' in e ? e.hits?.[App.me] : undefined;
   const bet = (v.sh?.bets ?? v.dk?.bets)?.[App.me];
   if (hit) sub += `<span class="tt bt">🔮 Richtig getippt! +${num(hit.q)} ${hit.q === 1 ? 'Punkt' : 'Punkte'}.</span>`;
   else if (bet && typeof bet.on === 'string') sub += '<span class="tt bt">🔮 Tipp daneben.</span>';
   sub += '<span class="zer-hint">Antippen zum Überspringen</span>';
+  const cls = look.crown ? 'g' : 'r';
   return {
     title: mine
-      ? `Du bist der <span class="r">${what}!</span>`
-      : `${esc(name)} ist der <span class="r">${what}!</span>`,
+      ? `Du bist ${look.crown ? '' : 'der '}<span class="${cls}">${what}!</span>`
+      : `${esc(name)} ist ${look.crown ? '' : 'der '}<span class="${cls}">${what}!</span>`,
     sub,
   };
 }
 
-/** Startet die Zeremonie zum Eintrag shend oder dkend. Die Enthüllung beginnt, wenn die Meldung dran ist. */
+/** Startet die Zeremonie zum Eintrag shend, dkend oder cbend. Die Enthüllung beginnt, wenn die Meldung dran ist. */
 export function shitheadCeremony(v: View, e: EndEntry): void {
   const pid = e.p;
   if (!pid) return;
@@ -292,7 +322,7 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
   renderLog(v);
   const m = message(v, e);
   announce({
-    icon: LOSER_MARK[v.game],
+    icon: lookOf(v.game).mark,
     tone: lookOf(v.game).tone,
     cls: 'zer',
     title: m.title,

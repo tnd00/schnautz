@@ -48,7 +48,14 @@ export function effects(prev: View, v: View, seqd = false): void {
         icon: '⏰',
         tone: 'red',
         title: 'Zeit um!',
-        sub: prev.phase === 'swap' ? 'Die KI hat für dich getauscht.' : 'Die KI hat für dich gezogen.',
+        sub:
+          prev.phase === 'swap'
+            ? 'Die KI hat für dich getauscht.'
+            : prev.phase === 'peek'
+              ? 'Die KI hat zwei Karten für dich aufgedeckt. Schnell merken!'
+              : prev.game === 'cabo'
+                ? 'Die KI hat deinen Zug gemacht.'
+                : 'Die KI hat für dich gezogen.',
         ms: 2000,
       });
     }
@@ -114,6 +121,7 @@ export function effects(prev: View, v: View, seqd = false): void {
     // Der Shithead steht fest: Zeremonie statt einfacher Meldung
     if (e.k === 'shend' && e.p && prev.phase !== 'over' && v.phase === 'over') shitheadCeremony(v, e);
     if (isDk(e)) durakEffect(prev, v, e, fresh, seqd);
+    if (isCb(e)) caboEffect(prev, v, e, fresh);
     if (e.k === 'result') {
       const best = roundBest(v);
       const c = e.changes?.[App.me];
@@ -206,7 +214,9 @@ export function effects(prev: View, v: View, seqd = false): void {
     }
   });
   // Zu Beginn der Revanche-Partie ein kurzer Hinweis am Tisch
-  const started = fresh.some((e) => e.k === 'shdeal' || (e.k === 'round' && e.r === 1));
+  const started = fresh.some(
+    (e) => e.k === 'shdeal' || e.k === 'dkdeal' || ((e.k === 'round' || e.k === 'cbdeal') && e.r === 1),
+  );
   const duel = started ? duelRunning(v) : '';
   if (duel) {
     const wait = fresh.some((e) => e.k === 'rematch') ? REMATCH_ANN_MS + 300 : 600;
@@ -331,6 +341,166 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
         // Das Ergebnisfenster wartet, bis die Meldungen durch sind
         holdForAnnouncements();
       }
+      return;
+  }
+}
+
+type CbEntry = Extract<LogEntry, { k: `cb${string}` }>;
+
+const isCb = (e: LogEntry): e is CbEntry => e.k.startsWith('cb');
+
+/** Was eine abgelegte Karte erlaubt, als kurzer Hinweis am Platz. */
+const CB_POWER_LABEL = {
+  peek: ['darf eigene ansehen', 'darfst eigene ansehen'],
+  spy: ['darf spionieren', 'darfst spionieren'],
+  swap: ['darf blind tauschen', 'darfst blind tauschen'],
+} as const;
+
+/** Cabo: Rundenbeginn, Klänge am Tisch, Cabo-Ruf, Spionieren und Blindtausch, Schnappen, Abrechnung, Krönung. */
+function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
+  const mine = e.p === App.me;
+  const N = (id: string | null | undefined, fb?: string) => esc(nameOf(v, id, fb));
+  const whom = (id: string | null | undefined, fb?: string) => (id === App.me ? 'dir' : N(id, fb));
+  // Endet die Partie im selben Schub, wartet alles Kleine bis nach der Krönung
+  const ending = fresh.some((x) => x.k === 'cbend');
+  switch (e.k) {
+    case 'cbdeal': {
+      sfx('deal');
+      const first = e.r === 1;
+      announce({
+        icon: '🃏',
+        tone: 'gold',
+        title: first ? 'Cabo!' : `Runde ${num(e.r)}`,
+        sub:
+          (first ? 'Wenig Punkte gewinnen. ' : '') +
+          'Sieh dir zwei deiner Karten an und merk sie dir gut. ' +
+          `${N(e.start)}${vb(e.start, ' fängst', ' fängt')} an.`,
+        ms: first ? 2600 : 1800,
+      });
+      return;
+    }
+    case 'cblook':
+      if (mine) sfx('pop');
+      return;
+    case 'cbdraw':
+      if (!mine) sfx('card');
+      if (!mine && e.from === 'pile') setTimeout(() => floatLabel(e.p, 'nimmt von der Ablage'), 60);
+      return;
+    case 'cbswap': {
+      if (!mine) sfx('card');
+      if (!e.ok) {
+        sfx('nope');
+        shakePanel(e.p);
+        setTimeout(() => floatLabel(e.p, 'greift daneben, Strafkarte!', 'greifst daneben, Strafkarte!'), 60);
+      } else if (e.slots > 1)
+        setTimeout(() => floatLabel(e.p, `wirft ${e.slots} gleiche ab`, `wirfst ${e.slots} gleiche ab`), 60);
+      return;
+    }
+    case 'cbdiscard':
+      if (!mine) sfx('card');
+      if (e.power) {
+        const [er, du] = CB_POWER_LABEL[e.power];
+        setTimeout(() => floatLabel(e.p, er, du), 60);
+      }
+      return;
+    case 'cbpeek':
+      if (!mine) setTimeout(() => floatLabel(e.p, 'schaut sich eine Karte an'), 60);
+      return;
+    case 'cbspy':
+      if (mine) return;
+      setTimeout(() => floatLabel(e.p, `spioniert bei ${whom(e.to, e.tn)}`), 60);
+      if (e.to === App.me) {
+        sfx('knock');
+        if (e.n % 2 === 0) tauntLabel(taunt('cbSpyOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
+      }
+      return;
+    case 'cbblind':
+      sfx('smack');
+      setTimeout(
+        () => floatLabel(e.p, `tauscht blind mit ${whom(e.to, e.tn)}`, `tauschst blind mit ${whom(e.to, e.tn)}`),
+        60,
+      );
+      if (e.to === App.me && !mine) {
+        shakePanel(App.me);
+        tauntLabel(taunt('cbBlindOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
+        try {
+          navigator.vibrate?.([40, 40, 40]);
+        } catch {
+          // Manche Browser verbieten Vibration ohne vorherige Geste
+        }
+      }
+      return;
+    case 'cbcabo': {
+      sfx('knock');
+      setTimeout(() => sfx('duel'), 250);
+      if (!mine) shakePanel(e.p);
+      const t = mine ? taunt('cbCaboSelf', null, e.n) : taunt('cbCaboOther', { name: nameOf(v, e.p, e.name) }, e.n);
+      announce({
+        icon: '📣',
+        tone: 'red',
+        title: mine ? 'Du rufst Cabo!' : `${N(e.p, e.name)} ruft Cabo!`,
+        sub: `${mine ? 'Alle anderen haben' : 'Jeder andere hat'} noch einen Zug.<span class="tt">${esc(t)}</span>`,
+        ms: 2400,
+      });
+      return;
+    }
+    case 'cbsnap':
+      if (e.ok) {
+        sfx('pop');
+        setTimeout(() => floatLabel(e.p, 'schnappt!', 'schnappst!'), 60);
+      } else {
+        sfx('nope');
+        shakePanel(e.p);
+        setTimeout(() => floatLabel(e.p, 'schnappt daneben, Strafkarte!', 'schnappst daneben, Strafkarte!'), 60);
+        if (mine) tauntLabel(taunt('cbSnapFailSelf', null, e.n));
+      }
+      return;
+    case 'cbround': {
+      // Kurz vorab, das Ergebnisfenster danach zeigt alles genau
+      let icon = '🃏';
+      let title = 'Stapel leer!';
+      let tone: Announcement['tone'] = '';
+      let sub = 'Alle Karten auf den Tisch.';
+      if (e.kami) {
+        icon = '💥';
+        title = 'Kamikaze!';
+        tone = 'red';
+        sub = `${N(e.kami)}${vb(e.kami, ' hast', ' hat')} zwei Damen und zwei schwarze Könige. Alle anderen bekommen 50.`;
+        sfx('bomb');
+      } else if (e.caller) {
+        icon = e.ok ? '🎯' : '🤡';
+        title = e.ok ? 'Cabo geschafft!' : 'Cabo daneben!';
+        tone = e.ok ? 'gold' : 'red';
+        sub = e.ok
+          ? `${N(e.caller)}${vb(e.caller, ' hattest', ' hatte')} am wenigsten.`
+          : `${N(e.caller)}${vb(e.caller, ' bekommst', ' bekommt')} 10 Strafpunkte obendrauf.`;
+        setTimeout(() => sfx(e.ok === (e.caller === App.me) ? 'win' : 'lose'), 250);
+      }
+      announce({ icon, tone, title, sub, ms: ending ? 1600 : 2200 });
+      holdForAnnouncements(300);
+      return;
+    }
+    case 'cbreset':
+      setTimeout(
+        () => floatLabel(e.p, 'landet genau auf 100 und fällt auf 50', 'landest genau auf 100 und fällst auf 50'),
+        400,
+      );
+      return;
+    case 'cbend':
+      if (prev.phase === 'over' || v.phase !== 'over') return;
+      if (e.p) shitheadCeremony(v, e);
+      else {
+        announce({
+          icon: '🤝',
+          tone: 'gold',
+          title: 'Unentschieden!',
+          sub: 'Vorne liegen mehrere gleichauf. Diesmal gibt es keinen neuen Cabo-König.',
+          ms: 2600,
+        });
+        holdForAnnouncements();
+      }
+      return;
+    default:
       return;
   }
 }

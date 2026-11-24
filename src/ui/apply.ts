@@ -21,6 +21,8 @@ import { placePick } from './toss';
 import { viewSig } from './viewsig';
 import { dkSyncSelection } from './durak/input';
 import { dkFlights, dkSnap } from './durak/flights';
+import { cbSyncReveal, cbSyncSelection } from './cabo/input';
+import { cbFlights, cbSnap } from './cabo/flights';
 
 function bumpSeen(v: View): void {
   App.seenN = v.log.reduce((mx, e) => Math.max(mx, e.n), App.seenN);
@@ -72,6 +74,8 @@ export function applyView(v: View): void {
   syncNext(v);
   resetSelection(prev, v);
   dkSyncSelection(prev, v);
+  cbSyncSelection(prev, v);
+  cbSyncReveal(prev, v);
   setAnimations(prev, v);
 
   const steps = prev ? shPlan(prev, v, fresh) : [];
@@ -86,9 +90,11 @@ export function applyView(v: View): void {
   bumpSeen(v);
   // Durak: Wo lagen die Karten vor dem Zeichnen? Danach fliegen sie von dort
   const dsnap = prev ? dkSnap(prev) : null;
+  const csnap = prev ? cbSnap(prev) : null;
   render();
   if (prev) runFlights(prev, v);
   if (prev && dsnap) dkFlights(prev, v, dsnap, fresh);
+  if (prev && csnap) cbFlights(prev, v, csnap, fresh);
   markLost(lostNow, v);
   placePick();
 }
@@ -105,7 +111,8 @@ function resetSelection(prev: View | null, v: View): void {
 
 function setAnimations(prev: View | null, v: View): void {
   App.anim = {};
-  const live = v.phase === 'choose' || v.phase === 'play';
+  // Cabo beginnt jede Runde mit dem Ansehen
+  const live = v.phase === 'choose' || v.phase === 'play' || v.phase === 'peek';
   // Neue Runde oder neue Partie: austeilen (Durak bleibt in Runde 1, also zählt auch die Partie)
   if ((!prev || v.round !== prev.round || v.games !== prev.games) && live) App.anim.deal = true;
   if (prev && v.phase === 'play' && prev.phase === 'choose') {

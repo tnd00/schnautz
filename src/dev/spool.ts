@@ -99,7 +99,8 @@ function run(st: State, rng: Rng, goal: SpoolGoal, want: SpoolWant, me: string):
 
 /** Geht dieses Ziel an diesem Tisch überhaupt? Sonst die Erklärung. */
 export function spoolCheck(st: State, goal: SpoolGoal, me: string): string | null {
-  if (goal === 'round' && st.game !== 'schnautz' && st.game !== 'cabo') return 'Runden gibt es nur bei Schnautz und Cabo.';
+  if (goal === 'round' && st.game !== 'schnautz' && st.game !== 'cabo')
+    return 'Runden gibt es nur bei Schnautz und Cabo.';
   if (goal === 'done' && !hasBets(st.game)) return 'Tippen gibt es nur bei Shithead und Durak.';
   const active = st.phase === 'lobby' || st.phase === 'over' ? st.players : st.players.filter((p) => !p.out);
   if (active.length < 2) return 'Dafür braucht es mindestens zwei Plätze.';
