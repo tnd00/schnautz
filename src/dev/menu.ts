@@ -54,6 +54,11 @@ const JUMPS: Record<State['game'], Jump[]> = {
     { id: 'dk-any', label: 'Ende, egal wer', goal: 'end', want: 'any' },
     { id: 'dk-done', label: 'Ich bin fertig und darf tippen', goal: 'done', want: 'any' },
   ],
+  cabo: [
+    { id: 'cb-round', label: 'Runde beenden', goal: 'round', want: 'any' },
+    { id: 'cb-win', label: 'Partie beenden, ich werde König', goal: 'end', want: 'win' },
+    { id: 'cb-lose', label: 'Partie beenden, ich verliere', goal: 'end', want: 'lose' },
+  ],
   schnautz: [
     { id: 'sz-round', label: 'Runde beenden', goal: 'round', want: 'any' },
     { id: 'sz-win', label: 'Partie beenden, ich gewinne', goal: 'end', want: 'win' },

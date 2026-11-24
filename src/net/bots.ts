@@ -247,6 +247,28 @@ function thinkTime(st: State, who: Player, a: Action): number {
     case 'dkpass':
       d = 600 + r * 600;
       break;
+    case 'cblook':
+      return 900 + r * 900 + (ANN.busy ? 700 : 0);
+    case 'cbdraw':
+      d = 900 + r * 900;
+      break;
+    case 'cbswap':
+    case 'cbdiscard':
+      d = 1000 + r * 1000;
+      break;
+    case 'cbcabo':
+      // Cabo rufen will gut überlegt aussehen
+      d = 1800 + r * 1400;
+      break;
+    case 'cbpeek':
+    case 'cbspy':
+    case 'cbblind':
+    case 'cbskip':
+      d = 1100 + r * 1000;
+      break;
+    case 'cbsnap':
+      d = 500 + r * 700;
+      break;
     default:
       d = a.type === 'pass' && passIsObvious(st, who.id) ? 800 + r * 600 : 1200 + r * 1400;
   }
@@ -257,8 +279,8 @@ function thinkTime(st: State, who: Player, a: Action): number {
 }
 
 /**
- * Tauschrunde: Alle KIs tauschen gleichzeitig, jede mit eigener Denkpause. Nacheinander dauerte das
- * bei neun KIs eine halbe Minute.
+ * Tauschrunde bei Shithead und Ansehen bei Cabo: Alle KIs gleichzeitig, jede mit eigener Denkpause.
+ * Nacheinander dauerte das bei neun KIs eine halbe Minute.
  */
 function botSwapRound(st: State): void {
   clearTurnTimer();
@@ -270,12 +292,12 @@ function botSwapRound(st: State): void {
       () => {
         delete BOTS.swap[p.id];
         const s = H.st;
-        if (App.role !== 'host' || !s || s.phase !== 'swap') return;
+        if (App.role !== 'host' || !s || s.phase !== st.phase) return;
         const me = s.players[pIdx(s, p.id)];
         if (!me?.bot || me.ready) return;
         const a2 = botDecide(viewFor(s, p.id), undefined, 'normal');
-        // Klappt ein Tausch nicht, macht die KI einfach fertig, damit niemand wartet
-        if (a2 && act(s, p.id, a2)) act(s, p.id, { type: 'shready' });
+        // Klappt es nicht, macht die KI einen einfachen Ersatzzug, damit niemand wartet
+        if (a2 && act(s, p.id, a2)) fallbackMove(s, p.id);
         hostCommit();
       },
       thinkTime(st, p, a) + Math.random() * 900,
@@ -299,7 +321,7 @@ export function botTick(): void {
   if (hasBets(st.game) && st.phase === 'play') botBets(st);
   else clearBets();
   planBotRematch(st);
-  if (st.game === 'shithead' && st.phase === 'swap') {
+  if ((st.game === 'shithead' && st.phase === 'swap') || (st.game === 'cabo' && st.phase === 'peek')) {
     botSwapRound(st);
     return;
   }

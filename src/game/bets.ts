@@ -22,6 +22,7 @@ export function hasBets(game: GameKind): boolean {
     case 'durak':
       return true;
     case 'schnautz':
+    case 'cabo':
       return false;
     default:
       return unreachable(game);
@@ -35,6 +36,7 @@ export function betPart(t: Table): BetPart | null {
     case 'durak':
       return t.dk ?? null;
     case 'schnautz':
+    case 'cabo':
       return null;
     default:
       return unreachable(t.game);

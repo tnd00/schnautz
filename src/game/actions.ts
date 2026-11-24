@@ -1,7 +1,7 @@
 /* Einziger Einstiegspunkt für alle Spielzüge. Der Gastgeber ruft act() für eigene Züge, Gäste und KIs auf. */
 import { EMOTES, SOUNDS, TOSS_ITEMS } from './constants';
-import { beginGame, checkReady, toLobby } from './flow';
-import { checkInstant, endTurn, renewMiddle, startRound } from './schnautz';
+import { beginGame, checkReady, nextRound, toLobby } from './flow';
+import { checkInstant, endTurn, renewMiddle } from './schnautz';
 import { shAct, shAuto, shBegin } from './shithead';
 import { challenge, rematchOpen } from './rematch';
 import { syncSeats } from './seats';
@@ -20,6 +20,7 @@ import {
 import type { Action, ActResult, LogEntry, Rng, State } from './types';
 import { GAME_NAME, isGame, unreachable } from './games';
 import { dkAct, dkAuto, dkWaiting } from './durak';
+import { cbAct, cbAuto, cbBegin, cbWaiting } from './cabo';
 
 const MAX_EMOTES_IN_LOG = 6;
 const MAX_TOSSES_IN_LOG = 6;
@@ -138,8 +139,9 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       return skipOffline(st, rng);
     case 'force':
       if (!isHost) return HOST_ONLY;
-      if (st.phase === 'end') startRound(st, rng, false);
+      if (st.phase === 'end') nextRound(st, rng);
       else if (st.phase === 'swap') shBegin(st);
+      else if (st.phase === 'peek') cbBegin(st);
       else if (st.phase === 'over') return beginGame(st, rng);
       return null;
     case 'ready':
@@ -161,6 +163,8 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       return a.type.startsWith('sh') ? shAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
     case 'durak':
       return a.type.startsWith('dk') || a.type === 'shbet' ? dkAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
+    case 'cabo':
+      return a.type.startsWith('cb') ? cbAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
     case 'schnautz':
       return schnautzMove(st, pid, pi, a, rng);
     default:
@@ -177,6 +181,9 @@ export function fallbackMove(st: State, pid: string, rng?: Rng): void {
       return;
     case 'durak':
       dkAuto(st, pid, rng);
+      return;
+    case 'cabo':
+      cbAuto(st, pid, rng);
       return;
     case 'schnautz':
       act(st, pid, st.phase === 'choose' ? { type: 'keep' } : { type: 'pass' }, rng);
@@ -195,6 +202,12 @@ function skipOffline(st: State, rng?: Rng): ActResult {
       if (!who) return null;
       if (who.online) return `${who.name} ist wieder da.`;
       return shAuto(st, who.id, rng);
+    }
+    case 'cabo': {
+      const ids = cbWaiting(st);
+      const who = st.players.find((p) => ids.includes(p.id) && !p.online && !p.bot);
+      if (!who) return ids.length ? 'Alle sind da.' : null;
+      return cbAuto(st, who.id, rng);
     }
     case 'durak': {
       // Wer gerade aufhält und offline ist, bekommt einen einfachen Zug

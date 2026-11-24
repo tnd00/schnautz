@@ -60,6 +60,13 @@ export function settleDuel(st: State): void {
       res = pb < pv ? 'won' : pb > pv ? 'lost' : 'tie';
       break;
     }
+    case 'cabo': {
+      // Weniger Punkte gewinnen
+      const pb = by.cbp ?? 0;
+      const pv = vs.cbp ?? 0;
+      res = pb < pv ? 'won' : pb > pv ? 'lost' : 'tie';
+      break;
+    }
     case 'schnautz': {
       const ob = by.id === st.winner ? Infinity : (by.outRound ?? Infinity);
       const ov = vs.id === st.winner ? Infinity : (vs.outRound ?? Infinity);

@@ -1,6 +1,6 @@
 /*
- * Schnautz: Nach einer Runde startet der Host die nächste von selbst, wenn nach 10 Sekunden noch nicht alle bereit
- * sind. Am Ende der Partie nicht, dann wartet das Ergebnisfenster.
+ * Schnautz und Cabo: Nach einer Runde startet der Host die nächste von selbst, wenn nach 10 Sekunden noch nicht
+ * alle bereit sind. Am Ende der Partie nicht, dann wartet das Ergebnisfenster.
  */
 import { act } from '../game/actions';
 import type { State, View } from '../game/types';
@@ -24,7 +24,7 @@ export function stopAutoNext(): void {
  * wenn die Meldungen zur Runde durch sind (`pauseMs`). Gibt true zurück, wenn gerade ein neuer Countdown beginnt.
  */
 export function hostAutoNext(st: State, pauseMs: number): boolean {
-  if (st.game !== 'schnautz' || st.phase !== 'end') {
+  if ((st.game !== 'schnautz' && st.game !== 'cabo') || st.phase !== 'end') {
     stopAutoNext();
     return false;
   }

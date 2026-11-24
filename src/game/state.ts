@@ -1,6 +1,6 @@
 import { BOT_NAMES } from '../content/names';
 import { rnd } from './cards';
-import { cloneRules, DEFAULT_RULES, LOG_LIMIT, MAX_SEATS, MIN_SEATS, TURN_SECS } from './constants';
+import { CB_TARGETS, cloneRules, DEFAULT_RULES, LOG_LIMIT, MAX_SEATS, MIN_SEATS, TURN_SECS } from './constants';
 import type { ActResult, GameKind, LogEntry, LogInput, Player, PlayerStats, Rng, Rules, ShRules, State } from './types';
 import { isGame, setReign } from './games';
 
@@ -184,6 +184,12 @@ export function sanitizeRules(r: unknown, old?: Rules): Rules {
       if (k in sh) o.sh[k] = !!sh[k];
     });
   }
+  if (src.cb && typeof src.cb === 'object') {
+    const cb = src.cb as Record<string, unknown>;
+    if ('snap' in cb) o.cb.snap = !!cb.snap;
+    const t = Number(cb.target);
+    if (CB_TARGETS.includes(t)) o.cb.target = t;
+  }
   if (src.dk && typeof src.dk === 'object') {
     const dk = src.dk as Record<string, unknown>;
     DK_BOOL_RULES.forEach((k) => {
@@ -209,6 +215,9 @@ export function migrate(st: State): void {
   if (!st.rules.sh) st.rules.sh = { ...DEFAULT_RULES.sh };
   if (!st.rules.dk || typeof st.rules.dk !== 'object') st.rules.dk = { ...DEFAULT_RULES.dk };
   if (typeof st.rules.dk.transfer !== 'boolean') st.rules.dk.transfer = DEFAULT_RULES.dk.transfer;
+  if (!st.rules.cb || typeof st.rules.cb !== 'object') st.rules.cb = { ...DEFAULT_RULES.cb };
+  if (typeof st.rules.cb.snap !== 'boolean') st.rules.cb.snap = DEFAULT_RULES.cb.snap;
+  if (!CB_TARGETS.includes(st.rules.cb.target)) st.rules.cb.target = DEFAULT_RULES.cb.target;
   (Object.keys(DEFAULT_RULES.sh) as (keyof ShRules)[]).forEach((k) => {
     if (!(k in st.rules.sh)) st.rules.sh[k] = DEFAULT_RULES.sh[k];
   });

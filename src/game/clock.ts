@@ -16,7 +16,8 @@ export function clockTurn(st: State): ClockTurn {
   const none: ClockTurn = { ids: [], key: '', swap: false };
   if (!st.rules.turnSecs) return none;
   const base = `${st.game}|${st.games}|${st.round}|${st.phase}`;
-  if (st.phase === 'swap') {
+  // Tauschrunde bei Shithead und Ansehen bei Cabo: alle gleichzeitig, doppelte Zeit
+  if (st.phase === 'swap' || st.phase === 'peek') {
     const ids = st.players.filter((p) => !p.bot && !p.out && !p.ready).map((p) => p.id);
     return ids.length ? { ids, key: base, swap: true } : none;
   }

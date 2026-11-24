@@ -6,11 +6,16 @@ import { addLog, pIdx, removePlayer } from './state';
 import type { ActResult, Rng, State } from './types';
 import { unreachable } from './games';
 import { dkStart } from './durak';
+import { cbBegin, cbNextRound, cbStart } from './cabo';
 
 export function checkReady(st: State, rng?: Rng): ActResult {
   if (st.phase === 'swap') {
     const needS = st.players.filter((p) => !p.out);
     if (needS.length && needS.every((p) => p.ready)) shBegin(st);
+    return null;
+  }
+  if (st.phase === 'peek') {
+    if (st.players.every((p) => p.ready || !st.cb?.P[p.id])) cbBegin(st);
     return null;
   }
   if (st.phase !== 'end' && st.phase !== 'over') return null;
@@ -21,20 +26,42 @@ export function checkReady(st: State, rng?: Rng): ActResult {
   if (humans.length) need = humans;
   if (!need.some((p) => p.ready) || need.some((p) => !p.ready)) return null;
   if (st.phase === 'over') return beginGame(st, rng);
-  startRound(st, rng, false);
+  nextRound(st, rng);
   return null;
+}
+
+/** Nächste Runde in Spielen mit Runden (Schnautz, Cabo). */
+export function nextRound(st: State, rng?: Rng): void {
+  switch (st.game) {
+    case 'schnautz':
+      startRound(st, rng, false);
+      return;
+    case 'cabo':
+      cbNextRound(st, rng);
+      return;
+    case 'shithead':
+    case 'durak':
+      return;
+    default:
+      unreachable(st.game);
+  }
 }
 
 export function beginGame(st: State, rng?: Rng): ActResult {
   switch (st.game) {
     case 'shithead':
       st.dk = null;
+      st.cb = null;
       return shStart(st, rng);
     case 'durak':
+      st.cb = null;
       return dkStart(st, rng);
+    case 'cabo':
+      return cbStart(st, rng);
     case 'schnautz':
       st.sh = null;
       st.dk = null;
+      st.cb = null;
       return startGame(st, rng);
     default:
       return unreachable(st.game);
@@ -68,7 +95,7 @@ export function toBot(st: State, pid: string, rng?: Rng): void {
   delete p.gone;
   addLog(st, { k: 'tobot', p: pid });
   // War die Person die Letzte, auf die alle gewartet haben, geht es jetzt weiter
-  if (st.phase === 'end' || st.phase === 'over' || st.phase === 'swap') checkReady(st, rng);
+  if (st.phase === 'end' || st.phase === 'over' || st.phase === 'swap' || st.phase === 'peek') checkReady(st, rng);
 }
 
 export function toLobby(st: State): void {
@@ -98,6 +125,7 @@ export function toLobby(st: State): void {
     turns: 0,
     sh: null,
     dk: null,
+    cb: null,
     rematch: null,
     rematchDuel: null,
   } satisfies Partial<State>);

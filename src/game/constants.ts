@@ -18,6 +18,7 @@ export const DEFAULT_RULES: Readonly<Rules> = {
   knockDouble: false,
   sh: { two: true, three: true, seven: true, ten: true, eight: true, four: true, cut: true, deck5: false },
   dk: { transfer: false },
+  cb: { target: 100, snap: false },
 };
 
 export const EMOTES: readonly string[] = ['😂', '🫵', '🤡', '💩', '🔥', '😭', '👏', '🙈'];
@@ -66,7 +67,18 @@ export const SOUND_HOST_WINDOW_MS = 2100;
 /** So lange wartet die Person am Zug bei einem neuen Stapel, damit alle ihre 4er reinwerfen können. */
 export const SH_WIN_MS = 2000;
 /** Höchstzahl am Tisch je Spiel. */
-export const MAX_SEATS: Readonly<Record<GameKind, number>> = { schnautz: 8, shithead: 10, durak: 8 };
+export const MAX_SEATS: Readonly<Record<GameKind, number>> = { schnautz: 8, shithead: 10, durak: 8, cabo: 8 };
+/** Cabo: vier Karten je Person, ab so vielen Leuten zwei Decks, wählbare Zielpunkte */
+export const CB_HAND = 4;
+export const CB_TWO_DECKS = 7;
+export const CB_TARGETS: readonly number[] = [50, 100];
+/** Cabo: falsches Cabo kostet so viel, Kamikaze gibt allen anderen so viel, genau so viele Punkte fallen einmal zurück */
+export const CB_PENALTY = 10;
+export const CB_KAMI = 50;
+export const CB_RESET_AT = 100;
+export const CB_RESET_TO = 50;
+/** So lange sieht man eine Karte, die man sich angesehen hat */
+export const CB_REVEAL_MS = 3500;
 /** Durak: so viele Karten auf der Hand, höchstens so viele Angriffskarten, ab so vielen Leuten das volle Deck */
 export const DK_HAND = 6;
 export const DK_MAX_ATTACK = 6;
@@ -102,5 +114,5 @@ export const SH_ORD: Readonly<Record<Rank, number>> = {
 export const SUIT_ORD: Readonly<Record<Suit, number>> = { C: 0, S: 1, H: 2, D: 3 };
 
 export function cloneRules(r: Readonly<Rules> = DEFAULT_RULES): Rules {
-  return { ...r, sh: { ...r.sh }, dk: { ...(r.dk ?? DEFAULT_RULES.dk) } };
+  return { ...r, sh: { ...r.sh }, dk: { ...(r.dk ?? DEFAULT_RULES.dk) }, cb: { ...(r.cb ?? DEFAULT_RULES.cb) } };
 }

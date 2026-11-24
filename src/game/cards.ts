@@ -57,3 +57,13 @@ export function dkSort(a: Card[], trump: Suit): Card[] {
   const key = (c: Card) => (suitOf(c) === trump ? 100 : 0) + SH_ORD[rankOf(c)];
   return a.sort((x, y) => key(x) - key(y) || SUIT_ORD[suitOf(x)] - SUIT_ORD[suitOf(y)]);
 }
+
+/** Cabo: Ass 1, 2 bis 10 nach Augen, Bube 11, Dame 12, schwarzer König 13, roter König 0. */
+export function cbVal(c: Card): number {
+  const r = rankOf(c);
+  if (r === 'A') return 1;
+  if (r === 'B') return 11;
+  if (r === 'D') return 12;
+  if (r === 'K') return suitOf(c) === 'H' || suitOf(c) === 'D' ? 0 : 13;
+  return Number(r);
+}

@@ -1,5 +1,5 @@
 import { DEFAULT_RULES } from './constants';
-import type { DkView, ShView, State, View } from './types';
+import type { CbView, DkView, ShView, State, View } from './types';
 
 const VIEW_LOG_LIMIT = 90;
 
@@ -57,6 +57,27 @@ export function viewFor(st: State, pid: string): View {
     });
     dk = { ...D, deck: D.deck.length, P };
   }
+  let cb: CbView | null = null;
+  if (copy.cb) {
+    const C = copy.cb;
+    // Nach der Runde liegt alles offen, vorher nur offene Plätze. Wissen und Einblendung gehören nur einem selbst
+    const reveal = st.phase === 'end' || st.phase === 'over';
+    const P: CbView['P'] = {};
+    Object.entries(C.P).forEach(([id, row]) => {
+      P[id] = row.map((s) => (reveal || s.up ? { ...s } : { id: s.id }));
+    });
+    const hold = C.hold && (C.hold.by === pid || C.hold.from === 'pile') ? C.hold : C.hold && { by: C.hold.by, from: C.hold.from };
+    const bot = !!st.players.find((p) => p.id === pid)?.bot;
+    const { know, reveal: shows, ...rest } = C;
+    cb = {
+      ...rest,
+      deck: C.deck.length,
+      P,
+      hold,
+      ...(bot ? { know: know[pid] ?? {} } : {}),
+      ...(shows[pid] ? { reveal: shows[pid] } : {}),
+    };
+  }
   return {
     ...copy,
     game: copy.game || 'schnautz',
@@ -64,6 +85,7 @@ export function viewFor(st: State, pid: string): View {
       ...copy.rules,
       sh: copy.rules.sh ?? { ...DEFAULT_RULES.sh },
       dk: copy.rules.dk ?? { ...DEFAULT_RULES.dk },
+      cb: copy.rules.cb ?? { ...DEFAULT_RULES.cb },
     },
     deck: st.deck.length,
     discard: st.discard.length,
@@ -71,6 +93,7 @@ export function viewFor(st: State, pid: string): View {
     hands,
     sh,
     dk,
+    cb,
     log: copy.log.slice(-VIEW_LOG_LIMIT),
     me: pid,
   };

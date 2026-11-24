@@ -11,8 +11,9 @@ export type Card = string;
 export type Rank = string;
 export type Rng = () => number;
 
-export type GameKind = 'schnautz' | 'shithead' | 'durak';
-export type Phase = 'lobby' | 'choose' | 'play' | 'end' | 'over' | 'swap';
+export type GameKind = 'schnautz' | 'shithead' | 'durak' | 'cabo';
+/** `peek`: Cabo, alle sehen sich zu Beginn der Runde zwei eigene Karten an */
+export type Phase = 'lobby' | 'choose' | 'play' | 'end' | 'over' | 'swap' | 'peek';
 
 export interface ShRules {
   two: boolean;
@@ -31,6 +32,12 @@ export interface DkRules {
   transfer: boolean;
 }
 
+/** Cabo: Wer mehr als so viele Punkte hat, beendet die Partie. Schnappen außer der Reihe an oder aus */
+export interface CbRules {
+  target: number;
+  snap: boolean;
+}
+
 export interface Rules {
   /** Plätze am Tisch, die Höchstzahl hängt vom Spiel ab (`maxSeats`) */
   seats: number;
@@ -45,6 +52,7 @@ export interface Rules {
   knockDouble: boolean;
   sh: ShRules;
   dk: DkRules;
+  cb: CbRules;
 }
 
 /** Bilanz in einem Spiel, seit der Tisch offen ist. Wie oft jemand Shithead war, steht in `Player.shc`. */
@@ -57,6 +65,10 @@ export interface PlayerStats {
   hot?: number;
   /** Shithead und Durak: Summe der Plätze, für den Schnitt */
   places?: number;
+  /** Cabo: gerufen, davon mit den wenigsten Punkten, Kamikaze */
+  cabos?: number;
+  cabosOk?: number;
+  kami?: number;
   /** Shithead und Durak: abgegebene Tipps, Treffer und Punkte daraus */
   bets?: number;
   betHits?: number;
@@ -82,6 +94,8 @@ export interface Player {
   shc?: number;
   /** So oft Durak gewesen */
   dkc?: number;
+  /** Cabo: Punkte in der laufenden Partie */
+  cbp?: number;
   stats?: Partial<Record<GameKind, PlayerStats>>;
 }
 
@@ -160,7 +174,28 @@ export interface DurakResult {
   bets?: ShBetResult[];
 }
 
-export type Result = SchnautzResult | ShitheadResult | DurakResult;
+/** Cabo: Wertung einer Runde. Am Partieende steht zusätzlich der Sieger fest */
+export interface CaboResult {
+  reason: 'cabo';
+  /** Summe der Karten je Person */
+  sums: Record<string, number>;
+  /** Punkte dieser Runde je Person (nach Cabo-Ruf, Strafe und Kamikaze) */
+  scores: Record<string, number>;
+  /** Stand danach */
+  totals: Record<string, number>;
+  caller: string | null;
+  /** Hatte wer Cabo rief am wenigsten? */
+  ok: boolean | null;
+  kami: string | null;
+  /** Wer genau 100 erreicht hat und zurück auf 50 fällt */
+  resets: string[];
+  hands: Record<string, Card[]>;
+  /** Nur am Partieende */
+  winner?: string | null;
+  names: Record<string, string>;
+}
+
+export type Result = SchnautzResult | ShitheadResult | DurakResult | CaboResult;
 
 /**
  * Neuer Stapel bei Shithead: Ist der Stapel leer, dürfen alle außer der Person am Zug ihre 4er
@@ -240,6 +275,71 @@ export interface DkState {
 export interface DkView extends Omit<DkState, 'deck' | 'P'> {
   deck: number;
   P: Record<string, Card[] | number>;
+}
+
+/** Ein Platz in der Cabo-Reihe: feste ID, Karte und ob sie offen liegt (dann sehen sie alle) */
+export interface CbSlot {
+  id: number;
+  c: Card;
+  up?: boolean;
+}
+
+/** Was jemand über einen Platz weiß, und in welchem Zug er es erfahren hat */
+export interface CbKnow {
+  c: Card;
+  t: number;
+}
+
+/** Eine kurze Einblendung: diese Plätze sehe nur ich für ein paar Sekunden */
+export interface CbReveal {
+  id: number;
+  items: { owner: string; slot: number; c: Card }[];
+}
+
+export interface CbState {
+  /** Gezogen wird vom Ende */
+  deck: Card[];
+  /** Ablagestapel, oben liegt die letzte Karte */
+  pile: Card[];
+  P: Record<string, CbSlot[]>;
+  /** Nächste freie Platz-ID */
+  sid: number;
+  /** Gezogene Karte der Person am Zug */
+  hold: { by: string; c: Card; from: 'deck' | 'pile' } | null;
+  /** Fähigkeit nach dem Ablegen: eigene ansehen, fremde ansehen, blind tauschen */
+  power: { by: string; kind: 'peek' | 'spy' | 'swap'; c: Card } | null;
+  cabo: string | null;
+  /** Wer nach dem Cabo-Ruf noch einmal dran ist */
+  left: string[];
+  /** Zählt die Züge, für das Gedächtnis der KI */
+  t: number;
+  /** Wissen je Person über Plätze (Platz-ID), wandert beim Tauschen mit der Karte */
+  know: Record<string, Record<number, CbKnow>>;
+  /** Letzte Einblendung je Person */
+  reveal: Record<string, CbReveal>;
+  rid: number;
+  /** Wer in dieser Partie schon einmal von 100 auf 50 zurückgefallen ist */
+  resets: string[];
+  /** Wer diese Runde beginnt */
+  start: string;
+  decks: number;
+}
+
+/** Ein Platz aus fremder Sicht: Karte nur, wenn sie offen liegt oder die Runde vorbei ist */
+export interface CbSlotView {
+  id: number;
+  c?: Card;
+  up?: boolean;
+}
+
+export interface CbView extends Omit<CbState, 'deck' | 'P' | 'hold' | 'know' | 'reveal'> {
+  deck: number;
+  P: Record<string, CbSlotView[]>;
+  hold: { by: string; c?: Card; from: 'deck' | 'pile' } | null;
+  /** Nur für KIs: ihr Wissen. Menschen müssen sich Karten merken */
+  know?: Record<number, CbKnow>;
+  /** Nur die eigene Einblendung */
+  reveal?: CbReveal;
 }
 
 export interface Reign {
@@ -337,6 +437,20 @@ export type LogEntry = LogBase &
     | { k: 'dkpickup'; cnt: number }
     | { k: 'dkout'; place: number }
     | { k: 'dkend'; hits?: Record<string, { q: number; name: string }> }
+    | { k: 'cbdeal'; r: number; start: string }
+    | { k: 'cblook' }
+    | { k: 'cbdraw'; from: 'deck' | 'pile'; c?: Card }
+    | { k: 'cbswap'; out: Card[]; ok: boolean; slots: number; up?: boolean; pen?: boolean }
+    | { k: 'cbdiscard'; c: Card; power?: 'peek' | 'spy' | 'swap' }
+    | { k: 'cbpeek' }
+    | { k: 'cbspy'; to: string; tn?: string }
+    | { k: 'cbblind'; to: string; tn?: string; id: number; oid: number }
+    | { k: 'cbskip' }
+    | { k: 'cbcabo' }
+    | { k: 'cbsnap'; c: Card; ok: boolean }
+    | { k: 'cbround'; scores: Record<string, number>; caller: string | null; ok: boolean | null; kami: string | null }
+    | { k: 'cbreset' }
+    | { k: 'cbend' }
     // Nur der Host schreibt ihn direkt, es gibt keine Aktion dafür. Der Verlauf zeigt ihn nicht
     | { k: 'dev'; fx: DevFx; s?: string; to?: string }
   );
@@ -371,6 +485,7 @@ export interface State {
   n: number;
   games: number;
   dk?: DkState | null;
+  cb?: CbState | null;
   /** Krone und Verlierer-Titel je Spiel, sie bleiben, bis dort jemand Neues gewinnt (src/game/games.ts) */
   reigns?: Partial<Record<GameKind, Reign>>;
   /** Nach der Partie: Revanche anbieten */
@@ -394,13 +509,14 @@ export interface ShView extends Omit<ShState, 'deck' | 'burned' | 'P'> {
   P: Record<string, ShPlayerView>;
 }
 
-export interface View extends Omit<State, 'deck' | 'discard' | 'spare' | 'hands' | 'sh' | 'dk'> {
+export interface View extends Omit<State, 'deck' | 'discard' | 'spare' | 'hands' | 'sh' | 'dk' | 'cb'> {
   deck: number;
   discard: number;
   spare: number;
   hands: Record<string, Card[] | number>;
   sh: ShView | null;
   dk?: DkView | null;
+  cb?: CbView | null;
   me: string;
   /** Zeitlimit: wer gerade die Uhr hat, Restzeit und volle Zeit in ms (beim Host auch das Ende als `at`) */
   clock?: { ids: string[]; left: number; total: number; at?: number } | null;
@@ -418,7 +534,14 @@ export type Action =
   | { type: 'toss'; item: TossItem; to: string; bot?: boolean }
   /** Klang vom Soundboard für alle am Tisch. `quiet` setzt nur der Host, wenn am Tisch gerade zu viel los ist */
   | { type: 'sound'; s: string; bot?: boolean; quiet?: boolean }
-  | { type: 'rules'; rules: Partial<Omit<Rules, 'sh' | 'dk'>> & { sh?: Partial<ShRules>; dk?: Partial<DkRules> } }
+  | {
+      type: 'rules';
+      rules: Partial<Omit<Rules, 'sh' | 'dk' | 'cb'>> & {
+        sh?: Partial<ShRules>;
+        dk?: Partial<DkRules>;
+        cb?: Partial<CbRules>;
+      };
+    }
   | { type: 'game'; game: GameKind }
   | { type: 'start' }
   | { type: 'addbot' }
@@ -458,7 +581,21 @@ export type Action =
   /** Durak: nichts mehr nachlegen */
   | { type: 'dkpass' }
   /** Durak mit Weiterschieben: gleiche Werte dazulegen und an den Nächsten geben */
-  | { type: 'dktransfer'; idx: number[]; cards?: Card[] };
+  | { type: 'dktransfer'; idx: number[]; cards?: Card[] }
+  /** Cabo: zu Beginn zwei eigene Plätze ansehen */
+  | { type: 'cblook'; ids: number[] }
+  | { type: 'cbdraw'; from: 'deck' | 'pile' }
+  | { type: 'cbcabo' }
+  /** Gezogene Karte gegen einen oder mehrere eigene Plätze tauschen (mehrere nur mit gleichem Wert) */
+  | { type: 'cbswap'; ids: number[] }
+  | { type: 'cbdiscard' }
+  /** Fähigkeit: eigene Karte ansehen, fremde ansehen, blind tauschen oder verzichten */
+  | { type: 'cbpeek'; id: number }
+  | { type: 'cbspy'; to: string; id: number }
+  | { type: 'cbblind'; id: number; to: string; oid: number }
+  | { type: 'cbskip' }
+  /** Schnappen: eigene Karte außer der Reihe auf eine gleiche oben auf der Ablage werfen */
+  | { type: 'cbsnap'; id: number };
 
 export type ActionType = Action['type'];
 
