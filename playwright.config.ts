@@ -4,9 +4,13 @@ import { defineConfig, devices } from '@playwright/test';
  * Ende-zu-Ende-Tests: echte Browser spielen über WebRTC gegeneinander.
  * Ein lokaler PeerServer ersetzt den öffentlichen Vermittlungsserver, damit die Tests offline laufen.
  * Lokal kann PW_CHROME auf ein installiertes Chrome zeigen, sonst nimmt Playwright sein eigenes Chromium.
+ * PW_PORT, PEER_PORT und PW_DIST erlauben mehrere Läufe nebeneinander (eigene Ports, eigener Build-Ordner).
+ * PW_FAST=1 baut ohne Typprüfung, damit halbfertige Dateien anderer Arbeiten einen Einzellauf nicht blockieren.
  */
-const PORT = 4173;
-const PEER_PORT = 9000;
+const PORT = Number(process.env.PW_PORT ?? 4173);
+const PEER_PORT = Number(process.env.PEER_PORT ?? 9000);
+const DIST = process.env.PW_DIST ?? 'dist';
+const BUILD = process.env.PW_FAST ? `npx vite build --outDir ${DIST} --emptyOutDir` : `npm run build -- --outDir ${DIST}`;
 // Chrome verweigert seine Sandbox als root (CI-Container); auf dem Mac bleibt sie an
 const noSandbox = !!process.env.CI || process.getuid?.() === 0;
 
@@ -43,7 +47,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: `npm run build && npx vite preview --host 127.0.0.1 --port ${PORT} --strictPort`,
+      command: `${BUILD} && npx vite preview --outDir ${DIST} --host 127.0.0.1 --port ${PORT} --strictPort`,
       port: PORT,
       // Immer frisch bauen, sonst testet man womöglich einen alten Stand
       reuseExistingServer: false,

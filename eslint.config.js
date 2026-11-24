@@ -5,7 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-  { ignores: ['dist', 'node_modules', 'playwright-report', 'test-results', '.claude'] },
+  { ignores: ['dist', 'dist-*', 'node_modules', 'playwright-report', 'test-results', '.claude'] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {

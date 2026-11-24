@@ -1,8 +1,8 @@
 import { expect, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test';
 import type { GameKind, View } from '../../src/game/types';
 
-/** Startseite mit lokalem PeerServer und ohne STUN (siehe playwright.config.ts). */
-export const START = './?peerhost=127.0.0.1&peerport=9000&noice=1';
+/** Startseite mit lokalem PeerServer und ohne STUN (siehe playwright.config.ts, Port per PEER_PORT). */
+export const START = `./?peerhost=127.0.0.1&peerport=${process.env.PEER_PORT ?? 9000}&noice=1`;
 
 /** Sammelt Fehler aus allen Seiten eines Tests, damit der Test am Ende darauf prüfen kann. */
 export class Errors {
