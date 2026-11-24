@@ -3,3 +3,7 @@ node_modules
 package-lock.json
 playwright-report
 test-results
+
+# Fremde Skills für Claude Code, unverändert übernommen
+.claude/skills
+skills-lock.json
