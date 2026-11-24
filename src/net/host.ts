@@ -77,7 +77,11 @@ function info(conn: DataConnection): ConnInfo {
   return i;
 }
 
+/** Gegen die KI: Spiel, das gleich nach dem Öffnen des Tisches mit aufgefüllten Plätzen startet. */
+let vsBots: GameKind | null = null;
+
 function resetHost(): void {
+  vsBots = null;
   H.conns = new Map();
   H.alias = Object.create(null);
   H.keys = Object.create(null);
@@ -97,6 +101,26 @@ export function hostNew(name: string): void {
   resetHost();
   resetTableUI();
   hostOpen(false);
+}
+
+/** Neuer Tisch gegen die KI. Gestartet wird erst, wenn der Tisch offen ist (siehe hostOpen). */
+export function hostNewVsBots(name: string, game: GameKind): void {
+  hostNew(name);
+  vsBots = game;
+}
+
+/** Spiel wählen, freie Plätze mit KI füllen und starten, mit denselben Aktionen wie in der Lobby. */
+function startVsBots(st: State, game: GameKind): void {
+  vsBots = null;
+  if (st.phase !== 'lobby') return;
+  const steps: Action[] = [{ type: 'game', game }, { type: 'rules', rules: { fill: true } }, { type: 'start' }];
+  for (const a of steps) {
+    const e = act(st, App.me, a);
+    if (e) {
+      dlog('game', `Gegen die KI: ${a.type} abgelehnt, ${e}`);
+      return;
+    }
+  }
 }
 
 export function hostResume(saved: SavedHost): void {
@@ -147,6 +171,7 @@ function hostOpen(resume: boolean): void {
     opened = true;
     H.retries = 0;
     setNet('online');
+    if (vsBots && H.st) startVsBots(H.st, vsBots);
     hostCommit();
   });
   peer.on('connection', (conn) => {
@@ -199,6 +224,7 @@ function hostOpen(resume: boolean): void {
 }
 
 function hostFail(msg: string): void {
+  vsBots = null;
   resetTableUI();
   const p = H.peer;
   H.peer = null;
@@ -535,6 +561,7 @@ export function hostClose(): void {
 
 /** Abbrechen, während der Tisch noch aufgebaut wird. */
 export function hostCancel(): void {
+  vsBots = null;
   safeDestroy(H.peer);
   H.peer = null;
   if (H.st && H.st.players.length === 1 && H.st.phase === 'lobby') LS.del('host');

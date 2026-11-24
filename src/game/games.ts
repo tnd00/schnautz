@@ -46,6 +46,18 @@ const NO_VERSION = '2.2.0';
 export const canShow = (game: GameKind, v: string | undefined): boolean =>
   cmpVersion(v ?? NO_VERSION, GAME_SINCE[game]) >= 0;
 
+/** So viele Minor-Versionen nach seiner Einführung trägt das neueste Spiel auf der Startseite „Neu“. */
+const NEW_FOR_MINORS = 1;
+
+/** Ist das Spiel das zuletzt dazugekommene und für diese Version noch frisch? */
+export function isNewGame(game: GameKind, version: string): boolean {
+  const since = GAME_SINCE[game];
+  if (GAMES.some((g) => cmpVersion(GAME_SINCE[g], since) > 0)) return false;
+  const [va = 0, vb = 0] = version.split('.').map(Number);
+  const [sa = 0, sb = 0] = since.split('.').map(Number);
+  return va === sa && vb >= sb && vb - sb <= NEW_FOR_MINORS;
+}
+
 export const isGame = (x: unknown): x is GameKind => typeof x === 'string' && (GAMES as readonly string[]).includes(x);
 
 const SZ_REASONS: ReadonlySet<string> = new Set(['feuer', 'schnautz', 'knock', 'quit']);

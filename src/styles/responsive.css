@@ -31,18 +31,6 @@
   }
 }
 @media (max-width: 820px) {
-  .start {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding-top: 4px;
-  }
-  .hero {
-    text-align: left;
-  }
-  .fan {
-    height: 180px;
-    margin-bottom: 6px;
-  }
   .lobby {
     grid-template-columns: 1fr;
   }

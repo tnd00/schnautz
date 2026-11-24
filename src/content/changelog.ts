@@ -10,6 +10,33 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.6',
+    date: '2026-11-24',
+    title: 'Neuer Look',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Alles rund um den Tisch sieht neu aus: Startseite, Einladung, Lobby, Menü und Fenster sind jetzt ein Stickeralbum auf Violett. Jedes Spiel hat seine eigene Farbe.',
+          'Neu auf der Startseite ist „Gegen die KI spielen“. Name eintippen und mit einem Tipp sitzt du sofort am Tisch. Es startet das Spiel, das du zuletzt gespielt hast, die freien Plätze übernimmt die KI.',
+          'Ein Einladungslink begrüßt dich mit „Du bist eingeladen“. Name rein, an den Tisch, fertig. Warst du dort schon, bekommst du deinen alten Platz angeboten.',
+          'Startet die Partie, zieht sich der Spiel-Sticker ab und gibt den Tisch frei.',
+          'In der Lobby siehst du kurz, wer dazukommt oder wieder geht.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Gäste sehen in der Lobby nur, was an den Regeln anders ist als sonst. Ist alles Standard, steht das da, dann gibt es hinterher auch keine Ausreden.',
+          'Die Spielauswahl zeigt alle vier Spiele als Sticker. Der Startknopf sagt, was gespielt wird und zu wievielt.',
+          'Regeln, Bestenliste und Updates öffnen als Bogen mit festem Kopf, nur der Inhalt scrollt. Mit Tastatur und Screenreader findest du dich besser zurecht.',
+          'Im Menü ⋯ sind Ton und Soundboard jetzt Schalter, das Menü bleibt beim Umschalten offen.',
+          'Am Handy passt alles ohne Scrollen auf einen Bildschirm, auch auf kleinen Geräten. Die 31 am Logo gibt es nur noch am Schnautz-Tisch.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.5',
     date: '2026-11-24',
     title: 'Cabo',

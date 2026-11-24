@@ -1,33 +1,43 @@
-/* Fenster hinter dem Raumcode oben: Code und Einladungslink zum Kopieren oder Teilen. */
+/* Fenster hinter dem Tischcode oben: Code und Einladungslink zum Kopieren oder Teilen. */
 import { seatLimit } from '../../game/state';
 import { App } from '../app';
 import { esc } from '../dom';
+import { sheetHTML } from '../dialog';
 import { shareLink } from '../screens';
 
-export function inviteHTML(): string {
+const n = (x: number): string => `<span class="st-num">${x}</span>`;
+
+/** Wer gerade sitzt und was noch frei ist. In der Lobby gibt es KI-Plätze, mitten in der Partie KI-Plätze samt Karten. */
+function seatsHTML(): string {
   const v = App.view;
-  const link = shareLink();
-  const humans = v ? v.players.filter((p) => !p.bot).length : 0;
-  const bots = v ? v.players.filter((p) => p.bot && !p.left).length : 0;
-  const free = v ? Math.max(0, seatLimit(v) - v.players.length) : 0;
+  if (!v) return '';
+  const humans = v.players.filter((p) => !p.bot).length;
+  const bots = v.players.filter((p) => p.bot && !p.left).length;
+  const free = Math.max(0, seatLimit(v) - v.players.length);
   const room = free + bots;
-  const seats = !v
-    ? ''
-    : room
-      ? `${humans === 1 ? 'Ein Mensch sitzt' : `${humans} Menschen sitzen`} am Tisch. ` +
-        `${room === 1 ? 'Ein Platz ist' : `${room} Plätze sind`} noch zu haben` +
-        (bots ? ', wer kommt, übernimmt einen KI-Platz samt Karten.' : '.')
-      : 'Der Tisch ist gerade voll.';
+  if (!room) return '<p class="iseats">Der Tisch ist gerade voll.</p>';
+  const lobby = v.phase === 'lobby';
   return (
-    '<div class="modal"><div class="paper sheet invite"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    '<h2>Freunde einladen</h2><p class="lead">Schick den Link oder sag den Code an, dann sitzt ihr am selben Tisch.</p>' +
-    `<div class="icode" aria-label="Raumcode">${esc(App.code)}</div>` +
-    `<div class="ilink"><input class="input" readonly value="${esc(link)}" aria-label="Einladungslink" />` +
-    '<button class="btn primary" data-act="copylink">Kopieren</button></div>' +
-    (typeof navigator.share === 'function'
-      ? '<button class="btn ghost ishare" data-act="share">Link teilen</button>'
-      : '') +
-    (seats ? `<p class="nnote">${esc(seats)}</p>` : '') +
-    '</div></div>'
+    `<p class="iseats">${n(humans)} ${humans === 1 ? 'Mensch sitzt' : 'Menschen sitzen'} am Tisch, ` +
+    `${n(room)} ${room === 1 ? 'Platz ist' : 'Plätze sind'} noch zu haben.</p>` +
+    (bots ? `<p class="ibot">Wer jetzt kommt, übernimmt einen KI-Platz${lobby ? '' : ' samt Karten'}.</p>` : '')
   );
+}
+
+export function inviteHTML(): string {
+  const link = shareLink();
+  const code = esc(App.code);
+  return sheetHTML({
+    kind: 'invite',
+    title: 'Freunde einladen',
+    body:
+      '<p class="lead">Schick den Link oder sag den Code an, dann sitzt ihr am selben Tisch.</p>' +
+      `<p class="icode"><span class="sr">Tischcode </span><span class="icodev st-num st-l3">${code}</span></p>` +
+      `<div class="ilink"><input class="st-input" readonly value="${esc(link)}" aria-label="Einladungslink" />` +
+      '<button type="button" class="st-btn st-primary" data-act="copylink">Link kopieren</button></div>' +
+      (typeof navigator.share === 'function'
+        ? '<button type="button" class="st-btn st-secondary ishare" data-act="share">Link teilen</button>'
+        : '') +
+      seatsHTML(),
+  });
 }

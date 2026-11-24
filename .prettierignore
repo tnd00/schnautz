@@ -7,3 +7,6 @@ test-results
 # Fremde Skills für Claude Code, unverändert übernommen
 .claude/skills
 skills-lock.json
+
+# Arbeitsstände der Design-Skill (Entwürfe, Fragen, Belege), unverändert ablegen
+.impeccable

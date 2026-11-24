@@ -28,13 +28,47 @@ export function showUpdate(text: string, reload: boolean): void {
   }
   bar.innerHTML =
     `<span>${esc(text)}</span>` +
-    (reload ? '<button class="btn primary small" data-act="reloadapp">Neu laden</button>' : '') +
-    '<button class="x" data-act="closeupd" aria-label="Schließen">×</button>';
+    (reload ? '<button type="button" class="btn primary small" data-act="reloadapp">Neu laden</button>' : '') +
+    '<button type="button" class="x" data-act="closeupd" aria-label="Schließen">×</button>';
   shown = true;
+  watch(bar);
+}
+
+/*
+ * Der Hinweis liegt unter der Kopfzeile, damit Regeln, Menü und Tischcode frei bleiben. Toasts und die
+ * Verbindungswarnung rutschen so lange darunter (--st-updend). Die Kopfzeile ändert ihre Höhe je nach Bildschirm.
+ */
+let ro: ResizeObserver | null = null;
+
+function place(): void {
+  const root = document.documentElement.style;
+  const bar = $opt('#updbar');
+  const head = $opt('.top')?.getBoundingClientRect();
+  if (!bar) {
+    root.removeProperty('--st-updtop');
+    root.removeProperty('--st-updend');
+    return;
+  }
+  if (head && head.height) root.setProperty('--st-updtop', `${Math.round(head.bottom + 8)}px`);
+  else root.removeProperty('--st-updtop');
+  root.setProperty('--st-updend', `${Math.round(bar.getBoundingClientRect().bottom + 8)}px`);
+}
+
+function watch(bar: HTMLElement): void {
+  if (!ro && typeof ResizeObserver === 'function') {
+    ro = new ResizeObserver(place);
+    const head = $opt('.top');
+    if (head) ro.observe(head);
+    ro.observe(bar);
+  }
+  place();
 }
 
 export function closeUpdate(): void {
   $opt('#updbar')?.remove();
+  ro?.disconnect();
+  ro = null;
+  place();
 }
 
 /** Neu laden und danach an den Tisch zurück, als hätte man „Fortsetzen“ getippt. */
@@ -75,9 +109,11 @@ async function check(): Promise<void> {
     if (typeof j.build === 'string' && j.build !== BUILD) {
       dlog('net', `Neue Version auf dem Server: ${j.build}`);
       showUpdate(
-        App.role === 'host'
-          ? 'Neue Version verfügbar. Lade neu, der Tisch läuft danach weiter.'
-          : 'Neue Version verfügbar. Lade neu, dein Platz bleibt.',
+        !App.role
+          ? 'Neue Version da, kurz neu laden.'
+          : App.role === 'host'
+            ? 'Neue Version verfügbar. Lade neu, der Tisch läuft danach weiter.'
+            : 'Neue Version verfügbar. Lade neu, dein Platz bleibt.',
         true,
       );
     }

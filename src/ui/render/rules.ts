@@ -14,34 +14,52 @@ import type { CbRules, DkRules, GameKind, Rules, ShRules } from '../../game/type
 import { App } from '../app';
 import { num } from '../dom';
 import { legendGrid, legendTitle } from './legend';
+import { sheetHTML } from '../dialog';
 import { GAME_NAME, GAMES, LOSER_MARK, unreachable } from '../../game/games';
 
 /* ---------- Regeln ---------- */
 const p = (t: string) => `<p>${t}</p>`;
-/** Ein Abschnitt als eigene Karte, damit man beim Überfliegen schnell findet, was man sucht. */
+/** Ein Abschnitt mit eigener Überschrift, damit man beim Überfliegen schnell findet, was man sucht. */
 const sec = (title: string, ...ps: string[]) =>
   `<section class="rsec"><h3>${title}</h3>${ps.map(p).join('')}</section>`;
 
-/** Regelfenster, am Tisch nur für das laufende Spiel. Oben die Kurzübersicht der Karten. */
+/** Sprungmarken des Fensters, das gerade gebaut wird. Nur Abschnitte, die es mit diesen Regeln wirklich gibt. */
+let JUMPS: { id: string; label: string }[] = [];
+/** Abschnitt mit Sprungmarke oben im Kopf. `label` ist kurz, die Marken müssen am Handy in eine Zeile passen. */
+const jsec = (label: string, title: string, ...ps: string[]) => {
+  const id = `rj-${JUMPS.length}`;
+  JUMPS.push({ id, label });
+  return `<section class="rsec" id="${id}"><h3 tabindex="-1">${title}</h3>${ps.map(p).join('')}</section>`;
+};
+
+/** Feste Neigung pro Spiel-Sticker, nie zufällig. */
+const TILT: Record<GameKind, string> = { schnautz: 'st-l3', shithead: 'st-r2', durak: 'st-l2', cabo: 'st-r3' };
+
+/**
+ * Regelfenster: Reiter für alle Spiele (auch am Tisch), oben die Kurzübersicht der Karten.
+ * Ohne Angabe zeigt es das Spiel am Tisch. Am Tisch gelten für jedes Spiel die Regeln aus der Lobby.
+ */
 export function rulesHTML(game?: GameKind): string {
   const v = App.view;
-  // Am Tisch gibt es nur die Regeln des Spiels, das gerade läuft. Reiter nur auf der Startseite
-  const g = v?.game || game || 'schnautz';
+  const g = game ?? v?.game ?? 'schnautz';
   const r: Rules = v ? v.rules : DEFAULT_RULES;
   const tabs =
-    '<div class="gamesel">' +
+    '<div class="rtabs" role="group" aria-label="Spiel">' +
     GAMES.map(
-      (x) => `<button data-act="rulestab" data-g="${x}" class="${g === x ? 'on' : ''}">${GAME_NAME[x]}</button>`,
+      (x) =>
+        `<button type="button" class="rtab g-${x} ${TILT[x]}" data-act="rulestab" data-g="${x}" aria-pressed="${g === x}">` +
+        `<span class="rtn">${GAME_NAME[x]}</span>${v?.game === x ? '<span class="rtag">am Tisch</span>' : ''}</button>`,
     ).join('') +
     '</div>';
-  const glance = `<section class="rsec glance"><h3>${legendTitle(g)} auf einen Blick</h3>${legendGrid(g, r)}</section>`;
-  return (
-    '<div class="modal"><div class="paper sheet rules"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    (v ? '' : tabs) +
-    rulesOf(g, r, glance) +
-    (r.turnSecs ? sec('Zeitlimit', timeText(g, r.turnSecs)) : '') +
-    '</div></div>'
-  );
+  const glance = `<section class="rsec glance g-${g}"><h3>${legendTitle(g)} auf einen Blick</h3>${legendGrid(g, r)}</section>`;
+  JUMPS = [];
+  const body = rulesOf(g, r, glance) + (r.turnSecs ? sec('Zeitlimit', timeText(g, r.turnSecs)) : '');
+  const jumps = JUMPS.length
+    ? '<nav class="rjump" aria-label="Springe zu">' +
+      JUMPS.map((j) => `<button type="button" class="rj" data-jump="${j.id}">${j.label}</button>`).join('') +
+      '</nav>'
+    : '';
+  return sheetHTML({ kind: `rules g-${g}`, title: 'Regeln', head: tabs + jumps, body });
 }
 
 /** Zeitlimit je Spiel: Durak hat keine Tauschrunde und keine 4er, Cabo hat statt der Tauschrunde das Ansehen. */
@@ -86,14 +104,16 @@ function rulesSh(R: ShRules, glance: string): string {
     'Vier gleiche Karten hintereinander sind eine Bombe und verbrennen den Stapel ebenfalls. Wer die vierte legt, ist gleich nochmal dran.',
   );
   return (
-    '<h2>So geht <span class="r">Shithead</span></h2><p class="lead">Auch bekannt als Palace oder Karma. Gespielt wird mit 52 Karten, ab 6 Leuten mit zwei Decks. Das Ass ist am höchsten.</p>' +
+    '<p class="lead">Auch bekannt als Palace oder Karma. Gespielt wird mit 52 Karten, ab 6 Leuten mit zwei Decks. Das Ass ist am höchsten.</p>' +
     glance +
     sec('Worum es geht', 'Werde alle deine Karten los. Wer am Ende als Letzter noch Karten hat, ist der Shithead.') +
-    sec(
+    jsec(
+      'Aufbau',
       'Aufbau',
       'Jeder bekommt drei verdeckte Karten, darauf drei offene und dazu drei auf die Hand. Vor dem Start darfst du Handkarten mit deinen offenen Tischkarten tauschen.',
     ) +
-    sec(
+    jsec(
+      'Ablauf',
       'Ablauf',
       'Wer die niedrigste Handkarte hat, fängt an. Sonderkarten zählen dabei nicht. Du legst eine oder mehrere Karten mit gleichem Wert auf den Stapel. Sie müssen gleich hoch oder höher sein als die oberste Karte. Danach ziehst du wieder auf drei Handkarten nach, solange der Nachziehstapel reicht.',
       'Kannst oder willst du nicht legen, nimmst du den ganzen Stapel auf.',
@@ -102,9 +122,10 @@ function rulesSh(R: ShRules, glance: string): string {
       'Tischkarten',
       'Sind Nachziehstapel und Hand leer, spielst du deine offenen Tischkarten. Danach kommen die verdeckten, blind und eine nach der anderen. Passt die aufgedeckte Karte nicht, nimmst du den Stapel samt dieser Karte auf.',
     ) +
-    sec('Sonderkarten', ...sp) +
+    jsec('Sonderkarten', 'Sonderkarten', ...sp) +
     (R.four
-      ? sec(
+      ? jsec(
+          '4er',
           '4er reinwerfen',
           'Immer wenn ein neuer Stapel beginnt, also am Anfang, nach einer 10, nach einer Bombe und nach dem Aufnehmen, dürfen alle ihre 4er per Knopf reinwerfen, auch die Person am Zug. An der Reihenfolge ändert das nichts.',
           'Wer dran ist, wartet höchstens ' +
@@ -132,24 +153,26 @@ function rulesSh(R: ShRules, glance: string): string {
 function rulesDurak(R: DkRules, glance: string): string {
   const small = DK_FULL_DECK - 1;
   return (
-    '<h2>So geht <span class="r">Durak</span></h2>' +
     `<p class="lead">Durak ist Russisch für Dummkopf. Den Titel will keiner haben. Bis ${small} Leute spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} mit allen 52. Das Ass ist am höchsten.</p>` +
     glance +
     sec(
       'Worum es geht',
       'Werde alle deine Karten los. Wer zuerst keine mehr hat, holt die Krone. Wer am Ende als Letzter noch Karten hat, ist der Durak.',
     ) +
-    sec(
+    jsec(
+      'Aufbau',
       'Geben und Trumpf',
       'Jeder bekommt sechs Karten. Die unterste Karte des Stapels liegt offen darunter. Ihre Farbe ist Trumpf für die ganze Partie, gezogen wird sie als letzte.',
       'Spielen sechs Leute mit 36 Karten, bleibt kein Stapel übrig. Dann zeigt die zuletzt gegebene Karte den Trumpf und bleibt auf der Hand.',
     ) +
-    sec(
+    jsec(
+      'Angriff',
       'Angreifen und nachlegen',
       'Wer angreift, legt eine Karte oder mehrere mit gleichem Wert vor den Verteidiger. Solange der Angriff läuft, dürfen alle außer dem Verteidiger nachlegen. Erlaubt sind nur Werte, die schon auf dem Tisch liegen, egal ob angegriffen oder geschlagen.',
       'In einen Angriff passen höchstens sechs Karten und nie mehr, als der Verteidiger zu Beginn auf der Hand hatte.',
     ) +
-    sec(
+    jsec(
+      'Abwehr',
       'Verteidigen und aufnehmen',
       'Der Verteidiger schlägt jede Angriffskarte einzeln, mit einer höheren Karte derselben Farbe oder mit einem Trumpf. Gegen einen Trumpf hilft nur ein höherer Trumpf.',
       'Kannst oder willst du nicht schlagen, nimmst du alles auf. Die anderen dürfen dir dann noch Karten dazulegen, die du gleich mit einsammelst.',
@@ -173,7 +196,8 @@ function rulesDurak(R: DkRules, glance: string): string {
       'Wer anfängt',
       'In der ersten Partie greift an, wer den niedrigsten Trumpf hat. Hat niemand einen, entscheidet der Zufall. Danach wird der Durak der letzten Partie zuerst angegriffen, von der Person rechts von ihm. Strafe muss sein.',
     ) +
-    sec(
+    jsec(
+      'Ende',
       'Ende',
       'Ist der Stapel leer, ist raus, wer keine Karten mehr hat. Wer als Letzter Karten hält, ist der Durak und trägt den ' +
         LOSER_MARK.durak +
@@ -194,7 +218,6 @@ function rulesDurak(R: DkRules, glance: string): string {
 function rulesCabo(R: CbRules, glance: string): string {
   const targets = CB_TARGETS.join(' oder ');
   return (
-    '<h2>So geht <span class="r">Cabo</span></h2>' +
     `<p class="lead">Ein Spiel fürs Gedächtnis und für Pokerfaces. Gespielt wird mit 52 Karten, ab ${CB_TWO_DECKS} Leuten mit zwei Decks.</p>` +
     glance +
     sec(
@@ -206,18 +229,21 @@ function rulesCabo(R: CbRules, glance: string): string {
       'Das Ass zählt 1, die 2 bis 10 zählen, was draufsteht. Der Bube zählt 11, die Dame 12, der schwarze König 13.',
       'Der rote König zählt 0 und ist die beste Karte im Spiel. Wer einen hat, sollte ihn nicht hergeben.',
     ) +
-    sec(
+    jsec(
+      'Aufbau',
       'Aufbau',
       `Jeder bekommt ${CB_HAND} verdeckte Karten in einer Reihe, eine Karte liegt offen auf der Ablage. Zu Beginn jeder Runde suchst du dir zwei deiner Karten aus und siehst sie dir an.`,
       'Gezeigt werden sie nur ein paar Sekunden, danach musst du sie dir merken. Mitschreiben gilt nicht.',
     ) +
-    sec(
+    jsec(
+      'Zug',
       'Dein Zug',
       'Du ziehst vom Stapel oder nimmst die oberste Karte der Ablage. Die Karte tauschst du gegen eine deiner Karten, die alte kommt offen auf die Ablage. Eine Karte von der Ablage musst du tauschen, sie liegt danach offen vor dir.',
       'Du darfst auch mehrere Karten mit gleichem Wert auf einmal gegen die gezogene tauschen. Dann liegen weniger Karten vor dir. Haben sie nicht alle den gleichen Wert, bleiben sie offen liegen, die gezogene geht auf die Ablage und du bekommst eine Strafkarte.',
       'Eine Karte vom Stapel darfst du auch gleich wieder ablegen. Hat sie eine Fähigkeit, darfst du sie nutzen.',
     ) +
-    sec(
+    jsec(
+      'Fähigkeiten',
       'Fähigkeiten',
       'Mit einer 7 oder 8 siehst du dir eine eigene Karte an.',
       'Mit einer 9 oder 10 schaust du dir eine Karte von jemand anderem an.',
@@ -229,7 +255,8 @@ function rulesCabo(R: CbRules, glance: string): string {
       'Glaubst du, dass du am wenigsten hast, rufst du statt zu ziehen Cabo. Alle anderen sind dann noch genau einmal dran, danach wird aufgedeckt.',
       'Ist der Stapel leer, endet die Runde auch ohne Cabo.',
     ) +
-    sec(
+    jsec(
+      'Wertung',
       'Wertung',
       `Am Ende zählt die Summe deiner Karten. Wer Cabo ruft und am wenigsten hat, bekommt 0 Punkte. Gleichstand reicht dafür. Hat jemand weniger, gibt es die eigene Summe plus ${CB_PENALTY} Strafpunkte. Großes Maul, große Strafe.`,
       `Liegen bei jemandem genau zwei Damen und zwei schwarze Könige und sonst nichts, ist das Kamikaze. Alle anderen bekommen ${CB_KAMI} Punkte, die Person selbst 0. Das schlägt jeden Cabo-Ruf.`,
@@ -267,25 +294,28 @@ function rulesCabo(R: CbRules, glance: string): string {
 
 function rulesSchnautz(r: Rules, glance: string): string {
   return (
-    '<h2>So geht <span class="r">Schnautz</span></h2><p class="lead">Auch bekannt als Schwimmen, 31 oder Knack.</p>' +
+    '<p class="lead">Auch bekannt als Schwimmen, 31 oder Knack.</p>' +
     glance +
     sec(
       'Worum es geht',
       'Jeder hat drei Karten. Gezählt werden nur Karten derselben Farbe. Das Höchste ist 31. Wer am Ende einer Runde am wenigsten hat, verliert einen Bierdeckel.',
     ) +
-    sec(
+    jsec(
+      'Werte',
       'Kartenwerte',
       'Das Ass zählt 11. König, Dame, Bube und Zehn zählen 10. Neun, Acht und Sieben zählen so viel, wie draufsteht.',
       'Drei gleiche Karten (etwa drei Buben) zählen 30,5.' + (r.feuer ? ' Drei Asse sind Feuer und zählen 33.' : ''),
     ) +
-    sec(
+    jsec(
+      'Ablauf',
       'Ablauf',
       r.dealerChoice
         ? 'Wer gibt, bekommt ein zweites Blatt. Nach einem Blick auf das erste Blatt entscheidet der Geber, ob er es behält oder blind das zweite nimmt. Das übrige Blatt kommt offen in die Mitte.'
         : 'Jeder bekommt drei Karten, drei weitere liegen offen in der Mitte.',
       'Wer die letzte Runde verloren hat, fängt an. Das gilt auch für die erste Runde der nächsten Partie. Wer dran ist, tauscht eine Karte mit der Mitte, tauscht alle drei, schiebt oder klopft. Schieben alle nacheinander, kommen drei neue Karten in die Mitte.',
     ) +
-    sec(
+    jsec(
+      'Klopfen',
       'Klopfen',
       'Wer mit dem eigenen Blatt zufrieden ist, klopft. Alle anderen haben danach noch genau einen Zug. Dann wird aufgedeckt.' +
         (r.knockFirst ? '' : ' Klopfen geht erst, wenn jeder einmal dran war.') +
@@ -296,7 +326,8 @@ function rulesSchnautz(r: Rules, glance: string): string {
       'Wer 31 auf der Hand hat, deckt sofort auf und die Runde ist vorbei. Das Spiel merkt das automatisch.' +
         (r.feuer ? ' Bei Feuer verlieren alle anderen einen Bierdeckel.' : ''),
     ) +
-    sec(
+    jsec(
+      'Ende',
       'Leben und Schwimmen',
       'Jeder startet mit ' +
         num(r.lives) +

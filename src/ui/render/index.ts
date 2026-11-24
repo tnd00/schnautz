@@ -1,6 +1,7 @@
 import { App } from '../app';
 import { $, $opt } from '../dom';
 import { showScreen } from '../screens';
+import { rememberGame } from '../start';
 import { renderBetModal } from './bets';
 import { renderEmotes } from './emotes';
 import { renderLegend } from './legend';
@@ -16,6 +17,7 @@ import { GAME_NAME, unreachable } from '../../game/games';
 import type { View } from '../../game/types';
 import { renderDk, renderDkOverlay } from './durak';
 import { renderCb, renderCbOverlay } from './cabo';
+import { peelChosen } from '../peel';
 
 /** Was jedes Spiel am Tisch zeichnet und ob die Leiste oben und das Abzeichen am Namen dazugehören. */
 function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: boolean; badge: boolean } {
@@ -48,7 +50,10 @@ export function render(): void {
     showScreen('lobby');
     renderLobby(v);
   } else {
+    // Von der Lobby an den Tisch: Der gewählte Spiel-Sticker zieht sich ab, solange die Lobby noch zu sehen ist
+    if (!$('#scr-lobby').hidden) peelChosen();
     showScreen('game');
+    rememberGame(v.game);
     const tbl = $('#table');
     tbl.dataset.game = v.game;
     tbl.classList.toggle('swap', v.game === 'shithead' && v.phase === 'swap');

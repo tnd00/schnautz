@@ -2,7 +2,7 @@ import { suitOf } from '../game/cards';
 import type { LogEntry, View } from '../game/types';
 import { confetti, emojiFly } from './animations';
 import { App } from './app';
-import { $opt, esc, num } from './dom';
+import { $opt, esc, listJoin, num } from './dom';
 import { REMATCH_ANN_MS, SUIT_SYM } from '../game/constants';
 import {
   type Announcement,
@@ -14,13 +14,14 @@ import {
   holdForAnnouncements,
   shakePanel,
   tauntLabel,
+  toast,
 } from './feedback';
 import { myMoveNow, myTurn, nameOf, pById, roundBest, vb } from './helpers';
 import { betEffect, BETUI } from './render/bets';
 import { duelResult, duelRunning, rematchAnn } from './render/rematch';
 import { updateTitle } from './screens';
 import { burnAnn } from './shithead/sequence';
-import { sfx } from './sound';
+import { sfx, sfxCalm } from './sound';
 import { shitheadCeremony } from './ceremony';
 import { ZER_SHDONE_MS } from './shithead/ceremony-plan';
 import { taunt } from './taunts';
@@ -213,6 +214,7 @@ export function effects(prev: View, v: View, seqd = false): void {
       if (mine) setTimeout(confetti, 600);
     }
   });
+  if (prev.phase === 'lobby' && v.phase === 'lobby') lobbyPeople(prev, v, fresh);
   // Zu Beginn der Revanche-Partie ein kurzer Hinweis am Tisch
   const started = fresh.some(
     (e) => e.k === 'shdeal' || e.k === 'dkdeal' || ((e.k === 'round' || e.k === 'cbdeal') && e.r === 1),
@@ -502,5 +504,28 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
       return;
     default:
       return;
+  }
+}
+
+/**
+ * Lobby: Wer kommt oder geht, bekommt eine kurze Meldung und einen leisen Ton. KIs kommen und gehen still,
+ * mehrere auf einmal stehen in einer Meldung.
+ */
+function lobbyPeople(prev: View, v: View, fresh: LogEntry[]): void {
+  const came: string[] = [];
+  const went: string[] = [];
+  fresh.forEach((e) => {
+    if (!e.p || e.p === App.me) return;
+    if ((e.k === 'join' && !e.bot) || e.k === 'takeover' || e.k === 'back') came.push(nameOf(v, e.p, e.name));
+    const was = pById(prev, e.p);
+    if (e.k === 'leave' && was && !was.bot) went.push(e.name ?? was.name);
+  });
+  if (came.length) {
+    sfxCalm('msg', 400);
+    toast(`${listJoin(came)} ${came.length === 1 ? 'sitzt' : 'sitzen'} jetzt mit am Tisch`);
+  }
+  if (went.length) {
+    sfxCalm('card', 400, 0.7);
+    toast(`${listJoin(went)} ${went.length === 1 ? 'ist' : 'sind'} gegangen`);
   }
 }

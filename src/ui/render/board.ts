@@ -1,27 +1,29 @@
-/* Bestenliste: Bilanz am Tisch für das Spiel, das gerade gewählt ist. */
-import type { Player, PlayerStats, View } from '../../game/types';
+/* Bestenliste: Bilanz am Tisch, das gewählte Spiel zuerst, danach jedes Spiel, das hier schon lief. */
+import type { GameKind, Player, PlayerStats, View } from '../../game/types';
 import { App } from '../app';
 import { esc, num } from '../dom';
+import { sheetHTML } from '../dialog';
 import { loserCount, reignHTML } from './marks';
-import { GAME_NAME, LOSER_MARK, LOSER_NAME, unreachable } from '../../game/games';
+import { GAME_NAME, GAMES, LOSER_NAME, unreachable } from '../../game/games';
 
 interface Row {
   p: Player;
   s: PlayerStats;
 }
 
-const avgPlace = (r: Row): number => (r.s.games ? num(r.s.places) / r.s.games : 99);
-
-function cell(v: number | string, title: string): string {
-  return `<span class="bv" title="${esc(title)}">${v}</span>`;
+/** Spalte: kurze Überschrift (mindestens 12 px lesbar), ausgeschrieben für Vorleser und Mauszeiger. */
+interface Col {
+  h: string;
+  full: string;
+  val: (r: Row) => string;
 }
 
-/**
- * Bestenliste: Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt Deckel und 31.
- * Cabo hat Plätze, aber keinen Verlierer-Titel. An dessen Stelle stehen die Cabo-Rufe, die aufgingen.
- */
-function placesGame(v: View): boolean {
-  switch (v.game) {
+const avgPlace = (r: Row): number => (r.s.games ? num(r.s.places) / r.s.games : 99);
+const comma = (x: number): string => x.toFixed(1).replace('.', ',');
+
+/** Platz-Spiele zählen Siege, Verlierer-Titel und Platz, Schnautz zählt Deckel und 31. */
+function placesGame(g: GameKind): boolean {
+  switch (g) {
     case 'shithead':
     case 'durak':
     case 'cabo':
@@ -29,76 +31,98 @@ function placesGame(v: View): boolean {
     case 'schnautz':
       return false;
     default:
-      return unreachable(v.game);
+      return unreachable(g);
   }
 }
 
-/** Cabo-Rufe: richtig gerufen von allen Rufen, kurz genug für die schmale Spalte. */
+/** Cabo-Rufe: richtig gerufen von allen Rufen. Cabo hat keinen Verlierer-Titel, an dessen Stelle stehen die Rufe. */
 function caboCalls(s: PlayerStats): string {
   const n = num(s.cabos);
-  if (!n) return cell('·', 'Noch nie Cabo gerufen');
-  return cell(`${num(s.cabosOk)}/${n}`, `${num(s.cabosOk)} von ${n} Cabo-Rufen gingen auf`);
+  return n ? `${num(s.cabosOk)}/${n}` : '·';
 }
 
-export function boardHTML(v: View): string {
-  const sh = placesGame(v);
-  const cbo = v.game === 'cabo';
-  const lost = (r: Row) => loserCount(v.game, r.p);
-  const rows: Row[] = v.players.map((p) => ({ p, s: p.stats?.[v.game] ?? { games: 0, wins: 0 } }));
+function columns(g: GameKind, tips: boolean): Col[] {
+  const wins: Col = { h: 'Siege', full: 'Gewonnene Partien', val: (r) => String(r.s.wins) };
+  const games: Col = { h: 'Partien', full: 'Gespielte Partien', val: (r) => String(r.s.games) };
+  if (!placesGame(g))
+    return [
+      wins,
+      { h: 'Deckel', full: 'Verlorene Bierdeckel', val: (r) => String(num(r.s.coasters)) },
+      { h: '31', full: 'Runden mit 31 oder Feuer beendet', val: (r) => String(num(r.s.hot)) },
+      games,
+    ];
+  const second: Col =
+    g === 'cabo'
+      ? { h: 'Cabo', full: 'Cabo-Rufe, die aufgingen, von allen Rufen', val: (r) => caboCalls(r.s) }
+      : { h: LOSER_NAME[g], full: `So oft ${LOSER_NAME[g]}`, val: (r) => String(loserCount(g, r.p)) };
+  return [
+    wins,
+    second,
+    { h: 'Ø Platz', full: 'Durchschnittlicher Platz', val: (r) => (r.s.games ? comma(avgPlace(r)) : '·') },
+    ...(tips ? [{ h: 'Tipps', full: 'Punkte aus richtigen Tipps', val: (r: Row) => String(num(r.s.betPts)) }] : []),
+    games,
+  ];
+}
+
+const MEDALS = ['🥇', '🥈', '🥉'];
+
+/** Ein Spiel als eigener Abschnitt in seiner Farbe. Die Krone gibt es nur beim Spiel, das gerade gewählt ist. */
+function section(v: View, g: GameKind, rows: Row[], played: number): string {
+  const name = `<span class="lbg st-display g-${g}">${GAME_NAME[g]}</span>`;
+  const count = played
+    ? `<span class="lbn"><span class="st-num">${played}</span> ${played === 1 ? 'Partie' : 'Partien'}</span>`
+    : '';
+  const head = `<div class="lbh">${name}${count}</div>`;
+  if (!played)
+    return `<section class="lbs g-${g}">${head}<p class="lbnone">Noch keine Partie ${GAME_NAME[g]} fertig.</p></section>`;
+  const sh = placesGame(g);
+  const lost = (r: Row) => loserCount(g, r.p);
   rows.sort((a, b) =>
     sh
       ? b.s.wins - a.s.wins || lost(a) - lost(b) || avgPlace(a) - avgPlace(b)
       : b.s.wins - a.s.wins || num(a.s.coasters) - num(b.s.coasters) || num(b.s.hot) - num(a.s.hot),
   );
-  const head = sh
-    ? [
-        '🏆<small>Siege</small>',
-        cbo ? '📣<small>Cabo-Rufe</small>' : `${LOSER_MARK[v.game]}<small>${LOSER_NAME[v.game]}</small>`,
-        'Ø<small>Platz</small>',
-        '#<small>Partien</small>',
-      ]
-    : [
-        '🏆<small>Siege</small>',
-        '🍺<small>Deckel weg</small>',
-        '⭐<small>31 / Feuer</small>',
-        '#<small>Partien</small>',
-      ];
-  const played = rows.some((r) => r.s.games > 0);
   // Tipp-Punkte als eigene Spalte, sobald bei Shithead oder Durak jemand getippt hat
-  const tips = sh && rows.some((r) => num(r.s.bets) > 0);
-  if (tips) head.splice(3, 0, '🔮<small>Tipp-Punkte</small>');
-  const MEDALS = ['🥇', '🥈', '🥉'];
+  const tips = sh && g !== 'cabo' && rows.some((r) => num(r.s.bets) > 0);
+  const cols = columns(g, tips);
+  const ths = cols
+    .map((c) => `<span class="lbc" role="columnheader" title="${esc(c.full)}">${esc(c.h)}</span>`)
+    .join('');
   const body = rows
     .map((r, i) => {
-      const s = r.s;
-      const vals = sh
-        ? [
-            cell(s.wins, 'Gewonnene Partien'),
-            cbo ? caboCalls(s) : cell(lost(r), `So oft ${LOSER_NAME[v.game]}`),
-            cell(s.games ? avgPlace(r).toFixed(1).replace('.', ',') : '·', 'Durchschnittlicher Platz'),
-            ...(tips ? [cell(num(s.betPts), 'Punkte aus richtigen Tipps')] : []),
-            cell(s.games, 'Gespielte Partien'),
-          ]
-        : [
-            cell(s.wins, 'Gewonnene Partien'),
-            cell(num(s.coasters), 'Verlorene Bierdeckel'),
-            cell(num(s.hot), 'Runden mit 31 oder Feuer beendet'),
-            cell(s.games, 'Gespielte Partien'),
-          ];
       const me = r.p.id === App.me;
+      const rank =
+        i < 3 && r.s.games
+          ? `<span class="sr">${i + 1}.</span><span class="lbm" aria-hidden="true">${MEDALS[i]}</span>`
+          : `${i + 1}.`;
+      const mark = g === v.game ? reignHTML(v, r.p.id) : '';
+      const who = `${mark}<span class="lbname">${esc(me ? 'Du' : r.p.name)}</span>${r.p.bot ? '<i class="botb">KI</i>' : ''}`;
+      const cells = cols.map((c) => `<span class="lbv" role="cell" title="${esc(c.full)}">${c.val(r)}</span>`).join('');
       return (
-        `<div class="brow${me ? ' mine' : ''}${i === 0 && s.wins ? ' top' : ''}">` +
-        `<span class="bp">${played && i < 3 && s.games ? MEDALS[i] : `${i + 1}.`}</span>` +
-        `<span class="bn">${reignHTML(v, r.p.id)}${esc(me ? 'Du' : r.p.name)}${r.p.bot ? '<i class="botb">KI</i>' : ''}</span>` +
-        `${vals.join('')}</div>`
+        `<div class="lbr${me ? ' mine' : ''}${i === 0 && r.s.wins ? ' top' : ''}" role="row">` +
+        `<span class="lbp" role="cell">${rank}</span><span class="lbw" role="rowheader">${who}</span>${cells}</div>`
       );
     })
     .join('');
   return (
-    '<div class="modal"><div class="paper sheet board"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    `<h2>Bestenliste <span class="r">${GAME_NAME[v.game]}</span></h2>` +
-    `<p class="lead">${played ? 'Zählt alle fertigen Partien, seit dieser Tisch offen ist.' : 'Noch keine Partie fertig. Nach der ersten steht hier, wer vorne liegt.'}</p>` +
-    `<div class="btable${tips ? ' c5' : ''}"><div class="brow bhead"><span class="bp"></span><span class="bn"></span>${head.map((h) => `<span class="bv">${h}</span>`).join('')}</div>${body}</div>` +
-    '</div></div>'
+    `<section class="lbs g-${g}">${head}` +
+    `<div class="lbt c${cols.length}" role="table" aria-label="Bestenliste ${GAME_NAME[g]}">` +
+    `<div class="lbr lbhead" role="row"><span class="lbp" role="columnheader"><span class="sr">Platz</span></span>` +
+    `<span class="lbw" role="columnheader"><span class="sr">Name</span></span>${ths}</div>${body}</div></section>`
   );
+}
+
+export function boardHTML(v: View): string {
+  const rowsOf = (g: GameKind): Row[] => v.players.map((p) => ({ p, s: p.stats?.[g] ?? { games: 0, wins: 0 } }));
+  // Wie viele Partien hier fertig sind: Jede Partie zählt bei allen, die mitgespielt haben, also das Maximum
+  const playedOf = (g: GameKind): number => Math.max(0, ...rowsOf(g).map((r) => num(r.s.games)));
+  const order = [v.game, ...GAMES.filter((g) => g !== v.game && playedOf(g) > 0)];
+  const any = order.some((g) => playedOf(g) > 0);
+  const body = any
+    ? '<p class="lead">Zählt alle fertigen Partien, seit dieser Tisch offen ist.</p>' +
+      order.map((g) => section(v, g, rowsOf(g), playedOf(g))).join('')
+    : '<div class="lbempty"><span class="lbcup st-r4" aria-hidden="true">🏆</span>' +
+      '<p class="lbbig st-display">Noch blitzeblank.</p>' +
+      '<p>Noch keine Partie fertig, also darf hier noch keiner angeben. Nach der ersten steht fest, wer prahlen darf und wer sich was anhören muss.</p></div>';
+  return sheetHTML({ kind: `board g-${v.game}`, title: 'Bestenliste', body });
 }

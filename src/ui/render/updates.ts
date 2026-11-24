@@ -2,6 +2,7 @@
 import { CHANGELOG } from '../../content/changelog';
 import { APP_VERSION } from '../../content/version';
 import { esc } from '../dom';
+import { sheetHTML } from '../dialog';
 import { BUILD } from '../update';
 
 const DATE = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -12,12 +13,12 @@ function dateOf(iso: string): string {
 }
 
 export function updatesHTML(): string {
+  const now = CHANGELOG[0]?.v ?? APP_VERSION;
   const rel = CHANGELOG.map(
     (r, i) =>
-      '<section class="rsec rel">' +
-      `<div class="relh"><span class="relv">${esc(r.v)}</span><h3>${esc(r.title)}</h3>` +
-      (i === 0 ? '<span class="relnow">aktuell</span>' : '') +
-      `<span class="reld">${esc(dateOf(r.date))}</span></div>` +
+      `<section class="rsec rel${i === 0 ? ' now' : ''}">` +
+      `<div class="relh"><span class="relv st-num${i === 0 ? ' st-ink' : ''}">${esc(r.v)}</span><h3>${esc(r.title)}</h3>` +
+      `<span class="reld">${i === 0 ? '<b class="relnow">Aktuell</b> · ' : ''}${esc(dateOf(r.date))}</span></div>` +
       r.groups
         .map(
           (g) =>
@@ -26,12 +27,14 @@ export function updatesHTML(): string {
         .join('') +
       '</section>',
   ).join('');
-  return (
-    '<div class="modal"><div class="paper sheet updates"><button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
-    '<h2>Updates</h2><p class="lead">Was sich mit jeder Version am Tisch geändert hat.</p>' +
-    rel +
-    // Fünf schnelle Tipps hier öffnen das versteckte Dev-Menü (src/ui/events.ts)
-    `<p class="relfoot" data-act="devtap">Version ${esc(APP_VERSION)}${BUILD ? ` · Build ${esc(BUILD)}` : ''}</p>` +
-    '</div></div>'
-  );
+  return sheetHTML({
+    kind: 'updates',
+    title: 'Updates',
+    badge: `<span class="dlg-ver st-num st-ink st-r4"><span class="sr">Aktuelle Version </span>${esc(now)}</span>`,
+    body:
+      '<p class="lead">Was sich mit jeder Version am Tisch geändert hat.</p>' +
+      rel +
+      // Fünf schnelle Tipps hier öffnen das versteckte Dev-Menü (src/ui/events.ts)
+      `<p class="relfoot" data-act="devtap">Version ${esc(APP_VERSION)}${BUILD ? ` · Build ${esc(BUILD)}` : ''}</p>`,
+  });
 }

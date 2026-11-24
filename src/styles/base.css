@@ -16,6 +16,43 @@
   --display: var(--serif);
   --ui: 'Bricolage Grotesque Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
   --side: 320px;
+
+  /* Sticker-Pack: der Rahmen (Start, Warten, Lobby, Menüs, Fenster). Der Tisch nutzt die Werte oben */
+  --st-ground: #6f6cf0;
+  --st-ground-hi: #8f8cf7;
+  --st-ground-lo: #5d5ae2;
+  --st-ink: #1a1830;
+  --st-ink-hi: #312e57;
+  --st-ink-soft: #4a4672;
+  --st-paper: #ffffff;
+  --st-sheet: #f4f3ff;
+  --st-field: #eeedff;
+  --st-line: rgba(26, 24, 48, 0.14);
+  /* Limette gehört nur Logo und Claim. Cabo hat denselben Ton, das ist die Spielfarbe und nur dort erlaubt */
+  --st-lime: #c8f25c;
+  --st-schnautz: #ff9a3c;
+  --st-shithead: #ff7eb6;
+  --st-durak: #5ee6c2;
+  --st-cabo: #c8f25c;
+  --st-display: 'Fraunces Soft', 'Fraunces Variable', Georgia, serif;
+  --st-cut: 7px;
+  --st-radius: 22px;
+  /* Kurzer Kontaktschatten plus weicher Hubschatten, beide mit Versatz und Unschärfe */
+  --st-shadow:
+    0 1px 1.5px rgba(26, 24, 48, 0.22), 0 4px 6px -2px rgba(26, 24, 48, 0.24), 0 14px 24px -10px rgba(26, 24, 48, 0.42);
+  --st-shadow-lift:
+    0 2px 3px rgba(26, 24, 48, 0.16), 0 12px 16px -6px rgba(26, 24, 48, 0.26), 0 30px 44px -14px rgba(26, 24, 48, 0.46);
+  --st-shadow-press: 0 1px 1px rgba(26, 24, 48, 0.24), 0 2px 4px -1px rgba(26, 24, 48, 0.22);
+  /* Angehoben, aber dicht am Grund: für Sticker, unter denen gleich etwas anderes liegt */
+  --st-shadow-lift-sm:
+    0 2px 2px rgba(26, 24, 48, 0.18), 0 7px 10px -4px rgba(26, 24, 48, 0.3), 0 12px 14px -10px rgba(26, 24, 48, 0.3);
+  /* Bogen: Formular, Menü und Fenster, die von unten hochfahren oder aufgehen. Alle mit demselben Grauschleier */
+  --st-sheet-radius: 30px;
+  --st-shadow-sheet: 0 -1px 2px rgba(26, 24, 48, 0.12), 0 -20px 44px -16px rgba(26, 24, 48, 0.55);
+  --st-dim: rgba(30, 27, 96, 0.5);
+  --st-sheet-ms: 420ms;
+  --st-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --st-lift-ms: 180ms;
 }
 * {
   box-sizing: border-box;

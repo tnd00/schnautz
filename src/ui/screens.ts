@@ -15,19 +15,23 @@ export function showScreen(name: Screen): void {
   });
   // Am Tisch passt mobil alles auf einen Bildschirm, ohne Scrollen
   document.body.classList.toggle('ingame', name === 'game');
+  // Browserleiste in der Farbe des Grundes: Filz am Tisch, Periwinkle im Rahmen
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', name === 'game' ? '#123326' : '#6f6cf0');
   document.body.classList.toggle('inlobby', name === 'lobby');
   document.body.classList.toggle('onstart', name === 'start');
   if (name !== 'start') document.body.classList.remove('startform');
   $('#btn-board').hidden = name !== 'game';
   document.body.classList.toggle('intable', name === 'lobby' || name === 'game');
   const inTable = name === 'lobby' || name === 'game';
-  $('#codechip').hidden = !inTable;
-  // Das Menü gibt es überall, außerhalb des Tisches nur mit den Updates
+  // In der Lobby steht der Code als eigener Sticker mit Kopieren und Teilen, oben nur am Tisch
+  $('#codechip').hidden = name !== 'game';
+  // Das Menü gibt es überall, außerhalb des Tisches nur mit Ton und Updates
   $('#btn-menu').hidden = name === 'wait';
   $('#netchip').hidden = name === 'start';
   if (!inTable) {
     $('#brand-name').textContent = 'Schnautz';
-    $('#brand-badge').hidden = false;
+    // Das Abzeichen 31 gibt es nur noch am Schnautz-Tisch
+    $('#brand-badge').hidden = true;
     $('#menu').hidden = true;
     document.body.classList.remove('logopen', 'emoopen');
     $('#overlay').innerHTML = '';
@@ -57,10 +61,13 @@ export function copyLink(): void {
   const done = () => {
     toast('Link kopiert. Jetzt einfach verschicken.');
     const b = $opt('#btn-copy');
-    if (b) {
-      b.textContent = 'Kopiert!';
+    const l = b?.querySelector('.lc-l');
+    if (b && l) {
+      b.classList.add('done');
+      l.textContent = 'Kopiert!';
       setTimeout(() => {
-        b.textContent = 'Kopieren';
+        b.classList.remove('done');
+        l.textContent = 'Link kopieren';
       }, 1800);
     }
   };

@@ -1,85 +1,9 @@
-/* Startbildschirm, Warten und Lobby */
-.start > * {
-  min-width: 0;
-}
-.start {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 40px;
-  align-items: center;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 20px 28px 48px;
-  width: 100%;
-}
-.hero h1 {
-  font-family: var(--display);
-  font-weight: 800;
-  font-style: italic;
-  font-size: clamp(46px, 6.4vw, 86px);
-  line-height: 0.92;
-  letter-spacing: -0.035em;
-  margin: 0;
-  color: var(--cream);
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
-}
-.hero h1 em {
-  color: var(--brass-hi);
-  font-style: italic;
-}
-.hero p.tagline {
-  font-size: 18px;
-  color: var(--muted);
-  max-width: 30ch;
-  margin: 18px 0 0;
-}
-.fan {
-  position: relative;
-  height: clamp(170px, 24vw, 240px);
-  margin: 10px 0 26px 8px;
-}
-.fan .card {
-  position: absolute;
-  left: 0;
-  top: 20px;
-  --cw: clamp(96px, 12vw, 128px);
-}
-.fan .card:nth-child(1) {
-  transform: rotate(-14deg);
-  left: 0;
-}
-.fan .card:nth-child(2) {
-  transform: rotate(-2deg) translateY(-12px);
-  left: calc(var(--cw) * 0.62);
-}
-.fan .card:nth-child(3) {
-  transform: rotate(11deg);
-  left: calc(var(--cw) * 1.24);
-  top: 24px;
-}
-.fan .score {
-  position: absolute;
-  left: calc(clamp(96px, 12vw, 128px) * 2.55);
-  top: 52px;
-  font-family: var(--display);
-  font-style: italic;
-  font-weight: 800;
-  font-size: clamp(46px, 6vw, 66px);
-  color: var(--brass-hi);
-  transform: rotate(-6deg);
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
-}
-.fan .score small {
-  display: block;
-  font-family: var(--ui);
-  font-style: normal;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+/*
+ * Startbildschirm, Warten und die Kopfzeile außerhalb des Tisches im Sticker-Pack.
+ * Die Lobby steht in lobby.css. Bausteine aus sticker.css: .st, .st-btn, .st-num, .st-chip.
+ */
+
+/* ---------- Allgemeine Bausteine ---------- */
 .panel {
   background: linear-gradient(180deg, rgba(8, 26, 19, 0.72), rgba(8, 26, 19, 0.55));
   border: 1px solid rgba(246, 239, 223, 0.1);
@@ -99,29 +23,6 @@
   flex-direction: column;
   gap: 14px;
 }
-.or {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 13px;
-  margin: 4px 0;
-}
-.or::before,
-.or::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: rgba(246, 239, 223, 0.14);
-}
-.joinrow {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-}
-.joinbox.hi .input {
-  border-color: var(--brass);
-}
 .note {
   font-size: 13px;
   color: var(--muted);
@@ -135,28 +36,935 @@
   border-radius: 12px;
   font-size: 14px;
 }
-.resume {
-  border: 1px dashed rgba(243, 205, 125, 0.45);
-  border-radius: 14px;
-  padding: 12px 14px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+
+/* ---------- Kopfzeile im Rahmen (am Tisch bleibt sie, wie sie ist) ---------- */
+body:not(.ingame) .top {
   gap: 10px;
-  background: rgba(243, 205, 125, 0.06);
+  min-height: 68px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
 }
-.resume p {
-  margin: 0;
-  flex: 1 1 180px;
+/* Wortmarke als Sticker: Fraunces Black, weich, Limette auf Tinte */
+body:not(.ingame) .top .brand {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px 8px;
+  border: 4px solid var(--st-paper);
+  border-radius: 14px;
+  background: var(--st-ink);
+  color: var(--st-lime);
+  font-family: var(--st-display);
+  font-style: normal;
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-shadow: none;
+  box-shadow: var(--st-shadow);
+  rotate: -3deg;
+  white-space: nowrap;
+}
+/* In der Lobby steht dort das gewählte Spiel, als Spiel-Sticker in seiner Farbe mit Tinte */
+body.inlobby:has(#scr-lobby.g-schnautz) .top .brand {
+  --g: var(--st-schnautz);
+}
+body.inlobby:has(#scr-lobby.g-shithead) .top .brand {
+  --g: var(--st-shithead);
+}
+body.inlobby:has(#scr-lobby.g-durak) .top .brand {
+  --g: var(--st-durak);
+}
+body.inlobby:has(#scr-lobby.g-cabo) .top .brand {
+  --g: var(--st-cabo);
+}
+body.inlobby .top .brand {
+  background: var(--g, var(--st-paper));
+  background-image: linear-gradient(152deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 40%);
+  color: var(--st-ink);
+}
+/* Das Abzeichen 31 gibt es im Rahmen nicht mehr */
+body:not(.ingame) .top .brand small {
+  display: none;
+}
+/* Auf der Startseite trägt der große Logo-Sticker den Namen */
+body.onstart .top .brand {
+  display: none;
+}
+/* Ohne den leeren Abstandshalter: ein Zwischenraum weniger, die Knöpfe rücken per margin nach rechts */
+body:not(.ingame) .top .grow {
+  display: none;
+}
+body:not(.ingame) .top .brand {
+  margin-right: auto;
+}
+body.onstart .top #btn-rules {
+  margin-left: auto;
+}
+body:not(.ingame) .top .iconbtn,
+body:not(.ingame) .top .chip {
+  min-width: 44px;
+  height: 44px;
+  border: 3px solid var(--st-paper);
+  background: var(--st-paper);
+  color: var(--st-ink);
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 6px 12px -5px rgba(26, 24, 48, 0.4);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    translate var(--st-lift-ms) var(--st-ease),
+    scale var(--st-lift-ms) var(--st-ease),
+    box-shadow var(--st-lift-ms) var(--st-ease);
+}
+body:not(.ingame) .top .iconbtn {
+  width: 44px;
+  border-radius: 14px;
+}
+body:not(.ingame) .top .chip {
+  border-radius: 14px;
+  padding: 0 12px;
   font-size: 14px;
 }
-.resume .btn {
-  min-height: 38px;
-  padding: 0 14px;
-  font-size: 14px;
+@media (hover: hover) {
+  body:not(.ingame) .top .iconbtn:hover,
+  body:not(.ingame) .top .chip:hover {
+    border-color: var(--st-paper);
+    translate: 0 -2px;
+    box-shadow: var(--st-shadow-lift);
+  }
+}
+body:not(.ingame) .top .iconbtn:active,
+body:not(.ingame) .top .chip:active {
+  translate: 0 -4px;
+  scale: 1.04;
+  box-shadow: var(--st-shadow-lift);
+}
+/* Feste Neigung pro Knopf */
+body:not(.ingame) #codechip {
+  rotate: -2deg;
+}
+body:not(.ingame) #netchip {
+  rotate: 2deg;
+}
+body:not(.ingame) #btn-rules {
+  rotate: -2deg;
+  width: auto;
+  padding: 0 13px 0 11px;
+  gap: 7px;
+  font-weight: 750;
+}
+body:not(.ingame) #btn-sound {
+  rotate: 3deg;
+}
+body:not(.ingame) #btn-menu {
+  rotate: -3deg;
+}
+body:not(.ingame) .top .iconbtn svg {
+  width: 20px;
+  height: 20px;
+}
+/* Auf der Startseite ist Platz: „Regeln“ steht auch am Handy als Wort da */
+body.onstart #btn-rules span {
+  display: inline;
+}
+body.onstart .top .iconbtn#btn-rules {
+  width: auto;
+  padding: 0 13px 0 11px;
+}
+/* Tischcode im Kopf als Zahlen-Sticker */
+body:not(.ingame) #codechip .lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--st-ink-soft);
+}
+body:not(.ingame) #codechip b {
+  color: var(--st-ink);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+body:not(.ingame) #netchip {
+  justify-content: center;
+}
+/* Schmale Handys: In der Lobby stehen Wortmarke, Code, Verbindung, Regeln und Menü in einer Zeile */
+@media (max-width: 420px) {
+  body:not(.ingame) .top {
+    gap: 6px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  body:not(.ingame) .top .brand {
+    padding: 5px 8px 6px;
+    border-width: 3px;
+    border-radius: 12px;
+    font-size: 17px;
+  }
+  body:not(.ingame) #codechip {
+    padding: 0 9px;
+  }
+  body:not(.ingame) #codechip b {
+    font-size: 15px;
+    letter-spacing: 0.08em;
+  }
 }
 
-/* waiting */
+/* ---------- Startseite ---------- */
+#scr-start {
+  --display: var(--st-display);
+  color: var(--st-ink);
+}
+#scr-start > * {
+  min-width: 0;
+}
+#scr-start .st-logo {
+  margin: 0;
+  font-size: inherit;
+  line-height: 1;
+}
+#scr-start .st-logo-word {
+  --st-radius: 28px;
+  display: inline-block;
+  padding: 0.14em 0.3em 0.2em;
+  color: var(--st-lime);
+  font-size: 64px;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+/* Abgezogene Ecke: Hier sieht man das Trägerpapier */
+#scr-start .st-logo-word::after {
+  content: '';
+  position: absolute;
+  right: calc(-1 * var(--st-cut));
+  bottom: calc(-1 * var(--st-cut));
+  width: 34px;
+  height: 34px;
+  border-radius: 0 0 var(--st-radius) 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0) 49%, #d9d7fb 50%, #f6f5ff 78%);
+  box-shadow: -3px -3px 6px -3px rgba(26, 24, 48, 0.35);
+}
+#scr-start .st-claim {
+  --fill: var(--st-lime);
+  --st-cut: 6px;
+  --st-radius: 18px;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 15em;
+  margin: 0;
+  padding: 9px 14px 11px;
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* Vier Spiel-Sticker 2x2 in ihren Farben */
+#scr-start .st-games {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+#scr-start .st-games > li {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+#scr-start .st-game {
+  --st-radius: 24px;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  container: st-game / size;
+}
+.st-game-in {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 11px 13px 12px;
+  overflow: hidden;
+  border-radius: calc(var(--st-radius) - var(--st-cut));
+}
+.st-game-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: auto;
+}
+/* Emoji als Sticker mit weißem Stanzrand, der Rand wächst mit dem Zeichen */
+.st-mark {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0.046em 0 0 #fff) drop-shadow(-0.046em 0 0 #fff) drop-shadow(0 0.046em 0 #fff)
+    drop-shadow(0 -0.046em 0 #fff) drop-shadow(0 0.09em 0.09em rgba(26, 24, 48, 0.3));
+}
+.st-game .st-num {
+  font-size: 13px;
+  margin-top: 2px;
+}
+.st-game-name {
+  font-family: var(--st-display);
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+  font-size: min(28px, 17cqw);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+.st-game-tag {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.st-game .st-tag {
+  position: absolute;
+  top: -15px;
+  right: 12px;
+  z-index: 1;
+}
+@container st-game (min-height: 150px) {
+  .st-mark {
+    font-size: 40px;
+  }
+}
+/* PC: breite Sticker tragen das Zeichen groß, bis 64 px. Es nimmt die Höhe, die Name, Satz und Ränder (88 px) übrig
+ * lassen, auf flachen Fenstern also weniger */
+@container st-game (min-width: 230px) and (min-height: 110px) {
+  .st-mark {
+    font-size: clamp(40px, calc(100cqh - 88px), 64px);
+  }
+}
+/* Wenig Höhe: erst der Satz weg, dann alles in eine Zeile */
+@container st-game (max-height: 124px) {
+  .st-game-tag {
+    display: none;
+  }
+}
+@container st-game (max-height: 84px) {
+  .st-game-in {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .st-game-top {
+    display: contents;
+  }
+  .st-mark {
+    font-size: 24px;
+    order: -1;
+  }
+  .st-game-name {
+    flex: 1;
+    min-width: 0;
+    font-size: min(22px, 14cqw);
+  }
+  .st-game .st-num {
+    order: 2;
+    margin: 0;
+    font-size: 12px;
+  }
+}
+
+/* Drei Versprechen als kleine Sticker */
+#scr-start .st-promises {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#scr-start .pr-short {
+  display: none;
+}
+
+/* Hauptaktion im Daumenbereich (nur Handy) */
+#scr-start .st-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+#scr-start .playbtn {
+  width: 100%;
+  min-height: 62px;
+  border-radius: 22px;
+  font-size: 19px;
+}
+/* Weiß auf dem Grund: groß und fett, damit der Kontrast reicht */
+#scr-start .st-joinlink {
+  align-self: center;
+  color: var(--st-paper);
+  font-size: 19px;
+  font-weight: 700;
+  text-decoration-color: rgba(255, 255, 255, 0.55);
+}
+#scr-start .st-joinlink b {
+  font-weight: 800;
+}
+
+/* Formular: am PC ein großer weißer Sticker, am Handy ein Stickerbogen, der hochfährt */
+#scr-start .startpanel,
+#scr-start .startbody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#scr-start .startbody > * {
+  flex: none;
+}
+#scr-start .field {
+  gap: 8px;
+}
+#scr-start .field label {
+  font-family: var(--st-display);
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-transform: none;
+  color: var(--st-ink);
+}
+#scr-start .st-input:focus-visible {
+  outline: none;
+}
+#scr-start .st-bots {
+  gap: 10px;
+}
+#scr-start .st-bots .st-chip {
+  min-height: 26px;
+  padding: 3px 10px 4px;
+  font-size: 13px;
+  box-shadow: none;
+  rotate: 3deg;
+}
+#scr-start .st-bots .st-chip:empty {
+  display: none;
+}
+#scr-start .st-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0 -2px;
+  color: var(--st-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+#scr-start .st-or::before,
+#scr-start .st-or::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--st-line);
+}
+#scr-start .joinrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+#scr-start .st-input.code {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+#scr-start .st-input.code::placeholder {
+  letter-spacing: 0.2em;
+}
+#scr-start #btn-join {
+  min-height: 56px;
+}
+#scr-start .st-own,
+#scr-start .startx,
+#scr-start .startdim {
+  display: none;
+}
+#scr-start .st-own {
+  align-self: center;
+  color: var(--st-ink);
+  font-size: 15px;
+}
+/* Fehler: weißer Zettel mit Tintenrand, in keiner Spielfarbe und ohne Rot */
+#scr-start .st-err {
+  margin: 0;
+  padding: 9px 12px;
+  border: 2px solid var(--st-ink);
+  border-radius: 14px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font-size: 15px;
+  font-weight: 650;
+  rotate: -1deg;
+  box-shadow: 0 1px 1px rgba(26, 24, 48, 0.14);
+}
+#scr-start .st-filenote {
+  color: var(--st-ink-soft);
+  font-size: 13px;
+}
+
+/* Fortsetzen: ein Sticker in der Farbe des Spiels mit genau einer Hauptaktion */
+#scr-start .st-resume {
+  gap: 12px;
+}
+#scr-start .resume {
+  --st-cut: 6px;
+  --st-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 10px;
+}
+#scr-start .resume p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+#scr-start .resume p .st-num {
+  font-size: 14px;
+  margin: 0 2px;
+}
+#scr-start .resume-acts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#scr-start .resume .st-btn {
+  flex: 1;
+  min-height: 50px;
+  font-size: 16px;
+}
+#scr-start .resume .st-link {
+  flex: none;
+  font-size: 15px;
+}
+/* Mit einem Tisch zum Fortsetzen ist „Tisch aufmachen“ nur noch Nebenweg */
+#scr-start #resume:not([hidden]) ~ #btn-host {
+  --fill: var(--st-paper);
+  color: var(--st-ink);
+}
+
+/* ---------- Einladung: Link mit Code geöffnet ---------- */
+#scr-start .st-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+#scr-start .st-invite-title {
+  --st-radius: 22px;
+  margin: 0;
+  padding: 10px 16px 13px;
+  color: var(--st-paper);
+  font-size: 34px;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+#scr-start .st-invite-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+#scr-start .st-code {
+  font-size: 26px;
+  letter-spacing: 0.14em;
+  padding: 0.22em 0.4em 0.26em 0.54em;
+  border: 4px solid var(--st-paper);
+  background: var(--st-ink);
+  color: var(--st-paper);
+  border-radius: 14px;
+}
+body.invite #scr-start :is(#btn-host, #btn-bots, .st-or, #joincode, .startx) {
+  display: none;
+}
+body.invite #scr-start .joinrow {
+  grid-template-columns: minmax(0, 1fr);
+}
+body.invite #scr-start #btn-join {
+  --fill: var(--st-ink);
+  color: var(--st-paper);
+  min-height: 60px;
+  font-size: 18px;
+}
+/* Wer über den Link an den eigenen Platz zurückkommt: „Zurück an den Tisch“ ist die Hauptaktion */
+body.invite #scr-start .startbody:has(#resume:not([hidden])) #btn-join {
+  --fill: var(--st-paper);
+  color: var(--st-ink);
+}
+body.invite #scr-start .st-own {
+  display: inline-flex;
+}
+body.invite #scr-start .st-joinlink {
+  display: none;
+}
+
+/* ---------- Handy: ein Bildschirm, nichts scrollt ---------- */
+@media (max-width: 820px) {
+  body.onstart {
+    overflow: hidden;
+  }
+  body.onstart #app {
+    height: 100dvh;
+    min-height: 0;
+  }
+  body.onstart .top {
+    min-height: 64px;
+  }
+  #scr-start {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 16px max(10px, env(safe-area-inset-bottom));
+  }
+  #scr-start .st-hero {
+    --gap: 14px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+  #scr-start .st-logo {
+    flex: none;
+    padding-left: 2px;
+  }
+  #scr-start .st-logo-word {
+    font-size: clamp(42px, min(16vw, 8.2dvh), 70px);
+  }
+  #scr-start .st-claim {
+    flex: none;
+    margin: calc(-1 * var(--gap) - 10px) 0 0 30px;
+    font-size: clamp(16px, min(5.4vw, 2.6dvh), 21px);
+    max-width: 14.5em;
+  }
+  #scr-start .st-games {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 380px;
+    gap: 12px 14px;
+    margin-top: 4px;
+  }
+  #scr-start .st-promises {
+    justify-content: center;
+    gap: 8px 10px;
+  }
+  #scr-start .st-cta {
+    flex: none;
+    margin-top: auto;
+  }
+  /* Mittlere Höhe: eine kompakte Zeile ohne Zeichen, ganz kurze Handys lassen sie weg */
+  @media (max-height: 759px) {
+    #scr-start .st-promises {
+      flex-wrap: nowrap;
+      gap: 6px;
+    }
+    #scr-start .st-promises .st-chip {
+      min-height: 28px;
+      padding: 4px 10px 5px;
+      font-size: 12.5px;
+    }
+    #scr-start .st-promises svg,
+    #scr-start .pr-long {
+      display: none;
+    }
+    #scr-start .pr-short {
+      display: inline;
+    }
+  }
+  @media (max-height: 659px) {
+    #scr-start .st-promises {
+      display: none;
+    }
+  }
+  @media (max-height: 600px) {
+    #scr-start .st-hero {
+      --gap: 10px;
+    }
+    #scr-start .playbtn {
+      min-height: 56px;
+    }
+  }
+
+  /* Der Bogen fährt von unten hoch */
+  #scr-start .startpanel {
+    display: none;
+  }
+  body.startform #scr-start .st-cta {
+    visibility: hidden;
+  }
+  /* Offener Bogen: Die Kopfzeile tritt zurück, oben steht nur noch das Kreuz */
+  body.onstart.startform .top {
+    visibility: hidden;
+  }
+  body.startform #scr-start .startdim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--st-dim);
+    animation: fade 0.2s;
+  }
+  body.startform #scr-start .startpanel {
+    --st-field: var(--st-paper);
+    display: flex;
+    position: fixed;
+    z-index: 61;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 20px 18px max(16px, env(safe-area-inset-bottom));
+    background: var(--st-sheet);
+    border-radius: var(--st-sheet-radius) var(--st-sheet-radius) 0 0;
+    box-shadow: var(--st-shadow-sheet);
+    animation: st-sheet var(--st-sheet-ms) var(--st-ease);
+  }
+  /* Nur als Notbehelf auf sehr kurzen Bildschirmen scrollt der Inhalt des Bogens */
+  body.startform #scr-start .startbody {
+    max-height: calc(100dvh - 92px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin: -6px -8px;
+    padding: 6px 8px;
+  }
+  body.startform #scr-start .startx {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: -58px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 3px solid var(--st-paper);
+    border-radius: 50%;
+    background: var(--st-paper);
+    color: var(--st-ink);
+    box-shadow:
+      0 1px 1px rgba(26, 24, 48, 0.2),
+      0 5px 10px -4px rgba(26, 24, 48, 0.35);
+    rotate: 4deg;
+  }
+  body.startform #scr-start .startx svg {
+    width: 20px;
+    height: 20px;
+  }
+  body.invite.startform #scr-start .startx {
+    display: none;
+  }
+  #scr-start .st-invite-title {
+    font-size: clamp(27px, 7.8vw, 36px);
+  }
+  @media (max-height: 640px) {
+    body.startform #scr-start .startbody {
+      gap: 10px;
+    }
+    body.startform #scr-start .startpanel {
+      padding-top: 16px;
+    }
+    #scr-start .st-btn {
+      min-height: 52px;
+    }
+    #scr-start .st-input {
+      min-height: 52px;
+    }
+    #scr-start .field label {
+      font-size: 23px;
+    }
+    #scr-start .resume {
+      padding: 10px 12px 8px;
+      gap: 6px;
+    }
+    #scr-start .resume p {
+      font-size: 14px;
+    }
+    #scr-start .resume .st-btn {
+      min-height: 46px;
+    }
+  }
+}
+@keyframes st-sheet {
+  from {
+    transform: translateY(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.startform #scr-start .startpanel {
+    animation: fade 0.2s;
+  }
+  body:not(.ingame) .top :is(.iconbtn, .chip):is(:hover, :active) {
+    translate: none;
+    scale: none;
+  }
+}
+
+/* Fortsetzen steht vorn: Dann rückt das Formular darunter zusammen, statt zu scrollen. Erst gehen Trenner und
+ * Überschrift (die Frage bleibt für Screenreader), bei zwei Tischen oder einem Fehler werden die Karten flacher,
+ * auf kurzen Bildschirmen tritt „Gegen die KI spielen“ zurück, bis ein Tisch erledigt ist. */
+@media (max-width: 820px) and (max-height: 759px), (min-width: 821px) and (max-height: 900px) {
+  #scr-start .startbody:has(#resume:not([hidden])) .st-or {
+    display: none;
+  }
+  #scr-start .startbody:has(#resume:not([hidden])) .field label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+#scr-start .startbody:has(.resume + .resume, #start-err:not([hidden])) .resume {
+  gap: 6px;
+  padding: 8px 12px 8px;
+}
+#scr-start .startbody:has(.resume + .resume, #start-err:not([hidden])) .resume p {
+  font-size: 14px;
+  line-height: 1.3;
+}
+#scr-start .startbody:has(.resume + .resume, #start-err:not([hidden])) .resume .st-btn {
+  min-height: 46px;
+  border-width: 5px;
+}
+#scr-start .startbody:has(.resume + .resume, #start-err:not([hidden])) .st-err {
+  padding: 7px 10px;
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+/* Ganz kurze Handys mit Fehler und zwei Tischen zum Fortsetzen: Auch der Code-Weg tritt zurück, bis ein Tisch
+ * erledigt ist. Mit nur einem Tisch bleibt das Code-Feld, damit man einen vertippten Code verbessern kann */
+@media (max-width: 820px) and (max-height: 620px) {
+  #scr-start .startbody:has(.resume + .resume):has(#start-err:not([hidden])) .joinbox {
+    display: none;
+  }
+}
+@media (max-height: 760px) {
+  #scr-start .startbody:has(.resume + .resume) .st-bots,
+  #scr-start .startbody:has(#start-err:not([hidden])):has(#resume:not([hidden])) .st-bots {
+    display: none;
+  }
+}
+
+/* ---------- PC: links Logo, Claim und Spiele, rechts das Formular als weißer Sticker ---------- */
+@media (min-width: 821px) {
+  #scr-start {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(350px, 410px);
+    align-items: center;
+    column-gap: clamp(40px, 6vw, 100px);
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4px 44px 40px;
+  }
+  #scr-start .st-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  #scr-start .st-logo-word {
+    font-size: clamp(66px, min(8.4vw, 12.5dvh), 124px);
+  }
+  #scr-start .st-claim {
+    margin: -34px 0 0 56px;
+    max-width: none;
+    font-size: clamp(20px, min(2.1vw, 3dvh), 27px);
+  }
+  #scr-start .st-games {
+    height: clamp(250px, 42dvh, 400px);
+    max-width: 640px;
+    gap: 20px 24px;
+    margin-top: 6px;
+  }
+  #scr-start .st-game-tag {
+    font-size: 14px;
+  }
+  #scr-start .st-game-in {
+    padding: 14px 16px 15px;
+  }
+  .st-game-name {
+    font-size: min(34px, 15cqw);
+  }
+  #scr-start .st-cta {
+    display: none;
+  }
+  #scr-start .startbody {
+    display: contents;
+  }
+  #scr-start .startpanel {
+    --st-cut: 0px;
+    position: relative;
+    gap: 14px;
+    padding: 28px 26px 40px;
+    background: var(--st-paper);
+    border-radius: var(--st-sheet-radius);
+    box-shadow:
+      0 2px 3px rgba(26, 24, 48, 0.14),
+      0 18px 26px -12px rgba(26, 24, 48, 0.36),
+      0 46px 70px -28px rgba(26, 24, 48, 0.5);
+    rotate: 1deg;
+  }
+  /* Abgezogene Ecke auch am Formular, im eigenen Rand unten rechts */
+  #scr-start .startpanel::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 0 0 var(--st-sheet-radius) 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0) 49%, #dedcfb 50%, #f4f3ff 80%);
+    box-shadow: -4px -4px 8px -4px rgba(26, 24, 48, 0.3);
+    pointer-events: none;
+  }
+  #scr-start .field label {
+    font-size: 30px;
+  }
+}
+@media (min-width: 821px) and (max-height: 760px) {
+  #scr-start {
+    padding-bottom: 24px;
+  }
+  #scr-start .st-hero {
+    gap: 16px;
+  }
+  #scr-start .startpanel {
+    gap: 11px;
+    padding: 22px 22px 38px;
+  }
+  #scr-start .st-btn,
+  #scr-start .st-input {
+    min-height: 52px;
+  }
+}
+
+/* ---------- Warten ---------- */
 .wait {
   flex: 1;
   display: grid;
@@ -164,243 +972,62 @@
   text-align: center;
   padding: 30px;
 }
-.spinner {
+#scr-wait .wait-card {
+  width: min(360px, 100%);
+  padding: 26px 22px 20px;
+  --st-radius: 28px;
+}
+#scr-wait .spinner {
   width: 54px;
   height: 54px;
   margin: 0 auto 18px;
   position: relative;
 }
-.spinner i {
+#scr-wait .spinner i {
   position: absolute;
   inset: 0;
-  border-radius: 6px;
-  background: var(--cream);
+  border-radius: 7px;
+  border: 3px solid var(--st-paper);
+  background: var(--st-ink);
   width: 34px;
   height: 48px;
   left: 10px;
   top: 3px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(26, 24, 48, 0.3);
   animation: flip 1.6s infinite ease-in-out;
 }
-.spinner i:nth-child(2) {
-  background: var(--ox);
+/* Zwei Kartenrücken in Tinte und Grundfarbe: Spielfarben gehören den Spielen, Neigung bleibt bei 6 Grad */
+#scr-wait .spinner i:nth-child(2) {
+  background: var(--st-ground);
   animation-delay: 0.2s;
-  opacity: 0.9;
 }
 @keyframes flip {
   0%,
   100% {
-    transform: rotate(-12deg) translateX(-6px);
+    transform: rotate(-6deg) translateX(-8px);
   }
   50% {
-    transform: rotate(12deg) translateX(6px);
+    transform: rotate(6deg) translateX(8px);
   }
 }
-
-/* lobby */
-.lobby {
-  flex: 1;
-  max-width: 1020px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 10px 24px 48px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 22px;
-  align-items: start;
+@media (prefers-reduced-motion: reduce) {
+  #scr-wait .spinner i {
+    animation-duration: 4s;
+  }
 }
-.lobby > * {
-  min-width: 0;
+#scr-wait .wait-text {
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--st-ink);
 }
-.bigcode {
-  font-family: var(--ui);
-  font-weight: 800;
-  font-size: clamp(44px, 8vw, 76px);
-  letter-spacing: 0.16em;
-  color: var(--brass-hi);
-  line-height: 1;
-  margin: 6px 0 12px;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
-}
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 700;
-}
-.linkbox {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(246, 239, 223, 0.14);
-  border-radius: 13px;
-  padding: 6px 6px 6px 12px;
-}
-.linkbox code {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  color: var(--muted);
-}
-.linkbox .btn {
-  min-height: 38px;
-  padding: 0 14px;
+#scr-wait .wait-sub {
+  margin-top: 8px;
+  color: var(--st-ink-soft);
   font-size: 14px;
 }
-.seats {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+#scr-wait .wait-sub:empty {
+  display: none;
 }
-.seats li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(246, 239, 223, 0.08);
-  animation: rise 0.35s backwards;
-}
-.seats li.off {
-  opacity: 0.55;
-}
-.seats li.empty {
-  border-style: dashed;
-  color: var(--muted);
-  background: transparent;
-}
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-family: var(--display);
-  font-weight: 700;
-  color: #2a1a05;
-  background: linear-gradient(160deg, var(--brass-hi), var(--brass));
-  flex: none;
-}
-.seats .nm {
-  flex: 1;
-  font-weight: 600;
-}
-.badge {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--brass-hi);
-  border: 1px solid rgba(243, 205, 125, 0.4);
-  padding: 2px 7px;
-  border-radius: 999px;
-}
-.rules-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 2px;
-  border-bottom: 1px solid rgba(246, 239, 223, 0.07);
-  cursor: pointer;
-}
-.toggle:last-child {
-  border-bottom: 0;
-}
-.toggle span {
-  flex: 1;
-  font-size: 14px;
-}
-.toggle span small {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-}
-.switch {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 44px;
-  height: 26px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(246, 239, 223, 0.2);
-  position: relative;
-  flex: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.switch::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--cream);
-  transition: transform 0.18s;
-}
-.switch:checked {
-  background: var(--brass);
-}
-.switch:checked::after {
-  transform: translateX(18px);
-  background: #2a1a05;
-}
-.switch:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.stepper button {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid rgba(246, 239, 223, 0.2);
-  background: rgba(0, 0, 0, 0.25);
-}
-.stepper b {
-  min-width: 22px;
-  text-align: center;
-  font-family: var(--display);
-  font-size: 18px;
-}
-
-/* Warten und Lobby: Abstände, die früher als Inline-Styles im Markup standen */
-.wait-text {
-  font-family: var(--display);
-  font-size: 20px;
-}
-.wait-sub {
-  margin-top: 6px;
-}
-.wait-cancel {
+#scr-wait .wait-cancel {
   margin-top: 18px;
-}
-.seat-title {
-  margin: 6px 0 10px;
-}
-.rules-title {
-  margin-bottom: 10px;
-}
-.rules-note {
-  margin-top: 10px;
 }

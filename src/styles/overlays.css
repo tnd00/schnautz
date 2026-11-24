@@ -359,3 +359,953 @@ body.peeking #emotes {
   font-size: 17px;
   cursor: pointer;
 }
+
+/* ==========================================================================
+ * Fenster im Sticker-Pack (#modal): Regeln, Bestenliste, Updates, Einladen, Verbindung und Rückfragen.
+ * Ein Bogen aus Trägerpapier (--st-sheet) mit weißen Stickern darauf, unter demselben Schleier (--st-dim) wie
+ * Formular und Menü, auch wenn er über dem Tisch aufgeht.
+ * Gerüst und Fokus kommen aus src/ui/dialog.ts (.dlg mit festem Kopf und eigenem Scrollbereich).
+ * Jede Regel hängt an #modal und schlägt so die Filz-Regeln (.paper.sheet in shithead-flow.css) unabhängig
+ * von der Reihenfolge. Ausgenommen sind Tipps (.betm, .bets), die zum Spiel gehören, und das Dev-Menü (.devm).
+ * Ergebnisfenster am Tisch (#overlay) bleiben unverändert.
+ * ========================================================================== */
+
+#modal > .modal:not(.betm, :has(> .devm)) {
+  padding: 24px;
+  background: var(--st-dim);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* Der Bogen ist Trägerpapier wie Formular und Menü am Handy: Felder und Nebenknöpfe darauf sind weiß */
+#modal .paper.sheet:not(.bets, .devm) {
+  --display: var(--ui);
+  --st-field: var(--st-paper);
+  width: min(600px, 100%);
+  max-height: min(880px, calc(100dvh - 48px));
+  padding: 22px 22px 20px;
+  color: var(--st-ink);
+  background-color: var(--st-sheet);
+  /* Glanz oben links wie auf dem Vinyl */
+  background-image: linear-gradient(156deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 30%);
+  border: 0;
+  border-radius: var(--st-sheet-radius);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.9),
+    0 2px 3px rgba(26, 24, 48, 0.2),
+    0 26px 60px -18px rgba(26, 24, 48, 0.6);
+  font-family: var(--ui);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 24, 48, 0.32) transparent;
+  animation: stw-rise 0.38s var(--st-ease);
+}
+#modal > .modal > .paper:focus,
+#modal > .modal > .paper:focus-visible {
+  outline: none;
+}
+#modal .paper.sheet:not(.bets, .devm) :focus-visible {
+  outline: 3px solid var(--st-ink);
+  outline-offset: 3px;
+}
+#modal .paper.sheet:not(.bets, .devm) ::selection {
+  background: var(--st-ink);
+  color: var(--st-paper);
+}
+#modal .paper.sheet:not(.bets, .devm) input {
+  caret-color: var(--st-ground);
+}
+#modal .paper.sheet:not(.bets, .devm) ::-webkit-scrollbar {
+  width: 10px;
+}
+#modal .paper.sheet:not(.bets, .devm) ::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background: rgba(26, 24, 48, 0.3) padding-box;
+}
+#modal .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@keyframes stw-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+}
+@keyframes stw-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* ---------- Bogen mit festem Kopf: Titel und Schließen scrollen nie weg ---------- */
+#modal .paper.sheet.dlg {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+#modal .dlg-head {
+  flex: none;
+  padding: 18px 20px 12px 24px;
+  box-shadow: 0 1.5px 0 var(--st-line);
+}
+#modal .dlg-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#modal .dlg-title {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--st-ink);
+  font-family: var(--st-display);
+  font-size: clamp(32px, 8.6vw, 44px);
+  font-style: normal;
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: left;
+  text-wrap: balance;
+}
+#modal .dlg-ver {
+  font-size: 17px;
+}
+#modal .dlg-x {
+  position: static;
+}
+#modal .paper.sheet:not(.bets, .devm) .x {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0;
+  border: 3px solid var(--st-paper);
+  border-radius: 50%;
+  background: var(--st-field);
+  color: var(--st-ink);
+  font: 700 24px/1 var(--ui);
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 5px 10px -4px rgba(26, 24, 48, 0.35);
+  rotate: 4deg;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    scale var(--st-lift-ms) var(--st-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+#modal .paper.sheet:not(.bets, .devm) .x svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+@media (hover: hover) {
+  #modal .paper.sheet:not(.bets, .devm) .x:hover {
+    background: var(--st-ink);
+    color: var(--st-paper);
+  }
+}
+#modal .paper.sheet:not(.bets, .devm) .x:active {
+  scale: 0.92;
+}
+#modal .paper.sheet .dlg-body:focus-visible {
+  outline-offset: -3px;
+  border-radius: 0 0 30px 30px;
+}
+#modal .dlg-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 24px 26px;
+  scrollbar-gutter: stable;
+}
+
+/* Grundtext im Bogen */
+#modal .paper.sheet:not(.bets, .devm) :is(h2, h3, p, .lead) {
+  padding-left: 0;
+}
+#modal .paper.sheet:not(.bets, .devm) .lead {
+  max-width: none;
+  margin: 0 0 18px;
+  color: var(--st-ink-soft);
+  font-size: 15.5px;
+  line-height: 1.5;
+  text-align: left;
+}
+#modal .paper.sheet:not(.bets, .devm) .botb {
+  display: inline-grid;
+  place-items: center;
+  min-height: 20px;
+  margin-left: 6px;
+  padding: 1px 6px 2px;
+  border-radius: 6px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  vertical-align: 1px;
+}
+
+/* ---------- Knöpfe im Bogen: Hauptknopf in Tinte, Nebenknopf in Weiß (wie .st-btn) ---------- */
+#modal .paper.sheet:not(.bets, .devm) .btn {
+  min-height: 56px;
+  padding: 0 20px;
+  border: 6px solid var(--st-paper);
+  border-radius: 20px;
+  background: var(--st-field);
+  background-clip: padding-box;
+  color: var(--st-ink);
+  font: 800 17px/1.1 var(--ui);
+  box-shadow: var(--st-shadow);
+  transition:
+    translate var(--st-lift-ms) var(--st-ease),
+    box-shadow var(--st-lift-ms) var(--st-ease);
+}
+#modal .paper.sheet:not(.bets, .devm) .btn.primary {
+  background: var(--st-ink);
+  background-clip: padding-box;
+  color: var(--st-paper);
+}
+@media (hover: hover) {
+  #modal .paper.sheet:not(.bets, .devm) .btn:hover {
+    translate: 0 -2px;
+    box-shadow: var(--st-shadow-lift);
+  }
+}
+#modal .paper.sheet:not(.bets, .devm) .btn:active {
+  translate: 0 -4px;
+  box-shadow: var(--st-shadow-lift);
+}
+
+/* ---------- Bogen ohne festen Kopf: Rückfragen (events.ts) und Verbindung (render/netinfo.ts) ---------- */
+#modal .paper.sheet:not(.dlg, .bets, .devm) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  column-gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#modal .paper.sheet:not(.dlg, .bets, .devm) > * {
+  grid-column: 1 / -1;
+}
+#modal .paper.sheet:not(.dlg, .bets, .devm) > h2 {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  margin: 0 0 14px;
+  padding: 0;
+  color: var(--st-ink);
+  font-family: var(--st-display);
+  font-size: clamp(32px, 8.6vw, 44px);
+  font-style: normal;
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+#modal .paper.sheet:not(.dlg, .bets, .devm) > .x {
+  position: sticky;
+  top: 0;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+}
+/* Rückfragen sind ein ganzer Satz: kräftig, aber nicht das Riesenwort */
+#modal .paper.sheet:has(#cfm-ok) > h2 {
+  margin-bottom: 6px;
+  font-family: var(--ui);
+  font-weight: 800;
+  font-variation-settings: normal;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+#modal .paper.sheet:not(.bets, .devm) .foot {
+  gap: 10px;
+  padding-top: 8px;
+}
+#modal .paper.sheet:has(#cfm-ok) .foot .btn {
+  flex: 1 1 auto;
+}
+#modal .netinfo .nrows {
+  margin: 0 0 18px;
+  gap: 8px;
+}
+#modal .netinfo .nrow {
+  align-items: center;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--st-paper);
+  font-size: 14.5px;
+}
+#modal .netinfo .nrow span,
+#modal .paper.sheet:not(.bets, .devm) .npeople li span,
+#modal .paper.sheet:not(.bets, .devm) .nnote {
+  color: var(--st-ink-soft);
+}
+#modal .netinfo .nrow b {
+  color: var(--st-ink);
+  font-weight: 750;
+}
+#modal .netinfo h3 {
+  margin: 0 0 6px;
+  color: var(--st-ink);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+#modal .netinfo .npeople li {
+  min-height: 40px;
+  border-bottom: 1.5px solid var(--st-line);
+}
+#modal .netinfo .nnote {
+  font-size: 13px;
+}
+
+/* ---------- Regeln: Spiel-Reiter, Sprungmarken, Abschnitte ---------- */
+#modal .rtabs {
+  display: flex;
+  gap: 7px;
+  margin-top: 16px;
+}
+#modal .rtab {
+  --st-tabfill: color-mix(in srgb, var(--g) 32%, var(--st-paper));
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 7px;
+  border: 3px solid var(--st-paper);
+  border-radius: 15px;
+  background: var(--st-tabfill);
+  color: var(--st-ink);
+  font-family: var(--st-display);
+  font-size: clamp(14px, 3.85vw, 17px);
+  font-weight: 900;
+  font-variation-settings: 'SOFT' 100;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.16),
+    0 3px 6px -3px rgba(26, 24, 48, 0.3);
+  cursor: pointer;
+  transition:
+    translate var(--st-lift-ms) var(--st-ease),
+    box-shadow var(--st-lift-ms) var(--st-ease),
+    background-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+#modal .rtab .rtn {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (hover: hover) {
+  #modal .rtab:hover {
+    translate: 0 -2px;
+    box-shadow: var(--st-shadow-lift);
+  }
+}
+#modal .rtab:active {
+  translate: 0 -4px;
+  box-shadow: var(--st-shadow-lift);
+}
+/* Gewählt: in voller Farbe, schief festgeklebt, mit kleinem Platsch */
+#modal .rtab[aria-pressed='true'] {
+  --st-tabfill: var(--g);
+  z-index: 1;
+  rotate: var(--tilt);
+  background-image: linear-gradient(152deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 40%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    var(--st-shadow);
+  animation: st-slap 0.32s var(--st-ease);
+}
+/* Das Spiel am Tisch trägt einen kleinen Aufkleber, nicht nur eine Farbe */
+#modal .rtag {
+  position: absolute;
+  top: -12px;
+  right: -7px;
+  padding: 3px 6px 4px;
+  border: 2px solid var(--st-paper);
+  border-radius: 8px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font: 800 12px/1 var(--ui);
+  letter-spacing: 0;
+  white-space: nowrap;
+  rotate: 6deg;
+  box-shadow: 0 2px 5px -1px rgba(26, 24, 48, 0.4);
+}
+#modal .rjump {
+  display: flex;
+  gap: 2px;
+  margin: 8px -20px 0 -24px;
+  padding: 0 16px 0 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#modal .rjump::-webkit-scrollbar {
+  display: none;
+}
+/* 44 px zum Tippen, sichtbar ist die schmalere Pille (der Rand bleibt durchsichtig) */
+#modal .rj {
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 5px solid transparent;
+  border-radius: 999px;
+  background: var(--st-field);
+  background-clip: padding-box;
+  color: var(--st-ink);
+  font: 750 14px/1 var(--ui);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  #modal .rj:hover {
+    background-color: color-mix(in srgb, var(--g) 40%, var(--st-paper));
+  }
+}
+#modal .rj[aria-current='true'] {
+  background-color: var(--st-ink);
+  color: var(--st-paper);
+}
+#modal .dlg .rsec {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+#modal .dlg .rsec + .rsec {
+  margin-top: 24px;
+}
+#modal .dlg .rsec h3 {
+  margin: 0 0 6px;
+  padding: 0;
+  color: var(--st-ink);
+  font: 800 18px/1.25 var(--ui);
+  letter-spacing: -0.01em;
+  scroll-margin-top: 12px;
+}
+#modal .dlg .rsec h3:focus:not(:focus-visible) {
+  outline: none;
+}
+#modal .dlg .rsec p {
+  max-width: 68ch;
+  margin: 0 0 8px;
+  color: var(--st-ink-soft);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+#modal .dlg .rsec p:last-child {
+  margin-bottom: 0;
+}
+/* Auf einen Blick: ein Sticker in der Farbe des Spiels */
+#modal .dlg .rsec.glance {
+  margin-bottom: 30px;
+  padding: 16px 16px 16px 18px;
+  border: 6px solid var(--st-paper);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--g) 30%, var(--st-paper));
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.6),
+    var(--st-shadow);
+}
+#modal .dlg .rsec.glance + .rsec {
+  margin-top: 0;
+}
+#modal .dlg .lg {
+  margin: 12px 0 0;
+  gap: 10px 13px;
+}
+#modal .dlg .lg .rk {
+  min-width: 36px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font-family: var(--ui);
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow:
+    0 1px 1px rgba(26, 24, 48, 0.2),
+    0 4px 8px -3px rgba(26, 24, 48, 0.32);
+}
+#modal .dlg .lg .rk.r {
+  color: #c8213a;
+}
+#modal .dlg .lg .rk.e {
+  background: var(--st-ink);
+  color: var(--st-paper);
+}
+#modal .dlg .lg .t b {
+  color: var(--st-ink);
+  font-size: 15px;
+}
+#modal .dlg .lg .t span {
+  color: var(--st-ink-soft);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* ---------- Bestenliste: ein Abschnitt pro Spiel in seiner Farbe ---------- */
+#modal .lbs + .lbs {
+  margin-top: 28px;
+}
+#modal .lbh {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+}
+#modal .lbg {
+  display: inline-block;
+  padding: 6px 13px 8px;
+  border: 5px solid var(--st-paper);
+  border-radius: 16px;
+  background: var(--g);
+  font-size: 21px;
+  line-height: 1;
+  rotate: -2deg;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+    var(--st-shadow);
+}
+#modal .lbs:nth-of-type(even) .lbg {
+  rotate: 2deg;
+}
+#modal .lbn {
+  color: var(--st-ink-soft);
+  font-size: 14px;
+  font-weight: 650;
+}
+#modal .lbn .st-num {
+  font-size: 14px;
+}
+#modal .lbnone {
+  margin: 0;
+  color: var(--st-ink-soft);
+  font-size: 15px;
+}
+#modal .lbt {
+  --st-lbcol: 62px;
+  display: grid;
+  gap: 6px;
+}
+#modal .lbt.c4 {
+  --st-lbn: 4;
+}
+#modal .lbt.c5 {
+  --st-lbn: 5;
+}
+#modal .lbr {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) repeat(var(--st-lbn, 4), var(--st-lbcol));
+  align-items: center;
+  column-gap: 4px;
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: var(--st-paper);
+}
+#modal .lbr.lbhead {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  background: none;
+}
+#modal .lbr.top {
+  background: color-mix(in srgb, var(--g) 34%, var(--st-paper));
+}
+#modal .lbr.mine .lbname {
+  font-weight: 850;
+}
+#modal .lbp {
+  color: var(--st-ink-soft);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+#modal .lbm {
+  font-size: 21px;
+  line-height: 1;
+}
+#modal .lbw {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+#modal .lbw .reign {
+  flex: none;
+  margin-right: 5px;
+}
+#modal .lbname {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#modal .lbc {
+  color: var(--st-ink-soft);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+#modal .lbv {
+  color: var(--st-ink);
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+/* Leer: ein frecher Satz statt einer Tabelle voller Nullen */
+#modal .lbempty {
+  display: grid;
+  justify-items: center;
+  padding: 18px 8px 8px;
+  text-align: center;
+}
+#modal .lbcup {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border: 7px solid var(--st-paper);
+  border-radius: 30px;
+  background: var(--g, var(--st-paper));
+  font-size: 46px;
+  line-height: 1;
+  rotate: var(--tilt);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+    var(--st-shadow);
+}
+#modal .lbempty .lbbig {
+  margin: 20px 0 8px;
+  font-size: clamp(28px, 7.4vw, 34px);
+  line-height: 1.05;
+}
+#modal .lbempty p:last-child {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--st-ink-soft);
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+
+/* ---------- Updates: eine Version pro Abschnitt, Versionen als Zahl-Sticker ---------- */
+#modal .dlg.updates .rsec.rel + .rsec.rel {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 2px dashed var(--st-line);
+}
+#modal .relh {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 12px;
+}
+#modal .relv.st-num {
+  padding: 0.28em 0.55em 0.3em;
+  border-radius: 0.6em;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font-size: 15px;
+}
+#modal .relv.st-num.st-ink {
+  background: var(--st-ink);
+  color: var(--st-paper);
+}
+#modal .dlg .relh h3 {
+  margin: 0;
+  font-size: 19px;
+}
+#modal .reld {
+  margin-left: auto;
+  color: var(--st-ink-soft);
+  font-size: 13px;
+}
+#modal .relnow {
+  color: var(--st-ink);
+  font-size: inherit;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+#modal .relg + .relg {
+  margin-top: 14px;
+}
+#modal .relg h4 {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 4px 10px 5px;
+  border-radius: 9px;
+  background: var(--st-field);
+  color: var(--st-ink);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+#modal .relg ul {
+  margin: 0;
+  padding-left: 20px;
+}
+#modal .relg li {
+  margin: 4px 0;
+  color: var(--st-ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+#modal .relg li::marker {
+  color: var(--st-ground);
+}
+#modal .updates .relfoot {
+  margin: 22px 0 0;
+  padding: 14px 0;
+  color: var(--st-ink-soft);
+  font-size: 12.5px;
+}
+
+/* ---------- Einladen: ein Code-Sticker, Link, Kopieren und Teilen ---------- */
+#modal .invite .icode {
+  margin: 6px 0 26px;
+  text-align: center;
+}
+#modal .icodev.st-num {
+  padding: 0.2em 0.36em 0.24em 0.5em;
+  border: 7px solid var(--st-paper);
+  border-radius: 22px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font-size: clamp(42px, 12.4vw, 58px);
+  letter-spacing: 0.14em;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    var(--st-shadow);
+}
+#modal .ilink {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+#modal .ilink .st-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+#modal .ilink .st-btn {
+  flex: none;
+  padding: 0 18px;
+}
+#modal .ishare {
+  width: 100%;
+  margin-top: 10px;
+}
+#modal .iseats {
+  margin: 20px 0 0;
+  color: var(--st-ink);
+  font-size: 15.5px;
+  line-height: 1.75;
+}
+#modal .iseats .st-num {
+  font-size: 15px;
+  vertical-align: 1px;
+}
+#modal .ibot {
+  margin: 2px 0 0;
+  color: var(--st-ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---------- Handy: der Bogen kommt von unten, nur sein Inhalt scrollt ---------- */
+@media (max-width: 640px) {
+  #modal > .modal:not(.betm, :has(> .devm)) {
+    place-items: end center;
+    padding: max(28px, env(safe-area-inset-top)) 0 0;
+  }
+  #modal .paper.sheet:not(.bets, .devm) {
+    width: 100%;
+    max-height: calc(100dvh - max(28px, env(safe-area-inset-top)));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    border-radius: var(--st-sheet-radius) var(--st-sheet-radius) 0 0;
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.9),
+      var(--st-shadow-sheet);
+    animation: stw-up var(--st-sheet-ms) var(--st-ease);
+  }
+  #modal .paper.sheet.dlg {
+    padding-bottom: 0;
+  }
+  #modal .dlg-head {
+    padding: 16px 16px 10px 20px;
+  }
+  #modal .rjump {
+    margin: 6px -16px 0 -20px;
+    padding: 0 12px 0 16px;
+  }
+  #modal .rj {
+    padding: 0 10px;
+    border-width: 4px;
+    font-size: 13.5px;
+  }
+  #modal .dlg-body {
+    padding: 16px 20px max(24px, calc(env(safe-area-inset-bottom) + 12px));
+  }
+  #modal .paper.sheet:not(.dlg, .bets, .devm) {
+    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+  }
+  /* Bestenliste: Name oben, Zahlen darunter genau unter ihren Überschriften */
+  #modal .lbr {
+    grid-template-columns: 28px repeat(var(--st-lbn, 4), minmax(0, 1fr));
+    row-gap: 2px;
+    padding: 8px 8px 6px;
+  }
+  #modal .lbr > .lbp {
+    grid-row: 1 / span 2;
+  }
+  #modal .lbr > .lbw {
+    grid-column: 2 / -1;
+    grid-row: 1;
+  }
+  #modal .lbr > .lbv {
+    grid-row: 2;
+  }
+  #modal .lbr.lbhead > .lbp {
+    grid-row: 1;
+  }
+  #modal .lbr.lbhead > .lbw {
+    display: none;
+  }
+}
+@media (max-height: 600px) and (max-width: 640px) {
+  #modal > .modal:not(.betm, :has(> .devm)) {
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  #modal .paper.sheet:not(.bets, .devm) {
+    max-height: calc(100dvh - max(12px, env(safe-area-inset-top)));
+  }
+  #modal .dlg-title {
+    font-size: 30px;
+  }
+  #modal .rtabs {
+    margin-top: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #modal .paper.sheet:not(.bets, .devm) {
+    animation: fade 0.2s;
+  }
+  #modal .rtab[aria-pressed='true'] {
+    animation: none;
+  }
+  #modal .rtab,
+  #modal .paper.sheet:not(.bets, .devm) .btn {
+    transition: box-shadow var(--st-lift-ms) linear;
+  }
+  #modal .rtab:is(:hover, :active),
+  #modal .paper.sheet:not(.bets, .devm) .btn:is(:hover, :active) {
+    translate: none;
+  }
+}
+
+/* ---------- Toasts und Hinweis auf eine neue Version im Rahmen (am Tisch bleibt alles wie gehabt) ---------- */
+/* Der Hinweis liegt unter der Kopfzeile (--st-updtop misst update.ts) und unter offenen Fenstern (#modal 65).
+ * Toasts und Verbindungswarnung rutschen so lange darunter (--st-updend). */
+body:not(.ingame) #updbar {
+  top: var(--st-updtop, max(10px, env(safe-area-inset-top)));
+  z-index: 64;
+}
+body:not(.ingame) .netbar {
+  top: max(62px, var(--st-updend, 0px));
+}
+body:not(.ingame) .toasts {
+  top: max(66px, var(--st-updend, 0px));
+}
+body:not(.ingame) .toast {
+  padding: 11px 16px 12px;
+  border: 4px solid var(--st-paper);
+  border-radius: 16px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font: 700 14.5px/1.35 var(--ui);
+  rotate: -1deg;
+  box-shadow: var(--st-shadow-lift);
+}
+body:not(.ingame) .toast:nth-child(even) {
+  rotate: 1deg;
+}
+body:not(.ingame) #updbar {
+  gap: 8px;
+  padding: 5px 5px 5px 14px;
+  border: 4px solid var(--st-paper);
+  border-radius: 20px;
+  background: var(--st-ink);
+  color: var(--st-paper);
+  font: 700 14.5px/1.3 var(--ui);
+  rotate: -1deg;
+  box-shadow: var(--st-shadow-lift);
+}
+body:not(.ingame) #updbar .btn.small {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font-weight: 800;
+  box-shadow: none;
+}
+body:not(.ingame) #updbar .x {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--st-paper);
+  font-size: 20px;
+}
+body:not(.ingame) #updbar :focus-visible {
+  outline: 3px solid var(--st-paper);
+  outline-offset: 2px;
+}
+
+/* Beim Wechsel des Inhalts (anderer Regel-Reiter) fliegt das Fenster nicht neu ein. Steht am Ende und ist
+ * spezifischer als jede Einblendung oben, auch die vom Handy und die für reduzierte Bewegung. */
+#modal > .modal.swap,
+#modal > .modal.swap > .paper.sheet:not(.bets, .devm) {
+  animation: none;
+}

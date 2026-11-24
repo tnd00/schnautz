@@ -3,12 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#123326" />
+    <meta name="theme-color" content="#6f6cf0" />
     <meta
       name="description"
       content="Schnautz, Shithead, Durak und Cabo online, Schnautz, Durak und Cabo mit bis zu acht, Shithead mit bis zu zehn Leuten. Tisch eröffnen, Link schicken und losspielen."
     />
     <title>Schnautz · Online</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Schnautz" />
+    <meta property="og:title" content="Schnautz · Kartentisch für dich und deine Leute" />
+    <meta
+      property="og:description"
+      content="Schnautz, Shithead, Durak und Cabo im Browser. Tisch aufmachen, Link schicken, losspielen. Ohne Anmeldung, die KI füllt freie Plätze."
+    />
+    <meta property="og:locale" content="de_DE" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Schnautz · Kartentisch für dich und deine Leute" />
+    <meta
+      name="twitter:description"
+      content="Schnautz, Shithead, Durak und Cabo im Browser. Tisch aufmachen, Link schicken, losspielen. Ohne Anmeldung, die KI füllt freie Plätze."
+    />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   </head>
   <body>
@@ -51,101 +65,204 @@
           </svg>
         </button>
       </header>
-      <div class="menu" id="menu" hidden>
-        <button data-act="updates" id="menu-updates">Updates</button>
-        <button data-act="devopen" id="menu-dev" hidden>Dev-Menü</button>
-        <button data-act="copylink" class="t-only">Einladungslink kopieren</button>
-        <button data-act="sound" class="m-only" id="menu-sound">Ton ausschalten</button>
-        <button data-act="sbtoggle" id="menu-sb">Soundboard ausschalten</button>
-        <button data-act="tolobby" class="t-only" id="menu-lobby">Partie abbrechen, zurück zur Lobby</button>
-        <button data-act="leave" class="danger t-only" id="menu-leave">Tisch verlassen</button>
-      </div>
-
       <!-- START -->
       <section class="start" id="scr-start">
-        <div class="hero">
-          <div class="fan" id="fan"></div>
-          <h1>Schwimmen,<br /><em>ganz egal,</em><br />wie weit weg.</h1>
-          <p class="tagline">
-            Schnautz, Durak und Cabo mit bis zu acht, Shithead mit bis zu zehn Leuten. Tisch eröffnen, Link schicken und
-            los geht's.
-          </p>
-          <button class="btn primary playbtn" data-act="play">Spielen</button>
+        <div class="hero st-hero">
+          <h1 class="st-logo">
+            <span class="st st-ink st-l4 st-logo-word st-display">Schnautz</span>
+          </h1>
+          <p class="st st-r2 st-claim st-display">Karten, Freunde und ein bisschen Gift.</p>
+          <ul class="st-games" id="st-games" aria-label="Die vier Spiele, antippen für die Regeln"></ul>
+          <ul class="st-promises" aria-label="Was dich erwartet">
+            <li class="st-chip st-l2">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4.5 20a7.5 7.5 0 0 1 15 0M3 3l18 18" />
+              </svg>
+              Ohne Anmeldung
+            </li>
+            <li class="st-chip st-r1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <rect x="4" y="8" width="16" height="12" rx="4" />
+                <path d="M12 8V4M9 13.5h.01M15 13.5h.01M9.5 17h5" />
+              </svg>
+              <span class="pr-long">KI füllt freie Plätze</span><span class="pr-short">KI füllt auf</span>
+            </li>
+            <li class="st-chip st-l1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="16" rx="3" />
+                <path d="M3 9h18M7 6.5h.01M10 6.5h.01" />
+              </svg>
+              <span class="pr-long">Läuft im Browser</span><span class="pr-short">Im Browser</span>
+            </li>
+          </ul>
+          <div class="st-cta">
+            <button class="st-btn st-primary playbtn" data-act="play">Tisch aufmachen</button>
+            <button class="st-link st-joinlink" data-act="playjoin">Code bekommen? <b>Beitreten</b></button>
+          </div>
         </div>
         <div class="startdim" data-act="startclose"></div>
-        <div class="panel stack startpanel">
-          <button class="x startx" data-act="startclose" aria-label="Schließen">×</button>
-          <div id="start-err" class="err" hidden></div>
-          <div id="resume" class="stack" hidden></div>
-          <div class="field">
-            <label for="name">Dein Name</label
-            ><input class="input" id="name" maxlength="16" autocomplete="nickname" placeholder="Wie heißt du?" />
-          </div>
-          <button class="btn primary" id="btn-host">Neuen Tisch eröffnen</button>
-          <div class="or">oder mit Code beitreten</div>
-          <div class="joinbox" id="joinbox">
-            <div class="joinrow">
-              <input
-                class="input code"
-                id="joincode"
-                maxlength="5"
-                autocomplete="off"
-                autocapitalize="characters"
-                spellcheck="false"
-                placeholder="CODE"
-                aria-label="Tisch-Code"
-              />
-              <button class="btn ghost" id="btn-join">Beitreten</button>
+        <div class="startpanel st-form" id="startpanel">
+          <button class="startx" data-act="startclose" aria-label="Schließen">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <div class="startbody">
+            <div class="st-invite" id="invite" hidden>
+              <h2 class="st st-ink st-l2 st-invite-title st-display">Du bist eingeladen</h2>
+              <p class="st-invite-line">an Tisch <b class="st-num st-r3 st-code" id="invite-code"></b></p>
             </div>
+            <div id="start-err" class="err st-err" role="alert" hidden></div>
+            <div id="resume" class="stack st-resume" hidden></div>
+            <div class="field st-field">
+              <label for="name" class="st-display">Wie heißt du?</label
+              ><input
+                class="input st-input"
+                id="name"
+                maxlength="16"
+                autocomplete="nickname"
+                placeholder="Dein Name am Tisch"
+              />
+            </div>
+            <button class="st-btn st-primary" id="btn-host">Tisch aufmachen</button>
+            <button class="st-btn st-secondary st-bots" id="btn-bots" data-act="bots">
+              Gegen die KI spielen <span class="st-chip" id="bots-game"></span>
+            </button>
+            <div class="or st-or">Code bekommen?</div>
+            <div class="joinbox" id="joinbox">
+              <div class="joinrow">
+                <input
+                  class="input st-input code"
+                  id="joincode"
+                  maxlength="5"
+                  autocomplete="off"
+                  autocapitalize="characters"
+                  spellcheck="false"
+                  placeholder="CODE"
+                  aria-label="Tisch-Code"
+                />
+                <button class="st-btn st-secondary" id="btn-join">Beitreten</button>
+              </div>
+            </div>
+            <button class="st-link st-own" data-act="noinvite">Lieber eigenen Tisch aufmachen</button>
+            <p class="note st-filenote" id="filenote" hidden>
+              Die Seite läuft gerade als lokale Datei. Damit andere den Link öffnen können, lade sie zuerst bei einem
+              Hoster hoch.
+            </p>
           </div>
-          <p class="note" id="filenote" hidden>
-            Die Seite läuft gerade als lokale Datei. Damit andere den Link öffnen können, lade sie zuerst bei einem
-            Hoster hoch.
-          </p>
         </div>
       </section>
 
       <!-- WAIT -->
       <section class="wait" id="scr-wait" hidden>
-        <div>
+        <div class="st st-r1 wait-card">
           <div class="spinner"><i></i><i></i></div>
-          <div id="wait-text" class="wait-text">Einen Moment…</div>
+          <div id="wait-text" class="wait-text st-display">Einen Moment…</div>
           <p class="note wait-sub" id="wait-sub"></p>
-          <button class="btn ghost wait-cancel" id="btn-cancel">Abbrechen</button>
+          <button class="st-btn st-secondary wait-cancel" id="btn-cancel">Abbrechen</button>
         </div>
       </section>
 
       <!-- LOBBY -->
       <section class="lobby" id="scr-lobby" hidden>
-        <div class="ltabs gamesel" id="lobby-tabs">
-          <button data-act="ltab" data-t="table" class="on">Tisch</button
-          ><button data-act="ltab" data-t="game">Spiel und Regeln</button>
+        <div class="ltabs" id="lobby-tabs" role="tablist" aria-label="Lobby">
+          <button
+            role="tab"
+            id="ltab-table"
+            aria-controls="lpane-table"
+            aria-selected="true"
+            data-act="ltab"
+            data-t="table"
+            class="on"
+          >
+            Tisch <span class="ltab-n" id="ltab-n"></span></button
+          ><button
+            role="tab"
+            id="ltab-game"
+            aria-controls="lpane-game"
+            aria-selected="false"
+            tabindex="-1"
+            data-act="ltab"
+            data-t="game"
+          >
+            <i class="ltab-dot" aria-hidden="true"></i>Spiel und Regeln
+          </button>
         </div>
-        <div class="panel stack lpane" data-pane="table">
-          <div class="codehead">
-            <div>
-              <div class="eyebrow">Dein Tisch</div>
-              <div class="bigcode" id="lobby-code">-----</div>
+        <div class="lpane lp-table" data-pane="table" id="lpane-table" role="tabpanel" aria-labelledby="ltab-table">
+          <div class="lhead">
+            <h2 class="lh st-display" id="lobby-title">Dein Tisch</h2>
+            <div class="st linvite">
+              <button class="lcode st-num" id="lobby-code" data-act="invite" aria-label="Tischcode, Einladung öffnen">
+                -----
+              </button>
+              <button class="lc-btn" data-act="copylink" id="btn-copy">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="9" y="9" width="11" height="11" rx="2.5" />
+                  <path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
+                </svg>
+                <span class="lc-l">Link kopieren</span>
+              </button>
+              <button class="lc-btn lc-share" data-act="share" id="btn-share" aria-label="Link teilen" hidden>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 15V3M7.5 7.5 12 3l4.5 4.5M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12" />
+                </svg>
+              </button>
+              <p class="lc-note">Wer den Link öffnet, sitzt direkt mit am Tisch.</p>
             </div>
-            <p class="note">Schick den Link an deine Mitspieler. Wer ihn öffnet, sitzt direkt mit am Tisch.</p>
           </div>
-          <div class="linkbox">
-            <code id="lobby-link"></code><button class="btn primary" data-act="copylink" id="btn-copy">Kopieren</button
-            ><button class="btn ghost" data-act="share" id="btn-share" hidden>Teilen</button>
+          <div class="seathead">
+            <h3 class="seat-title" id="seat-title">Plätze</h3>
+            <div class="seat-ctl" id="seat-ctl"></div>
           </div>
-          <div>
-            <div class="seathead">
-              <div class="eyebrow seat-title" id="seat-title">Am Tisch</div>
-              <div id="seat-ctl"></div>
-            </div>
-            <ul class="seats" id="seats"></ul>
-            <div id="seat-opts"></div>
-          </div>
+          <ul class="seats" id="seats" aria-labelledby="seat-title"></ul>
         </div>
-        <div class="panel lpane" data-pane="game">
-          <div class="eyebrow rules-title">Spiel und Regeln</div>
-          <div class="rules-list" id="rules-form"></div>
-          <p class="note rules-note" id="rules-note"></p>
+        <div class="lpane lp-game" data-pane="game" id="lpane-game" role="tabpanel" aria-labelledby="ltab-game">
+          <div class="rules-form" id="rules-form"></div>
         </div>
         <div class="lfoot" id="lobby-start"></div>
       </section>
@@ -200,6 +317,31 @@
       </section>
     </div>
 
+    <!-- Menü ⋯ liegt außerhalb von #app, damit es als Bogen über Ergebnisfenster und Leisten am Tisch liegt -->
+    <div class="menu" id="menu" aria-label="Menü" hidden>
+      <div class="mgroup mg-table t-only">
+        <button class="mi mi-invite" data-act="invite">Einladen</button>
+        <button class="mi mi-rules" data-act="menurules">Regeln</button>
+        <button class="mi mi-board" data-act="board">Bestenliste</button>
+      </div>
+      <div class="mgroup mg-sound">
+        <button class="mi mi-sound" data-act="sound" id="menu-sound" role="switch" aria-checked="true">
+          Ton<span class="msw" aria-hidden="true"></span>
+        </button>
+        <button class="mi mi-sb g-only" data-act="sbtoggle" id="menu-sb" role="switch" aria-checked="true">
+          Soundboard<span class="msw" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="mgroup mg-app">
+        <button class="mi mi-updates" data-act="updates" id="menu-updates">Updates</button>
+        <button class="mi mi-dev" data-act="devopen" id="menu-dev" hidden>Dev-Menü</button>
+      </div>
+      <div class="mgroup mg-danger t-only">
+        <button class="mi mi-stop" data-act="tolobby" id="menu-lobby">Partie abbrechen</button>
+        <button class="mi mi-leave danger" data-act="leave" id="menu-leave">Tisch verlassen</button>
+      </div>
+    </div>
+    <div class="menudim" aria-hidden="true"></div>
     <div id="overlay"></div>
     <div id="modal"></div>
     <div class="netbar" id="netbar" hidden>Verbindung unterbrochen. Verbinde neu…</div>

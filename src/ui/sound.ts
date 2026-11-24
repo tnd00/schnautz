@@ -293,6 +293,7 @@ const ICON_SOUND =
 
 export function renderSoundBtn(): void {
   $('#btn-sound').innerHTML = App.muted ? ICON_MUTED : ICON_SOUND;
-  $('#menu-sound').textContent = App.muted ? 'Ton einschalten' : 'Ton ausschalten';
-  $('#menu-sb').textContent = App.sbOff ? 'Soundboard einschalten' : 'Soundboard ausschalten';
+  // Im Menü sind Ton und Soundboard Schalter, ihr Zustand steht in aria-checked
+  $('#menu-sound').setAttribute('aria-checked', String(!App.muted));
+  $('#menu-sb').setAttribute('aria-checked', String(!App.sbOff));
 }

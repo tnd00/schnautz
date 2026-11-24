@@ -2,6 +2,8 @@
 import '@fontsource-variable/fraunces/opsz.css';
 import '@fontsource-variable/fraunces/opsz-italic.css';
 import '@fontsource-variable/bricolage-grotesque/opsz.css';
+// Weiche Fraunces (SOFT) unter eigenem Namen, nur für den Rahmen
+import './styles/fraunces-soft.css';
 import './styles/index.css';
 
 import { act } from './game/actions';
@@ -22,6 +24,7 @@ import { initStart } from './ui/start';
 import { autoResume, initUpdateCheck } from './ui/update';
 import { LS } from './ui/storage';
 import { initDevLog } from './ui/devlog';
+import './ui/dialog'; // Fenster: Rolle, Fokus und Rückweg, richtet sich beim Laden selbst ein
 
 declare global {
   interface Window {

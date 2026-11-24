@@ -6,7 +6,7 @@ import { EMOTE_GAP_MS, SOUND_GAP_MS, SOUNDS, TOSS_ITEMS, TURN_SECS } from '../ga
 import type { Action, GameKind, TossItem } from '../game/types';
 import { doAct } from '../net/dispatch';
 import { guestLeave, guestStart, guestStop, guestWake } from '../net/guest';
-import { hostCancel, hostClose, hostNew, hostResume } from '../net/host';
+import { hostCancel, hostClose, hostNew, hostNewVsBots, hostResume } from '../net/host';
 import { cleanCode, genId } from '../net/ids';
 import { asSavedGuest, asSavedHost, HOST_RESUME_MS } from '../net/protocol';
 import { App, type EmoTab } from './app';
@@ -22,7 +22,7 @@ import { boardHTML } from './render/board';
 import { renderEmotes } from './render/emotes';
 import { render } from './render/index';
 import { legendOn, renderLegend } from './render/legend';
-import { renderLobby, turnLabel } from './render/lobby';
+import { fitLobby, renderLobby, turnLabel, turnText } from './render/lobby';
 import { renderLog } from './render/log';
 import { rulesHTML } from './render/rules';
 import { renderGame } from './render/schnautz';
@@ -38,7 +38,7 @@ import { copyLink, setNet, shareLink, showScreen, updateTitle } from './screens'
 import { fitHand, grabRects } from './shithead/hand';
 import { setSbBlock } from './soundboard';
 import { renderSoundBtn, setSbVolume, sfx, unlockAudio } from './sound';
-import { initStart, readName, renderResume, showStartError } from './start';
+import { initStart, lastGame, leaveInvite, readName, renderResume, showStartError } from './start';
 import { LS, SS } from './storage';
 import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
 import { dkButton, dkTapHand, dkTapTable } from './durak/input';
@@ -348,7 +348,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       setSbVolume();
       renderSoundBtn();
       renderEmotes();
-      $('#menu').hidden = true;
+      // Schalter im Menü: Das Menü bleibt offen, damit man den neuen Zustand sieht
       break;
     case 'emote': {
       document.body.classList.remove('emoopen');
@@ -378,6 +378,18 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       break;
     case 'rulestab':
       $('#modal').innerHTML = rulesHTML(t.dataset.g as GameKind);
+      break;
+    case 'menurules':
+      $('#menu').hidden = true;
+      $('#modal').innerHTML = rulesHTML();
+      break;
+    case 'invite':
+      $('#menu').hidden = true;
+      $('#modal').innerHTML = inviteHTML();
+      break;
+    case 'board':
+      $('#menu').hidden = true;
+      if (v) $('#modal').innerHTML = boardHTML(v);
       break;
     case 'swap':
       if (App.sel.h != null && App.sel.m != null) {
@@ -432,7 +444,6 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       copyLink();
       break;
     case 'sound':
-      $('#menu').hidden = true;
       toggleSound();
       break;
     case 'share':
@@ -458,9 +469,19 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       $('#modal').innerHTML = '';
       break;
     case 'play':
-      // Am Handy öffnet "Spielen" das Popup mit Name, Tisch eröffnen und Beitreten
+      // Am Handy öffnet „Tisch aufmachen“ den Bogen mit Name, Tisch aufmachen, KI und Beitreten
       document.body.classList.add('startform');
       $<HTMLInputElement>('#name').focus();
+      break;
+    case 'playjoin':
+      document.body.classList.add('startform');
+      $<HTMLInputElement>('#joincode').focus();
+      break;
+    case 'bots':
+      startBots();
+      break;
+    case 'noinvite':
+      leaveInvite();
       break;
     case 'startclose':
       document.body.classList.remove('startform');
@@ -550,7 +571,8 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
   }
 }
 
-function startHost(): void {
+/** Neuen Tisch aufmachen. Läuft noch ein eigener Tisch, wird vorher gefragt. */
+function openTable(go: (name: string) => void): void {
   const n = readName();
   if (!n) return;
   showStartError('');
@@ -558,9 +580,18 @@ function startHost(): void {
   const hs = asSavedHost(LS.get<unknown>('host', null));
   if (hs && hs.st.phase !== 'lobby' && Date.now() - hs.ts < HOST_RESUME_MS) {
     confirmBox(`Dein laufender Tisch ${hs.code} geht dann verloren. Trotzdem neu anfangen?`, 'Neu anfangen', () =>
-      hostNew(n),
+      go(n),
     );
-  } else hostNew(n);
+  } else go(n);
+}
+
+function startHost(): void {
+  openTable(hostNew);
+}
+
+/** Gegen die KI: Tisch mit dem zuletzt gespielten Spiel, freie Plätze füllt die KI, die Partie startet sofort. */
+function startBots(): void {
+  openTable((n) => hostNewVsBots(n, lastGame()));
 }
 
 function startJoin(): void {
@@ -578,6 +609,7 @@ function startJoin(): void {
   let pid = SS.get<string | null>(`pid:${c}`, null);
   let key = SS.get<string | null>(`key:${c}`, null);
   if (!pid || !key) {
+    // Jeder Tab ist ein eigener Platz, auch mit gleichem Namen (tests/e2e/schnautz.spec.ts, zweiter Tab)
     pid = genId('p');
     key = genId('k');
   }
@@ -633,6 +665,7 @@ export function initEvents(): void {
     if (v?.game === 'shithead' && v.phase !== 'lobby') layoutSwapOpps(v);
     if (v && v.phase !== 'lobby') layoutOpps(v);
     if (v && v.phase !== 'lobby') renderLegend(v);
+    if (v?.phase === 'lobby') fitLobby();
     fitDesktop();
     closePick();
   });
@@ -662,6 +695,8 @@ export function initEvents(): void {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       $('#modal').innerHTML = '';
+      // Wer das Menü per Tastatur schließt, landet wieder auf dem Menüknopf
+      if (!$('#menu').hidden && document.activeElement?.closest('#menu')) $('#btn-menu').focus();
       $('#menu').hidden = true;
       document.body.classList.remove('logopen', 'emoopen', 'startform');
       if (ceremonyOn()) skipAnnouncement();
@@ -673,6 +708,13 @@ export function initEvents(): void {
     }
     // Karten sind per Tastatur bedienbar
     const t = e.target as HTMLElement;
+    // Reiter der Lobby: Pfeiltasten wechseln wie bei echten Reitern
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && t.matches?.('#lobby-tabs [role="tab"]')) {
+      const other = $<HTMLElement>(`#lobby-tabs [data-t="${t.dataset.t === 'game' ? 'table' : 'game'}"]`);
+      other.click();
+      other.focus();
+      return;
+    }
     if (
       (e.key === 'Enter' || e.key === ' ') &&
       t.matches?.(
@@ -707,6 +749,7 @@ export function initEvents(): void {
     const s = TURN_SECS[Number(t.value)] ?? 0;
     const val = document.querySelector('#tval');
     if (val) val.textContent = turnLabel(s);
+    t.setAttribute('aria-valuetext', turnText(s));
   });
   $('#btn-host').onclick = startHost;
   $('#btn-join').onclick = startJoin;
@@ -738,6 +781,14 @@ export function initEvents(): void {
     $('#menu-dev').hidden = !LS.get('dev', false);
     m.hidden = !m.hidden;
   };
+  // Menüknopf sagt, ob das Menü offen ist, egal wer es schließt
+  const menuBtn = $('#btn-menu');
+  menuBtn.setAttribute('aria-controls', 'menu');
+  menuBtn.setAttribute('aria-expanded', 'false');
+  new MutationObserver(() => menuBtn.setAttribute('aria-expanded', String(!$('#menu').hidden))).observe($('#menu'), {
+    attributes: true,
+    attributeFilter: ['hidden'],
+  });
   $('#codechip').onclick = () => {
     $('#modal').innerHTML = inviteHTML();
   };
