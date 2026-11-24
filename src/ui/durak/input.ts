@@ -2,15 +2,20 @@
  * Durak bedienen: Karten antippen, Angriff wählen, Knöpfe. Angreifer wählen gleiche Werte und tippen Angreifen
  * oder Nachlegen. Wer verteidigt, tippt eine Karte und dann den Angriff, den sie schlagen soll. Ist nur ein
  * Angriff offen und schlägt die Karte ihn, reicht ein Tipp. Weiterschieben bleibt dann immer ein bewusster Knopf.
+ * Gesendet werden die gemeinten Karten mit, damit beim Gast nie eine andere Karte gespielt wird, falls sich die
+ * Hand verschoben hat. Bis die neue Ansicht da ist, ist die Bedienung gesperrt (App.busy).
  */
 import { rankOf } from '../../game/cards';
 import { dkTransferError } from '../../game/durak';
-import type { Action, View } from '../../game/types';
+import type { Action, Card, View } from '../../game/types';
 import { doAct } from '../../net/dispatch';
 import { App } from '../app';
 import { render } from '../render/index';
-import { dkCanPass, dkMine, dkRole, dkSelected, dkTargets } from '../render/durak';
+import { dkBeatPair, dkCanPass, dkMine, dkRole, dkSelected, dkTargets } from '../render/durak';
 import { sfx, unlockAudio } from '../sound';
+
+/** Ein Tipp so kurz nach einem Wechsel der Knopfzeile galt wohl dem alten Knopf */
+const BTN_GUARD_MS = 400;
 
 /** Merkt sich, wo die eigenen Karten lagen, damit sie von dort auf den Tisch fliegen. */
 function grabRects(idx: number[]): void {
@@ -19,28 +24,34 @@ function grabRects(idx: number[]): void {
   if (rects.length) App.playRects = { t: Date.now(), src: 'hand', rects };
 }
 
-function send(a: Action, idx: number[]): void {
-  grabRects(idx);
-  App.ds = { idx: [], pair: null };
-  sfx('card');
-  doAct(a);
-}
-
 function redraw(): void {
   App.anim = {};
   render();
 }
 
+/** Senden: Auswahl weg, Bedienung sperren, bis die Antwort da ist. */
+function send(a: Action, idx: number[] = []): void {
+  if (idx.length) grabRects(idx);
+  App.ds = { idx: [], pair: null };
+  App.busy = true;
+  if (a.type !== 'dkpass' && a.type !== 'dktake') sfx('card');
+  doAct(a);
+  // Beim Gast dauert die Antwort, die Auswahl soll trotzdem sofort verschwinden
+  if (App.busy) redraw();
+}
+
 function defend(v: View, pair: number, i: number): void {
-  send({ type: 'dkdefend', a: pair, i }, [i]);
-  void v;
+  const hand = dkMine(v) ?? [];
+  const ac = v.dk?.table[pair]?.a;
+  const c: Card | undefined = hand[i];
+  send({ type: 'dkdefend', a: pair, i, ...(ac ? { ac } : {}), ...(c ? { c } : {}) }, [i]);
 }
 
 /** Handkarte angetippt. */
 export function dkTapHand(i: number): void {
   const v = App.view;
   const hand = v ? dkMine(v) : null;
-  if (!v || !hand || !hand[i]) return;
+  if (!v || !hand || !hand[i] || App.busy) return;
   unlockAudio();
   const role = dkRole(v);
   const cur = App.ds.idx;
@@ -68,8 +79,10 @@ export function dkTapHand(i: number): void {
     return;
   }
   // Sonst auswählen. Gleiche Werte zum Weiterschieben lassen sich sammeln
+  const more = cur.length ? [...cur, i].map((x) => hand[x]) : [];
   if (cur.includes(i)) App.ds.idx = cur.filter((x) => x !== i);
-  else if (canTransfer && cur.length && rankOf(hand[cur[0]]) === rankOf(c)) App.ds.idx = [...cur, i];
+  else if (canTransfer && cur.length && rankOf(hand[cur[0]]) === rankOf(c) && !dkTransferError(v, App.me, more))
+    App.ds.idx = [...cur, i];
   else App.ds.idx = [i];
   App.ds.pair = null;
   redraw();
@@ -78,7 +91,7 @@ export function dkTapHand(i: number): void {
 /** Angriff auf dem Tisch angetippt (nur wer verteidigt). */
 export function dkTapTable(pair: number): void {
   const v = App.view;
-  if (!v || dkRole(v) !== 'defend') return;
+  if (!v || dkRole(v) !== 'defend' || App.busy) return;
   unlockAudio();
   const sel = dkSelected(v);
   if (sel.idx.length === 1 && dkTargets(v, sel.cards[0]).includes(pair)) {
@@ -93,37 +106,45 @@ export function dkTapTable(pair: number): void {
 /** Knöpfe am eigenen Platz. */
 export function dkButton(kind: string): void {
   const v = App.view;
-  if (!v) return;
+  if (!v || App.busy) return;
+  // Hat sich die Knopfzeile gerade geändert, galt der Tipp vermutlich dem Knopf, der vorher dort stand
+  if (Date.now() - App.dkBtn.at < BTN_GUARD_MS) return;
   const sel = dkSelected(v);
   switch (kind) {
     case 'dkgo':
-      if (sel.idx.length) send({ type: 'dkattack', idx: sel.idx }, sel.idx);
+      if (sel.idx.length) send({ type: 'dkattack', idx: sel.idx, cards: sel.cards }, sel.idx);
       return;
     case 'dkbeat': {
-      if (sel.idx.length !== 1) return;
-      const t = dkTargets(v, sel.cards[0]);
-      const pair = App.ds.pair != null && t.includes(App.ds.pair) ? App.ds.pair : t.length === 1 ? t[0] : null;
+      const pair = dkBeatPair(v);
       if (pair != null) defend(v, pair, sel.idx[0]);
       return;
     }
     case 'dktransfer':
-      if (sel.idx.length) send({ type: 'dktransfer', idx: sel.idx }, sel.idx);
+      if (sel.idx.length) send({ type: 'dktransfer', idx: sel.idx, cards: sel.cards }, sel.idx);
       return;
     case 'dktake':
-      App.ds = { idx: [], pair: null };
-      doAct({ type: 'dktake' });
+      send({ type: 'dktake' });
       return;
     case 'dkpass':
-      if (!dkCanPass(v)) return;
-      App.ds = { idx: [], pair: null };
-      doAct({ type: 'dkpass' });
+      if (dkCanPass(v)) send({ type: 'dkpass' });
       return;
   }
 }
 
-/** Nach einer neuen Ansicht: Auswahl verwerfen, wenn sich am Tisch etwas getan hat. */
+/**
+ * Nach einer neuen Ansicht: Die Auswahl bleibt, solange die eigene Hand und der Angriff gleich sind. Legt jemand
+ * anderes nach, ändern sich weder Hand noch Tischplätze. Ein gewählter Angriff, der inzwischen geschlagen ist,
+ * gilt nicht mehr.
+ */
 export function dkSyncSelection(prev: View | null, v: View): void {
-  if (v.game !== 'durak' || !prev || prev.last?.n !== v.last?.n || prev.dk?.bout !== v.dk?.bout) {
+  const same =
+    v.game === 'durak' &&
+    !!prev &&
+    prev.dk?.bout === v.dk?.bout &&
+    JSON.stringify(prev.dk?.P[App.me]) === JSON.stringify(v.dk?.P[App.me]);
+  if (!same) {
     App.ds = { idx: [], pair: null };
+    return;
   }
+  if (App.ds.pair != null && (!v.dk?.table[App.ds.pair] || v.dk.table[App.ds.pair].d)) App.ds.pair = null;
 }

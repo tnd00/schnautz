@@ -149,7 +149,8 @@ function opponentHTML(v: View, S: ShView, p: Player): string {
   let tag = '';
   if (p.out) tag = '<span class="tag outt">raus</span>';
   else if (done) tag = `<span class="tag">Platz ${num(p.place)}</span>`;
-  else if (over && S.shithead === p.id) tag = '<span class="tag outt">Shithead</span>';
+  // Bis zur Enthüllung verrät auch das Etikett den Shithead nicht
+  else if (over && S.shithead === p.id && App.zerHide !== p.id) tag = '<span class="tag outt">Shithead</span>';
   else if (v.phase === 'swap')
     tag = p.ready ? '<span class="tag">fertig</span>' : `<span class="tag turn">tauscht${THINKING}</span>`;
   else if (v.phase === 'play' && tId === p.id) tag = `<span class="tag turn">ist dran${THINKING}</span>`;

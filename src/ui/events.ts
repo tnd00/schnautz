@@ -647,7 +647,10 @@ export function initEvents(): void {
     }
     // Karten sind per Tastatur bedienbar
     const t = e.target as HTMLElement;
-    if ((e.key === 'Enter' || e.key === ' ') && t.matches?.('.card[data-act], [data-act="aim"][role="button"]')) {
+    if (
+      (e.key === 'Enter' || e.key === ' ') &&
+      t.matches?.('.card[data-act], [data-act="aim"][role="button"], .dkpair[data-act]')
+    ) {
       e.preventDefault();
       t.click();
     }

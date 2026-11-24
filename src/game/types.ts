@@ -327,7 +327,7 @@ export type LogEntry = LogBase &
     | { k: 'shbet'; on: string; onName: string; q: number }
     | { k: 'rematch'; to: string | null; tn?: string; c: number }
     | { k: 'rematchend'; to: string; tn: string; res: 'won' | 'lost' | 'tie'; c: number }
-    | { k: 'dkdeal'; trump: Card; att: string; def: string; prev?: boolean }
+    | { k: 'dkdeal'; trump: Card; att: string; def: string; prev?: boolean; rnd?: boolean }
     | { k: 'dkattack'; cards: Card[]; lead?: boolean }
     | { k: 'dkdefend'; a: Card; d: Card }
     | { k: 'dktransfer'; cards: Card[]; to: string; tn?: string }
@@ -447,15 +447,18 @@ export type Action =
   | { type: 'shunlock'; id: number }
   /** Wer fertig ist, tippt, wer Shithead oder Durak wird */
   | { type: 'shbet'; on: string }
-  /** Durak: angreifen oder passende Karten nachlegen */
-  | { type: 'dkattack'; idx: number[] }
-  /** Durak: Angriffskarte `a` mit der Handkarte `i` schlagen */
-  | { type: 'dkdefend'; a: number; i: number }
+  /**
+   * Durak: angreifen oder passende Karten nachlegen. Die Oberfläche schickt die gemeinten Karten mit,
+   * dann zählen sie statt der Indizes, falls sich die Hand inzwischen verschoben hat.
+   */
+  | { type: 'dkattack'; idx: number[]; cards?: Card[] }
+  /** Durak: Angriffskarte `a` mit der Handkarte `i` schlagen, mit Karten wie oben */
+  | { type: 'dkdefend'; a: number; i: number; ac?: Card; c?: Card }
   | { type: 'dktake' }
   /** Durak: nichts mehr nachlegen */
   | { type: 'dkpass' }
   /** Durak mit Weiterschieben: gleiche Werte dazulegen und an den Nächsten geben */
-  | { type: 'dktransfer'; idx: number[] };
+  | { type: 'dktransfer'; idx: number[]; cards?: Card[] };
 
 export type ActionType = Action['type'];
 

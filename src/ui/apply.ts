@@ -106,7 +106,8 @@ function resetSelection(prev: View | null, v: View): void {
 function setAnimations(prev: View | null, v: View): void {
   App.anim = {};
   const live = v.phase === 'choose' || v.phase === 'play';
-  if ((!prev || v.round !== prev.round) && live) App.anim.deal = true;
+  // Neue Runde oder neue Partie: austeilen (Durak bleibt in Runde 1, also zählt auch die Partie)
+  if ((!prev || v.round !== prev.round || v.games !== prev.games) && live) App.anim.deal = true;
   if (prev && v.phase === 'play' && prev.phase === 'choose') {
     App.anim.dealMid = true;
     if (v.last?.k === 'take' && v.last.p === App.me) App.anim.dealHand = true;

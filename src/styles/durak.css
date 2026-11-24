@@ -156,7 +156,26 @@
   outline-offset: -3px;
 }
 
+@media (max-width: 520px) {
+  /* Kurze Knopfbeschriftung, damit drei Knöpfe nebeneinander passen */
+  .dkme .actions .blong {
+    display: none;
+  }
+  .dkme .actions .bshort {
+    display: inline;
+  }
+}
+
 @media (max-width: 960px) {
+  /* Am Ende liegen die Karten des Durak offen in seiner Kachel, so schmal wie der Fächer */
+  .opp .dkshow {
+    --tw: calc(var(--u) * 7.4);
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .opp .dkshow .card + .card {
+    margin-left: calc(var(--tw) * -0.72);
+  }
   #table[data-game='durak'] .center {
     --pw: calc(var(--u) * 11.5);
     gap: calc(var(--u) * 3);

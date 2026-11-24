@@ -38,6 +38,8 @@ export const App = {
   sw: { h: null as number | null, u: null as number | null },
   /** Durak: gewählte Handkarten und der Angriff, den der Verteidiger schlagen will. */
   ds: { idx: [] as number[], pair: null as number | null },
+  /** Durak: Knopfzeile und wann sie sich zuletzt geändert hat, gegen Tipps auf einen gerade getauschten Knopf */
+  dkBtn: { sig: '', at: 0 },
   /** Lobby am Handy: welcher Reiter offen ist. */
   ltab: 'table' as 'table' | 'game',
   seenN: 0,

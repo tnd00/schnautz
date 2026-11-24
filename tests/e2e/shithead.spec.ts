@@ -57,10 +57,16 @@ async function myMove(page: Page, v: View, me: string): Promise<boolean> {
   }
   // Oft die niedrigste Karte, sonst eine zufällige. Stur die niedrigste führt im Endspiel zu endlosem Pingpong
   const pick = Math.random() < 0.6 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
-  await page.click(`.shme [data-act=${src === 'hand' ? 'shh' : 'shu'}][data-i="${pick.i}"]`, {
-    position: { x: 8, y: 18 },
-  });
-  await page.click('[data-act=shplay]');
+  // Kommt zwischen Ansicht und Klick ein neuer Zug, gibt es die Karte kurz nicht: dann im nächsten Durchgang neu
+  try {
+    await page.click(`.shme [data-act=${src === 'hand' ? 'shh' : 'shu'}][data-i="${pick.i}"]`, {
+      position: { x: 8, y: 18 },
+      timeout: 5000,
+    });
+    await page.click('[data-act=shplay]', { timeout: 5000 });
+  } catch {
+    return false;
+  }
   return true;
 }
 

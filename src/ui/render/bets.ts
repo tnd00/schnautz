@@ -2,7 +2,7 @@
  * Tipps in der Oberfläche: Knopf und Fenster für Fertige, Zahlen an den Kacheln und Sprüche, wenn jemand
  * auf mich tippt. Das Fenster wird beim Aktualisieren nur geflickt, damit eine Auswahl nicht verloren geht.
  */
-import { shBetCandidates, shBetQuote, shBetsOn, shCanBet } from '../../game/bets';
+import { betPart, shBetCandidates, shBetQuote, shBetsOn, shCanBet } from '../../game/bets';
 import type { LogEntry, View } from '../../game/types';
 import { App } from '../app';
 import { $, $opt, esc, num } from '../dom';
@@ -38,7 +38,7 @@ export function betTagHTML(v: View, id: string): string {
 /** Untertitel für Fertige und für alle, auf die getippt wurde. */
 export function betSub(v: View, place: number): string | null {
   if (shCanBet(v, App.me)) return `Platz ${num(place)}. Tipp jetzt, wer ${LOSER_NAME[v.game]} wird.`;
-  const mine = v.sh?.bets?.[App.me];
+  const mine = betPart(v)?.bets?.[App.me];
   if (mine && typeof mine.on === 'string') return `Platz ${num(place)}. Dein Tipp steht, jetzt heißt es mitfiebern.`;
   return null;
 }
@@ -47,7 +47,7 @@ export function betsOnMeSub(v: View): string | null {
   const on = shBetsOn(v, App.me);
   if (!on.length) return null;
   if (on.length === 1) {
-    const by = Object.entries(v.sh?.bets ?? {}).find(([, b]) => b === on[0])?.[0];
+    const by = Object.entries(betPart(v)?.bets ?? {}).find(([, b]) => b === on[0])?.[0];
     return `🔮 <b>${esc(nameOf(v, by))}</b> tippt auf dich.`;
   }
   return `🔮 ${on.length} tippen auf dich.`;
@@ -59,7 +59,7 @@ export function betActionHTML(v: View): string {
     const pulse = App.betSeen !== v.games ? ' pulse' : '';
     return `<button class="btn primary betbtn${pulse}" data-act="betopen"><span class="bl">🔮 Tippen, wer ${LOSER_NAME[v.game]} wird</span></button>`;
   }
-  const mine = v.sh?.bets?.[App.me];
+  const mine = betPart(v)?.bets?.[App.me];
   if (v.phase === 'play' && mine && typeof mine.on === 'string')
     return `<div class="betnote"><span class="bl">🔮 Du tippst auf ${esc(nameOf(v, mine.on))} · ${num(mine.q)} ${mine.q === 1 ? 'Punkt' : 'Punkte'}</span></div>`;
   return '';

@@ -15,7 +15,7 @@ import {
   shakePanel,
   tauntLabel,
 } from './feedback';
-import { myTurn, nameOf, pById, roundBest, turnId, vb } from './helpers';
+import { myMoveNow, myTurn, nameOf, pById, roundBest, vb } from './helpers';
 import { betEffect, BETUI } from './render/bets';
 import { duelResult, duelRunning, rematchAnn } from './render/rematch';
 import { updateTitle } from './screens';
@@ -218,8 +218,8 @@ export function effects(prev: View, v: View, seqd = false): void {
     tauntLabel(BETUI.pend.text);
     BETUI.pend = null;
   }
-  const was = prev.phase === 'play' && turnId(prev) === App.me && !prev.sh?.win?.lock;
-  if (myTurn(v) && !v.sh?.win?.lock && !was) {
+  const was = myMoveNow(prev) && !prev.sh?.win?.lock;
+  if (myMoveNow(v) && !v.sh?.win?.lock && !was) {
     sfx('turn');
     try {
       navigator.vibrate?.(60);
@@ -241,6 +241,11 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
   if (seqd) return;
   const mine = e.p === App.me;
   const N = (id: string | null | undefined, fb?: string) => esc(nameOf(v, id, fb));
+  /** Wen etwas trifft, aus Sicht dieses Browsers: dich statt Du */
+  const whom = (id: string | null | undefined, fb?: string) => (id === App.me ? 'dich' : N(id, fb));
+  const cards = (n: number) => `${n} ${n === 1 ? 'Karte' : 'Karten'}`;
+  // Endet die Partie im selben Schub, haben Sprüche zum einzelnen Angriff Pause bis nach der Enthüllung
+  const ending = fresh.some((x) => x.k === 'dkend');
   switch (e.k) {
     case 'dkdeal': {
       const s = suitOf(e.trump);
@@ -250,7 +255,10 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
           e.def === App.me
             ? 'Du warst zuletzt Durak. Rate mal, wer zuerst angegriffen wird.'
             : `${N(e.def)} war zuletzt Durak und wird zuerst angegriffen.`;
-      } else sub = `${N(e.att)} hat den kleinsten Trumpf und greift ${N(e.def)} an.`;
+      } else if (e.rnd)
+        sub = `Niemand hat Trumpf, das Los entscheidet: ${N(e.att)}${vb(e.att, ' greifst', ' greift')} ${whom(e.def)} an.`;
+      else
+        sub = `${N(e.att)}${vb(e.att, ' hast', ' hat')} den kleinsten Trumpf und${vb(e.att, ' greifst', ' greift')} ${whom(e.def)} an.`;
       announce({ icon: SUIT_SYM[s], tone: 'gold', title: `Trumpf ist ${SUIT_NAME[s]}`, sub, ms: 2400 });
       return;
     }
@@ -258,23 +266,26 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
     case 'dkdefend':
       if (!mine) sfx('card');
       return;
-    case 'dktransfer':
+    case 'dktransfer': {
       sfx('knock');
-      setTimeout(() => floatLabel(e.p, `schiebt weiter an ${e.tn ?? 'den Nächsten'}`, 'schiebst weiter'), 60);
+      const to = whom(e.to, e.tn ?? 'den Nächsten');
+      setTimeout(() => floatLabel(e.p, `schiebt weiter an ${to}`, `schiebst weiter an ${to}`), 60);
       if (e.to === App.me && !mine) tauntLabel(taunt('dkTransferOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
       return;
+    }
     case 'dktake':
-      setTimeout(() => floatLabel(e.p, 'nimmt auf', 'nimmst auf'), 60);
-      // Ist der Tisch schon voll, folgt das Aufnehmen sofort, dann spricht der Spruch dort
+      // Ist der Tisch schon voll, folgt das Aufnehmen sofort, dann sprechen Hinweis und Spruch dort
       if (fresh.some((x) => x.k === 'dkpickup' && x.n > e.n)) return;
+      setTimeout(() => floatLabel(e.p, 'nimmt auf', 'nimmst auf'), 60);
+      if (ending) return;
       if (mine) tauntLabel(taunt('dkTakeSelf', null, e.n));
       else if (e.n % 3 === 0) tauntLabel(taunt('dkTakeOther', { name: nameOf(v, e.p, e.name) }, e.n));
       return;
     case 'dkpickup': {
       const n = num(e.cnt);
       sfx(mine ? 'lose' : 'pop');
-      setTimeout(() => floatLabel(e.p, `nimmt ${n} Karten`, `nimmst ${n} Karten`), 60);
-      if (n >= 6)
+      setTimeout(() => floatLabel(e.p, `nimmt ${cards(n)}`, `nimmst ${cards(n)}`), 60);
+      if (n >= 6 && !ending)
         tauntLabel(
           mine
             ? taunt('dkBigPickupSelf', { n }, e.n)
@@ -285,29 +296,31 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
     case 'dkbito':
       sfx('deal');
       setTimeout(() => floatLabel(e.p, 'wehrt alles ab', 'wehrst alles ab'), 60);
-      if (mine && num(e.cnt) >= 6) tauntLabel(taunt('dkBitoSelf', null, e.n));
+      if (mine && num(e.cnt) >= 6 && !ending) tauntLabel(taunt('dkBitoSelf', null, e.n));
       return;
     case 'dkout': {
-      // Direkt vor der Zeremonie nur kurz
+      // Direkt vor der Zeremonie nur kurz. Teilt sich jemand den Platz, gibt es keinen Siegerjubel
       const toEnd = fresh.some((x) => x.k === 'dkend' && x.p);
+      const shared = fresh.some((x) => x.k === 'dkout' && x.place === e.place && x.p !== e.p);
+      const solo = e.place === 1 && !shared;
       announce({
-        icon: e.place === 1 ? '🥇' : '✅',
+        icon: solo ? '🥇' : '✅',
         tone: 'gold',
         title: N(e.p, e.name) + vb(e.p, ' bist raus!', ' ist raus!'),
         sub:
           'Platz ' +
           num(e.place) +
-          '.' +
-          (mine && e.place === 1 && !toEnd ? '<span class="tt">' + esc(taunt('dkWinSelf', null, e.n)) + '</span>' : ''),
+          (shared ? ', gleichzeitig mit anderen.' : '.') +
+          (mine && solo && !toEnd ? '<span class="tt">' + esc(taunt('dkWinSelf', null, e.n)) + '</span>' : ''),
         ms: toEnd ? ZER_SHDONE_MS : mine ? 2200 : 1600,
       });
-      if (mine && e.place === 1) setTimeout(() => sfx('win'), 200);
+      if (mine && solo) setTimeout(() => sfx('win'), 200);
       return;
     }
     case 'dkend':
       if (prev.phase === 'over' || v.phase !== 'over') return;
       if (e.p) shitheadCeremony(v, e);
-      else
+      else {
         announce({
           icon: '🤝',
           tone: 'gold',
@@ -315,6 +328,9 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
           sub: 'Die Letzten sind gleichzeitig raus. Diesmal gibt es keinen Durak.',
           ms: 2600,
         });
+        // Das Ergebnisfenster wartet, bis die Meldungen durch sind
+        holdForAnnouncements();
+      }
       return;
   }
 }

@@ -486,3 +486,24 @@ describe('Durak: Übernahme, Zeitablauf, Weiterschieben am Ende', () => {
     expect(st.players[st.turn].id).toBe('h');
   });
 });
+
+describe('Durak: Karten statt Indizes', () => {
+  it('spielt die gemeinte Karte, auch wenn sich die Hand verschoben hat, und lehnt fehlende ab', () => {
+    const { st, D } = table(2, 71);
+    D.trump = 'H6';
+    D.P.h = ['S7', 'C7', 'DB', 'SK', 'D8', 'H7'];
+    D.P.p1 = ['S9', 'C10', 'HA', 'SD', 'CA', 'DD'];
+    D.att = 'h';
+    D.def = 'p1';
+    D.limit = 6;
+    act(st, 'h', { type: 'dkattack', idx: [0, 1] });
+    // Erster Schlag mit S9, dann ein veralteter Index 1 (jetzt HA), gemeint war C10 gegen C7
+    expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'S7', c: 'S9' })).toBeNull();
+    expect(act(st, 'p1', { type: 'dkdefend', a: 1, i: 1, ac: 'C7', c: 'C10' })).toBeNull();
+    expect(D.table.map((p) => p.d)).toEqual(['S9', 'C10']);
+    expect(D.P.p1).toContain('HA');
+    expect(act(st, 'h', { type: 'dkattack', idx: [0], cards: ['S7'] })).toBe(
+      'Die Karte hast du nicht mehr auf der Hand.',
+    );
+  });
+});

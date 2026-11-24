@@ -76,8 +76,6 @@ export function dkFlights(prev: View, v: View, snap: DkSnap | null, fresh: LogEn
       end.k === 'dkbito'
         ? rectOf($opt('#center .dkbito'))
         : rectOf(end.p === App.me ? ($opt('#me .dkhand') ?? panelFor(App.me)) : panelFor(end.p));
-    // Die letzte Verteidigung lag nie auf dem Tisch: Sie fliegt direkt vom Verteidiger mit
-    const last = fresh.filter((e) => e.k === 'dkdefend' && !snap.cards.has(e.d));
     let k = 0;
     snap.cards.forEach((r, c) => {
       flyG(r, target, c, {
@@ -88,9 +86,14 @@ export function dkFlights(prev: View, v: View, snap: DkSnap | null, fresh: LogEn
         spin: end.k === 'dkbito' ? 14 : -10,
       });
     });
-    last.forEach((e) => {
-      if (e.k !== 'dkdefend') return;
-      flyG(seatRect(e.p, w), target, e.d, { w, fade: true, dur: 520, delay: 80 + k++ * 40 });
+    // Karten, die im selben Schub gelegt wurden, lagen nie sichtbar auf dem Tisch: Sie fliegen vom Platz mit
+    fresh.forEach((e) => {
+      const late = e.k === 'dkdefend' ? [e.d] : e.k === 'dkattack' || e.k === 'dktransfer' ? e.cards : [];
+      late.forEach((c) => {
+        if (snap.cards.has(c)) return;
+        const from = e.p === App.me && mine?.rects[own] ? mine.rects[own++] : seatRect(e.p, w);
+        flyG(from, target, c, { w, fade: true, dur: 520, delay: 80 + k++ * 40 });
+      });
     });
   }
   // Nachziehen: Kartenrücken vom Stapel zu allen, die mehr Karten haben als vorher

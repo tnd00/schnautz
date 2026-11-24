@@ -123,10 +123,13 @@ export function dkAttackError(t: Table, pid: string, cards: Card[]): string | nu
     if (!cards.every((c) => ranks.has(rankOf(c))))
       return 'Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.';
   }
-  if (cards.length > dkRoom(D))
-    return dkRoom(D)
-      ? `Es passen nur noch ${dkRoom(D)} Karten in diesen Angriff.`
-      : 'In diesen Angriff passt nichts mehr.';
+  const room = dkRoom(D);
+  if (cards.length > room)
+    return room === 1
+      ? 'Es passt nur noch eine Karte in diesen Angriff.'
+      : room
+        ? `Es passen nur noch ${room} Karten in diesen Angriff.`
+        : 'In diesen Angriff passt nichts mehr.';
   return null;
 }
 
@@ -238,12 +241,21 @@ export function dkStart(st: State, rng?: Rng): ActResult {
   // Der Durak der letzten Partie wird zuerst angegriffen, sonst beginnt der niedrigste Trumpf
   const prev = reignOf(st, 'durak')?.lose;
   const D = st.dk;
+  let rand = false;
   if (prev && prev in P) beginBout(st, dkPrev(st, prev), prev);
   else {
-    const first = lowestTrump(st, D) ?? st.players[Math.floor(rnd(rng) * st.players.length)].id;
-    beginBout(st, first);
+    const low = lowestTrump(st, D);
+    rand = !low;
+    beginBout(st, low ?? st.players[Math.floor(rnd(rng) * st.players.length)].id);
   }
-  addLog(st, { k: 'dkdeal', trump, att: D.att, def: D.def, ...(prev && prev in P ? { prev: true } : {}) });
+  addLog(st, {
+    k: 'dkdeal',
+    trump,
+    att: D.att,
+    def: D.def,
+    ...(prev && prev in P ? { prev: true } : {}),
+    ...(rand ? { rnd: true } : {}),
+  });
   return null;
 }
 
@@ -253,15 +265,28 @@ function takeAt(arr: Card[], idx: number[]): Card[] {
   return cards;
 }
 
-/** Gültige, eindeutige Indizes einer Hand. */
-function pick(hand: Card[], raw: unknown): number[] {
+/**
+ * Gültige, eindeutige Indizes einer Hand. Kommen Karten mit, zählen sie: So spielt ein Gast nie eine andere
+ * Karte, nur weil sich seine Hand verschoben hat, bevor die neue Ansicht da war. Fehlt eine, gibt es null.
+ */
+function pick(hand: Card[], raw: unknown, cards?: unknown): number[] | null {
   const idx: number[] = [];
+  if (Array.isArray(cards) && cards.length) {
+    for (const c of cards.slice(0, DK_MAX_ATTACK)) {
+      const i = hand.findIndex((x, j) => x === c && !idx.includes(j));
+      if (i < 0) return null;
+      idx.push(i);
+    }
+    return idx;
+  }
   (Array.isArray(raw) ? raw.slice(0, DK_MAX_ATTACK) : []).forEach((x) => {
     const i = Number(x) | 0;
     if (i >= 0 && i < hand.length && !idx.includes(i)) idx.push(i);
   });
   return idx;
 }
+
+const GONE = 'Die Karte hast du nicht mehr auf der Hand.';
 
 export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng): ActResult {
   const D = st.dk;
@@ -272,7 +297,8 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
   const hand = D.P[pid];
   switch (a.type) {
     case 'dkattack': {
-      const idx = pick(hand, a.idx);
+      const idx = pick(hand, a.idx, a.cards);
+      if (!idx) return GONE;
       const cards = idx.map((i) => hand[i]);
       const err = dkAttackError(st, pid, cards);
       if (err) return err;
@@ -288,10 +314,12 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
     case 'dkdefend': {
       if (pid !== D.def) return 'Schlagen kann nur, wer verteidigt.';
       if (D.take) return 'Du nimmst schon auf.';
-      const pair = D.table[Number(a.a) | 0];
+      // Mit Karten statt Indizes: gemeint ist genau dieser Angriff und genau diese Karte
+      const pair = a.ac ? D.table.find((p) => p.a === a.ac) : D.table[Number(a.a) | 0];
       if (!pair) return 'Diese Karte liegt nicht auf dem Tisch.';
       if (pair.d) return 'Diese Karte ist schon geschlagen.';
-      const hi = Number(a.i) | 0;
+      const hi = a.c ? hand.indexOf(a.c) : Number(a.i) | 0;
+      if (a.c && hi < 0) return GONE;
       const c = hand[hi];
       if (!c || hi < 0) return 'Wähle zuerst eine Karte.';
       if (!dkBeats(c, pair.a, dkTrump(D))) return 'Die Karte schlägt das nicht.';
@@ -326,7 +354,8 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       return null;
     }
     case 'dktransfer': {
-      const idx = pick(hand, a.idx);
+      const idx = pick(hand, a.idx, a.cards);
+      if (!idx) return GONE;
       const cards = idx.map((i) => hand[i]);
       const err = dkTransferError(st, pid, cards);
       if (err) return err;

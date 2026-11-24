@@ -3,7 +3,7 @@ import { G } from '../net/guest';
 import { App, type NetState } from './app';
 import { $, $opt } from './dom';
 import { toast } from './feedback';
-import { dealerId, myTurn } from './helpers';
+import { dealerId, myMoveNow } from './helpers';
 import { dlog } from './devlog';
 import { GAME_NAME } from '../game/games';
 
@@ -92,6 +92,6 @@ function fallbackCopy(text: string): void {
 /** Im Tab-Titel anzeigen, wenn man dran ist und gerade woanders ist. */
 export function updateTitle(): void {
   const v = App.view;
-  const yourTurn = v && (myTurn(v) || (v.phase === 'choose' && dealerId(v) === App.me)) && document.hidden;
+  const yourTurn = v && (myMoveNow(v) || (v.phase === 'choose' && dealerId(v) === App.me)) && document.hidden;
   document.title = `${yourTurn ? '● Du bist dran · ' : ''}${GAME_NAME[v?.game ?? 'schnautz']} · Online`;
 }

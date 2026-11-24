@@ -4,7 +4,7 @@ import type { Player, SchnautzResult, View } from '../game/types';
 import { App } from './app';
 import { esc } from './dom';
 import { szResult, unreachable } from '../game/games';
-import { dkLive } from '../game/durak';
+import { dkLive, dkWaiting } from '../game/durak';
 
 export function schnautzResult(v: View): SchnautzResult | null {
   return szResult(v.result);
@@ -31,6 +31,9 @@ export function nameOf(v: View, id: string | null | undefined, fallback?: string
 export const turnId = (v: View): string | null => (v.turn >= 0 ? (v.players[v.turn]?.id ?? null) : null);
 export const dealerId = (v: View): string | null => (v.dealer >= 0 ? (v.players[v.dealer]?.id ?? null) : null);
 export const myTurn = (v: View): boolean => v.phase === 'play' && turnId(v) === App.me;
+/** Muss ich gerade etwas tun? Bei Durak können mehrere dran sein, auch wer nur fertig sagen soll. */
+export const myMoveNow = (v: View): boolean =>
+  v.game === 'durak' ? v.phase === 'play' && dkWaiting(v).includes(App.me) : myTurn(v);
 
 /** Verbform passend zu "Du" oder einem Namen, zum Beispiel vb(id, ' legst', ' legt'). */
 export const vb = (id: string | null | undefined, du: string, er: string): string => (id === App.me ? du : er);

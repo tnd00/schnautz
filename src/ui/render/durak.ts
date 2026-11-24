@@ -82,7 +82,8 @@ const suitHTML = (s: Suit): string => `<span class="suit ${s === 'H' || s === 'D
 
 function roleTag(v: View, D: DkView, p: Player, waiting: string[]): string {
   if (v.phase === 'over') {
-    if (D.durak === p.id) return `<span class="tag outt">${LOSER_MARK.durak} Durak</span>`;
+    // Bis zur Enthüllung verrät auch das Etikett den Durak nicht
+    if (D.durak === p.id) return App.zerHide === p.id ? '' : `<span class="tag outt">${LOSER_MARK.durak} Durak</span>`;
     return p.place ? `<span class="tag">Platz ${num(p.place)}</span>` : '';
   }
   if (D.finished.includes(p.id)) return `<span class="tag">Platz ${num(p.place)}</span>`;
@@ -153,12 +154,11 @@ export function renderDkCenter(v: View): void {
   const targets = role === 'defend' && sel.cards.length === 1 ? dkTargets(v, sel.cards[0]) : [];
   const dn = num(D.deck);
   const trumpCard = dn ? `<div class="dktrump" title="Trumpf">${cardHTML(D.trump)}</div>` : '';
+  // Liegt nur noch der Trumpf, gibt es keinen Kartenrücken mehr darüber
   const deck =
-    (dn
-      ? cardHTML(null) +
-        (dn > 1 ? cardHTML(null) : '') +
-        `<span class="pcount" title="Karten zum Nachziehen">${dn}</span>`
-      : `<div class="emptyslot">leer</div>`) + trumpCard;
+    (dn > 1 ? cardHTML(null) + (dn > 2 ? cardHTML(null) : '') : dn ? '' : `<div class="emptyslot">leer</div>`) +
+    (dn ? `<span class="pcount" title="Karten zum Nachziehen">${dn}</span>` : '') +
+    trumpCard;
   const pairs = D.table
     .map((p, i) => {
       const pick = role === 'defend' && !p.d;
@@ -175,18 +175,23 @@ export function renderDkCenter(v: View): void {
     })
     .join('');
   const room = dkRoom(D);
-  const info = !D.table.length
-    ? `Bis zu ${num(D.limit)} Karten`
-    : D.take
-      ? `${W(v, D.def)} nimmt auf · ${room ? `noch ${room} dazu` : 'voll'}`
-      : room
-        ? `noch ${room} ${room === 1 ? 'Karte passt' : 'Karten passen'} dazu`
-        : 'voll';
+  const over = v.phase !== 'play';
+  const info = over
+    ? ''
+    : !D.table.length
+      ? `Bis zu ${num(D.limit)} ${D.limit === 1 ? 'Karte' : 'Karten'}`
+      : D.take
+        ? `${W(v, D.def)}${vb(D.def, ' nimmst', ' nimmt')} auf · ${room ? `noch ${room} dazu` : 'voll'}`
+        : room
+          ? `noch ${room} ${room === 1 ? 'Karte passt' : 'Karten passen'} dazu`
+          : 'voll';
+  const empty = over ? '<div class="emptyslot">Vorbei</div>' : '<div class="emptyslot">Hier wird angegriffen</div>';
   $('#center').innerHTML =
     `<span class="cap">Trumpf ${suitHTML(ts)} ${SUIT_NAME[ts]}</span>` +
     `<div class="deck dkdeck" title="Nachziehstapel">${deck}</div>` +
-    `<div class="dktable${D.table.length ? '' : ' empty'}">${pairs || '<div class="emptyslot">Hier wird angegriffen</div>'}` +
-    `<span class="cnt">${info}</span></div>` +
+    `<div class="dktable${D.table.length ? '' : ' empty'}">${pairs || empty}` +
+    (info ? `<span class="cnt">${info}</span>` : '') +
+    '</div>' +
     `<div class="burned dkbito" title="Weggelegte Karten"><span class="flame">🗑️</span><b>${num(D.discard)}</b><span class="cnt">weg</span></div>`;
 }
 
@@ -203,13 +208,15 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
         main = '<em>Du greifst an.</em>';
         sub = `Tippe eine Karte oder gleiche Werte an und greif ${W(v, def)} an.`;
         break;
-      case 'defend':
+      case 'defend': {
         main = '<em>Du verteidigst.</em>';
-        sub =
-          D.table.length && !D.table.some((p) => p.d) && v.rules.dk?.transfer
-            ? 'Schlag jede Karte, nimm alles auf oder schieb mit gleichem Wert weiter.'
-            : 'Tippe eine Karte und dann den Angriff, den sie schlagen soll. Oder nimm alles auf.';
+        const hand = dkMine(v) ?? [];
+        const canTransfer = hand.some((c) => !dkTransferError(v, App.me, [c]));
+        sub = canTransfer
+          ? 'Schlag jede Karte, nimm alles auf oder schieb mit gleichem Wert weiter.'
+          : 'Tippe eine Karte und dann den Angriff, den sie schlagen soll. Oder nimm alles auf.';
         break;
+      }
       case 'taking':
         main = 'Du nimmst auf.';
         sub = 'Die anderen dürfen dir noch etwas obendrauf legen.';
@@ -220,8 +227,9 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
           : dkOpen(D).length
             ? `${W(v, def)} verteidigt.`
             : '<em>Alles geschlagen.</em>';
-        sub =
-          D.take || !dkOpen(D).length
+        sub = D.done.includes(App.me)
+          ? 'Du hast fertig gesagt. Nachlegen geht trotzdem noch, die anderen überlegen.'
+          : D.take || !dkOpen(D).length
             ? 'Passende Werte darfst du nachlegen, sonst tippe Fertig.'
             : 'Passende Werte darfst du schon nachlegen.';
         break;
@@ -231,12 +239,22 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
         if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
         break;
       default: {
+        if (def === App.me && D.table.length && !dkOpen(D).length) {
+          // Ich habe alles geschlagen und warte, ob noch etwas kommt
+          main = '<em>Alles geschlagen.</em>';
+          sub = 'Jetzt dürfen die anderen noch nachlegen oder fertig sagen.';
+          break;
+        }
         // Werde ich angegriffen, heißt es dich statt Du
         const whom = def === App.me ? '<b>dich</b>' : W(v, def);
-        main = D.table.length ? `${W(v, D.att)} greift ${whom} an.` : `${W(v, D.att)} greift gleich ${whom} an.`;
+        const att = `${W(v, D.att)}${vb(D.att, ' greifst', ' greift')}`;
+        main = D.table.length ? `${att} ${whom} an.` : `${att} gleich ${whom} an.`;
         sub = betsOnMeSub(v) ?? '';
       }
     }
+    // Eine Auswahl, die so nicht geht: sagen warum
+    const why = selectionError(v, role);
+    if (why) sub = esc(why);
   } else if (v.phase === 'over') main = 'Partie vorbei.';
   // Wer gerade aufhält und offline ist
   const waiting = dkWaiting(v);
@@ -252,28 +270,66 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
   return `<div class="main">${main}</div>${second}`;
 }
 
-/** Knöpfe am eigenen Platz, je nach Rolle. */
+/** Welchen Angriff die gewählte Karte schlagen würde: der gewählte oder der einzige mögliche. */
+export function dkBeatPair(v: View): number | null {
+  const sel = dkSelected(v);
+  if (sel.cards.length !== 1) return null;
+  const t = dkTargets(v, sel.cards[0]);
+  if (App.ds.pair != null && t.includes(App.ds.pair)) return App.ds.pair;
+  return t.length === 1 ? t[0] : null;
+}
+
+/** Warum die aktuelle Auswahl so nicht geht, oder null. */
+function selectionError(v: View, role: DkRole): string | null {
+  const sel = dkSelected(v);
+  if (!sel.cards.length) return null;
+  if (role === 'lead' || role === 'throw') return dkAttackError(v, App.me, sel.cards);
+  if (role !== 'defend') return null;
+  if (sel.cards.length > 1) return dkTransferError(v, App.me, sel.cards);
+  if (dkTargets(v, sel.cards[0]).length || !dkTransferError(v, App.me, sel.cards)) return null;
+  return 'Diese Karte schlägt keinen offenen Angriff.';
+}
+
+/**
+ * Knöpfe am eigenen Platz, je nach Rolle. Sie stehen immer an derselben Stelle und werden nur deaktiviert,
+ * damit nicht plötzlich ein anderer Knopf unter dem Finger liegt, wenn jemand anderes etwas tut.
+ */
 function actionsHTML(v: View): string {
   const role = dkRole(v);
+  const D = v.dk;
   const sel = dkSelected(v);
-  const btns: string[] = [];
   const n = sel.cards.length;
   const many = n > 1 ? ` (${n})` : '';
-  if (role === 'lead') {
-    const err = n ? dkAttackError(v, App.me, sel.cards) : 'Wähle eine Karte.';
-    btns.push(`<button class="btn primary" data-act="dkgo"${err ? ' disabled' : ''}>Angreifen${many}</button>`);
-  } else if (role === 'throw') {
-    if (n && !dkAttackError(v, App.me, sel.cards))
-      btns.push(`<button class="btn primary" data-act="dkgo">Nachlegen${many}</button>`);
-    if (dkCanPass(v)) btns.push(`<button class="btn ${n ? 'ghost' : 'primary'}" data-act="dkpass">Fertig</button>`);
-  } else if (role === 'defend') {
-    const t = n === 1 ? dkTargets(v, sel.cards[0]) : [];
-    const pair = App.ds.pair != null && t.includes(App.ds.pair) ? App.ds.pair : t.length === 1 ? t[0] : null;
-    if (pair != null) btns.push('<button class="btn primary" data-act="dkbeat">Schlagen</button>');
-    if (n && !dkTransferError(v, App.me, sel.cards))
-      btns.push(`<button class="btn wood" data-act="dktransfer">Weiterschieben${many}</button>`);
-    btns.push(`<button class="btn ${pair != null ? 'ghost' : 'wood'}" data-act="dktake">Aufnehmen</button>`);
+  const btn = (act: string, cls: string, label: string, ok: boolean) =>
+    `<button class="btn ${cls}" data-act="${act}"${ok ? '' : ' disabled'}>${label}</button>`;
+  const btns: string[] = [];
+  if (role === 'lead')
+    btns.push(btn('dkgo', 'primary', `Angreifen${many}`, n > 0 && !dkAttackError(v, App.me, sel.cards)));
+  else if (role === 'throw' && D) {
+    const can = n > 0 && !dkAttackError(v, App.me, sel.cards);
+    btns.push(btn('dkgo', can ? 'primary' : 'ghost', `Nachlegen${many}`, can));
+    const done = D.done.includes(App.me);
+    btns.push(btn('dkpass', can ? 'ghost' : 'primary', done ? 'Fertig ✓' : 'Fertig', dkCanPass(v)));
+  } else if (role === 'defend' && D) {
+    const pair = dkBeatPair(v);
+    btns.push(btn('dkbeat', 'primary', 'Schlagen', pair != null));
+    // Weiterschieben steht da, solange es in diesem Angriff noch gehen könnte
+    if (v.rules.dk?.transfer && !D.table.some((p) => p.d)) {
+      const ok = n > 0 && !dkTransferError(v, App.me, sel.cards);
+      btns.push(
+        btn(
+          'dktransfer',
+          'wood',
+          `<span class="blong">Weiterschieben${many}</span><span class="bshort">Schieben</span>`,
+          ok,
+        ),
+      );
+    }
+    btns.push(btn('dktake', pair != null ? 'ghost' : 'wood', 'Aufnehmen', true));
   }
+  // Ändert sich die Zeile, sind Tipps kurz gesperrt (src/ui/durak/input.ts)
+  const sig = `${role}|${btns.map((b) => /data-act="(\w+)"/.exec(b)?.[1]).join(',')}`;
+  if (sig !== App.dkBtn.sig) App.dkBtn = { sig, at: Date.now() };
   const bet = betActionHTML(v);
   return `<div class="actions">${btns.join('')}${bet}</div>`;
 }
@@ -296,10 +352,7 @@ function myPlaceHTML(v: View, D: DkView, me: Player, hand: Card[]): string {
     let usable = false;
     if (role === 'lead') usable = true;
     else if (role === 'throw') usable = ranks.has(rankOf(c)) && dkRoom(D) > 0;
-    else if (role === 'defend')
-      usable =
-        open.some((p) => dkBeats(c, p.a, ts)) ||
-        (!!v.rules.dk?.transfer && !D.table.some((p) => p.d) && rankOf(c) === rankOf(D.table[0]?.a ?? ''));
+    else if (role === 'defend') usable = open.some((p) => dkBeats(c, p.a, ts)) || !dkTransferError(v, App.me, [c]);
     const cls =
       (usable ? 'pick' : '') +
       (sel.has(i) ? ' sel' : '') +
@@ -421,11 +474,4 @@ export function renderDkOverlay(v: View): void {
     `<h2>${title}</h2><p class="lead">${lead}</p>` +
     (rline ? `<p class="taunt rv">${rline}</p>` : tt ? `<p class="taunt${good ? ' good' : ''}">${esc(tt)}</p>` : '') +
     `<div class="rows">${rows}</div>${betResultHTML(v, r.bets, loser, 'Durak')}${overlayFoot(v, me)}</div></div>`;
-}
-
-/** Für Würfe und Meldungen: wer greift wen an, als Text. */
-export function dkWho(v: View): string {
-  const D = v.dk;
-  if (!D) return '';
-  return `${nameOf(v, D.att)} ${vb(D.att, 'greifst', 'greift')} ${nameOf(v, D.def)} an`;
 }
