@@ -20,10 +20,11 @@ export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 5 * 60_000,
   expect: { timeout: 20_000 },
-  // Dateien laufen nebeneinander, Tests einer Datei nacheinander. Lokal vier Worker (12 Kerne), in der CI einer,
-  // weil die Runner wenig Kerne haben und die Partien auf Zeit spielen. PW_WORKERS stellt es um.
+  // Dateien laufen nebeneinander, Tests einer Datei nacheinander. Lokal vier Worker (12 Kerne), in der CI zwei
+  // (öffentliche Runner haben vier Kerne). Mehr kippt unter Last die Tests, die auf Zeit spielen (4er-Fenster,
+  // Werfen, Vorspulen). PW_WORKERS stellt es um.
   fullyParallel: false,
-  workers: Number(process.env.PW_WORKERS ?? (process.env.CI ? 1 : 4)),
+  workers: Number(process.env.PW_WORKERS ?? (process.env.CI ? 2 : 4)),
   retries: process.env.CI ? 1 : 0,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
