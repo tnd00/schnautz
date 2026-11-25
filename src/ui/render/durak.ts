@@ -63,7 +63,7 @@ export function dkSelected(v: View): { idx: number[]; cards: Card[] } {
   return { idx, cards: idx.map((i) => hand[i]) };
 }
 
-/** Darf ich gerade fertig sagen? */
+/** Darf ich gerade passen? */
 export function dkCanPass(v: View): boolean {
   const D = v.dk;
   if (!D || dkRole(v) !== 'throw') return false;
@@ -93,7 +93,8 @@ function roleTag(v: View, D: DkView, p: Player, waiting: string[]): string {
     return `<span class="tag ${busy ? 'turn' : 'def'}">verteidigt${busy}</span>`;
   }
   if (p.id === D.att && !D.table.length) return `<span class="tag turn">greift an${busy}</span>`;
-  if (D.table.length && D.done.includes(p.id)) return '<span class="tag done">fertig ✓</span>';
+  // Hängt nur an der Passen-Liste, nie an Handkarten
+  if (D.table.length && D.done.includes(p.id)) return '<span class="tag done">passt ✓</span>';
   if (D.table.length && busy && dkCount(v, p.id)) return `<span class="tag turn">legt nach?${busy}</span>`;
   if (p.id === D.att) return '<span class="tag att">greift an</span>';
   return betTagHTML(v, p.id);
@@ -192,7 +193,7 @@ export function renderDkCenter(v: View): void {
     `<div class="dktable${D.table.length ? '' : ' empty'}">${pairs || empty}` +
     (info ? `<span class="cnt">${info}</span>` : '') +
     '</div>' +
-    `<div class="burned dkbito" title="Weggelegte Karten"><span class="flame">🗑️</span><b>${num(D.discard)}</b><span class="cnt">weg</span></div>`;
+    `<div class="burned dkbito" title="Bito, abgewehrte Karten"><b>${num(D.discard)}</b><span class="cnt">Bito</span></div>`;
 }
 
 /** Status über dem eigenen Platz. */
@@ -227,10 +228,13 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
           : dkOpen(D).length
             ? `${W(v, def)} verteidigt.`
             : '<em>Alles geschlagen.</em>';
+        // Passen gilt, bis ein neuer Wert auf dem Tisch liegt oder aufgenommen wird
         sub = D.done.includes(App.me)
-          ? 'Du hast fertig gesagt. Nachlegen geht trotzdem noch, die anderen überlegen.'
+          ? D.take
+            ? 'Du hast gepasst. Nachlegen geht trotzdem noch, die anderen überlegen.'
+            : `Du hast gepasst. Das gilt, bis ein neuer Wert liegt oder ${W(v, def)} aufnimmt. Nachlegen geht trotzdem.`
           : D.take || !dkOpen(D).length
-            ? 'Passende Werte darfst du nachlegen, sonst tippe Fertig.'
+            ? 'Nachlegen darfst du Werte, die schon liegen. Sonst tippe Passen.'
             : 'Passende Werte darfst du schon nachlegen.';
         break;
       case 'done':
@@ -242,7 +246,7 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
         if (def === App.me && D.table.length && !dkOpen(D).length) {
           // Ich habe alles geschlagen und warte, ob noch etwas kommt
           main = '<em>Alles geschlagen.</em>';
-          sub = 'Jetzt dürfen die anderen noch nachlegen oder fertig sagen.';
+          sub = 'Jetzt dürfen die anderen noch nachlegen oder passen.';
           break;
         }
         // Werde ich angegriffen, heißt es dich statt Du
@@ -309,7 +313,7 @@ function actionsHTML(v: View): string {
     const can = n > 0 && !dkAttackError(v, App.me, sel.cards);
     btns.push(btn('dkgo', can ? 'primary' : 'ghost', `Nachlegen${many}`, can));
     const done = D.done.includes(App.me);
-    btns.push(btn('dkpass', can ? 'ghost' : 'primary', done ? 'Fertig ✓' : 'Fertig', dkCanPass(v)));
+    btns.push(btn('dkpass', can ? 'ghost' : 'primary', done ? 'Gepasst ✓' : 'Passen', dkCanPass(v)));
   } else if (role === 'defend' && D) {
     const pair = dkBeatPair(v);
     btns.push(btn('dkbeat', 'primary', 'Schlagen', pair != null));
@@ -422,7 +426,7 @@ export function renderDkOverlay(v: View): void {
   // Nur wer allein zuerst fertig war, gilt als Erster
   const first = v.winner;
   const lead = !loser
-    ? 'Die Letzten sind gleichzeitig rausgegangen. Diesmal gibt es keinen Durak.'
+    ? 'Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.'
     : first === App.me
       ? 'Du warst zuerst fertig.'
       : first

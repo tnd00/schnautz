@@ -8,6 +8,7 @@ import { SH_ORD } from '../../src/game/constants';
 import { dkTrump, dkWaiting } from '../../src/game/durak';
 import type { View } from '../../src/game/types';
 import {
+  fitFindings,
   chooseGame,
   closeAll,
   desktop,
@@ -101,9 +102,6 @@ async function playToEnd(pages: Page[], check?: (p: Page, v: View, me: string) =
   throw new Error('Durak ist nicht zu Ende gegangen');
 }
 
-const noScroll = (page: Page): Promise<boolean> =>
-  page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 2);
-
 test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   test.setTimeout(6 * 60_000);
   const errors = new Errors();
@@ -119,7 +117,19 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   expect(v0.dk?.size).toBe(36);
   // Trumpf liegt sichtbar unter dem Stapel
   await expect(host.locator('#center .dktrump .card')).toBeVisible();
-  await playToEnd([host]);
+  // Der Ablagestapel heißt Bito, ohne Mülleimer
+  await expect(host.locator('#center .dkbito')).toContainText('Bito');
+  await expect(host.locator('#center .dkbito')).not.toContainText('🗑');
+  let passBtn = 0;
+  await playToEnd([host], async (p) => {
+    // Der Knopf heißt Passen, gedrückt Gepasst ✓, das Etikett am Platz passt ✓
+    const labels = await p.locator('[data-act=dkpass]').allTextContents();
+    labels.forEach((t) => expect(['Passen', 'Gepasst ✓']).toContain(t.trim()));
+    passBtn += labels.length;
+    const tags = await p.locator('.tag.done').allTextContents();
+    tags.forEach((t) => expect(t.trim()).toBe('passt ✓'));
+  });
+  expect(passBtn).toBeGreaterThan(0);
   await waitForPhase(host, ['over'], 20_000);
   await expect(host.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
   expect(errors.list).toEqual([]);
@@ -144,7 +154,7 @@ test('zwei Browser spielen Durak, fremde Karten bleiben geheim', async ({ browse
       if (id !== me) expect(typeof h).toBe('number');
     });
     expect(typeof v.dk.deck).toBe('number');
-    if (checked++ % 10 === 0) expect(await noScroll(guest)).toBe(true);
+    if (checked++ % 10 === 0) expect(await fitFindings(guest, ['#me'])).toEqual([]);
   });
   await waitForPhase(guest, ['over'], 20_000);
   await expect(guest.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
@@ -172,7 +182,7 @@ test('Durak zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ b
   await waitForPhase(host, ['play'], 20_000);
   expect((await mustView(host)).dk?.size).toBe(52);
   await host.waitForTimeout(1500);
-  expect(await noScroll(host)).toBe(true);
+  expect(await fitFindings(host, ['#me'])).toEqual([]);
   // Ein paar Angriffe später, mit Karten auf dem Tisch
   for (let k = 0; k < 40; k++) {
     const v = await mustView(host);
@@ -180,6 +190,6 @@ test('Durak zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ b
     await dkMove(host, v, await myId(host));
     await host.waitForTimeout(300);
   }
-  expect(await noScroll(host)).toBe(true);
+  expect(await fitFindings(host, ['#me'])).toEqual([]);
   expect(errors.list).toEqual([]);
 });

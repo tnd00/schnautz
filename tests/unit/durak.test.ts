@@ -5,7 +5,7 @@ import { act } from '../../src/game/actions';
 import { dkBeats, rankOf, suitOf } from '../../src/game/cards';
 import { SH_ORD } from '../../src/game/constants';
 import { clockTurn } from '../../src/game/clock';
-import { dkLive, dkWaiting } from '../../src/game/durak';
+import { dkLive, dkTableRanks, dkWaiting } from '../../src/game/durak';
 import { reignOf } from '../../src/game/games';
 import { addPlayer, newState } from '../../src/game/state';
 import { seatGuest, takeSeat } from '../../src/game/seats';
@@ -193,6 +193,54 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     cardsOk(st);
   });
 
+  it('gepasst bleibt, solange der Verteidiger mit Werten schlägt, die schon liegen', () => {
+    const { st, D } = fixed();
+    expect(act(st, 'h', { type: 'dkattack', idx: [0] })).toBeNull(); // C7
+    expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' })).toBeNull(); // 8 ist neu
+    expect(act(st, 'h', { type: 'dkpass' })).toBeNull();
+    expect(act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] })).toBeNull();
+    // Dieselbe Zahl noch einmal hebt das Passen nicht auf
+    expect(D.done).toEqual(['h']);
+    expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'D7', c: 'H8' })).toBeNull(); // 8 liegt schon
+    expect(D.done).toEqual(['h']);
+    expect(dkWaiting(st)).toEqual(['p2']);
+    expect(act(st, 'p2', { type: 'dkpass' })).toBeNull();
+    // Bito, ohne dass h ein zweites Mal passen muss
+    expect(st.log.some((e) => e.k === 'dkbito' && e.p === 'p1' && e.cnt === 4)).toBe(true);
+  });
+
+  it('ein neuer Wert auf dem Tisch holt alle zurück', () => {
+    const { st, D } = fixed();
+    act(st, 'h', { type: 'dkattack', idx: [0] });
+    act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' });
+    act(st, 'h', { type: 'dkpass' });
+    act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] });
+    expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'D7', c: 'D10' })).toBeNull(); // 10 ist neu
+    expect(D.done).toEqual([]);
+    expect(dkWaiting(st).sort()).toEqual(['h', 'p2']);
+  });
+
+  it('Aufnehmen holt alle zurück, wer selbst nachlegt, hat nicht mehr gepasst', () => {
+    const { st, D } = fixed();
+    act(st, 'h', { type: 'dkattack', idx: [0] }); // C7
+    act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' });
+    act(st, 'h', { type: 'dkpass' });
+    act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] });
+    expect(act(st, 'p1', { type: 'dktake' })).toBeNull();
+    expect(D.done).toEqual([]);
+    expect(dkWaiting(st).sort()).toEqual(['h', 'p2']);
+    // Wer gepasst hat und dann doch nachlegt, steht nicht mehr in der Liste
+    act(st, 'h', { type: 'dkpass' });
+    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBeNull();
+    expect(D.done).toEqual([]);
+    // Nachlegen eines anderen lässt ein Passen stehen
+    act(st, 'p2', { type: 'dkpass' });
+    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['H7'] })).toBeNull();
+    expect(D.done).toEqual(['p2']);
+    expect(act(st, 'h', { type: 'dkpass' })).toBeNull();
+    expect(st.log.some((e) => e.k === 'dkpickup' && e.p === 'p1' && e.cnt === 5)).toBe(true);
+  });
+
   it('nie mehr Angriffskarten als sechs oder als der Verteidiger zu Beginn hatte', () => {
     const { st, D } = fixed();
     D.P.p1 = ['C8', 'S9'];
@@ -347,7 +395,14 @@ describe('Durak: zufällige Partien', () => {
         const pref = all.filter(([, a]) => a.type === 'dkdefend' || a.type === 'dkpass');
         const pool = pref.length && rng() < 0.8 ? pref : all;
         const [pid, a] = pool[Math.floor(rng() * pool.length)];
+        const bout = st.dk?.bout;
+        const before = [...(st.dk?.done ?? [])];
+        const ranks = dkTableRanks(st.dk as DkState);
+        const card = a.type === 'dkdefend' ? st.dk?.P[pid][a.i ?? -1] : undefined;
         assert.equal(act(st, pid, a, rng), null, `${a.type} von ${pid}`);
+        // Passen verfällt beim Schlagen nur durch einen neuen Wert, das hängt allein am Tisch
+        if (card && st.dk?.bout === bout && st.dk?.table.length)
+          assert.deepEqual(st.dk.done, ranks.has(rankOf(card)) ? before : [], 'Passen nach dem Schlagen');
         if (a.type === 'dktransfer') stats.transfer++;
         cardsOk(st);
         // Fremde Hände bleiben geheim
@@ -410,6 +465,37 @@ describe('Durak: KI', () => {
       expect(st.phase).toBe('over');
     }
     expect(transfers).toBeGreaterThan(0);
+  });
+
+  it('bleibt beim eigenen Passen, bis ein neuer Wert kommt', () => {
+    /** h greift p1 mit der Kreuz 7 an, p1 schlägt mit der 8, h passt, p2 legt die Karo 7 nach. */
+    const start = (): { st: State; D: DkState } => {
+      const { st, D } = table(3, 78);
+      D.trump = 'H6';
+      D.deck = ['H6', 'C6', 'S6', 'D6', 'C9', 'CK', 'SB', 'DA', 'HK'];
+      D.P.h = ['C7', 'S7', 'D9', 'DB', 'SK', 'H7'];
+      D.P.p1 = ['C8', 'S9', 'D10', 'H8', 'HA', 'SD'];
+      D.P.p2 = ['D7', 'S10', 'CB', 'CD', 'DK', 'H9'];
+      D.att = 'h';
+      D.def = 'p1';
+      D.limit = 6;
+      act(st, 'h', { type: 'dkattack', idx: [0] });
+      act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' });
+      act(st, 'h', { type: 'dkpass' });
+      act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] });
+      return { st, D };
+    };
+    for (let seed = 1; seed <= 40; seed++) {
+      // Die 8 liegt schon: h hat noch die Pik 7, legt sie aber nicht nach
+      const same = start();
+      act(same.st, 'p1', { type: 'dkdefend', a: 1, i: 0, ac: 'D7', c: 'H8' });
+      expect(same.D.done).toEqual(['h']);
+      expect(botDecide(viewFor(same.st, 'h'), rngF(seed), 'normal')).toBeNull();
+      // Die 10 ist neu: h ist wieder gefragt
+      const fresh = start();
+      act(fresh.st, 'p1', { type: 'dkdefend', a: 1, i: 0, ac: 'D7', c: 'D10' });
+      expect(botDecide(viewFor(fresh.st, 'h'), rngF(seed), 'normal')).not.toBeNull();
+    }
   });
 
   it('nimmt auf, wenn sie nicht schlagen kann, und legt dem Aufnehmenden etwas obendrauf', () => {

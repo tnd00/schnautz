@@ -3,7 +3,7 @@
  * jede mit einer höheren Karte derselben Farbe oder mit Trumpf oder nimmt alles auf. Alle außer dem Verteidiger
  * dürfen Werte nachlegen, die schon auf dem Tisch liegen, höchstens sechs und nie mehr, als der Verteidiger zu
  * Beginn Karten hatte. Danach ziehen alle auf sechs nach, der Angreifer zuerst und der Verteidiger zuletzt.
- * Wer zuletzt Karten hat, ist der Durak. Gehen die Letzten gleichzeitig raus, ist es unentschieden.
+ * Wer zuletzt Karten hat, ist der Durak. Werden die Letzten gleichzeitig fertig, ist es unentschieden.
  * Weiterschieben (Perevodnoy) ist ein Schalter: Der Verteidiger legt gleiche Werte dazu und gibt weiter.
  * Alle Abfragen nehmen auch eine Ansicht, damit KI und Oberfläche dieselben Regeln nutzen.
  */
@@ -49,7 +49,7 @@ export function dkNext(t: Table, id: string): string {
 }
 
 /**
- * Wer den Angriff beim Weiterschieben bekäme: der Nächste, der noch Karten hat. Bei leerem Stapel ist schon raus,
+ * Wer den Angriff beim Weiterschieben bekäme: der Nächste, der noch Karten hat. Bei leerem Stapel ist schon fertig,
  * wer gerade seine letzte Karte gelegt hat, auch wenn das erst am Ende des Angriffs eingetragen wird.
  */
 export function dkNextTarget(t: Table, id: string): string {
@@ -91,7 +91,8 @@ export const dkRoom = (D: Pick<DkAny, 'table' | 'limit'>): number => Math.max(0,
 
 /**
  * Auf wen die Partie gerade wartet: leerer Tisch heißt der Angreifer, offene Karten der Verteidiger, sonst alle,
- * die noch nachlegen könnten und nicht fertig gesagt haben.
+ * die noch nachlegen könnten und nicht gepasst haben. Passen gilt, bis durch Schlagen ein neuer Wert auf dem Tisch
+ * liegt oder der Verteidiger aufnimmt oder weiterschiebt.
  */
 export function dkWaiting(t: Table): string[] {
   const D = t.dk;
@@ -305,7 +306,8 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       const lead = !D.table.length;
       takeAt(hand, idx);
       D.table.push(...cards.map((c) => ({ a: c, by: pid })));
-      D.done = [];
+      // Wer selbst nachlegt, hat nicht mehr gepasst. Wer sonst gepasst hat, bleibt dabei, der Wert liegt ja schon
+      D.done = D.done.filter((id) => id !== pid);
       addLog(st, lead ? { k: 'dkattack', p: pid, cards, lead: true } : { k: 'dkattack', p: pid, cards });
       st.last = { k: 'dkattack', p: pid, n: st.n, cards };
       check(st, rng);
@@ -323,9 +325,12 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       const c = hand[hi];
       if (!c || hi < 0) return 'Wähle zuerst eine Karte.';
       if (!dkBeats(c, pair.a, dkTrump(D))) return 'Die Karte schlägt das nicht.';
+      // Nur ein neuer Wert auf dem Tisch bringt neue Möglichkeiten zum Nachlegen. Das hängt nur vom Tisch ab,
+      // nie von Handkarten, sonst verriete das Etikett „passt ✓“, wer den Wert hat
+      const fresh = !dkTableRanks(D).has(rankOf(c));
       hand.splice(hi, 1);
       pair.d = c;
-      D.done = [];
+      if (fresh) D.done = [];
       addLog(st, { k: 'dkdefend', p: pid, a: pair.a, d: c });
       st.last = { k: 'dkdefend', p: pid, n: st.n, cards: [c] };
       check(st, rng);
@@ -517,7 +522,7 @@ export function dkCheapest(hand: Card[], a: Card, trump: Suit): number {
 
 /**
  * Einfacher Ersatzzug, wenn jemand offline ist oder ein Zug der KI scheitert: Verteidiger schlagen die erste
- * offene Karte so billig wie möglich oder nehmen, Angreifer legen die kleinste Karte oder sagen fertig.
+ * offene Karte so billig wie möglich oder nehmen, Angreifer legen die kleinste Karte oder passen.
  */
 export function dkAuto(st: State, pid: string, rng?: Rng): ActResult {
   const D = st.dk;

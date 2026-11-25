@@ -104,9 +104,6 @@
 .dktable > .cnt {
   bottom: -27px;
 }
-.dkbito .flame {
-  filter: grayscale(0.3);
-}
 
 /* Rollen an den Kacheln */
 .opp.dk.def {

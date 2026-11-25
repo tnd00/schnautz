@@ -92,6 +92,8 @@ export function botDurak(v: View, rng?: Rng, lvl: BotLevel = 'normal'): Action |
 
   // Nachlegen erst, wenn alles geschlagen ist oder der Verteidiger aufnimmt
   if (!D.take && dkOpen(D).length) return null;
+  // Wer gepasst hat, bleibt dabei, bis ein neuer Wert liegt oder jemand aufnimmt (dann leert der Tisch die Liste)
+  if (D.done.includes(me)) return null;
   const room = dkRoom(D);
   const ranks = dkTableRanks(D);
   if (room > 0) {
@@ -108,5 +110,5 @@ export function botDurak(v: View, rng?: Rng, lvl: BotLevel = 'normal'): Action |
       return { type: 'dkattack', idx: cand.slice(0, n).map((x) => x.i) };
     }
   }
-  return D.done.includes(me) ? null : { type: 'dkpass' };
+  return { type: 'dkpass' };
 }
