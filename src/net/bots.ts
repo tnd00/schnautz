@@ -16,6 +16,7 @@ import { tableQuiet } from './rate';
 import { App } from '../ui/app';
 import { hashStr, num, type Timer } from '../ui/dom';
 import { ANN } from '../ui/feedback';
+import { SAY } from '../ui/levels';
 import { seqLeft, seqMsOf } from '../ui/shithead/sequence';
 import { botDecide } from '../bots/index';
 import { BOT_LINES } from '../bots/lines';
@@ -647,7 +648,7 @@ export function botChatter(): void {
         if (!bot(e.p)) say(anyBot(), 'mockBlindFail', 0.3);
         break;
       case 'shpickup':
-        if (!bot(e.p) && num(e.cnt) >= 6) {
+        if (!bot(e.p) && num(e.cnt) >= SAY.pickupTaunt) {
           say(anyBot(), 'mockPickup', 0.35);
           emo(anyBot(), '😂', 0.3);
         }
@@ -686,7 +687,7 @@ export function botChatter(): void {
       case 'dkpickup':
         // Nimmt der Mensch zuletzt auf und wird Durak, wartet der Spott auf die Zeremonie
         if (bot(e.p) || dkOver) break;
-        if (num(e.cnt) >= 6) {
+        if (num(e.cnt) >= SAY.pickupTaunt) {
           say(anyBot(), 'mockDkTake', 0.35);
           emo(anyBot(), '😂', 0.3);
         }
@@ -789,7 +790,7 @@ export function botChatter(): void {
         else snd(realBot(e.p), 'horn', 0.25);
         break;
       case 'shpickup':
-        if (num(e.cnt) >= 6) say(bot(e.p), 'shPickup', 0.45);
+        if (num(e.cnt) >= SAY.pickupTaunt) say(bot(e.p), 'shPickup', 0.45);
         break;
       case 'shdone':
         say(bot(e.p), 'shFinish', 0.5);
@@ -813,10 +814,10 @@ export function botChatter(): void {
         say(bot(e.p), 'dkTransfer', 0.3);
         break;
       case 'dkbito':
-        if (!dkOver) say(bot(e.p), 'dkBito', num(e.cnt) >= 6 ? 0.35 : 0.15);
+        if (!dkOver) say(bot(e.p), 'dkBito', num(e.cnt) >= SAY.bitoTaunt ? 0.35 : 0.15);
         break;
       case 'dkpickup':
-        if (!dkOver) say(bot(e.p), 'dkTake', num(e.cnt) >= 6 ? 0.45 : 0.2);
+        if (!dkOver) say(bot(e.p), 'dkTake', num(e.cnt) >= SAY.pickupTaunt ? 0.45 : 0.2);
         break;
       case 'dkout':
         if (dkOver) break;

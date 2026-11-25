@@ -78,3 +78,34 @@ test('Neuer Tisch: freie Plätze bleiben bis zum Start frei, dann spielt die KI 
   expect(v.players.filter((p) => p.bot)).toHaveLength(3);
   expect(errors.list).toEqual([]);
 });
+
+test('Regeln und Updates laden nach: Sticker auf der Startseite, Menü in der Lobby, fünf Tipps aufs Dev-Menü', async ({
+  browser,
+}) => {
+  const errors = new Errors();
+  const page = errors.watch(await (await phone(browser)).newPage(), 'host');
+  await page.goto(START);
+  // Der Spiel-Sticker öffnet die Regeln gleich beim richtigen Spiel (src/ui/lazy.ts lädt sie nach)
+  await page.click('[data-act=rulestab][data-g=durak]');
+  await expect(page.locator('#modal .rules.g-durak')).toBeVisible();
+  await expect(page.locator('#modal .rtab[aria-pressed=true]')).toContainText('Durak');
+  // Reiterwechsel im offenen Fenster
+  await page.click('#modal .rtab[data-g=cabo]');
+  await expect(page.locator('#modal .rules.g-cabo')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#modal .paper')).toHaveCount(0);
+
+  if (await page.locator('.playbtn').isVisible()) await page.click('.playbtn');
+  await page.fill('#name', 'Tahna');
+  await page.click('#btn-bots');
+  await expect(page.locator('#scr-lobby')).toBeVisible();
+  // Updates aus dem Menü: Das Menü geht zu, das Fenster zeigt die Versionen
+  await page.click('#btn-menu');
+  await page.click('#menu-updates');
+  await expect(page.locator('#modal .updates .relh').first()).toBeVisible();
+  await expect(page.locator('#menu')).toBeHidden();
+  const foot = page.locator('#modal [data-act=devtap]');
+  for (let i = 0; i < 5; i++) await foot.click();
+  await expect(page.locator('#modal .devm')).toBeVisible();
+  expect(errors.list).toEqual([]);
+});

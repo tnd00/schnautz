@@ -1,8 +1,9 @@
 import { CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO } from '../../game/constants';
-import type { LogEntry, View } from '../../game/types';
+import type { LogEntry } from '../../game/types';
 import { App } from '../app';
 import { esc, num } from '../dom';
-import { type Announcement, announce, floatLabel, holdForAnnouncements, shakePanel, tauntLabel } from '../feedback';
+import { type Announcement, emit, shakePanel } from '../feedback';
+import { cueOf, type LevelCtx } from '../levels';
 import { nameOf, vb } from '../helpers';
 import { sfx } from '../sound';
 import { shitheadCeremony } from '../ceremony';
@@ -20,9 +21,11 @@ const CB_POWER_LABEL = {
 } as const;
 
 /** Cabo: Rundenbeginn, Klänge am Tisch, Cabo-Ruf, Spionieren und Blindtausch, Schnappen, Abrechnung, Krönung. */
-export function caboEffect(prev: View, v: View, e0: LogEntry, fresh: readonly LogEntry[]): void {
+export function caboEffect(c: LevelCtx, e0: LogEntry): void {
+  const { prev, v, fresh } = c;
   if (!isCb(e0)) return;
   const e = e0;
+  const cue = cueOf(e, c);
   const mine = e.p === App.me;
   const N = (id: string | null | undefined, fb?: string) => esc(nameOf(v, id, fb));
   /** Name nach „bei“ oder „mit“ als reiner Text, nur für floatLabel (setzt textContent, maskiert selbst) */
@@ -33,10 +36,10 @@ export function caboEffect(prev: View, v: View, e0: LogEntry, fresh: readonly Lo
     case 'cbdeal': {
       // Den Austeilklang spielt schon das Austeilen selbst (src/ui/apply.ts)
       const first = e.r === 1;
-      announce({
+      emit(cue, {
+        text: first ? 'Cabo!' : `Runde ${num(e.r)}`,
         icon: '🃏',
         tone: 'gold',
-        title: first ? 'Cabo!' : `Runde ${num(e.r)}`,
         sub:
           (first ? 'Wenig Punkte gewinnen. ' : '') +
           'Sieh dir zwei deiner Karten an und merk sie dir gut. ' +
@@ -50,45 +53,46 @@ export function caboEffect(prev: View, v: View, e0: LogEntry, fresh: readonly Lo
       return;
     case 'cbdraw':
       if (!mine) sfx('card');
-      if (!mine && e.from === 'pile') setTimeout(() => floatLabel(e.p, 'nimmt von der Ablage'), 60);
+      if (!mine && e.from === 'pile') emit(cue, { pid: e.p, text: 'nimmt von der Ablage' });
       return;
     case 'cbswap': {
       if (!mine) sfx('card');
       if (!e.ok) {
-        sfx('nope');
         shakePanel(e.p);
-        setTimeout(() => floatLabel(e.p, 'greift daneben, Strafkarte!', 'greifst daneben, Strafkarte!'), 60);
+        emit(cue, { pid: e.p, text: 'greift daneben, Strafkarte!', mine: 'greifst daneben, Strafkarte!', sfx: 'nope' });
       } else if (e.slots > 1)
-        setTimeout(() => floatLabel(e.p, `wirft ${e.slots} gleiche ab`, `wirfst ${e.slots} gleiche ab`), 60);
+        emit(cue, { pid: e.p, text: `wirft ${e.slots} gleiche ab`, mine: `wirfst ${e.slots} gleiche ab` });
       return;
     }
     case 'cbdiscard':
       if (!mine) sfx('card');
       if (e.power) {
         const [er, du] = CB_POWER_LABEL[e.power];
-        setTimeout(() => floatLabel(e.p, er, du), 60);
+        emit(cue, { pid: e.p, text: er, mine: du });
       }
       return;
     case 'cbpeek':
-      if (!mine) setTimeout(() => floatLabel(e.p, 'schaut sich eine Karte an'), 60);
+      if (!mine) emit(cue, { pid: e.p, text: 'schaut sich eine Karte an' });
       return;
     case 'cbspy':
       if (mine) return;
-      setTimeout(() => floatLabel(e.p, `spioniert bei ${toWhom(e.to, e.tn)}`), 60);
-      if (e.to === App.me) {
-        sfx('knock');
-        if (e.n % 2 === 0) tauntLabel(taunt('cbSpyOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
-      }
+      emit(cue, {
+        pid: e.p,
+        text: `spioniert bei ${toWhom(e.to, e.tn)}`,
+        sfx: e.to === App.me ? 'knock' : undefined,
+        taunt: taunt('cbSpyOnMe', { name: nameOf(v, e.p, e.name) }, e.n),
+      });
       return;
     case 'cbblind':
-      sfx('smack');
-      setTimeout(
-        () => floatLabel(e.p, `tauscht blind mit ${toWhom(e.to, e.tn)}`, `tauschst blind mit ${toWhom(e.to, e.tn)}`),
-        60,
-      );
+      emit(cue, {
+        pid: e.p,
+        text: `tauscht blind mit ${toWhom(e.to, e.tn)}`,
+        mine: `tauschst blind mit ${toWhom(e.to, e.tn)}`,
+        sfx: 'smack',
+        taunt: taunt('cbBlindOnMe', { name: nameOf(v, e.p, e.name) }, e.n),
+      });
       if (e.to === App.me && !mine) {
         shakePanel(App.me);
-        tauntLabel(taunt('cbBlindOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
         try {
           navigator.vibrate?.([40, 40, 40]);
         } catch {
@@ -101,24 +105,29 @@ export function caboEffect(prev: View, v: View, e0: LogEntry, fresh: readonly Lo
       setTimeout(() => sfx('duel'), 250);
       if (!mine) shakePanel(e.p);
       const t = mine ? taunt('cbCaboSelf', null, e.n) : taunt('cbCaboOther', { name: nameOf(v, e.p, e.name) }, e.n);
-      announce({
+      emit(cue, {
+        pid: e.p,
+        text: 'ruft Cabo!',
+        mine: 'rufst Cabo!',
         icon: '📣',
         tone: 'red',
-        title: mine ? 'Du rufst Cabo!' : `${N(e.p, e.name)} ruft Cabo!`,
-        sub: `Alle anderen haben noch einen Zug.<span class="tt">${esc(t)}</span>`,
+        sub: 'Alle anderen haben noch einen Zug.',
+        taunt: t,
         ms: 2400,
       });
       return;
     }
     case 'cbsnap':
-      if (e.ok) {
-        sfx('pop');
-        setTimeout(() => floatLabel(e.p, 'schnappt!', 'schnappst!'), 60);
-      } else {
-        sfx('nope');
+      if (e.ok) emit(cue, { pid: e.p, text: 'schnappt!', mine: 'schnappst!', sfx: 'pop' });
+      else {
         shakePanel(e.p);
-        setTimeout(() => floatLabel(e.p, 'schnappt daneben, Strafkarte!', 'schnappst daneben, Strafkarte!'), 60);
-        if (mine) tauntLabel(taunt('cbSnapFailSelf', null, e.n));
+        emit(cue, {
+          pid: e.p,
+          text: 'schnappt daneben, Strafkarte!',
+          mine: 'schnappst daneben, Strafkarte!',
+          sfx: 'nope',
+          taunt: taunt('cbSnapFailSelf', null, e.n),
+        });
       }
       return;
     case 'cbround': {
@@ -142,33 +151,29 @@ export function caboEffect(prev: View, v: View, e0: LogEntry, fresh: readonly Lo
           : `${N(e.caller)}${vb(e.caller, ' bekommst', ' bekommt')} ${CB_PENALTY} Strafpunkte obendrauf.`;
         setTimeout(() => sfx(e.ok === (e.caller === App.me) ? 'win' : 'lose'), 250);
       }
-      announce({ icon, tone, title, sub, ms: ending ? 1600 : 2200 });
-      holdForAnnouncements(300);
+      emit(cue, { text: title, icon, tone, sub, ms: ending ? 1600 : 2200, hold: 300 });
       return;
     }
     case 'cbreset':
-      setTimeout(
-        () =>
-          floatLabel(
-            e.p,
-            `landet genau auf ${CB_RESET_AT} und fällt auf ${CB_RESET_TO}`,
-            `landest genau auf ${CB_RESET_AT} und fällst auf ${CB_RESET_TO}`,
-          ),
-        400,
-      );
+      emit(cue, {
+        pid: e.p,
+        text: `landet genau auf ${CB_RESET_AT} und fällt auf ${CB_RESET_TO}`,
+        mine: `landest genau auf ${CB_RESET_AT} und fällst auf ${CB_RESET_TO}`,
+        delay: 400,
+      });
       return;
     case 'cbend':
       if (prev.phase === 'over' || v.phase !== 'over') return;
       if (e.p) shitheadCeremony(v, e);
       else {
-        announce({
+        emit(cue, {
+          text: 'Unentschieden!',
           icon: '🤝',
           tone: 'gold',
-          title: 'Unentschieden!',
           sub: 'Vorne liegen mehrere gleichauf. Diesmal gibt es keinen neuen Cabo-König.',
           ms: 2600,
+          hold: 250,
         });
-        holdForAnnouncements();
       }
       return;
     default:

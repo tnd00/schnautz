@@ -319,11 +319,11 @@ function hostSend(conn: DataConnection, m: HostMessage): void {
 }
 
 /** Ablehnung für den Draht: Code und Argumente, dazu `msg` aus Sicht des Gastes `pid` für Gäste von 2.6. */
-function wire(r: Reject | string, st: State, pid: string): ReturnType<typeof wireReject> {
+function wire(r: Reject, st: State, pid: string): ReturnType<typeof wireReject> {
   return wireReject(r, ctxOfState(st, pid));
 }
 
-function rejectConn(conn: DataConnection, st: State, pid: string, r: Reject | string): void {
+function rejectConn(conn: DataConnection, st: State, pid: string, r: Reject): void {
   hostSend(conn, { t: 'reject', ...wire(r, st, pid) });
   safeClose(conn, 600);
 }

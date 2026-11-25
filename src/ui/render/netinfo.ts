@@ -2,7 +2,7 @@
  * Fenster hinter dem Punkt oben: Tischcode mit Link zum Einladen, darunter die Verbindung (Rolle, Antwortzeit und
  * wer gerade da ist). Punkt und Code waren früher zwei Knöpfe, jetzt ist es einer.
  */
-import { CHANGELOG } from '../../content/changelog';
+import { APP_VERSION } from '../../content/version';
 import { G } from '../../net/guest';
 import { App } from '../app';
 import { sheetHTML } from '../dialog';
@@ -58,6 +58,7 @@ export function netInfoHTML(): string {
       `<div class="nrows">${rows.join('')}</div>` +
       (list ? `<h3>Am Tisch</h3><ul class="npeople">${list}</ul>` : '') +
       (bots ? `<p class="nnote">Dazu ${bots === 1 ? 'eine KI' : `${bots} KIs`}.</p>` : '') +
-      `<p class="nnote">Version ${esc(CHANGELOG[0]?.v ?? '')}</p>`,
+      // Kurzform wie im Changelog (2.7.0 heißt 2.7), ohne ihn ins Startpaket zu holen (src/ui/lazy.ts)
+      `<p class="nnote">Version ${esc(APP_VERSION.replace(/\.0$/, ''))}</p>`,
   });
 }

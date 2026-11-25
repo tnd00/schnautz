@@ -173,6 +173,11 @@ describe('Rückmeldestufen (levels.ts)', () => {
     const full = L({ k: 'dkbito', p: 'a', cnt: 12 });
     expect(cue(half, ctx('durak', [half], { prev: { dk: dk(6) } }))?.level).toBe('mid');
     expect(cue(full, ctx('durak', [full], { prev: { dk: dk(6) } }))?.level).toBe('big');
+    // Endet die Partie im selben Schub, kommt kein neues Großes vor die Enthüllung
+    const end = L({ k: 'dkend', p: 'b' });
+    expect(cue(full, ctx('durak', [full, end], { prev: { dk: dk(6) } }))?.level).toBe('mid');
+    const tr = L({ k: 'dktransfer', p: 'a', cards: ['H6'], to: ME });
+    expect(cue(tr, ctx('durak', [tr, end]))).toEqual({ level: 'mid' });
   });
 
   it('meldet Fertig eigenes und Platz 1 groß, andere mittel, vor der Zeremonie als Takt', () => {

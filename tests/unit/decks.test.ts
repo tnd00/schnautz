@@ -46,7 +46,10 @@ describe('Mehr Leute und zweites Deck', () => {
     expect(msgOf(addPlayer(full, 'p9', 'P9'))).toBe('Der Tisch ist voll.');
     // Ein alter Shithead-Tisch aus 2.5 mit neun Menschen kann nicht zu Schnautz wechseln
     full.players.push({ ...structuredClone(full.players[1]), id: 'p9', name: 'P9' });
-    expect(msgOf(act(full, 'h', { type: 'game', game: 'schnautz' }, rngF(2)))).toMatch(/höchstens 8/);
+    expect(act(full, 'h', { type: 'game', game: 'schnautz' }, rngF(2))).toEqual({
+      e: 'seat.tooMany',
+      a: { max: 8, g: 'schnautz' },
+    });
     expect(full.game).toBe('shithead');
   });
 

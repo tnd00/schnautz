@@ -1,12 +1,27 @@
-/* Rückmeldungen: Toasts, große Meldungen, Sprechblasen und kleine Einblendungen am Tisch. */
+/*
+ * Rückmeldungen: Toasts, große Meldungen, Sprechblasen und kleine Einblendungen am Tisch.
+ * Was am Tisch passiert, läuft über `emit` mit einer Stufe aus `cueOf` (src/ui/levels.ts). Die Entscheidungen ohne
+ * DOM (Stufe im Schub, Ton, Lage) stehen in src/ui/feedback-rules.ts.
+ */
 import { App } from './app';
 import { $, $opt, esc, type Timer } from './dom';
 import { render } from './render/index';
 import type { Cue } from './levels';
 import type { Reject } from '../game/reject';
+import type { LogEntry } from '../game/types';
 import { ctxOfView, rejectText } from '../content/texts';
 import { myMoveNow } from './helpers';
 import { sfx, sfxCalm, type SoundName } from './sound';
+import {
+  bandBox,
+  type BatchState,
+  type Box,
+  levelInBatch,
+  movedEnough,
+  newBatch,
+  slotOf,
+  toneOf,
+} from './feedback-rules';
 
 const ms = (x: number | undefined, d: number) => x || d;
 
@@ -31,10 +46,6 @@ export function toast(msg: string, duration?: number): void {
   );
 }
 
-/**
- * Freie Spielfläche zwischen Gegnern und eigenem Platz. Meldungen liegen nur dort,
- * damit sie weder die eigenen Karten noch die Gegner verdecken. Ohne Platz (etwa in der Tauschrunde) `null`.
- */
 /** Oberkante des offenen Reaktionsfensters am Handy, Meldungen sollen es nicht verdecken. */
 function emotesTop(): number {
   if (!document.body.classList.contains('emoopen')) return Infinity;
@@ -43,7 +54,17 @@ function emotesTop(): number {
   return r && r.height ? r.top : Infinity;
 }
 
-function fieldRect(min = 90): { left: number; top: number; width: number; height: number } | null {
+/** Sichtbares Rechteck oder null (ausgeblendete Elemente liefern ein Rechteck aus Nullen). */
+function shown(sel: string): DOMRect | null {
+  const r = $opt(sel)?.getBoundingClientRect();
+  return r && r.height > 0 && r.width > 0 ? r : null;
+}
+
+/**
+ * Freie Spielfläche zwischen Gegnern und eigenem Platz. Meldungen liegen nur dort,
+ * damit sie weder die eigenen Karten noch die Gegner verdecken. Ohne Platz (etwa in der Tauschrunde) `null`.
+ */
+function fieldRect(min = 90): Box | null {
   if (!document.body.classList.contains('ingame')) return null;
   const table = $opt('#table');
   const opps = $opt('#opps');
@@ -57,48 +78,88 @@ function fieldRect(min = 90): { left: number; top: number; width: number; height
 }
 
 /**
- * Bin ich am Zug oder in der Tauschrunde? Dann stehen Meldungen als Band über der Statuszeile, nie über eigenen
- * Karten, Gegnern oder Stapel. Anker ist die Statuszeile, in der Tauschrunde (dort ist sie aus) der Kopf am Platz.
+ * Anker des Bands: die Statuszeile, in der Tauschrunde (dort ist sie aus) der Kopf am Platz, zur Not die Oberkante
+ * des eigenen Platzes. Nur am Tisch.
  */
-function bandAnchor(): DOMRect | null {
-  const v = App.view;
-  if (!v || !document.body.classList.contains('ingame')) return null;
-  const me = v.players.find((p) => p.id === App.me);
-  const swap = v.phase === 'swap' && !!me && !me.ready;
-  if (!swap && !myMoveNow(v)) return null;
+function bandBase(): Box | null {
+  if (!document.body.classList.contains('ingame')) return null;
+  const me = shown('#me');
   for (const sel of ['#status', '#me .swhead']) {
-    const r = $opt(sel)?.getBoundingClientRect();
-    if (r && r.height > 0 && r.width > 0) return r;
+    const r = shown(sel);
+    // So breit wie der eigene Platz, damit lange Titel nicht in vier Zeilen umbrechen und über den Stapel wachsen
+    const x0 = Math.min(r?.left ?? 0, me?.left ?? Infinity);
+    const x1 = Math.max(r?.right ?? 0, me?.right ?? -Infinity);
+    if (r) return { left: x0, top: r.top, width: x1 - x0, height: r.height };
   }
-  return null;
+  return me ? { left: me.left, top: me.top - 4, width: me.width, height: 0 } : null;
 }
 
 /**
- * Platz im Band: unten bündig mit der Statuszeile, weitere Meldungen stapeln sich nach oben bis zum Stapel. Ist kein
- * Platz mehr, weichen die älteren, damit nichts über eigene Karten rutscht.
+ * Bin ich am Zug oder in der Tauschrunde (oder gibt es keine Spielfläche)? Dann stehen Meldungen als Band über der
+ * Statuszeile, nie über eigenen Karten, Gegnern, Trumpfzeile oder Stapel (slotOf).
  */
-function bandSlot(el: HTMLElement, band: DOMRect, h: number): number {
-  const pile = $opt('#center')?.getBoundingClientRect();
-  const floor = Math.min(band.top, pile && pile.height ? pile.bottom : band.top - 40);
-  const base = band.bottom - h - 2;
-  const others = [...document.querySelectorAll<HTMLElement>('#fly .mid.band')].filter(
+function bandAnchor(): Box | null {
+  const v = App.view;
+  if (!v || !document.body.classList.contains('ingame')) return null;
+  const slot = slotOf({ swap: v.phase === 'swap', myMove: myMoveNow(v), field: !!fieldRect(0) });
+  return slot === 'band' ? bandBase() : null;
+}
+
+/** Unterkante von Stapel und Gegnern: so weit darf das Band nach oben wachsen. */
+function bandFloor(band: Box): number {
+  // Stapel und Ablage ragen bei manchen Spielen über die Mitte hinaus, deshalb jedes Kind einzeln
+  const parts = [...document.querySelectorAll<HTMLElement>('#center, #center > *, #opps')]
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.height > 0 && r.width > 0 && r.bottom <= band.top + band.height);
+  return Math.min(band.top, Math.max(band.top - 150, ...parts.map((r) => r.bottom)));
+}
+
+/**
+ * Lage einer Meldung nach dem Einblenden. Während der Pop-Animation ist das gemessene Rechteck verschoben und
+ * verkleinert, deshalb aus der gesetzten Lage und der Höhe ohne Transform.
+ */
+function restBox(el: HTMLElement): { top: number; bottom: number } {
+  const top = parseFloat(el.style.top) || el.getBoundingClientRect().top;
+  return { top, bottom: top + el.offsetHeight };
+}
+
+/** Dasselbe für die große Meldung im Band: Ebene plus Abstand darin. */
+function annBox(el: HTMLElement): { top: number; bottom: number } {
+  const host = el.parentElement;
+  const top = (parseFloat(host?.style.top ?? '') || 0) + el.offsetTop;
+  return { top, bottom: top + el.offsetHeight };
+}
+
+/**
+ * Platz im Band: unten bündig mit der Statuszeile, weitere Meldungen stapeln sich nach oben bis zum Stapel, über
+ * einer großen Meldung im Band. Ist kein Platz mehr, weichen die ältesten, damit nichts über eigene Karten rutscht.
+ * Der Grund einer Ablehnung bleibt stehen.
+ */
+function bandSlot(el: HTMLElement, band: Box, h: number): number {
+  const floor = bandFloor(band);
+  const base = band.top + band.height - h;
+  const ann = $opt('#announce.band .ann:not(.out)');
+  let live = [...document.querySelectorAll<HTMLElement>('#fly .mid.band')].filter(
     (o) => o !== el && !o.classList.contains('out') && o.style.top !== '-999px',
   );
-  let top = base;
-  for (const o of others.map((x) => x.getBoundingClientRect()).sort((p, q) => q.top - p.top))
-    if (top < o.bottom + 3 && top + h > o.top - 3) top = o.top - h - 3;
-  if (top >= floor) return top;
-  // Der Grund einer Ablehnung bleibt stehen, die übrigen weichen
-  const keep = el.classList.contains('nopelbl') ? [] : others.filter((o) => o.classList.contains('nopelbl'));
-  for (const o of others) {
-    if (keep.includes(o)) continue;
-    o.classList.add('out');
-    setTimeout(() => o.remove(), 320);
+  const fit = (): number => {
+    const rects = [...live.map(restBox), ...(ann ? [annBox(ann)] : [])].sort((p, q) => q.top - p.top);
+    let top = base;
+    for (const o of rects) if (top < o.bottom + 2 && top + h > o.top - 2) top = o.top - h - 2;
+    return top;
+  };
+  let top = fit();
+  const nope = el.classList.contains('nopelbl');
+  while (top < floor) {
+    const old = live.find((o) => nope || !o.classList.contains('nopelbl'));
+    if (!old) break;
+    old.classList.add('out');
+    setTimeout(() => old.remove(), 320);
+    live = live.filter((o) => o !== old);
+    top = fit();
   }
-  top = base;
-  for (const o of keep.map((x) => x.getBoundingClientRect()))
-    if (top < o.bottom + 3 && top + h > o.top - 3) top = o.top - h - 3;
-  return top;
+  // Immer noch kein Platz (eine große Meldung füllt das Band): unten im Band unter ihr warten statt über den Karten
+  return top < floor ? base : top;
 }
 
 /**
@@ -109,9 +170,8 @@ function bandSlot(el: HTMLElement, band: DOMRect, h: number): number {
  * Gibt `false` zurück, wenn kein Tisch zu sehen ist.
  */
 function placeMessage(el: HTMLElement, mode: 'cap' | 'center'): boolean {
-  const r = fieldRect(0);
-  const c = $opt('#center')?.getBoundingClientRect();
-  if (!r && !c) return false;
+  if (!fieldRect(0) && !bandBase()) return false;
+  ensureResize();
   el.classList.add('mid');
   el.dataset.mode = mode;
   el.style.top = '-999px';
@@ -122,27 +182,24 @@ function placeMessage(el: HTMLElement, mode: 'cap' | 'center'): boolean {
 
 /** Setzt eine Meldung aus placeMessage (neu) an ihren Platz. Auch nach dem Zeichnen über realignFeedback. */
 function positionMessage(el: HTMLElement, mode: 'cap' | 'center'): void {
-  const r = fieldRect(0);
-  const c = $opt('#center')?.getBoundingClientRect();
-  if (!r && !c) return;
-  const area = r ?? { left: (c as DOMRect).left, width: (c as DOMRect).width, top: (c as DOMRect).top, height: 0 };
   const band = bandAnchor();
+  const area = band ? null : fieldRect(0);
   el.classList.toggle('band', !!band);
-  el.style.left = `${Math.round(band ? band.left + band.width / 2 : area.left + area.width / 2)}px`;
-  const h = el.offsetHeight;
-  const cap = $opt('#center .cap')?.getBoundingClientRect();
-  const oppsBottom = $opt('#opps')?.getBoundingClientRect().bottom ?? area.top;
   if (band) {
-    el.style.top = `${Math.round(bandSlot(el, band, h))}px`;
+    el.style.left = `${Math.round(band.left + band.width / 2)}px`;
+    el.style.top = `${Math.round(bandSlot(el, band, el.offsetHeight))}px`;
     return;
   }
+  if (!area) return;
+  el.style.left = `${Math.round(area.left + area.width / 2)}px`;
+  const h = el.offsetHeight;
+  const cap = shown('#center .cap');
+  const oppsBottom = $opt('#opps')?.getBoundingClientRect().bottom ?? area.top;
   let top =
-    mode === 'cap' && cap?.height
-      ? Math.max(oppsBottom, cap.bottom - h)
-      : area.top + Math.max(0, (area.height - h) / 2);
+    mode === 'cap' && cap ? Math.max(oppsBottom, cap.bottom - h) : area.top + Math.max(0, (area.height - h) / 2);
   const taken = [...document.querySelectorAll<HTMLElement>('#fly .mid')]
-    .filter((o) => o !== el && !o.classList.contains('out'))
-    .map((o) => o.getBoundingClientRect())
+    .filter((o) => o !== el && !o.classList.contains('out') && o.style.top !== '-999px')
+    .map(restBox)
     .sort((p, q) => p.top - q.top);
   for (const o of taken) if (top < o.bottom + 4 && top + h > o.top - 4) top = o.bottom + 4;
   // Ist das Reaktionsfenster offen, rückt die Meldung darüber
@@ -151,36 +208,52 @@ function positionMessage(el: HTMLElement, mode: 'cap' | 'center'): void {
   el.style.top = `${Math.round(top)}px`;
 }
 
-/** Legt eine feste Ebene genau über die Spielfläche. Ist es dort eng, wird die Meldung kompakter. */
+/** Inline-Maße einer festen Ebene, um die Lage vor und nach dem Zeichnen zu vergleichen. */
+const boxOfStyle = (el: HTMLElement): Box => ({
+  left: parseFloat(el.style.left) || 0,
+  top: parseFloat(el.style.top) || 0,
+  width: parseFloat(el.style.width) || 0,
+  height: parseFloat(el.style.height) || 0,
+});
+
+/**
+ * Legt die Ebene der großen Meldungen genau über die Spielfläche. Ist es dort eng, wird die Meldung kompakter.
+ * Bin ich am Zug oder in der Tauschrunde, wird sie ein schmales Band über der Statuszeile.
+ */
 function placeInField(el: HTMLElement | null): void {
   if (!el) return;
-  const r = fieldRect();
-  el.classList.toggle('field', !!r);
-  el.classList.toggle('tight', !!r && r.height < 220);
+  ensureResize();
+  const band = bandAnchor();
+  const r = band ? bandBox(band, bandFloor(band)) : fieldRect();
+  const cls = { field: !!r, band: !!band, tight: !!r && (!!band || r.height < 220) };
+  const same = Object.entries(cls).every(([k, on]) => el.classList.contains(k) === on);
+  for (const [k, on] of Object.entries(cls)) el.classList.toggle(k, on);
   if (!r) {
     ['left', 'top', 'width', 'height', 'right', 'bottom'].forEach((k) => el.style.removeProperty(k));
     return;
   }
+  // Nur verschieben, wenn sich die Lage spürbar ändert, sonst flackert es bei jedem Zeichnen
+  if (same && el.style.top && !movedEnough(boxOfStyle(el), r)) return;
   Object.assign(el.style, {
-    left: `${r.left}px`,
-    top: `${r.top}px`,
-    width: `${r.width}px`,
-    height: `${r.height}px`,
+    left: `${Math.round(r.left)}px`,
+    top: `${Math.round(r.top)}px`,
+    width: `${Math.round(r.width)}px`,
+    height: `${Math.round(r.height)}px`,
     right: 'auto',
     bottom: 'auto',
   });
 }
 
-let bannerTimer: Timer | undefined;
-export function banner(text: string): void {
-  sfxCalm('msg', 500);
-  const b = $('#banner');
-  b.innerHTML = `<div class="banner"><div>${esc(text)}</div></div>`;
-  placeInField(b.firstElementChild as HTMLElement | null);
-  clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => {
-    b.innerHTML = '';
-  }, 1700);
+/** Größenwechsel richtet laufende Meldungen neu aus. Erst beim ersten Gebrauch angemeldet, nicht beim Laden. */
+let resizeOn = false;
+let resizeRaf = 0;
+function ensureResize(): void {
+  if (resizeOn || typeof window === 'undefined') return;
+  resizeOn = true;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(realignFeedback);
+  });
 }
 
 /** Große Meldung in der Tischmitte. `title` und `sub` sind HTML und müssen bereits escaped sein. */
@@ -380,24 +453,22 @@ export function chatBubble(pid: string | undefined, text: string): void {
   }, 2800);
 }
 
-export function centerLabel(text: string): void {
-  sfxCalm('msg', 500, 0.7);
-  const c = $opt('#center');
-  if (c) addTemp(c, 'span', 'floatlbl center', text, 1600);
+/** Name vor dem Satz wie am Tisch üblich: „Lena nimmt 5 Karten“, für einen selbst „Du nimmst 5 Karten“. */
+function labelText(pid: string | undefined, text: string, mineText?: string): string {
+  const me = !!pid && pid === App.me;
+  const name = !pid ? '' : me ? 'Du' : (App.view?.players.find((p) => p.id === pid)?.name ?? '');
+  return `${name} ${me && mineText ? mineText : text}`.trim();
 }
 
 /**
- * Kurzer Hinweis, wer gerade was getan hat ("Heinzi nimmt 5 Karten"). Er erscheint oben in der Spielfläche,
- * damit er keinen Gegner verdeckt. Mehrere gleichzeitig stehen untereinander.
- * `mineText` ist die Form für einen selbst ("Du nimmst 5 Karten").
+ * Kurzer Hinweis, wer gerade was getan hat ("Heinzi nimmt 5 Karten"). Er erscheint in der Spielfläche,
+ * damit er keinen Gegner verdeckt, bin ich am Zug im Band über der Statuszeile. Mehrere stehen untereinander.
+ * `mineText` ist die Form für einen selbst ("Du nimmst 5 Karten"). Still, den Ton entscheidet `emit`.
  */
 export function floatLabel(pid: string | undefined, text: string, mineText?: string): void {
-  const me = pid === App.me;
-  const name = me ? 'Du' : (App.view?.players.find((p) => p.id === pid)?.name ?? '');
   const f = document.createElement('div');
   f.className = 'fieldlbl';
-  f.textContent = `${name} ${me && mineText ? mineText : text}`.trim();
-  sfxCalm('msg', 500, 0.7);
+  f.textContent = labelText(pid, text, mineText);
   if (placeMessage(f, 'cap')) {
     setTimeout(() => f.remove(), 1800);
     return;
@@ -406,10 +477,9 @@ export function floatLabel(pid: string | undefined, text: string, mineText?: str
   if (el) addTemp(el, 'span', 'floatlbl', text, 1600);
 }
 
-/** Einblendung über einem Element, die nicht beim nächsten Rendern verschwindet. */
+/** Einblendung über einem Element, die nicht beim nächsten Rendern verschwindet. Still, den Ton entscheidet `emit`. */
 export function fixedLabel(cls: string, text: string, anchor: Element | null, duration = 2400, dy = 10): void {
   if (!anchor || !text) return;
-  sfxCalm('msg', 500, 0.7);
   document.querySelector(`#fly .${cls}`)?.remove();
   const f = document.createElement('div');
   f.className = cls;
@@ -428,7 +498,7 @@ export function fixedLabel(cls: string, text: string, anchor: Element | null, du
 }
 
 export const tauntLabel = (text: string, duration = 2800): void =>
-  fixedLabel('tauntlbl', text, $opt('#center'), duration, 12);
+  fixedLabel('tauntlbl', text, $opt('#center') ?? $opt('#me'), duration, 12);
 
 export function boomFx(ch: string, el: Element | null): void {
   if (!el) return;
@@ -442,7 +512,10 @@ export function boomFx(ch: string, el: Element | null): void {
   setTimeout(() => f.remove(), 1100);
 }
 
-/** Eine Rückmeldung für `emit`. Texte für andere ohne Namen („nimmt 7 Karten“), der Name kommt davor wie heute. */
+/**
+ * Eine Rückmeldung für `emit`. `text` ist der Satz für andere ohne Namen („nimmt 7 Karten“), der Name kommt davor.
+ * Ohne `pid` steht `text` allein. Große Meldungen brauchen ihn auch, wird eine davon zu mittel, steht er klein da.
+ */
 export interface Msg {
   pid?: string;
   text: string;
@@ -451,59 +524,92 @@ export interface Msg {
   /** Nur groß */
   icon?: string;
   tone?: Announcement['tone'];
-  /** Nur groß, HTML und bereits maskiert. Ohne Titel steht `text` da */
+  /** Nur groß, HTML und bereits maskiert. Ohne Titel steht der Satz da */
   title?: string;
+  /** Nur groß, HTML und bereits maskiert */
   sub?: string;
   ms?: number;
-  /** Spruch dazu, wenn die Stufe einen vorsieht */
+  /** Spruch dazu, wenn die Stufe einen vorsieht (`cue.taunt`). Groß steht er in der Meldung, sonst daneben */
   taunt?: string;
+  /** Klang des Ereignisses. Er ersetzt bei klein und mittel den leisen Meldeton */
   sfx?: SoundName;
-  /** Wo die kleine Meldung sitzt, Standard Kappe der Mitte */
-  at?: 'cap' | 'pile';
+  /** Nur groß: Ergebnisfenster zurückhalten, bis die Meldungen durch sind (Zusatz in ms) */
+  hold?: number;
+  /** Kleine und mittlere Meldungen erscheinen nach dem Zeichnen (Standard 60 ms) */
+  delay?: number;
 }
 
-/** Merkt sich, ob in diesem Schub schon ein großer Moment lief. */
-const BATCH = { big: false };
+/** Merkt sich, ob in diesem Schub schon ein großer Moment lief und ob Kürzen erlaubt ist. */
+let BATCH: BatchState = newBatch();
 
-/** Neuer Schub von Logeinträgen (effects ruft das vorne auf): Der große Moment ist wieder frei. */
-export function beginBatch(): void {
-  BATCH.big = false;
+/**
+ * Neuer Schub von Logeinträgen (effects und der Shithead-Ablauf rufen das vorne auf): Der große Moment ist wieder
+ * frei. Steht ein Ende im Schub, wird nichts gekürzt (feedback-rules.ts).
+ */
+export function beginBatch(fresh: readonly LogEntry[] = []): void {
+  BATCH = newBatch(fresh);
+}
+
+/** Der Shithead-Ablauf hat sein Großes (Verbrennen, Bombe) schon gezeigt: Es zählt für den Zug mit. */
+export function noteBig(): void {
+  BATCH.big = true;
 }
 
 /**
- * Zeigt eine Rückmeldung in ihrer Stufe. Dünne Hülle um die heutigen Bausteine: groß ist `announce`, mittel und
- * klein sind `floatLabel` (mittel mit Klang und Spruch). Ein zweites großes Ereignis im selben Schub, das kein Takt
- * ist, fällt auf mittel zurück. Noch ohne Aufrufer, die Stufen setzt der Umbau der Rückmeldungen ein.
+ * Zeigt eine Rückmeldung in ihrer Stufe. Groß ist `announce`, mittel und klein sind Hinweise in der Spielfläche.
+ * Ein zweites großes Ereignis im selben Schub, das kein Takt ist, wird mittel. Den Ton entscheidet die Stufe:
+ * klein still (außer `cue.sound` oder eigener Klang), mittel mit Klang, groß mit Meldeton.
  */
-export function emit(cue: Cue, m: Msg): void {
-  let level = cue.level;
-  if (level === 'big' && !cue.beat) {
-    if (BATCH.big) level = 'mid';
-    else BATCH.big = true;
-  }
+export function emit(cue: Cue | null, m: Msg): void {
+  if (!cue) return;
+  const level = levelInBatch(cue, BATCH);
+  const tone = toneOf(cue, level, m.sfx);
+  if (tone.sfx) sfx(tone.sfx);
+  else if (tone.calm) sfxCalm('msg', 500, 0.7);
+  const taunt = cue.taunt && m.taunt ? m.taunt : '';
   if (level === 'big') {
-    announce({ icon: m.icon, tone: m.tone, title: m.title ?? esc(m.text), sub: m.sub, ms: m.ms });
-    if (m.sfx) sfx(m.sfx);
+    const sub = (m.sub ?? '') + (taunt ? `<span class="tt">${esc(taunt)}</span>` : '');
+    announce({
+      icon: m.icon,
+      tone: m.tone,
+      title: m.title ?? esc(labelText(m.pid, m.text, m.mine)),
+      sub: sub || undefined,
+      ms: m.ms,
+    });
+    if (m.hold !== undefined) holdForAnnouncements(m.hold);
     return;
   }
-  floatLabel(m.pid, m.text, m.mine);
-  if (level === 'mid' && m.sfx) sfx(m.sfx);
-  if (level === 'mid' && cue.taunt && m.taunt) tauntLabel(m.taunt);
+  // Hinweis zuerst, Spruch gleich danach: Ist im Band nur Platz für eins, bleibt der Spruch
+  setTimeout(() => {
+    floatLabel(m.pid, m.text, m.mine);
+    if (taunt) tauntLabel(taunt);
+  }, m.delay ?? 60);
 }
 
 /**
  * Laufende Ansagen und Hinweise nach dem Zeichnen neu an die Spielfläche setzen, so wie `markClocks` die Uhren
- * nachzieht. Läuft am Ende von `render()`. Vorerst ohne Wirkung, damit sich nichts sichtbar ändert.
+ * nachzieht. Läuft am Ende von `render()` und bei Größenwechsel. Verschoben wird nur, was sich um mehr als ein
+ * paar Pixel bewegt hat oder zwischen Band und Spielfläche wechselt.
  */
 export function realignFeedback(): void {
-  // Nur das Band zieht nach (Zug beginnt oder endet), die übrigen Meldungen bleiben, wo sie erschienen sind
-  const band = !!bandAnchor();
+  const ann = $opt('#announce');
+  if (ann?.firstElementChild) placeInField(ann);
   const live = [...document.querySelectorAll<HTMLElement>('#fly .mid:not(.out)')].filter(
-    (el) => (el.dataset.mode === 'cap' || el.dataset.mode === 'center') && (band || el.classList.contains('band')),
+    (el) => el.dataset.mode === 'cap' || el.dataset.mode === 'center',
   );
-  // Der Reihe nach neu setzen, älteste zuerst, damit das Band dieselbe Ordnung behält
+  if (!live.length) return;
+  const was = live.map((el) => ({ box: boxOfStyle(el), band: el.classList.contains('band') }));
+  // Der Reihe nach neu setzen, älteste zuerst, damit die Stapel dieselbe Ordnung behalten
   for (const el of live) el.style.top = '-999px';
-  for (const el of live) positionMessage(el, el.dataset.mode as 'cap' | 'center');
+  live.forEach((el, i) => {
+    positionMessage(el, el.dataset.mode as 'cap' | 'center');
+    const now = boxOfStyle(el);
+    const old = was[i];
+    if (old.band === el.classList.contains('band') && !movedEnough(old.box, now)) {
+      el.style.left = `${old.box.left}px`;
+      el.style.top = `${old.box.top}px`;
+    }
+  });
 }
 
 /** Zuletzt angetippte Karten oder Knöpfe je Aktion, damit eine Ablehnung das Richtige wackeln lässt. */
@@ -520,7 +626,7 @@ export function noteTap(act: string, sel: readonly string[]): void {
 const TABLE_ACT = /^(sh(?!bet)|dk|cb)[a-z]*$|^(swap|swapAll|pass|knock|keep|take|skip)$/;
 
 /** Ablehnungen, die nie an den Tisch gehören: Plätze und Netz. */
-const isSeatOrNet = (r: Reject | string): boolean => typeof r !== 'string' && /^(seat|net)\./.test(r.e);
+const isSeatOrNet = (r: Reject): boolean => /^(seat|net)\./.test(r.e);
 
 /** Was soll wackeln? Erst die gemerkten Karten, sonst der Knopf zur Aktion, sonst der eigene Platz. */
 function rejectTargets(act: string | null): HTMLElement[] {
@@ -538,7 +644,7 @@ function rejectTargets(act: string | null): HTMLElement[] {
  * Grund am Tisch: Lehnt der Gastgeber einen Zug ab, wackelt die angetippte Karte und der Grund steht klein am
  * Stapel. Lobby, Plätze, Netz und alles in Fenstern bleiben Toasts. `act` ist der Typ der abgelehnten Aktion.
  */
-export function showReject(r: Reject | string, act?: string | null, fallback?: string): void {
+export function showReject(r: Reject, act?: string | null, fallback?: string): void {
   const text = rejectText(r, ctxOfView(App.view), fallback);
   if (!text) return;
   const v = App.view;

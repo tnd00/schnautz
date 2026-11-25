@@ -5,7 +5,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { rankOf } from '../../src/game/cards';
 import { SH_ORD } from '../../src/game/constants';
-import { shAlways, shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
+import { shAlways, shCanBomb, shCanPlay, shCanThrow, shWhyNot } from '../../src/game/shithead';
+import { ctxOfView, rejectText } from '../../src/content/texts/reject';
 import type { View } from '../../src/game/types';
 import {
   closeAll,
@@ -276,5 +277,103 @@ test('nur noch KIs: Vorspulen spielt die Partie zügig und ganz normal zu Ende',
     expect((await mustView(host)).sh?.shithead).toBeTruthy();
   });
 
+  expect(errors.list).toEqual([]);
+});
+
+test('Gast: ein abgelehnter Zug nennt den Grund am Tisch statt als Toast', async ({ browser }) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  const guest = errors.watch(await (await phone(browser)).newPage(), 'gast');
+  const code = await hostTable(host, 'Tahna');
+  await joinTable(guest, code, 'Lena');
+  await host.click('[data-act=game][data-g=shithead]');
+  await expect.poll(async () => (await view(guest))?.game).toBe('shithead');
+  await startGame(host);
+  await waitForPhase(guest, ['swap']);
+  await guest.click('[data-act=shready]');
+  await host.click('[data-act=shready]');
+  await waitForPhase(guest, ['play']);
+  // Erst wenn die 4er-Sperre vorbei ist, steht der Grund fest: nicht dran oder erst Hand und offene Karten
+  await expect.poll(async () => (await view(guest))?.sh?.win?.lock ?? false).toBe(false);
+  const v = await mustView(guest);
+  const me = await myId(guest);
+  const why = shWhyNot(v, me, { src: 'down', i: 0 });
+  expect(why?.e === 'any.notYourTurn' || why?.e === 'sh.blindLast').toBe(true);
+  // Ein Zug, den die Oberfläche gar nicht anbietet, geht direkt an den Gastgeber
+  await guest.evaluate(() => {
+    void window.__schnautz?.G.conn?.send({ t: 'act', a: { type: 'shblind', i: 0 } });
+  });
+  await expect(guest.locator('#fly .nopelbl')).toHaveText(rejectText(why, ctxOfView(v)));
+  await expect(guest.locator('#toasts .toast')).toHaveCount(0);
+  expect((await mustView(guest)).n).toBe(v.n);
+  expect(errors.list).toEqual([]);
+});
+
+test('ausgegraute Karte antippen: Grund am Tisch, die Auswahl bleibt leer', async ({ browser }) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  await hostTable(host, 'Tahna');
+  await host.click('[data-act=game][data-g=shithead]');
+  await expect.poll(async () => (await view(host))?.game).toBe('shithead');
+  await fillWithBots(host, 3);
+  await startGame(host);
+  await waitForPhase(host, ['swap']);
+  await host.click('[data-act=shready]');
+  await waitForPhase(host, ['play']);
+  // Gastgeber am Zug, oben eine hohe Karte, auf der Hand eine niedrigere (passt nicht) und eine 10.
+  // Die Karten sucht der Test hier mit rankOf aus, im Browser werden sie nur umgelegt
+  const pool = await host.evaluate(() => {
+    const s = window.__schnautz;
+    const S = s?.H.st?.sh;
+    if (!s || !S) throw new Error('kein Shithead');
+    return [...S.deck, ...S.pile, ...S.P[s.App.me].hand];
+  });
+  const take = (ok: (r: string) => boolean): string => {
+    const c = pool.find((x) => ok(rankOf(x)));
+    if (!c) throw new Error('keine passende Karte');
+    pool.splice(pool.indexOf(c), 1);
+    return c;
+  };
+  const free = take((r) => r === '10');
+  const top = take((r) => ['A', 'K', 'D', 'B'].includes(r));
+  const low = take((r) => ['4', '5', '6', '8', '9'].includes(r));
+  await host.evaluate(
+    ({ rest, top, low, free }) => {
+      const s = window.__schnautz;
+      const st = s?.H.st;
+      const S = st?.sh;
+      if (!s || !st || !S) throw new Error('kein Shithead');
+      S.deck.splice(0, S.deck.length, ...rest);
+      S.pile.splice(0, S.pile.length, top);
+      S.P[s.App.me].hand.splice(0, S.P[s.App.me].hand.length, low, free);
+      S.win = null;
+      st.turn = st.players.findIndex((p) => p.id === s.App.me);
+      st.n++;
+      s.hostCommit();
+    },
+    { rest: pool, top, low, free },
+  );
+  // Vor jedem Tipp auf Shithead-Karten: Ein laufender Ablauf zeigt noch den alten Stand
+  await expect.poll(() => seqBusy(host)).toBe(false);
+  const v = await mustView(host);
+  const me = await myId(host);
+  const hand = v.sh?.P[me].hand as string[];
+  const i5 = hand.findIndex((c) => !shCanPlay(v, rankOf(c)));
+  const card = host.locator(`.shme .shhand [data-act=shh][data-i="${i5}"]`);
+  await expect(card).toHaveClass(/\bdim\b/);
+  await card.click({ position: { x: 8, y: 18 } });
+  await expect(host.locator('#fly .nopelbl')).toHaveText('Die Karte passt nicht auf den Stapel.');
+  await expect(host.locator('.shme .shhand .card.sel')).toHaveCount(0);
+  await expect(host.locator('#toasts .toast')).toHaveCount(0);
+  // Die passende Karte lässt sich wie immer wählen und legen
+  await host.click(`.shme .shhand [data-act=shh][data-i="${1 - i5}"]`, { position: { x: 8, y: 18 } });
+  await expect(host.locator('.shme .shhand .card.sel')).toHaveCount(1);
+  // Die 10 verbrennt zwei Karten im Ablauf: Unter zehn Karten ist das ein Hinweis, keine große Ansage
+  await host.click('[data-act=shplay]');
+  await expect.poll(() => seqBusy(host)).toBe(true);
+  await expect(host.locator('#fly .fieldlbl, .floatlbl').filter({ hasText: /verbrenn(st|t) den Stapel/ })).toHaveCount(
+    1,
+  );
+  await expect(host.locator('#announce')).not.toContainText('Verbrannt');
   expect(errors.list).toEqual([]);
 });

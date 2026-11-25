@@ -245,6 +245,70 @@ export function shBombWhy(st: Table, pid: string): Reject {
   return rj('sh.bombLate');
 }
 
+/**
+ * Was der Stapel gerade verlangt, als Daten. Die Oberfläche schreibt daraus den Hinweis unter dem Stapel
+ * (shPileInfo), shCanPlay entscheidet nach denselben Regeln. `through`: Oben liegt eine durchsichtige 3.
+ */
+export type ShNeed =
+  | { k: 'empty' }
+  | { k: 'threes' }
+  | { k: 'two'; through: boolean }
+  | { k: 'max'; r: Rank; through: boolean }
+  | { k: 'min'; r: Rank; through: boolean };
+
+export function shNeed(st: PileTable): ShNeed {
+  const R = shR(st);
+  const pile = st.sh?.pile ?? [];
+  if (!pile.length) return { k: 'empty' };
+  const t = shTop(st);
+  if (!t) return { k: 'threes' };
+  const through = R.three && rankOf(pile[pile.length - 1]) === '3';
+  if (t === '2' && R.two) return { k: 'two', through };
+  if (t === '7' && R.seven) return { k: 'max', r: '7', through };
+  return { k: 'min', r: t, through };
+}
+
+/** Welche eigene Karte gemeint ist: Index in Hand, offenen oder verdeckten Tischkarten. */
+export interface ShCardRef {
+  src: ShSource;
+  i: number;
+}
+
+/**
+ * Warum diese eine Karte gerade nicht gelegt werden kann, mit demselben Code und denselben Argumenten, die shAct für
+ * `shplay` (Hand, offen) oder `shblind` (verdeckt) mit nur dieser Karte liefern würde. `null` heißt: Der Zug ginge.
+ * Ohne DOM und auch auf der eigenen View, dort sind die verdeckten Karten nur eine Zahl.
+ */
+export function shWhyNot(t: Table, pid: string, ref: ShCardRef): Reject | null {
+  const S = t.sh;
+  if (!S) return rj('any.notStarted');
+  const pi = pIdx(t, pid);
+  const P = S.P[pid];
+  if (!P || pi < 0 || t.players[pi].out) return rj('any.notPlaying');
+  if (t.phase !== 'play') return phaseReject(t) ?? rj('any.unknown');
+  if (pi !== t.turn) {
+    const now = t.players[t.turn]?.id;
+    return now ? rj('any.notYourTurn', { p: now }) : rj('any.notYourTurn');
+  }
+  if (S.win?.lock) return rj('sh.winLock');
+  const hand = Array.isArray(P.hand) ? P.hand : [];
+  const handN = Array.isArray(P.hand) ? P.hand.length : P.hand;
+  const i = ref.i | 0;
+  if (ref.src === 'down') {
+    if (handN || P.up.length) return rj('sh.blindLast');
+    const downN = Array.isArray(P.down) ? P.down.length : P.down;
+    return i < 0 || i >= downN ? rj('any.cardGone') : null;
+  }
+  if (ref.src === 'up' && handN) return rj('sh.handFirst');
+  const arr = ref.src === 'up' ? P.up : hand;
+  // shAct verwirft Indizes außerhalb der Reihe, übrig bleibt keine Karte
+  if (i < 0 || i >= arr.length) return rj('any.pickCard');
+  const c = arr[i];
+  if (shCanPlay(t, rankOf(c))) return null;
+  const top = S.pile[S.pile.length - 1];
+  return rj('sh.noFit', top ? { c, top } : { c });
+}
+
 export function shBurnNow(st: State, pid: string, cut: boolean): void {
   const S = sh(st);
   S.burned.push(...S.pile);

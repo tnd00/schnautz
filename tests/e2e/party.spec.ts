@@ -3,7 +3,19 @@
  * Sperre gegen Dauerfeuer, Soundboard bei beiden und kein Nachspielen nach dem Neuverbinden.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { closeAll, desktop, Errors, hostTable, joinTable, myId, phone, seqBusy, view } from './helpers';
+import {
+  closeAll,
+  desktop,
+  Errors,
+  fillWithBots,
+  hostTable,
+  joinTable,
+  myId,
+  phone,
+  seqBusy,
+  START,
+  view,
+} from './helpers';
 
 test.afterEach(closeAll);
 
@@ -112,5 +124,47 @@ test('Werfen und Soundboard zwischen Host und Gast', async ({ browser }) => {
     expect(await sbSeen(guest)).toBe(seen);
   });
 
+  expect(errors.list).toEqual([]);
+});
+
+test('Übernahme am Tisch: kleine Meldung für alle, „samt Karten“ nur für den, der übernimmt', async ({ browser }) => {
+  test.setTimeout(2 * 60_000);
+  const errors = new Errors();
+  const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  const guest = errors.watch(await (await phone(browser)).newPage(), 'gast');
+  await hostTable(host, 'Tahna');
+  const code = await host.evaluate(() => window.__schnautz?.App.code ?? '');
+  await host.click('[data-act=game][data-g=shithead]');
+  await fillWithBots(host, 3);
+  await host.click('[data-act=start]');
+  await expect(host.locator('#scr-game')).toBeVisible();
+  // Der Hinweis steht nur kurz: alles mitschreiben, was am Tisch des Gastgebers erscheint
+  await host.evaluate(() => {
+    const w = window as unknown as { __fly: string[] };
+    w.__fly = [];
+    new MutationObserver((ms) => {
+      for (const m of ms)
+        for (const n of m.addedNodes)
+          if (n instanceof HTMLElement && n.matches('.fieldlbl')) w.__fly.push(n.textContent ?? '');
+    }).observe(document.querySelector('#fly')!, { childList: true });
+  });
+  // Lena kommt mitten in der Partie und übernimmt einen KI-Platz samt Karten
+  // (ohne joinTable, dessen first() mitten in der Partie die versteckte Lobby findet)
+  await guest.goto(`${START}#${code}`);
+  await guest.fill('#name', 'Lena');
+  await guest.click('#btn-join');
+  await expect(guest.locator('#scr-game')).toBeVisible();
+  const took = (await view(host))?.log.find((e) => e.k === 'takeover');
+  const from = took && took.k === 'takeover' ? took.from : '';
+  expect(from).not.toBe('');
+  const seen = () => host.evaluate(() => (window as unknown as { __fly: string[] }).__fly);
+  await expect.poll(seen).toContainEqual(expect.stringContaining(`Lena setzt sich an ${from}`));
+  expect((await seen()).some((t) => t.includes('samt Karten'))).toBe(false);
+  await expect(guest.locator('#fly .fieldlbl', { hasText: 'Du übernimmst' })).toContainText('Platz samt Karten.');
+  // Neu laden zeigt die eigene Übernahme nicht noch einmal
+  await guest.reload();
+  await expect(guest.locator('#scr-game')).toBeVisible();
+  await guest.waitForTimeout(1200);
+  await expect(guest.locator('#fly .fieldlbl', { hasText: 'Du übernimmst' })).toHaveCount(0);
   expect(errors.list).toEqual([]);
 });

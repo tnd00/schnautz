@@ -6,10 +6,11 @@
  * Hand verschoben hat. Bis die neue Ansicht da ist, ist die Bedienung gesperrt (App.busy).
  */
 import { rankOf } from '../../game/cards';
-import { dkTransferError } from '../../game/durak';
+import { dkTransferError, dkWhyNot } from '../../game/durak';
 import type { Action, Card, View } from '../../game/types';
 import { doAct } from '../../net/dispatch';
 import { App } from '../app';
+import { noteTap, showReject } from '../feedback';
 import { render } from '../render/index';
 import { dkBeatPair, dkCanPass, dkMine, dkRole, dkSelected, dkTargets } from '../render/durak';
 import { sfx, unlockAudio } from '../sound';
@@ -29,9 +30,16 @@ function redraw(): void {
   render();
 }
 
-/** Senden: Auswahl weg, Bedienung sperren, bis die Antwort da ist. */
-function send(a: Action, idx: number[] = []): void {
+const handSel = (i: number): string => `#me [data-act="dkh"][data-i="${i}"]`;
+
+/**
+ * Senden: Auswahl weg, Bedienung sperren, bis die Antwort da ist. Vorher merken, was zur Aktion gehört, damit bei
+ * einer Ablehnung die gemeinten Karten wackeln (showReject). `extra` sind weitere Selektoren, etwa der Angriff.
+ */
+function send(a: Action, idx: number[] = [], extra: string[] = []): void {
   if (idx.length) grabRects(idx);
+  const sel = [...idx.map(handSel), ...extra];
+  if (sel.length) noteTap(a.type, sel);
   App.ds = { idx: [], pair: null };
   App.busy = true;
   if (a.type !== 'dkpass' && a.type !== 'dktake') sfx('card');
@@ -44,7 +52,11 @@ function defend(v: View, pair: number, i: number): void {
   const hand = dkMine(v) ?? [];
   const ac = v.dk?.table[pair]?.a;
   const c: Card | undefined = hand[i];
-  send({ type: 'dkdefend', a: pair, i, ...(ac ? { ac } : {}), ...(c ? { c } : {}) }, [i]);
+  send(
+    { type: 'dkdefend', a: pair, i, ...(ac ? { ac } : {}), ...(c ? { c } : {}) },
+    [i],
+    [`#center .dkpair[data-i="${pair}"]`],
+  );
 }
 
 /** Handkarte angetippt. */
@@ -53,6 +65,13 @@ export function dkTapHand(i: number): void {
   const hand = v ? dkMine(v) : null;
   if (!v || !hand || !hand[i] || App.busy) return;
   unlockAudio();
+  // Ausgegraute Karte: nicht auswählen, sondern sagen warum (dieselben Codes wie beim Host)
+  const why = dkWhyNot(v, App.me, hand[i]);
+  if (why) {
+    noteTap('dkh', [handSel(i)]);
+    showReject(why, 'dkh');
+    return;
+  }
   const role = dkRole(v);
   const cur = App.ds.idx;
   if (role === 'lead' || role === 'throw') {

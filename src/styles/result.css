@@ -95,6 +95,8 @@
   font-family: var(--display);
   font-weight: 800;
   font-size: 18px;
+  /* Sonst bestimmt die große Zahl mit ihrer Zeilenhöhe jede Zeile, bei acht Leuten kostet das rund 30 px */
+  line-height: 1.1;
   text-align: right;
 }
 #overlay .paper.result.rs .row.rr.mine {
@@ -116,15 +118,44 @@
   text-align: left;
   white-space: normal;
 }
+/*
+ * Mit Punktzahl rechts (Cabo) steht der Stand neben dem Namen und die Karten neben der Kernzahl, so bleibt die
+ * Schlüsselzeile zweizeilig. Ohne Punktzahl (Shithead, Durak) haben die Karten die ganze Breite.
+ */
+#overlay .paper.result.rs .row.rr.key:has(.rval) .rnm {
+  grid-column: 2 / 4;
+}
+#overlay .paper.result.rs .row.rr.key .rval {
+  grid-column: 4;
+  grid-row: 1;
+}
+#overlay .paper.result.rs .row.rr.key:has(.rval):has(.rcards) .rcore {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+}
+#overlay .paper.result.rs .row.rr.key:has(.rval) .rcards {
+  grid-column: 3 / -1;
+  grid-row: 2;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+/* Minikarten und „+n“ bleiben in einer Reihe, sonst bricht „+n“ um und zu acht scrollt das Blatt am Handy */
 #overlay .paper.result.rs .row.rr .rcards {
   grid-column: 2 / -1;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 3px;
   margin-top: 4px;
 }
 #overlay .paper.result.rs .row.rr .rcards .card {
   --cw: 24px;
+  flex: none;
+}
+#overlay .paper.result.rs .row.rr .rcards .more {
+  flex: none;
+  margin-left: 2px;
 }
 
 /* Fuß: Reaktionen, Wartetext, Knöpfe. Mit Revanche bleiben am Handy alle Knöpfe in einer Reihe */
@@ -137,10 +168,20 @@
   flex-direction: column;
   gap: 6px;
 }
-#overlay .paper.result.rs .waittxt {
+/* Wartetext nach dem Bereitmelden steht in der Knopfreihe, einzeilig und notfalls gekürzt */
+#overlay .paper.result.rs .foot.rbtns .waittxt {
+  flex: 1 1 0;
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 13px;
-  text-align: center;
+  text-align: left;
+}
+#overlay .paper.result.rs .foot.rbtns.waiting {
+  flex-wrap: nowrap;
+  align-items: center;
 }
 #overlay .paper.result.rs .foot.rbtns {
   display: flex;
@@ -156,10 +197,23 @@
   font-size: 15px;
 }
 
+/* Acht Minikarten plus „+12“ passen bei 360 px nur schmaler in die Schlüsselzeile */
+@media (max-width: 400px) {
+  #overlay .paper.result.rs .row.rr .rcards .card {
+    --cw: 21px;
+  }
+}
 @media (max-width: 960px) {
   #overlay .paper.result.rs {
     padding: 12px 12px 10px;
     gap: 4px;
+  }
+  /* Etwas flacher als am PC: Titel über drei Zeilen, 12 Restkarten, Spruch und Tipps passen so bei 360x640 */
+  #overlay .paper.result.rs .rows {
+    gap: 2px;
+  }
+  #overlay .paper.result.rs .row.rr {
+    min-height: 28px;
   }
   #overlay .paper.result.rs .rfoot {
     margin: 2px -12px -10px;
@@ -186,14 +240,13 @@
     font-size: 24px;
   }
   #overlay .paper.result.rs h2 {
-    font-size: 20px;
-  }
-  #overlay .paper.result.rs .rows {
-    gap: 2px;
+    font-size: 18px;
+    line-height: 1.1;
   }
   #overlay .paper.result.rs .row.rr {
-    min-height: 24px;
+    min-height: 22px;
     padding: 1px 10px;
+    line-height: 1.2;
   }
   #overlay .paper.result.rs .row.rr.key {
     padding: 4px 10px;
@@ -203,6 +256,10 @@
   }
   #overlay .paper.result.rs .row.rr .rcards .card {
     --cw: 21px;
+  }
+  #overlay .paper.result.rs .row.rr .rval {
+    font-size: 16px;
+    line-height: 1;
   }
   #overlay .paper.result.rs .rfoot {
     gap: 4px;

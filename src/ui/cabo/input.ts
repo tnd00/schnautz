@@ -4,6 +4,7 @@
  * gehen über Tipps auf eigene oder fremde Karten. Bis die neue Ansicht da ist, ist die Bedienung gesperrt (App.busy).
  * Einblendungen kommen vom Gastgeber in `v.cb.reveal` und sind nach CB_REVEAL_MS wieder verdeckt.
  */
+import { cbWhyNot } from '../../game/cabo';
 import { CB_REVEAL_MS } from '../../game/constants';
 import type { Action, LogEntry, View } from '../../game/types';
 import { doAct } from '../../net/dispatch';
@@ -12,7 +13,7 @@ import { CAR, carouselRelease } from '../carousel';
 import type { Timer } from '../dom';
 import { render } from '../render/index';
 import { cbCanSnap, cbMine, cbRole } from '../render/cabo';
-import { tauntLabel } from '../feedback';
+import { noteTap, showReject, tauntLabel } from '../feedback';
 import { sfx, unlockAudio } from '../sound';
 import { taunt } from '../taunts';
 
@@ -33,15 +34,61 @@ const clearSel = (): void => {
   App.cs = { ids: [], opp: null, snap: false };
 };
 
+/** Selektoren der Karten, Stapel oder Knöpfe zu einer Aktion, damit eine Ablehnung das Richtige wackeln lässt. */
+function tapSel(a: Action): string[] {
+  const mine = (id: number) => `#me .cbslot[data-sid="${Number(id)}"]`;
+  const opp = (to: string, id: number) => `#opps .opp[data-pid="${CSS.escape(to)}"] .cbslot[data-sid="${Number(id)}"]`;
+  switch (a.type) {
+    case 'cblook':
+    case 'cbswap':
+      return a.ids.map(mine);
+    case 'cbpeek':
+    case 'cbsnap':
+      return [mine(a.id)];
+    case 'cbspy':
+      return [opp(a.to, a.id)];
+    case 'cbblind':
+      return [mine(a.id), ...(a.to ? [opp(a.to, a.oid)] : [])];
+    case 'cbdraw':
+      return [a.from === 'pile' ? '#center .cbpile' : '#center .cbdeck', `#me [data-act="cb${a.from}"]`];
+    case 'cbdiscard':
+      return ['#me [data-act="cbdiscard"]', '#center .cbpile'];
+    case 'cbcabo':
+      return ['#me [data-act="cbcabo"]'];
+    default:
+      return [];
+  }
+}
+
 function send(a: Action): void {
   clearSel();
   App.busy = true;
   if (a.type === 'cbdraw' || a.type === 'cbswap' || a.type === 'cbdiscard' || a.type === 'cbsnap') sfx('card');
+  noteTap(a.type, tapSel(a));
+  if (App.role === 'host') {
+    // Der Gastgeber lehnt sofort ab: erst neu zeichnen (Auswahl weg), damit die Ablehnung am neuen Element wackelt
+    redraw();
+    doAct(a);
+    return;
+  }
   const v0 = App.view;
   doAct(a);
-  // Beim Gast dauert die Antwort, und lehnt der Gastgeber selbst ab, kommt keine neue Ansicht: Die Auswahl soll trotzdem
-  // sofort verschwinden
+  // Beim Gast dauert die Antwort, die Auswahl soll trotzdem sofort verschwinden
   if (App.view === v0) redraw();
+}
+
+/**
+ * Geht der Zug? Sonst bleibt alles stehen, die Karte oder der Knopf wackelt und der Grund steht am Tisch, mit
+ * denselben Codes, die der Gastgeber schicken würde (cbWhyNot).
+ */
+function trySend(v: View, a: Action): void {
+  const no = cbWhyNot(v, App.me, a);
+  if (!no) {
+    send(a);
+    return;
+  }
+  noteTap(a.type, tapSel(a));
+  showReject(no, a.type);
 }
 
 /** Eigene Karte angetippt. */
@@ -74,6 +121,14 @@ export function cbTapMine(id: number): void {
     case 'blind':
       App.cs.ids = cur.includes(id) ? [] : [id];
       break;
+    // Nicht wählbar: Die Karte nennt ihren Grund
+    case 'draw':
+    case 'wait':
+      trySend(v, { type: 'cbswap', ids: [id] });
+      return;
+    case 'spy':
+      trySend(v, { type: 'cbspy', to: App.me, id });
+      return;
     default:
       return;
   }
@@ -106,30 +161,29 @@ export function cbButton(kind: string, fromButton = true): void {
   if (!C) return;
   unlockAudio();
   const role = cbRole(v);
+  // Ausgegraute Knöpfe, Stapel und Ablage nennen ihren Grund statt still nichts zu tun
   switch (kind) {
     case 'cbdeck':
-      if (role === 'draw' && C.deck > 0) send({ type: 'cbdraw', from: 'deck' });
+      trySend(v, { type: 'cbdraw', from: 'deck' });
       return;
     case 'cbpile':
-      // Ohne eigene Karten lässt sich die Ablage nicht tauschen
-      if (role === 'draw' && C.pile.length && cbMine(v)?.length) send({ type: 'cbdraw', from: 'pile' });
+      trySend(v, { type: 'cbdraw', from: 'pile' });
       return;
     case 'cbcabo':
-      if (role === 'draw' && !C.cabo) send({ type: 'cbcabo' });
+      trySend(v, { type: 'cbcabo' });
       return;
     case 'cbswap':
-      if (role === 'hold' && App.cs.ids.length) send({ type: 'cbswap', ids: App.cs.ids });
+      trySend(v, { type: 'cbswap', ids: App.cs.ids.slice() });
       return;
     case 'cbdiscard':
-      if (role === 'hold' && C.hold?.from === 'deck') send({ type: 'cbdiscard' });
+      trySend(v, { type: 'cbdiscard' });
       return;
     case 'cbskip':
       if (role === 'ownpeek' || role === 'spy' || role === 'blind') send({ type: 'cbskip' });
       return;
     case 'cbblind': {
       const o = App.cs.opp;
-      if (role === 'blind' && App.cs.ids.length === 1 && o)
-        send({ type: 'cbblind', id: App.cs.ids[0], to: o.to, oid: o.id });
+      trySend(v, { type: 'cbblind', id: App.cs.ids[0] ?? -1, to: o?.to ?? '', oid: o?.id ?? -1 });
       return;
     }
     case 'cbsnapmode':

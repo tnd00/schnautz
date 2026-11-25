@@ -6,7 +6,7 @@ import type { LogEntry } from '../game/types';
 import { confetti, dropOn } from './animations';
 import { App } from './app';
 import { replayCeremony } from './ceremony';
-import { announce, panelFor, toast } from './feedback';
+import { emit, panelFor, toast } from './feedback';
 import { sfx, SOUND_NAMES, type SoundName } from './sound';
 import { showUpdate } from './update';
 
@@ -23,7 +23,11 @@ export function playDevFx(e: Pick<DevEntry, 'fx' | 's' | 'to'>): void {
       return;
     }
     case 'ann':
-      announce({ icon: '🛠', tone: 'wood', title: 'Testansage', sub: 'So sieht eine Meldung am Tisch aus.', ms: 1800 });
+      // Ein Takt, damit die Testansage nie gekürzt wird
+      emit(
+        { level: 'big', beat: true },
+        { text: 'Testansage', icon: '🛠', tone: 'wood', sub: 'So sieht eine Meldung am Tisch aus.', ms: 1800 },
+      );
       return;
     case 'toast':
       toast('So sieht ein kurzer Hinweis aus.');

@@ -5,12 +5,16 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
 import { rankOf } from '../../src/game/cards';
+import { SH_ORD } from '../../src/game/constants';
+import { shCanPlay, shNeed, shWhyNot, type ShCardRef } from '../../src/game/shithead';
 import { addPlayer, newState } from '../../src/game/state';
 import type { State, View } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
+import { shPileInfo } from '../../src/ui/render/shithead';
+import { shDimWhy } from '../../src/ui/shithead/input';
 import { statusOf, type Status } from '../../src/ui/status';
-import { rngF } from './helpers';
+import { codeOf, msgOf, playOut, rngF } from './helpers';
 
 /** Shithead zu dritt: h (Gastgeber), a und b. Tauschrunde, bis alle bereit sind. */
 function table(seed = 7): State {
@@ -36,7 +40,6 @@ function statusFor(st: State, me: string): { s: Status; v: View; text: string } 
   App.zerHide = '';
   const v = viewFor(st, me);
   const s = statusOf(v);
-  if (!s) throw new Error('Shithead liefert immer einen Status');
   const strip = (h: string) => h.replace(/<[^>]+>/g, '');
   return { s, v, text: `${strip(s.main)} | ${strip(s.sub)}` };
 }
@@ -52,12 +55,18 @@ afterEach(() => {
 const noFour = (cs: string[]): string[] => cs.filter((c) => rankOf(c) !== '4');
 
 describe('Statuszeile Shithead', () => {
-  it('liefert für andere Spiele noch null', () => {
-    const st = newState('h', 'H');
-    addPlayer(st, 'a', 'Anna');
-    act(st, 'h', { type: 'game', game: 'durak' }, rngF(1));
-    App.me = 'h';
-    expect(statusOf(viewFor(st, 'h'))).toBeNull();
+  it('liefert für alle vier Spiele eine Statuszeile mit Hauptzeile', () => {
+    for (const game of ['shithead', 'durak', 'cabo', 'schnautz'] as const) {
+      const rng = rngF(1);
+      const st = newState('h', 'H');
+      addPlayer(st, 'a', 'Anna');
+      act(st, 'h', { type: 'game', game }, rng);
+      act(st, 'h', { type: 'start' }, rng);
+      App.me = 'h';
+      const s = statusOf(viewFor(st, 'h'));
+      expect(s.main, game).not.toBe('');
+      expect(['calm', 'turn', 'alert', 'knock', 'over']).toContain(s.tone);
+    }
   });
 
   it('Tauschrunde: erst tauschen, nach Bereit warten mit KI-Zeichen', () => {
@@ -202,12 +211,130 @@ describe('Statuszeile Shithead', () => {
     App.me = 'h';
     App.zerHide = 'a';
     const s = statusOf(viewFor(st, 'h'));
-    expect(s?.main).toBe('Aufdecken …');
+    expect(s.main).toBe('Aufdecken …');
   });
 
   it('Texte halten die Regeln aus CLAUDE.md ein', () => {
     const st = play(table());
     const all = st.players.map((p) => statusFor(st, p.id).text).join(' ');
     expect(all).not.toMatch(/[–—]|,\s+und\b|undefined|null/);
+  });
+});
+
+/** Alle eigenen Karten als Verweis, dazu je einer hinter dem Ende (fehlt, wird verworfen). */
+function refsOf(st: State, pid: string): ShCardRef[] {
+  const P = st.sh!.P[pid];
+  const out: ShCardRef[] = [];
+  for (const [src, n] of [
+    ['hand', P.hand.length],
+    ['up', P.up.length],
+    ['down', P.down.length],
+  ] as const)
+    for (let i = 0; i <= n; i++) out.push({ src, i });
+  return out;
+}
+
+/** Was shAct für genau diese eine Karte sagen würde, auf einer Kopie. */
+function actFor(st: State, pid: string, ref: ShCardRef): ReturnType<typeof act> {
+  const copy = structuredClone(st);
+  const a =
+    ref.src === 'down'
+      ? { type: 'shblind' as const, i: ref.i }
+      : { type: 'shplay' as const, from: ref.src, idx: [ref.i] };
+  return act(copy, pid, a);
+}
+
+describe('shWhyNot: Grund zur einzelnen Karte', () => {
+  it('liefert in vielen Lagen denselben Code und dieselben Argumente wie act, auf Zustand und eigener Ansicht', () => {
+    let checked = 0;
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 12; seed++) {
+      const st = table(seed);
+      const rng = rngF(seed * 31);
+      for (const id of ['h', 'a', 'b']) act(st, id, { type: 'shready' }, rng);
+      let step = 0;
+      playOut(st, rng, (s) => {
+        step++;
+        if (step % 3 || s.phase !== 'play') return false;
+        for (const p of s.players)
+          for (const ref of refsOf(s, p.id)) {
+            const want = actFor(s, p.id, ref);
+            const got = shWhyNot(s, p.id, ref);
+            const gotView = shWhyNot(viewFor(s, p.id), p.id, ref);
+            expect(got).toEqual(want);
+            expect(gotView).toEqual(want);
+            seen.add(codeOf(want) ?? 'ok');
+            checked++;
+          }
+        return false;
+      });
+    }
+    expect(checked).toBeGreaterThan(500);
+    for (const c of ['ok', 'any.notYourTurn', 'sh.noFit', 'sh.handFirst', 'sh.blindLast', 'any.pickCard'])
+      expect(seen.has(c)).toBe(true);
+  });
+
+  it('nennt die 4er-Sperre, die Tauschrunde und das Partieende wie act', () => {
+    const st = table();
+    const ref: ShCardRef = { src: 'hand', i: 0 };
+    expect(shWhyNot(st, 'h', ref)).toEqual(actFor(st, 'h', ref));
+    expect(codeOf(shWhyNot(st, 'h', ref))).toBe('sh.swapping');
+    for (const id of ['h', 'a', 'b']) act(st, id, { type: 'shready' });
+    const me = turnOf(st);
+    expect(st.sh!.win?.lock).toBe(true);
+    expect(codeOf(shWhyNot(st, me, ref))).toBe('sh.winLock');
+    expect(shWhyNot(st, me, ref)).toEqual(actFor(st, me, ref));
+    st.phase = 'over';
+    expect(codeOf(shWhyNot(st, me, ref))).toBe('any.over');
+  });
+
+  it('shNeed und shCanPlay sind sich für jeden Wert einig, der Hinweis am Stapel liest shNeed', () => {
+    const st = play(table());
+    App.me = 'h';
+    const ranks = Object.keys(SH_ORD) as (keyof typeof SH_ORD)[];
+    for (const top of ranks)
+      for (const three of [false, true]) {
+        const pile = three ? [`H${top}`, 'S3'] : [`H${top}`];
+        const t = { rules: st.rules, sh: { pile } };
+        const n = shNeed(t);
+        for (const r of ranks) {
+          const free = r === '2' || r === '3' || r === '10';
+          const byNeed =
+            free ||
+            n.k === 'empty' ||
+            n.k === 'threes' ||
+            n.k === 'two' ||
+            (n.k === 'max' ? SH_ORD[r] <= SH_ORD[n.r] : n.k === 'min' && SH_ORD[r] >= SH_ORD[n.r]);
+          expect(shCanPlay(t, r), `${pile.join(' ')} ${r}`).toBe(byNeed);
+        }
+        if (top !== '3') expect(n.k === 'two' || n.k === 'max' || n.k === 'min').toBe(true);
+        if (top !== '3') expect('through' in n && n.through).toBe(three);
+      }
+    const v = viewFor(st, 'h');
+    expect(shPileInfo(v, [])).toBe('Leer, alles geht');
+    expect(shPileInfo(v, ['S3'])).toBe('Nur Dreier, alles geht');
+    expect(shPileInfo(v, ['HB', 'S3'])).toBe('Bube oder höher (durch die 3)');
+    expect(shPileInfo(v, ['H7'])).toBe('7 oder niedriger');
+    expect(shPileInfo(v, ['H2'])).toBe('Nach der 2 geht alles');
+  });
+
+  it('ausgegraute Karte: Grund nur am eigenen Zug, nicht in der 4er-Sperre', () => {
+    const st = play(table());
+    const me = turnOf(st);
+    const S = st.sh!;
+    S.pile = ['HA'];
+    S.P[me].hand = ['S5', 'D2'];
+    App.me = me;
+    const v = viewFor(st, me);
+    const why = shDimWhy(v, { src: 'hand', i: 0 });
+    expect(codeOf(why)).toBe('sh.noFit');
+    expect(msgOf(why, st, me)).toBe('Die Karte passt nicht auf den Stapel.');
+    expect(shDimWhy(v, { src: 'hand', i: 1 })).toBeNull();
+    S.win = { r: '4', by: [], id: st.n, lock: true };
+    expect(shDimWhy(viewFor(st, me), { src: 'hand', i: 0 })).toBeNull();
+    S.win = null;
+    const other = st.players.find((p) => p.id !== me)!.id;
+    App.me = other;
+    expect(shDimWhy(viewFor(st, other), { src: 'hand', i: 0 })).toBeNull();
   });
 });

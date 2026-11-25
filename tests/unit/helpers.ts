@@ -53,7 +53,7 @@ export function playOut(st: State, rng: Rng, stop?: (st: State) => boolean): voi
 
 /**
  * Text einer Ablehnung, wie ihn die Person sieht. Mit `st` werden Platz-IDs zu Namen, ohne steht die ID. `me` ist der
- * Blickwinkel (eigener Platz heißt „du“), ohne `me` sieht niemand Bestimmtes zu. Strings gehen unverändert durch.
+ * Blickwinkel (eigener Platz heißt „du“), ohne `me` sieht niemand Bestimmtes zu.
  */
 export function msgOf(r: ActResult | undefined, st?: State, me = ''): string {
   if (!r) return '';
@@ -61,10 +61,9 @@ export function msgOf(r: ActResult | undefined, st?: State, me = ''): string {
   return rejectText(r, ctx);
 }
 
-/** Code einer Ablehnung oder der Text, solange die Stelle noch einen String liefert. */
-export function codeOf(r: ActResult | undefined): string | null {
-  if (!r) return null;
-  return typeof r === 'string' ? r : r.e;
+/** Code einer Ablehnung, null bei Erfolg. */
+export function codeOf(r: ActResult | undefined): RejectCode | null {
+  return r ? r.e : null;
 }
 
 /** Text der Ablehnung beim Platzsuchen, null wenn es einen Platz gab. */

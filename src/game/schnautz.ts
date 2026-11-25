@@ -1,9 +1,21 @@
 /* Schnautz (Schwimmen, 31) mit 32 Karten. */
 import { newDeck, rankOf, rnd, shuffle, suitOf } from './cards';
 import { MIN_SEATS, RANK_VAL, SUITS } from './constants';
-import { rj } from './reject';
+import { phaseReject, rj, type Reject } from './reject';
 import { activeList, addLog, countGame, nextActive, pIdx, prevActive, statsOf } from './state';
-import type { ActResult, Card, HandValue, LifeChange, Player, Rng, Rules, SchnautzReason, State, Suit } from './types';
+import type {
+  ActResult,
+  Card,
+  HandValue,
+  LifeChange,
+  Player,
+  Rng,
+  Rules,
+  SchnautzReason,
+  State,
+  Suit,
+  Table,
+} from './types';
 import { offerRematch, settleDuel } from './rematch';
 import { setReign, szResult } from './games';
 
@@ -25,6 +37,28 @@ export function handValue(cards: readonly Card[] | number | undefined, rules?: P
     }
   });
   return { v: best, kind: best === 31 ? 'schnautz' : 'normal', suit };
+}
+
+/** Züge am Schnautz-Tisch */
+export type SzMove = 'keep' | 'take' | 'swap' | 'swapAll' | 'pass' | 'knock';
+
+/**
+ * Warum dieser Zug gerade nicht geht, mit demselben Code und denselben Argumenten wie `schnautzMove` in
+ * src/game/actions.ts, in derselben Reihenfolge geprüft. `null` heißt: Der Zug ginge. Ohne DOM und auch auf der View.
+ */
+export function szWhyNot(t: Table, pid: string, move: SzMove): Reject | null {
+  const pi = pIdx(t, pid);
+  if (pi < 0) return rj('any.notSeated');
+  if (move === 'keep' || move === 'take') {
+    if (t.phase !== 'choose') return phaseReject(t) ?? rj('sz.chosen');
+    return pi === t.dealer ? null : rj('sz.dealerOnly', { p: t.players[t.dealer]?.id ?? '' });
+  }
+  if (t.phase !== 'play') return phaseReject(t) ?? rj('any.unknown');
+  if (pi !== t.turn) return rj('any.notYourTurn', { p: t.players[t.turn]?.id ?? '' });
+  if (move !== 'knock') return null;
+  if (t.knocker) return rj('sz.knocked', { p: t.knocker });
+  if (!t.rules.knockFirst && t.turns < activeList(t).length) return rj('sz.knockEarly');
+  return null;
 }
 
 export function startGame(st: State, rng?: Rng): ActResult {

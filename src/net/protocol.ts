@@ -1,5 +1,7 @@
 /* Nachrichten zwischen Gastgeber und Gästen (PeerJS-Datenkanal, JSON). */
 import type { Action, State, View } from '../game/types';
+import { rankOf, suitOf } from '../game/cards';
+import { SH_RANKS, SUITS } from '../game/constants';
 import { isGame } from '../game/games';
 import { isRejectCode, type Reject, type RejectArgs, type RejectCode } from '../game/reject';
 import { rejectText, type RejectCtx } from '../content/texts';
@@ -88,6 +90,15 @@ const REJECT_MAX_ARGS = 4;
 /** Platz-IDs vom Draht: kurz und ohne die Form eines Platzschlüssels (`k-` plus 12 Hex, src/net/ids.ts) */
 const REJECT_ID = /^[\w-]{1,40}$/;
 const SEAT_KEY = /^k-[0-9a-f]{12}$/;
+/**
+ * Karten vom Draht (sh.noFit, dk.noBeat, dk.beaten, dk.transferRank): Farbe und Wert wie in src/game/cards.ts, aus
+ * Deck 2 mit `:2`. SH_RANKS deckt auch Durak und Schnautz ab. Alles andere ist keine Karte.
+ */
+const isCardArg = (v: unknown): boolean =>
+  typeof v === 'string' &&
+  v.length <= 6 &&
+  (SUITS as readonly string[]).includes(suitOf(v)) &&
+  (SH_RANKS as readonly string[]).includes(rankOf(v));
 /** Erlaubte Argumente je Name. Alles andere verwirft die Prüfung, damit nichts Fremdes durchrutscht. */
 const REJECT_ARG: Readonly<Record<string, (v: unknown) => boolean>> = {
   p: (v) => typeof v === 'string' && REJECT_ID.test(v) && !SEAT_KEY.test(v),
@@ -96,6 +107,9 @@ const REJECT_ARG: Readonly<Record<string, (v: unknown) => boolean>> = {
   n: (v) => Number.isInteger(v) && Math.abs(v as number) <= 10_000,
   min: (v) => Number.isInteger(v) && Math.abs(v as number) <= 10_000,
   max: (v) => Number.isInteger(v) && Math.abs(v as number) <= 10_000,
+  c: isCardArg,
+  a: isCardArg,
+  top: isCardArg,
 };
 
 /** Code und Argumente einer Ablehnung vom Gastgeber, streng geprüft. Unbekannter Code oder krumme Argumente: null. */
@@ -115,9 +129,11 @@ export function asReject(m: unknown): Reject | null {
   return { e: m.e, a: out };
 }
 
-/** Was der Gastgeber zu einer Ablehnung schickt. Noch nicht umgestellte Stellen liefern Text, dann nur `msg`. */
-export function wireReject(r: Reject | string, ctx: RejectCtx): { e?: RejectCode; a?: RejectArgs; msg: string } {
-  if (typeof r === 'string') return { msg: r };
+/**
+ * Was der Gastgeber zu einer Ablehnung schickt: Code und Argumente, dazu `msg` aus Sicht des Gastes für Gäste von
+ * 2.6, die nur den Text lesen (mindestens bis 2.8, Entscheidung E6).
+ */
+export function wireReject(r: Reject, ctx: RejectCtx): { e: RejectCode; a?: RejectArgs; msg: string } {
   const msg = rejectText(r, ctx);
   return r.a ? { e: r.e, a: r.a, msg } : { e: r.e, msg };
 }

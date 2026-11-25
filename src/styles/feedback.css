@@ -320,9 +320,6 @@
 body.logopen #fly .bubble {
   display: none;
 }
-.floatlbl.center {
-  top: -6px;
-}
 .card.flipin {
   animation: flipin 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
@@ -436,8 +433,60 @@ body.logopen #fly .bubble {
   margin-top: 4px;
   font-size: 13px;
 }
-.banner.field div {
-  font-size: clamp(40px, 12vw, 96px);
+/*
+ * Band über der Statuszeile (am eigenen Zug und in der Tauschrunde): unten bündig mit der Zeile, wächst nach oben
+ * nur so weit wie nötig. Ohne Zeichen, Titel und Unterzeile kompakt, damit Stapel und eigene Karten frei bleiben.
+ */
+#announce.band {
+  overflow: visible;
+  place-items: end center;
+}
+#announce.band .ann {
+  max-height: none;
+  max-width: min(calc(100% - 8px), 520px);
+  padding: 6px 16px 7px;
+  min-width: min(80%, 260px);
+  border-radius: 16px;
+  animation: annBandIn 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+#announce.band .ann.out {
+  animation: annOut 0.2s ease-in forwards;
+}
+@keyframes annBandIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+}
+#announce.band .ann-ic {
+  display: none;
+}
+/* Titel in einer Zeile, Unterzeile höchstens zwei, damit das Band nie über den Stapel wächst */
+#announce.band .ann-t {
+  font-size: clamp(17px, 4.4vw, 22px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#announce.band .ann-s {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+/* Im Band ist es eng: Sprüche kompakter, damit Hinweis und Spruch zusammen Platz haben */
+#fly .tauntlbl.mid.band {
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 3px 12px;
+  border-radius: 12px;
+}
+#announce.band .ann-s .tt {
+  margin-top: 2px;
 }
 /* Kurze Hinweise oben in der Spielfläche (floatLabel), nie über den Gegnern */
 .fieldlbl {
@@ -1077,6 +1126,10 @@ body.logopen #fly .bubble {
 .duellbl {
   position: fixed;
   z-index: 47;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 5px 12px;
   border-radius: 999px;
   background: rgba(8, 22, 15, 0.92);

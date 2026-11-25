@@ -11,7 +11,7 @@ import { addPlayer, newState } from '../../src/game/state';
 import { seatGuest, takeSeat } from '../../src/game/seats';
 import type { Action, Card, DkState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { msgOf, rngF } from './helpers';
+import { codeOf, msgOf, rngF } from './helpers';
 
 /** Durak-Tisch mit `n` Leuten, gestartet. */
 function table(n: number, seed: number, transfer = false): { st: State; D: DkState; rng: () => number } {
@@ -142,7 +142,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0, 2] }))).toBe('Zusammen geht nur mit gleichem Wert.');
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1] })).toBeNull();
     expect(D.table.map((p) => p.a)).toEqual(['C7', 'S7']);
-    expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [1] }))).toMatch(/schon auf dem Tisch/);
+    expect(codeOf(act(st, 'p2', { type: 'dkattack', idx: [1] }))).toBe('dk.rankNotOnTable');
     expect(act(st, 'p2', { type: 'dkattack', idx: [0] })).toBeNull();
     expect(dkWaiting(st)).toEqual(['p1']);
     expect(clockTurn(st).ids).toEqual(['p1']);
@@ -258,7 +258,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     D.limit = 2;
     D.P.h = ['C7', 'S7', 'D7', 'H7', 'SK', 'DB'];
     D.discard += 4;
-    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0, 1, 2] }))).toMatch(/nur noch 2 Karten/);
+    expect(act(st, 'h', { type: 'dkattack', idx: [0, 1, 2] })).toEqual({ e: 'dk.room', a: { n: 2 } });
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1] })).toBeNull();
     expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [0] }))).toBe('In diesen Angriff passt nichts mehr.');
   });

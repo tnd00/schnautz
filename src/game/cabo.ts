@@ -22,10 +22,10 @@ import {
   MIN_SEATS,
 } from './constants';
 import { setReign } from './games';
-import { phaseReject, rj } from './reject';
+import { phaseReject, rj, type Reject } from './reject';
 import { offerRematch, settleDuel } from './rematch';
 import { addLog, countGame, pIdx, statsOf } from './state';
-import type { Action, ActResult, CaboResult, Card, CbReveal, CbSlot, CbState, Rng, State } from './types';
+import type { Action, ActResult, CaboResult, Card, CbReveal, CbSlot, CbState, Rng, State, Table } from './types';
 
 function cb(st: State): CbState {
   if (!st.cb) throw new Error('Cabo ist nicht gestartet');
@@ -353,6 +353,76 @@ function snap(st: State, pid: string, id: number): ActResult {
   // Hat die Strafkarte den Stapel geleert, bevor die Person am Zug gezogen hat, ist die Runde vorbei
   if (!C.deck.length && !C.hold && !C.power) endRound(st);
   return null;
+}
+
+/**
+ * Warum diese Aktion gerade nicht geht, oder null, wenn sie geht (Grund am Tisch für ausgegraute Knöpfe und Karten).
+ * Dieselben Codes in derselben Reihenfolge wie `cbAct`, geht auf dem Zustand und auf der Ansicht. Was erst beim
+ * Aufdecken entscheidet (ungleiche Karten tauschen, daneben schnappen), ist eine Strafe und kein Grund, hier also null.
+ */
+export function cbWhyNot(t: Table, pid: string, a: Action): Reject | null {
+  const C = t.cb;
+  if (!C) return rj('any.notStarted');
+  const row: readonly { id: number }[] | undefined = C.P[pid];
+  if (!row) return rj('any.notPlaying');
+  const has = (r: readonly { id: number }[], id: unknown): boolean => r.some((s) => s.id === Number(id));
+  const other = (raw: unknown): readonly { id: number }[] | null =>
+    typeof raw === 'string' && raw !== pid && Object.hasOwn(C.P, raw) ? C.P[raw] : null;
+  if (a.type === 'cblook') {
+    if (t.phase !== 'peek') return phaseReject(t) ?? rj('cb.peekOver');
+    if (t.players.find((p) => p.id === pid)?.ready) return null;
+    const ids = Array.isArray(a.ids) ? [...new Set(a.ids.map(Number))] : [];
+    const want = Math.min(2, row.length);
+    return ids.length !== want || ids.some((id) => !has(row, id)) ? rj('cb.pickTwo', { n: want }) : null;
+  }
+  if (a.type === 'cbsnap') {
+    if (!t.rules.cb?.snap) return rj('cb.snapOff');
+    if (t.phase !== 'play') return phaseReject(t) ?? rj('any.unknown');
+    if (C.hold?.by === pid || C.power?.by === pid) return rj('cb.finishTurn');
+    if (!C.pile.length) return rj('cb.pileEmpty');
+    return has(row, a.id) ? null : rj('cb.pickOwn');
+  }
+  if (t.phase !== 'play') return phaseReject(t) ?? rj('any.unknown');
+  const cur = cbCurrent(t);
+  if (cur !== pid) return cur ? rj('any.notYourTurn', { p: cur }) : rj('any.notYourTurn');
+  const deck = typeof C.deck === 'number' ? C.deck : C.deck.length;
+  switch (a.type) {
+    case 'cbdraw': {
+      if (C.hold || C.power) return rj('cb.drawn');
+      const from = a.from === 'pile' ? 'pile' : 'deck';
+      if (from === 'pile' && !row.length) return rj('cb.pileNoCards');
+      if (from === 'pile' ? !C.pile.length : !deck) return rj(from === 'pile' ? 'cb.pileEmpty' : 'cb.deckEmpty');
+      return null;
+    }
+    case 'cbcabo':
+      if (C.hold || C.power) return rj('cb.caboLate');
+      return C.cabo ? rj('cb.called', { p: C.cabo }) : null;
+    case 'cbswap': {
+      if (!C.hold) return rj('cb.drawFirst');
+      const ids = Array.isArray(a.ids) ? [...new Set(a.ids.map(Number))] : [];
+      return !ids.length || ids.length > row.length || ids.some((id) => !has(row, id)) ? rj('cb.pickSwap') : null;
+    }
+    case 'cbdiscard':
+      if (!C.hold) return rj('cb.drawFirst');
+      return C.hold.from === 'pile' ? rj('cb.mustSwap') : null;
+    case 'cbpeek':
+      if (C.power?.kind !== 'peek') return rj('cb.noPeek');
+      return has(row, a.id) ? null : rj('cb.pickOwn');
+    case 'cbspy': {
+      if (C.power?.kind !== 'spy') return rj('cb.noSpy');
+      const o = other(a.to);
+      return o && has(o, a.id) ? null : rj('cb.pickOther');
+    }
+    case 'cbblind': {
+      if (C.power?.kind !== 'swap') return rj('cb.noBlind');
+      const o = other(a.to);
+      if (!o) return rj('cb.pickOther');
+      return has(row, a.id) && has(o, a.oid) ? null : rj('cb.pickPair');
+    }
+    case 'cbskip':
+      return null;
+  }
+  return rj('any.unknown');
 }
 
 /** Zug vorbei: weiter im Kreis. Nach dem Cabo-Ruf ist jeder noch einmal dran, leerer Stapel beendet die Runde. */

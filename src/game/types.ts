@@ -607,8 +607,5 @@ export type Action =
 
 export type ActionType = Action['type'];
 
-/**
- * Ergebnis einer Aktion: `null` bei Erfolg, sonst der Grund als Code (src/game/reject.ts). Im Umbau (Stufe 2.7)
- * liefern noch nicht umgestellte Stellen einen Text, danach fällt `string` weg.
- */
-export type ActResult = Reject | string | null;
+/** Ergebnis einer Aktion: `null` bei Erfolg, sonst der Grund als Code (src/game/reject.ts), nie ein Text. */
+export type ActResult = Reject | null;

@@ -17,6 +17,7 @@ import { App } from './ui/app';
 import { applyView } from './ui/apply';
 import { $ } from './ui/dom';
 import { initEvents, resumeBack } from './ui/events';
+import { lazyQuiet } from './ui/lazy';
 import { showScreen } from './ui/screens';
 import { SEQ } from './ui/shithead/sequence';
 import { renderSoundBtn } from './ui/sound';
@@ -52,6 +53,8 @@ initDevLog();
  * Einmal neu laden (es geht danach an den Tisch zurück), beim zweiten Mal binnen einer Minute nur den Hinweis zeigen.
  */
 window.addEventListener('vite:preloadError', (e) => {
+  // Nur stilles Vorladen von Regeln oder Updates: nichts tun, beim Öffnen wird neu versucht (src/ui/lazy.ts)
+  if (lazyQuiet()) return;
   const last = SS.get<number>('preloadAt', 0);
   if (Date.now() - last < 60_000) {
     showUpdate(updateText(), true);

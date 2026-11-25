@@ -1,8 +1,8 @@
 /*
  * Statuszeile über dem eigenen Platz, gemeinsam für alle Spiele (Stufe 2.7 „Klare Worte“).
- * Jedes Spiel liefert seinen Status als Daten (`shStatus` und später die anderen), `renderStatus` schreibt ihn
- * immer mit Haupt- und Unterzeile, damit die Zeile ihre Höhe behält. Liefert ein Spiel noch `null`, zeichnet es
- * seine Zeile weiter selbst. Ohne DOM bis auf `renderStatus`, damit Vitest die Sätze prüfen kann.
+ * Jedes Spiel liefert seinen Status als Daten (`shStatus`, `dkStatus`, `cbStatus`, `szStatus`), `renderStatus`
+ * schreibt ihn immer mit Haupt- und Unterzeile, damit die Zeile ihre Höhe behält. Ohne DOM bis auf `renderStatus`,
+ * damit Vitest die Sätze prüfen kann. Die Spiele importieren von hier nur Funktionen, der Kreis ist deshalb harmlos.
  */
 import { unreachable } from '../game/games';
 import type { View } from '../game/types';
@@ -10,6 +10,9 @@ import { STATUS, turnOf, waitFor } from '../content/texts/status';
 import { App } from './app';
 import { $, esc, listJoin } from './dom';
 import { nameOf, pById } from './helpers';
+import { cbStatus } from './render/cabo';
+import { dkStatus } from './render/durak';
+import { szStatus } from './render/schnautz';
 import { shStatus } from './render/shithead';
 
 export type StatusTone = 'calm' | 'turn' | 'alert' | 'knock' | 'over';
@@ -47,28 +50,28 @@ export function endMain(v: View, revealing: boolean): string {
   return STATUS.roundOver;
 }
 
-/** Status des Spiels oder `null`, dann zeichnet das Spiel die Zeile noch selbst. */
-export function statusOf(v: View): Status | null {
+/** Status des laufenden Spiels. */
+export function statusOf(v: View): Status {
   switch (v.game) {
     case 'shithead':
       return shStatus(v);
     case 'durak':
+      return dkStatus(v);
     case 'cabo':
+      return cbStatus(v);
     case 'schnautz':
-      return null;
+      return szStatus(v);
     default:
       return unreachable(v.game);
   }
 }
 
-/** Schreibt #status. Gibt `false` zurück, wenn das Spiel seine Zeile noch selbst zeichnet. */
-export function renderStatus(v: View): boolean {
+/** Schreibt #status für alle Spiele in derselben Form. */
+export function renderStatus(v: View): void {
   const s = statusOf(v);
-  if (!s) return false;
   const el = $('#status');
   el.className = `status sline tone-${s.tone}${s.quick ? ' hasquick' : ''}`;
   el.innerHTML =
     `<div class="main">${s.main}</div>` +
     (s.quick ? `<div class="quick">${s.quick}</div>` : `<div class="sub">${s.sub}</div>`);
-  return true;
 }

@@ -275,29 +275,16 @@
 .cbme .actions .bshort {
   display: none;
 }
+/* Ausgegraut wie .btn[disabled], bleibt aber antippbar und nennt dann den Grund */
+.cbme .actions .btn[aria-disabled='true'] {
+  opacity: 0.38;
+  cursor: not-allowed;
+  filter: saturate(0.4);
+  box-shadow: none;
+  animation: none;
+}
 
-/* Ergebnis: Karten in derselben Zeile wie Name und Punkte, damit auch acht Zeilen passen */
-.cbres .row {
-  gap: 10px;
-}
-.cbres .row .cbpl {
-  min-width: 30px;
-  text-align: left;
-}
-.cbres .row .cbtot {
-  min-width: 40px;
-  font-size: 22px;
-}
-.cbres .mini.cbhand {
-  flex: none;
-  gap: 0;
-}
-.cbres .mini.cbhand .card {
-  --cw: 30px;
-}
-.cbres .mini.cbhand .card + .card {
-  margin-left: -9px;
-}
+/* Ergebnisblatt: Raster der Schlüsselzeile mit Punktzahl steht in result.css */
 .paper h2 .g {
   color: var(--brass);
 }
@@ -332,6 +319,9 @@
   .cbme .actions .bshort {
     display: inline;
   }
+  .cbhold .cnt .cnl {
+    display: none;
+  }
 }
 
 @media (max-width: 960px) {
@@ -363,19 +353,6 @@
   .cbrow.mine.many {
     --tw: calc(var(--u) * 11);
     gap: calc(var(--u) * 1.5);
-  }
-  .cbres .row {
-    gap: 6px;
-    padding: 7px 9px;
-  }
-  .cbres .row .who > span {
-    font-size: 12px;
-  }
-  .cbres .mini.cbhand .card {
-    --cw: 21px;
-  }
-  .cbres .mini.cbhand .card + .card {
-    margin-left: -7px;
   }
   /* Alle Knöpfe in einer Zeile, sonst springt die eigene Reihe, sobald man dran ist */
   .cbme .actions {

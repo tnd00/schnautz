@@ -30,6 +30,10 @@
 .status.sline .sub:empty {
   display: none;
 }
+/* Geklopft: dieselbe warme Farbe wie früher an .status.knocked (table.css) */
+.status.sline.tone-knock .main {
+  color: #ffd9b8;
+}
 /* Ring nicht höher als die Zeile, sonst schneidet die feste Höhe ihn ab */
 .status.sline .wincd {
   width: 1.2em;

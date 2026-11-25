@@ -113,6 +113,38 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await expect.poll(async () => (await view(guest))?.log.some((e) => e.k === 'chat')).toBe(true);
   });
 
+  await test.step('zu früh geklopft: Klopfen ist ausgegraut, bleibt antippbar und nennt den Grund am Tisch', async () => {
+    // Bis zum ersten eigenen Zug dieser Runde, dann klopfen beide zu früh, erst wer dran ist, nach einem Tausch der andere
+    for (let i = 0; i < 4 && (await mustView(host)).phase !== 'play'; i++) await step(host, byId, 'swap');
+    for (let k = 0; k < 2; k++) {
+      const v = await mustView(host);
+      if (v.phase !== 'play' || v.knocker || v.turns >= v.players.filter((x) => !x.out).length) break;
+      const p = byId.get(v.players[v.turn].id);
+      if (!p) throw new Error('Spieler unbekannt');
+      if (k === 0) {
+        // Wer nicht dran ist und eine Karte antippt, erfährt warum, statt dass nichts passiert
+        const other = byId.get(ids.find((id) => id !== v.players[v.turn].id) ?? '');
+        if (!other) throw new Error('Spieler unbekannt');
+        await other.click('#me [data-act=hand][data-i="0"]');
+        await expect(other.locator('#fly .nopelbl')).toHaveText('Du bist gerade nicht dran.');
+        // Tauschen ohne Auswahl ist ausgegraut und nennt beim Tipp den Grund
+        const swap = p.locator('#me [data-act=swap]');
+        await expect(swap).toHaveAttribute('aria-disabled', 'true');
+        await swap.click({ force: true });
+        await expect(p.locator('#fly .nopelbl')).toHaveText('Wähle zuerst eine Karte.');
+        expect((await mustView(host)).turn).toBe(v.turn);
+      }
+      const knock = p.locator('#me [data-act=knock]');
+      await expect(knock).toHaveAttribute('aria-disabled', 'true');
+      // force: Playwright hält aria-disabled für nicht klickbar, ein Mensch kann trotzdem tippen
+      await knock.click({ force: true });
+      await expect(p.locator('#fly .nopelbl')).toHaveText('Klopfen geht erst, wenn jeder einmal dran war.');
+      // Abgelehnt heißt: nichts geändert, dieselbe Person ist noch dran
+      expect((await mustView(host)).turn).toBe(v.turn);
+      await step(host, byId, 'swap');
+    }
+  });
+
   await test.step('eine Runde bis zum Ergebnis', async () => {
     for (let i = 0; i < 40; i++) {
       const v = await mustView(host);

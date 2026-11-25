@@ -1,7 +1,7 @@
 /* Shithead-Tisch: Gegner, Stapel, Status mit 4er-Fenster und Bombe, eigener Platz, Tauschrunde und Ergebnis. */
 import { rankOf } from '../../game/cards';
-import { DEFAULT_RULES, SH_WIN_MS } from '../../game/constants';
-import { shCanBomb, shCanPlay, shCanThrow, shTop, shTopRun } from '../../game/shithead';
+import { SH_WIN_MS } from '../../game/constants';
+import { shCanBomb, shCanPlay, shCanThrow, shNeed, shTopRun } from '../../game/shithead';
 import type { Card, Player, Rank, ShitheadResult, ShPlayerView, ShView, View } from '../../game/types';
 import { LOSER_MARK } from '../../game/games';
 import { App } from '../app';
@@ -55,20 +55,22 @@ export function shSrc(v: View): Source | null {
 const RANK_LABEL: Record<string, string> = { B: 'Bube', D: 'Dame', K: 'König', A: 'Ass' };
 export const shRankLabel = (r: Rank): string => RANK_LABEL[r] ?? r;
 
-/** Was als Nächstes auf den Stapel darf. */
-function shPileInfo(v: View, pile: Card[]): string {
-  const R = v.rules.sh ?? DEFAULT_RULES.sh;
-  if (!pile.length) return 'Leer, alles geht';
-  const t = shTop({ rules: v.rules, sh: { pile } });
-  if (!t) return 'Nur Dreier, alles geht';
-  const through = R.three && rankOf(pile[pile.length - 1]) === '3';
-  const txt =
-    t === '2' && R.two
-      ? 'Nach der 2 geht alles'
-      : t === '7' && R.seven
-        ? '7 oder niedriger'
-        : `${shRankLabel(t)} oder höher`;
-  return txt + (through ? ' (durch die 3)' : '');
+/** Was als Nächstes auf den Stapel darf. Die Regel dahinter steht in shNeed, dieselbe prüft shWhyNot. */
+export function shPileInfo(v: View, pile: Card[]): string {
+  const n = shNeed({ rules: v.rules, sh: { pile } });
+  switch (n.k) {
+    case 'empty':
+      return 'Leer, alles geht';
+    case 'threes':
+      return 'Nur Dreier, alles geht';
+    case 'two':
+    case 'max':
+    case 'min': {
+      const txt =
+        n.k === 'two' ? 'Nach der 2 geht alles' : n.k === 'max' ? '7 oder niedriger' : `${shRankLabel(n.r)} oder höher`;
+      return txt + (n.through ? ' (durch die 3)' : '');
+    }
+  }
 }
 
 const cardStyle = (delay: number) => `style="--d:${delay}s"`;
@@ -98,11 +100,9 @@ function shTableHTML(v: View, P: ShPlayerView, mine: boolean, focus = false): st
       const c = up[i];
       const selectable = swapping || (mine && myTurn(v) && src === 'up');
       const selected = mine && ((swapping && App.sw.u === i) || (App.ss.src === 'up' && App.ss.idx.includes(i)));
-      const cls =
-        (selectable ? ' pick' : '') +
-        (selected ? ' sel' : '') +
-        (playing && src === 'up' && !shCanPlay(v, rankOf(c)) ? ' dim' : '') +
-        deal;
+      // Ausgegraut bleibt antippbar, der Tipp nennt dann den Grund (src/ui/shithead/input.ts)
+      const dim = playing && src === 'up' && !shCanPlay(v, rankOf(c));
+      const cls = (selectable ? ' pick' : '') + (selected ? ' sel' : '') + (dim ? ' dim' : '') + deal;
       const attrs =
         (selectable ? `data-act="shu" data-i="${i}" role="button" tabindex="0" ` : '') + cardStyle(0.2 + i * 0.05);
       h += `<div class="upc">${cardHTML(c, cls, attrs)}</div>`;
@@ -182,7 +182,6 @@ function opponentHTML(v: View, S: ShView, p: Player): string {
 export function renderShCenter(v: View): void {
   const S = v.sh;
   if (!S) return;
-  const R = v.rules.sh ?? DEFAULT_RULES.sh;
   const ov = SEQ.ov;
   const pile = ov ? ov.pile : S.pile;
   const burned = ov ? ov.burned : num(S.burned);
@@ -203,7 +202,7 @@ export function renderShCenter(v: View): void {
     pileHTML += cardHTML(pile[k], isTop && App.anim.pilePop && !ov ? 'pop' : '', style);
   }
   if (!pile.length) pileHTML = '<div class="emptyslot">leer</div>';
-  const warn = R.seven && pile.length && shTop({ rules: v.rules, sh: { pile } }) === '7';
+  const warn = shNeed({ rules: v.rules, sh: { pile } }).k === 'max';
   $('#center').innerHTML =
     '<span class="cap">Stapel</span>' +
     `<div class="deck" title="Nachziehstapel">${deck}</div>` +
@@ -357,11 +356,9 @@ function myPlaceHTML(v: View, S: ShView, me: Player, mine: OwnCards, src: Source
     // Während der kurzen Sperre darf man schon auswählen, nur noch nicht legen
     const selectable = myTurn(v) && src === 'hand';
     const selected = App.ss.src === 'hand' && App.ss.idx.includes(i);
+    const dim = playing && src === 'hand' && !shCanPlay(v, rankOf(c));
     const cls =
-      (selectable ? 'pick' : '') +
-      (selected ? ' sel' : '') +
-      (playing && src === 'hand' && !shCanPlay(v, rankOf(c)) ? ' dim' : '') +
-      (App.anim.deal ? ' deal' : '');
+      (selectable ? 'pick' : '') + (selected ? ' sel' : '') + (dim ? ' dim' : '') + (App.anim.deal ? ' deal' : '');
     const attrs =
       (selectable ? `data-act="shh" data-i="${i}" role="button" tabindex="0" ` : '') +
       cardStyle(0.3 + Math.min(i, 8) * 0.06);

@@ -26,9 +26,12 @@ import {
 
 test.afterEach(closeAll);
 
+/** Knöpfe, die gerade gehen. Ausgegraute bleiben antippbar und nennen nur ihren Grund (aria-disabled). */
+const LIVE = ':not([disabled]):not([aria-disabled=true])';
+
 /** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (src/ui/cabo/input.ts). */
 async function button(page: Page, act: string): Promise<boolean> {
-  const b = page.locator(`#me [data-act=${act}]:not([disabled])`);
+  const b = page.locator(`#me [data-act=${act}]${LIVE}`);
   if (!(await b.count())) return false;
   await page.waitForTimeout(450);
   await b.first().click({ timeout: 5000 });
@@ -259,7 +262,100 @@ test('Spionieren und Blindtausch gehen auch im Karussell mit der Maus', async ({
   await host.locator('#me .cbslot[data-act=cbm]').first().click();
   await host.locator('#opps .opp[data-slot="0"] .cbslot[data-act=cbo]').first().click();
   await host.waitForTimeout(450);
-  await host.click('#me [data-act=cbblind]:not([disabled])');
+  await host.click(`#me [data-act=cbblind]${LIVE}`);
   await expect.poll(async () => (await view(host))?.log.some((e) => e.k === 'cbblind' && e.p === me)).toBe(true);
+  expect(errors.list).toEqual([]);
+});
+
+/** Zustand beim Gastgeber setzen: KIs anhalten, alle haben angesehen, ich bin dran mit der Karte `c` vom Stapel. */
+async function holdCard(host: Page, me: string, c: string): Promise<void> {
+  await host.evaluate(
+    ({ me, c }) => {
+      const S = window.__schnautz!;
+      S.BOTS.hold = true;
+      const st = S.H.st!;
+      st.players.forEach((p) => {
+        if (!p.ready && st.phase === 'peek')
+          S.act(st, p.id, { type: 'cblook', ids: st.cb!.P[p.id].slice(0, 2).map((s) => s.id) });
+      });
+      st.turn = st.players.findIndex((p) => p.id === me);
+      st.cb!.t += 1;
+      st.cb!.power = null;
+      st.cb!.hold = { by: me, c, from: 'deck' };
+      S.hostCommit();
+    },
+    { me, c },
+  );
+}
+
+test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe und Karten nennen ihren Grund', async ({
+  browser,
+}) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await phone(browser)).newPage(), 'host');
+  await hostTable(host, 'Tahna');
+  await chooseCabo(host, false);
+  for (let i = 0; i < 3; i++) await host.click('[data-act=addbot]');
+  await expect.poll(() => playerCount(host)).toBe(4);
+  await startGame(host);
+  await waitForPhase(host, ['peek'], 20_000);
+  const me = await myId(host);
+  await holdCard(host, me, 'SD');
+  await expect(host.locator('#announce .ann')).toHaveCount(0, { timeout: 20_000 });
+  await expect(host.locator('#me [data-act=cbdiscard]')).toContainText('Ablegen');
+  for (const size of [
+    { width: 360, height: 640 },
+    { width: 375, height: 548 },
+    { width: 390, height: 844 },
+  ]) {
+    await host.setViewportSize(size);
+    await host.waitForTimeout(300);
+    const m = await host.evaluate(() => {
+      const btns = [...document.querySelectorAll<HTMLElement>('#me .actions .btn')];
+      // Jeder Knopf einzeilig: sichtbare Beschriftung nicht höher als eine Zeile
+      const lines = btns.map((b) => {
+        const lbl = [...b.querySelectorAll<HTMLElement>('.blong, .bshort')].find((x) => x.offsetParent) ?? b;
+        const r = document.createRange();
+        r.selectNodeContents(lbl);
+        const tops = new Set([...r.getClientRects()].map((x) => Math.round(x.top)));
+        return tops.size;
+      });
+      const tops = new Set(btns.map((b) => Math.round(b.getBoundingClientRect().top)));
+      const cnt = document.querySelector('#center .cbhold .cnt')?.getBoundingClientRect();
+      const deck = document.querySelector('#center .cbdeck')?.getBoundingClientRect();
+      const pile = document.querySelector('#center .cbpile')?.getBoundingClientRect();
+      return {
+        lines,
+        rows: tops.size,
+        label: document.querySelector('#center .cbhold .cnt')?.textContent ?? '',
+        inside: !!cnt && !!deck && !!pile && cnt.left >= deck.right - 1 && cnt.right <= pile.left + 1,
+      };
+    });
+    expect.soft(m.rows, `Knöpfe in einer Reihe ${size.width}`).toBe(1);
+    expect.soft(Math.max(...m.lines), `Knöpfe einzeilig ${size.width}`).toBe(1);
+    expect.soft(m.inside, `Etikett „${m.label}“ in der Spalte ${size.width}`).toBe(true);
+  }
+  expect(await fitFindings(host, ['#me'])).toEqual([]);
+  // Nichts gewählt: „Eintauschen“ ist ausgegraut, nennt aber den Grund und schickt nichts
+  const t0 = (await mustView(host)).cb?.t;
+  await host.waitForTimeout(450);
+  // force: Playwright hält aria-disabled für nicht klickbar, ein Mensch kann trotzdem tippen
+  await host.locator('#me [data-act=cbswap][aria-disabled=true]').click({ force: true });
+  await expect(host.locator('#fly .nopelbl')).toContainText('Wähle die Karten, die du tauschen willst.');
+  await expect(host.locator('#me [data-act=cbswap]')).toHaveClass(/shake/);
+  expect((await mustView(host)).cb?.hold?.by).toBe(me);
+  expect((await mustView(host)).cb?.t).toBe(t0);
+  // Fremder Zug: die eigene Karte nennt, dass jemand anderes dran ist
+  await host.evaluate((me) => {
+    const S = window.__schnautz!;
+    const st = S.H.st!;
+    st.cb!.hold = null;
+    st.turn = st.players.findIndex((p) => p.id !== me);
+    st.cb!.t += 1;
+    S.hostCommit();
+  }, me);
+  await expect(host.locator('#status .main')).toContainText('ist dran.');
+  await host.locator('#me .cbslot[data-act=cbm]').first().click();
+  await expect(host.locator('#fly .nopelbl')).toContainText('nicht dran');
   expect(errors.list).toEqual([]);
 });

@@ -219,7 +219,8 @@ export function cueOf(e: LogEntry, c: LevelCtx): Cue | null {
     case 'dkpass':
       return null;
     case 'dktransfer':
-      return e.to === c.me && !mine ? withTaunt(BIG, true) : MID;
+      // Endet die Partie im selben Schub, bleibt es mittel: Ein neues Großes verschöbe die Enthüllung
+      return e.to === c.me && !mine && !ending('dkend') ? withTaunt(BIG, true) : MID;
     case 'dktake': {
       // Folgt das Aufnehmen sofort, sprechen Hinweis und Spruch dort
       if (c.fresh.some((x) => x.k === 'dkpickup' && x.n > e.n)) return null;
@@ -227,7 +228,7 @@ export function cueOf(e: LogEntry, c: LevelCtx): Cue | null {
     }
     case 'dkbito': {
       const limit = c.prev.dk?.limit ?? 0;
-      const full = limit > 0 && e.cnt >= 2 * limit;
+      const full = limit > 0 && e.cnt >= 2 * limit && !ending('dkend');
       return withTaunt(full ? BIG : MID, mine && e.cnt >= SAY.bitoTaunt && !ending('dkend'));
     }
     case 'dkpickup':

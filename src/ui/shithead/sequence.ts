@@ -10,7 +10,8 @@ import type { Card, LogEntry, View } from '../../game/types';
 import { flyG, type Rect } from '../animations';
 import { App } from '../app';
 import { $opt, esc, num, reduceMotion, type Timer } from '../dom';
-import { type Announcement, announce, boomFx, fixedLabel, floatLabel, shakeEl, tauntLabel } from '../feedback';
+import { type Announcement, boomFx, emit, shakeEl } from '../feedback';
+import { cueOf, type LevelCtx } from '../levels';
 import { nameOf, vb } from '../helpers';
 import { renderSh, renderShCenter } from '../render/shithead';
 import { sfx } from '../sound';
@@ -124,8 +125,12 @@ export function shPlan(prev: View, v: View, fresh: LogEntry[]): Step[] {
   // Der Zug, der den Shithead festlegt, kommt in Zeitlupe. Er zählt nicht gegen die Obergrenze
   const d = decisivePlay(fresh);
   if (d) steps.forEach((s) => s.k === 'play' && s.e === d && (s.slow = true));
+  planFresh = fresh;
   return steps;
 }
+
+/** Der ganze Schub zum zuletzt geplanten Ablauf, damit die Stufen in runStep dasselbe sehen wie effects(). */
+let planFresh: readonly LogEntry[] = [];
 
 export function stepMs(s: Step): number {
   switch (s.k) {
@@ -170,6 +175,7 @@ export function seqMsOf(entries: LogEntry[]): number {
 
 export function runSeq(steps: Step[], v: View, done: () => void): void {
   let i = 0;
+  const fresh = planFresh;
   const gen = SEQ.gen;
   const next = () => {
     if (gen !== SEQ.gen) return;
@@ -180,7 +186,7 @@ export function runSeq(steps: Step[], v: View, done: () => void): void {
     }
     const s = steps[i++];
     try {
-      runStep(s, v);
+      runStep(s, v, fresh);
     } catch (er) {
       console.warn(er);
     }
@@ -228,12 +234,14 @@ function later(fn: () => void, ms: number): Timer {
   }, ms);
 }
 
-function runStep(s: Step, v: View): void {
+function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
   const ov = SEQ.ov;
   if (!ov) return;
   const e = s.e;
   const mine = e.p === App.me;
   const nm = nameOf(v, e.p, e.name);
+  // Stufe und Ton wie ohne Ablauf (src/ui/shithead/effects.ts), damit beide Wege gleich klingen und dasselbe sagen
+  const lc: LevelCtx = { prev: v, v, fresh, me: App.me, seqd: false };
   switch (s.k) {
     case 'play': {
       ov.pile = s.pile;
@@ -278,14 +286,15 @@ function runStep(s: Step, v: View): void {
       }
       if (s.slow) later(() => zerSlow(false), stepMs(s));
       if (!mine || s.src !== 'hand') sfx('card');
-      if (s.e.k === 'shthrow') floatLabel(e.p, 'wirft 4er rein', 'wirfst 4er rein');
-      if (s.e.k === 'shbomb') floatLabel(e.p, 'wirft eine Bombe ein', 'wirfst eine Bombe ein');
+      if (s.e.k === 'shthrow')
+        emit(cueOf(s.e, lc), { pid: e.p, text: 'wirft 4er rein', mine: 'wirfst 4er rein', delay: 0 });
+      if (s.e.k === 'shbomb') {
+        emit(cueOf(s.e, lc), { pid: e.p, text: 'wirft eine Bombe ein', mine: 'wirfst eine Bombe ein', delay: 0 });
+      }
       if (s.src === 'down') {
+        const pe = s.e;
         later(
-          () => {
-            const text = mine ? 'Blind gelegt, passt!' : `${nm} legt blind, passt!`;
-            fixedLabel('nopelbl', text, $opt('#center .pile'), 1100, 14);
-          },
+          () => emit(cueOf(pe, lc), { pid: e.p, text: 'legt blind, passt!', mine: 'legst blind, passt!', delay: 0 }),
           760 + (s.slow ? ZER_SLOW_FLIGHT_MS : 0),
         );
       }
@@ -297,8 +306,21 @@ function runStep(s: Step, v: View): void {
         c.classList.add('burning');
       });
       boomFx(s.e.four ? '💣' : '🔥', $opt('#center .pile'));
-      sfx(s.e.four ? 'bomb' : 'burn');
-      announce(burnAnn(v, s.e));
+      // Groß erst ab SAY.burnBig Karten (oder Bombe): Dafür zählt der Stand vor dem Ablauf, den later() erst
+      // nach dem Verbrennen auf s.burned setzt
+      const at = (n: number): View => ({ ...v, sh: v.sh ? { ...v.sh, burned: n } : v.sh });
+      const a = burnAnn(v, s.e);
+      emit(cueOf(s.e, { ...lc, prev: at(ov.burned), v: at(s.burned) }), {
+        pid: e.p,
+        text: s.e.four ? 'macht die vier voll' : 'verbrennt den Stapel',
+        mine: s.e.four ? 'machst die vier voll' : 'verbrennst den Stapel',
+        icon: a.icon,
+        tone: a.tone,
+        title: a.title,
+        sub: a.sub,
+        ms: a.ms,
+        sfx: s.e.four ? 'bomb' : 'burn',
+      });
       later(() => {
         if (!SEQ.ov) return;
         SEQ.ov.pile = [];
@@ -326,9 +348,14 @@ function runStep(s: Step, v: View): void {
       later(() => {
         const p2 = $opt('#center .pile');
         if (p2) shakeEl(p2);
-        sfx('nope');
-        fixedLabel('nopelbl', 'Passt nicht!', p2, 1200, 14);
-        tauntLabel(mine ? taunt('blindFailSelf', null, e.n) : taunt('blindFailOther', { name: nm }, e.n), 2400);
+        emit(cueOf(s.e, lc), {
+          pid: e.p,
+          text: 'legt blind, passt nicht!',
+          mine: 'legst blind, passt nicht!',
+          sfx: 'nope',
+          taunt: mine ? taunt('blindFailSelf', null, e.n) : taunt('blindFailOther', { name: nm }, e.n),
+          delay: 0,
+        });
       }, 820);
       break;
     }
@@ -360,18 +387,23 @@ function runStep(s: Step, v: View): void {
         }, 520);
       }
       const cnt = num(s.e.cnt);
+      // Nach blind daneben hat „passt nicht“ schon gesprochen, die Zahl kommt dann klein und leise dazu
+      const pickCue = s.fail ? { level: 'small' as const } : cueOf(e, lc);
       later(
         () =>
-          floatLabel(
-            e.p,
-            `nimmt ${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`,
-            `nimmst ${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`,
-          ),
+          emit(pickCue, {
+            pid: e.p,
+            text: `nimmt ${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`,
+            mine: `nimmst ${cnt} ${cnt === 1 ? 'Karte' : 'Karten'}`,
+            taunt: s.fail
+              ? undefined
+              : mine
+                ? taunt('pickupSelf', { n: cnt }, e.n)
+                : taunt('pickupOther', { name: nm, n: cnt }, e.n),
+            delay: 0,
+          }),
         200,
       );
-      if (!s.fail && cnt >= 6) {
-        tauntLabel(mine ? taunt('pickupSelf', { n: cnt }, e.n) : taunt('pickupOther', { name: nm, n: cnt }, e.n), 2600);
-      }
       sfx('card');
       break;
     }

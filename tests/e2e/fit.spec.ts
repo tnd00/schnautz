@@ -209,29 +209,37 @@ for (const game of GAMES) {
 const SHEET_JUMP = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-round' } as const;
 
 for (const game of GAMES) {
-  // Welle B, Ergebnisblatt: Shithead zeichnet schon das gemeinsame Blatt und darf nicht scrollen (sheetFindings
-  // streng). Die anderen drei folgen, bis dahin verdeckt bei ihnen die Fußleiste eigene Zeile und Verlierer.
-  const strict = game === 'shithead';
-  (strict ? test : test.fixme)(
-    `${game} zu acht: Ergebnisblatt zeigt eigene Zeile und Verlierer`,
-    async ({ browser }) => {
-      test.setTimeout(3 * 60_000);
-      const errors = new Errors();
-      const { host, guest } = await tableOfEight(browser, errors, game);
-      await devJump(host, SHEET_JUMP[game]);
-      await waitSheet(guest);
-      for (const s of SHEET_PHONE) {
-        await resize(guest, s);
-        expect.soft(await sheetFindings(guest, strict), `Ergebnis ${s}`).toEqual([]);
-      }
-      await waitSheet(host);
-      for (const s of SHEET_PC) {
-        await resize(host, s);
-        expect.soft(await sheetFindings(host, strict), `Ergebnis PC ${s}`).toEqual([]);
-      }
-      expect(errors.list).toEqual([]);
-    },
-  );
+  // Alle vier Spiele zeichnen das gemeinsame Blatt (src/ui/render/result.ts): bis acht Leute scrollt am Handy nichts,
+  // auch nicht nach dem Bereitmelden, wenn der Wartetext in der Knopfreihe steht
+  test(`${game} zu acht: Ergebnisblatt zeigt eigene Zeile und Verlierer`, async ({ browser }) => {
+    test.setTimeout(3 * 60_000);
+    const errors = new Errors();
+    const { host, guest } = await tableOfEight(browser, errors, game);
+    await devJump(host, SHEET_JUMP[game]);
+    await waitSheet(guest);
+    for (const s of SHEET_PHONE) {
+      await resize(guest, s);
+      expect.soft(await sheetFindings(guest, true), `Ergebnis ${s}`).toEqual([]);
+    }
+    await waitSheet(host);
+    for (const s of SHEET_PC) {
+      await resize(host, s);
+      expect.soft(await sheetFindings(host, true), `Ergebnis PC ${s}`).toEqual([]);
+    }
+    // Der Gast meldet sich bereit, der Gastgeber noch nicht: Wartetext statt Knopf. Beim Rundenende läuft der
+    // Countdown, deshalb nur messen, solange das Blatt noch steht
+    const ready = guest.locator('#overlay .paper.result [data-act=ready]').first();
+    if (await ready.isVisible()) {
+      await ready.click();
+      await expect(guest.locator('#overlay .waittxt')).toBeVisible();
+    } else test.info().annotations.push({ type: 'Hinweis', description: 'Blatt schon weg, bereit nicht gemessen' });
+    for (const s of SHEET_PHONE) {
+      if (!(await guest.locator('#overlay .paper.result').isVisible())) break;
+      await resize(guest, s);
+      expect.soft(await sheetFindings(guest, true), `Ergebnis bereit ${s}`).toEqual([]);
+    }
+    expect(errors.list).toEqual([]);
+  });
 }
 
 test('Schnautz am PC: Vorschau beim Tauschen schiebt die Reaktionsleiste nicht weg', async ({ browser }) => {

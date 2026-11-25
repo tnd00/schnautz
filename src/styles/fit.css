@@ -6,7 +6,6 @@
 /* Am Desktop liegt rechts der Verlauf. Meldungen, Ergebnis und Toasts zentrieren sich über dem Tisch */
 @media (min-width: 961px) {
   body.ingame #announce,
-  body.ingame #banner .banner,
   body.ingame #overlay .modal {
     right: var(--side);
   }

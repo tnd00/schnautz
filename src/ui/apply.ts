@@ -7,6 +7,9 @@ import { markLost, runFlights } from './animations';
 import { App } from './app';
 import { num } from './dom';
 import { effects } from './effects';
+import { beginBatch, emit } from './feedback';
+import { ownSeatNote } from './feedback-rules';
+import { SS } from './storage';
 import { pById } from './helpers';
 import { render } from './render/index';
 import { renderLog } from './render/log';
@@ -79,6 +82,8 @@ export function applyView(v: View): void {
   setAnimations(prev, v);
 
   const steps = prev ? shPlan(prev, v, fresh) : [];
+  // Der Ablauf zeigt Verbrennen schon vor effects(): Sein Schub beginnt hier, damit er als das Große des Zugs zählt
+  if (prev && steps.length) beginBatch(fresh);
   if (prev && steps.length && startSequence(prev, v, steps)) return;
 
   const lostNow: Record<string, true> = {};
@@ -97,6 +102,21 @@ export function applyView(v: View): void {
   if (prev && csnap) cbFlights(prev, v, csnap, fresh);
   markLost(lostNow, v);
   placePick();
+  if (!prev) ownSeat(v);
+}
+
+/**
+ * Eigene Übernahme oder Rückkehr: Die erste Ansicht spielt keine Effekte ab, deshalb hier einmal klein am Tisch.
+ * Die Lognummer steht in sessionStorage, damit Neuladen nichts wiederholt.
+ */
+function ownSeat(v: View): void {
+  if (!App.code) return;
+  const key = `seat:${App.code}`;
+  const note = ownSeatNote(v.log, App.me, SS.get<number>(key, -1));
+  if (!note) return;
+  // Auch in der Lobby merken, damit eine Übernahme dort später am Tisch nicht nachkommt
+  SS.set(key, note.n);
+  if (v.phase !== 'lobby') emit({ level: 'small' }, { text: note.text, delay: 400 });
 }
 
 function resetSelection(prev: View | null, v: View): void {

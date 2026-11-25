@@ -153,6 +153,27 @@ export function dkTransferError(t: Table, pid: string, cards: Card[]): Reject | 
   return null;
 }
 
+/**
+ * Warum diese eine Handkarte gerade nicht geht, oder null, wenn sie geht (Grund am Tisch für ausgegraute Karten).
+ * Dieselben Codes wie `dkAct`: Wer nicht verteidigt, bekommt die Antwort von `dkAttackError`. Wer verteidigt, darf
+ * sie nehmen, wenn sie einen offenen Angriff schlägt oder zum Weiterschieben taugt.
+ */
+export function dkWhyNot(t: Table, pid: string, c: Card): Reject | null {
+  const D = t.dk;
+  if (!D) return phaseReject(t) ?? rj('any.notStarted');
+  if (t.phase !== 'play') return phaseReject(t);
+  if (!(pid in D.P)) return rj('any.notPlaying');
+  if (!dkLive(t, pid)) return rj('any.done');
+  if (pid !== D.def) return dkAttackError(t, pid, [c]);
+  if (D.take) return rj('dk.taking');
+  if (!D.table.length) return rj('dk.notLead', { p: D.att });
+  const open = dkOpen(D);
+  if (!open.length) return rj('dk.allBeaten');
+  const ts = dkTrump(D);
+  if (open.some((p) => dkBeats(c, p.a, ts)) || !dkTransferError(t, pid, [c])) return null;
+  return rj('dk.noTarget');
+}
+
 /** Wer den niedrigsten Trumpf hat, beginnt die erste Partie. Hat niemand Trumpf, gibt es null. */
 function lowestTrump(st: State, D: DkState): string | null {
   const ts = dkTrump(D);

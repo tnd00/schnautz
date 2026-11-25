@@ -5,25 +5,38 @@
  */
 import { dkBeats, suitOf } from '../../game/cards';
 import { SUIT_SYM } from '../../game/constants';
-import { dkAttackError, dkCount, dkLive, dkOpen, dkRoom, dkTransferError, dkTrump, dkWaiting } from '../../game/durak';
-import { LOSER_MARK } from '../../game/games';
+import {
+  dkAttackError,
+  dkAttackers,
+  dkCount,
+  dkLive,
+  dkOpen,
+  dkRoom,
+  dkTransferError,
+  dkTrump,
+  dkWaiting,
+  dkWhyNot,
+} from '../../game/durak';
+import { LOSER_MARK, unreachable } from '../../game/games';
 import { type Reject, rj } from '../../game/reject';
 import { ctxOfView, rejectText } from '../../content/texts';
+import { OFFLINE_WAIT, offline, playFor, STATUS } from '../../content/texts/status';
+import { DK_STATUS } from '../../content/texts/status-dk';
 import type { Card, DkView, DurakResult, Player, Suit, View } from '../../game/types';
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
 import { layoutOpps } from '../carousel';
+import { ceremonyOn } from '../ceremony';
 import { markClocks } from '../clock';
-import { $, esc, num } from '../dom';
-import { holdOverlay } from '../feedback';
+import { $, esc, listJoin, num } from '../dom';
 import { nameOf, onlyBotsPlaying, pById, seatOrder, vb, W } from '../helpers';
 import { fitHand } from '../shithead/hand';
+import { endMain, renderStatus, waitSub, whoHTML, type Status } from '../status';
 import { taunt } from '../taunts';
 import { markTosses } from '../toss';
 import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
 import { aimAttrs, dkcHTML, marksHTML, reignHTML } from './marks';
-import { rematchLine, rematchMark } from './rematch';
-import { betResultHTML, botsOnlyHTML, overlayFoot, peekHTML } from './result';
+import { betResultHTML, botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
 
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 const SUIT_NAME: Record<Suit, string> = { C: 'Kreuz', S: 'Pik', H: 'Herz', D: 'Karo' };
@@ -187,82 +200,130 @@ export function renderDkCenter(v: View): void {
     `<div class="burned dkbito" title="Bito, abgewehrte Karten"><b>${num(D.discard)}</b><span class="cnt">Bito</span></div>`;
 }
 
-/** Status über dem eigenen Platz. */
-function statusHTML(v: View, D: DkView, me: Player | null): string {
-  const role = dkRole(v);
-  const def = D.def;
-  let main = '';
-  let sub = '';
-  let quick = '';
-  if (v.phase === 'play') {
-    switch (role) {
-      case 'lead':
-        main = '<em>Du greifst an.</em>';
-        sub = `Tippe eine Karte oder gleiche Werte an und greif ${W(v, def)} an.`;
-        break;
-      case 'defend': {
-        main = '<em>Du verteidigst.</em>';
-        const hand = dkMine(v) ?? [];
-        const canTransfer = hand.some((c) => !dkTransferError(v, App.me, [c]));
-        sub = canTransfer
-          ? 'Schlag jede Karte, nimm alles auf oder schieb mit gleichem Wert weiter.'
-          : 'Tippe eine Karte und dann den Angriff, den sie schlagen soll. Oder nimm alles auf.';
-        break;
-      }
-      case 'taking':
-        main = 'Du nimmst auf.';
-        sub = 'Die anderen dürfen dir noch etwas obendrauf legen.';
-        break;
-      case 'throw':
-        main = D.take
-          ? `<em>${W(v, def)} nimmt auf.</em>`
-          : dkOpen(D).length
-            ? `${W(v, def)} verteidigt.`
-            : '<em>Alles geschlagen.</em>';
-        // Passen gilt, bis ein neuer Wert auf dem Tisch liegt oder aufgenommen wird. Bis dahin kein Nachlegen
-        sub = D.done.includes(App.me)
-          ? D.take
-            ? 'Du hast gepasst. Die anderen dürfen noch etwas obendrauf legen.'
-            : `Du hast gepasst. Das gilt, bis ein neuer Wert liegt oder ${W(v, def)} aufnimmt.`
-          : D.take || !dkOpen(D).length
-            ? 'Nachlegen darfst du Werte, die schon liegen. Sonst tippe Passen.'
-            : 'Passende Werte darfst du schon nachlegen.';
-        break;
-      case 'done':
-        main = 'Du bist fertig!';
-        sub = (me && betSub(v, num(me.place))) ?? `Platz ${num(me?.place)}. Werfen und tröten darfst du trotzdem.`;
-        if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
-        break;
-      default: {
-        if (def === App.me && D.table.length && !dkOpen(D).length) {
-          // Ich habe alles geschlagen und warte, ob noch etwas kommt
-          main = '<em>Alles geschlagen.</em>';
-          sub = 'Jetzt dürfen die anderen noch nachlegen oder passen.';
-          break;
-        }
-        // Werde ich angegriffen, heißt es dich statt Du
-        const whom = def === App.me ? '<b>dich</b>' : W(v, def);
-        const att = `${W(v, D.att)}${vb(D.att, ' greifst', ' greift')}`;
-        main = D.table.length ? `${att} ${whom} an.` : `${att} gleich ${whom} an.`;
-        sub = betsOnMeSub(v) ?? '';
-      }
-    }
-    // Eine Auswahl, die so nicht geht: sagen warum
-    const why = selectionError(v, role);
-    if (why) sub = esc(rejectText(why, ctxOfView(v)));
-  } else if (v.phase === 'over') main = 'Partie vorbei.';
-  // Wer gerade aufhält und offline ist
-  const waiting = dkWaiting(v);
-  const off = v.players.find((p) => waiting.includes(p.id) && !p.online && !p.bot && p.id !== App.me);
-  if (v.phase === 'play' && off) {
-    sub =
-      `${esc(off.name)} ist gerade offline.` +
-      (App.role === 'host'
-        ? ` <button class="btn ghost small" data-act="skip">Für ${esc(off.name)} spielen</button>`
-        : ' Das Spiel wartet.');
+/** Längster Hauptsatz ohne Markup, der am Handy noch in eine Zeile passt. Längere Sätze kürzt die Zeile. */
+const MAIN_FIT = 38;
+const fits = (h: string): boolean => h.replace(/<[^>]+>/g, '').replace(/&[#a-z0-9]+;/gi, 'x').length <= MAIN_FIT;
+
+/** Wer außer mir gerade nachlegen darf: alle außer dem Verteidiger mit Karten, die nicht gepasst haben. */
+function addersOf(v: View, D: DkView): string[] {
+  return dkAttackers(v).filter((id) => id !== App.me && !D.done.includes(id));
+}
+
+/** „Lena darf nachlegen“, „Lena und KI Igor dürfen nachlegen“ */
+const mayAddHTML = (v: View, ids: readonly string[]): string =>
+  DK_STATUS.mayAdd(listJoin(ids.map((id) => whoHTML(v, id))), ids.length);
+
+/**
+ * Lage am Tisch in einem Satz, wenn ich gerade nichts tun muss: „Lena greift Tom an.“, „Tom verteidigt, Lena darf
+ * nachlegen.“ Sind es mehr als zwei oder passt der Satz nicht in die Zeile, bleibt der erste Teil. Wartet die Partie
+ * auf die, die nachlegen dürfen, nennt die Unterzeile sie dann („Warte auf Lena, Tom und KI Igor.“).
+ */
+function sceneOf(v: View, D: DkView): { main: string; sub: string } {
+  if (!D.table.length) {
+    const att = whoHTML(v, D.att);
+    const full = `${DK_STATUS.attacks(att, D.def === App.me ? `<b>${DK_STATUS.you}</b>` : whoHTML(v, D.def))}.`;
+    return { main: fits(full) ? full : `${DK_STATUS.attacksShort(att)}.`, sub: '' };
   }
-  const second = quick ? `<div class="quick">${quick}</div>` : sub ? `<div class="sub">${sub}</div>` : '';
-  return `<div class="main">${main}</div>${second}`;
+  const open = dkOpen(D).length > 0;
+  const head = D.take
+    ? DK_STATUS.takes(whoHTML(v, D.def))
+    : open
+      ? DK_STATUS.defends(whoHTML(v, D.def))
+      : DK_STATUS.beaten;
+  const adders = addersOf(v, D);
+  if (!adders.length) return { main: `${head}.`, sub: '' };
+  const full = `${head}, ${mayAddHTML(v, adders)}.`;
+  if (adders.length <= 2 && fits(full)) return { main: full, sub: '' };
+  return { main: `${head}.`, sub: D.take || !open ? waitSub(v, adders) : '' };
+}
+
+/**
+ * Status über dem eigenen Platz als Daten, ohne DOM, damit Vitest jede Lage prüfen kann. Mehrere können zugleich
+ * dran sein (dkWaiting), die Zeile nennt sie zusammen. Eine Auswahl, die so nicht geht, erklärt die Unterzeile.
+ * `renderStatus` (src/ui/status.ts) schreibt ihn.
+ */
+export function dkStatus(v: View): Status {
+  const D = v.dk;
+  if (!D) return { main: '', sub: '', tone: 'calm' };
+  if (v.phase === 'over') {
+    const revealing = !!App.zerHide || ceremonyOn();
+    return { main: endMain(v, revealing), sub: revealing ? DK_STATUS.overSub : '', tone: 'over' };
+  }
+  if (v.phase !== 'play') return { main: '', sub: '', tone: 'calm' };
+  const me = pById(v, App.me);
+  const role = dkRole(v);
+  const waiting = dkWaiting(v);
+  const defN = whoHTML(v, D.def);
+  let st: Status;
+  let quick = '';
+  switch (role) {
+    case 'lead':
+      st = { main: `<em>${DK_STATUS.lead}</em>`, sub: DK_STATUS.leadSub(defN), tone: 'turn' };
+      break;
+    case 'defend': {
+      const canTransfer = (dkMine(v) ?? []).some((c) => !dkTransferError(v, App.me, [c]));
+      st = {
+        main: `<em>${DK_STATUS.defend}</em>`,
+        sub: canTransfer ? DK_STATUS.defendSubTransfer : DK_STATUS.defendSub,
+        tone: 'turn',
+      };
+      break;
+    }
+    case 'taking':
+      st = { main: DK_STATUS.taking, sub: waitSub(v, waiting), tone: 'calm' };
+      break;
+    case 'throw':
+      if (waiting.includes(App.me)) {
+        // Die Partie wartet auf mich: nachlegen oder passen
+        const full = `${D.take ? DK_STATUS.takes(defN) : DK_STATUS.beaten}, ${DK_STATUS.meMayAdd}.`;
+        st = { main: `<em>${fits(full) ? full : DK_STATUS.meMayAddMain}</em>`, sub: DK_STATUS.throwFree, tone: 'turn' };
+      } else {
+        // Passen gilt, bis ein neuer Wert auf dem Tisch liegt oder aufgenommen wird. Bis dahin kein Nachlegen
+        const passed = D.done.includes(App.me);
+        const sub = passed ? (D.take ? DK_STATUS.passedTake : DK_STATUS.passed(defN)) : DK_STATUS.throwOpen;
+        st = { main: sceneOf(v, D).main, sub, tone: 'calm' };
+      }
+      break;
+    case 'done':
+      st = {
+        main: STATUS.done,
+        sub: (me && betSub(v, num(me.place))) ?? DK_STATUS.doneSub(num(me?.place)),
+        tone: 'calm',
+      };
+      if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
+      break;
+    case 'wait':
+    case 'none': {
+      // Ich verteidige und habe alles geschlagen: Jetzt dürfen die anderen noch nachlegen oder passen
+      if (D.def === App.me && D.table.length && !dkOpen(D).length) {
+        st = { main: DK_STATUS.beatenMine, sub: waitSub(v, waiting), tone: 'calm' };
+        break;
+      }
+      const sc = sceneOf(v, D);
+      const soon = role === 'wait' && D.def === App.me ? DK_STATUS.attackedSoon : '';
+      st = { main: sc.main, sub: betsOnMeSub(v) ?? (sc.sub || soon), tone: 'calm' };
+      break;
+    }
+    default:
+      return unreachable(role);
+  }
+  // Eine Auswahl, die so nicht geht: sagen warum
+  const why = selectionError(v, role);
+  if (why) st = { ...st, sub: esc(rejectText(why, ctxOfView(v))) };
+  // Wer gerade aufhält und offline ist. Wartet die Partie auch auf mich, bleibt meine Zeile stehen
+  const off = waiting.includes(App.me)
+    ? null
+    : v.players.find((p) => waiting.includes(p.id) && !p.online && !p.bot && p.id !== App.me);
+  if (off) {
+    const nm = esc(off.name);
+    // Ein schneller Knopf (Vorspulen) hat Vorrang, sonst hätte der Gastgeber gar keine Aktion mehr
+    if (App.role === 'host' && !quick) {
+      if (role !== 'done') st = { ...st, main: offline(`<b>${nm}</b>`) };
+      quick = `<button class="btn ghost small" data-act="skip"><span class="qlbl">${playFor(nm)}</span></button>`;
+    } else st = { ...st, sub: `${offline(nm)} ${OFFLINE_WAIT}` };
+  }
+  // Schnelle Knöpfe ersetzen den Hinweis, die Zeile behält ihre Höhe
+  return quick ? { ...st, quick } : st;
 }
 
 /** Welchen Angriff die gewählte Karte schlagen würde: der gewählte oder der einzige mögliche. */
@@ -275,7 +336,7 @@ export function dkBeatPair(v: View): number | null {
 }
 
 /** Warum die aktuelle Auswahl so nicht geht, oder null. */
-function selectionError(v: View, role: DkRole): Reject | string | null {
+function selectionError(v: View, role: DkRole): Reject | null {
   const sel = dkSelected(v);
   if (!sel.cards.length) return null;
   if (role === 'lead' || role === 'throw') return dkAttackError(v, App.me, sel.cards);
@@ -334,8 +395,10 @@ function myPlaceHTML(v: View, D: DkView, me: Player, hand: Card[]): string {
   const role = dkRole(v);
   const sel = new Set(dkSelected(v).idx);
   const ts = dkTrump(D);
-  const open = dkOpen(D);
   const done = D.finished.includes(App.me);
+  // Wer am Zug sein könnte, sieht ausgegraut, was nicht geht. Antippbar bleibt jede Karte, sie nennt dann ihren Grund
+  const acting = role === 'lead' || role === 'throw' || role === 'defend';
+  const tappable = acting || role === 'wait' || role === 'taking';
   let h =
     `<div class="mehead">${reignHTML(v, me.id)}<span class="nm">Du</span>${dkcHTML(me)}` +
     (done ? `<span class="tag">Platz ${num(me.place)}</span>` : '') +
@@ -343,19 +406,16 @@ function myPlaceHTML(v: View, D: DkView, me: Player, hand: Card[]): string {
   h += '<div class="shrow">';
   if (hand.length) h += '<div class="shhand dkhand">';
   hand.forEach((c, i) => {
-    let usable = false;
-    if (role === 'lead') usable = true;
-    // Nachlegen: Wert liegt schon, Platz ist frei und ich habe nicht gepasst (dieselbe Prüfung wie beim Host)
-    else if (role === 'throw') usable = !dkAttackError(v, App.me, [c]);
-    else if (role === 'defend') usable = open.some((p) => dkBeats(c, p.a, ts)) || !dkTransferError(v, App.me, [c]);
+    // Dieselbe Prüfung wie beim Host: Nachlegen nach dkAttackError, Verteidigen mit Schlagen oder Weiterschieben
+    const usable = acting && !dkWhyNot(v, App.me, c);
     const cls =
       (usable ? 'pick' : '') +
       (sel.has(i) ? ' sel' : '') +
-      (role !== 'wait' && role !== 'done' && role !== 'none' && role !== 'taking' && !usable ? ' dim' : '') +
+      (acting && !usable ? ' dim' : '') +
       (suitOf(c) === ts ? ' trumpc' : '') +
       (App.anim.deal ? ' deal' : '');
     const attrs =
-      (usable ? `data-act="dkh" data-i="${i}" role="button" tabindex="0" ` : '') +
+      (tappable ? `data-act="dkh" data-i="${i}" role="button" tabindex="0" ` : '') +
       `style="--d:${(0.3 + Math.min(i, 8) * 0.06).toFixed(2)}s"`;
     h += cardHTML(c, cls, attrs);
   });
@@ -374,9 +434,7 @@ export function renderDk(v: View): void {
     .map((p) => opponentHTML(v, D, p, waiting))
     .join('');
   renderDkCenter(v);
-  const stEl = $('#status');
-  stEl.className = 'status';
-  stEl.innerHTML = statusHTML(v, D, me);
+  renderStatus(v);
   const meEl = $('#me');
   meEl.className = `me shme dkme${waiting.includes(App.me) ? ' turn' : ''}`;
   meEl.innerHTML =
@@ -391,20 +449,14 @@ function durakResult(v: View): DurakResult | null {
   return v.result?.reason === 'durak' ? v.result : null;
 }
 
-/** Ergebnis: Reihenfolge, der Durak mit seinen übrigen Karten und ein frecher Spruch. */
-export function renderDkOverlay(v: View): void {
-  const ov = $('#overlay');
+/**
+ * Ergebnisblatt am Ende als Daten: der Durak mit seinen übrigen Karten als Schlüsselzeile, Spruch oder Duell, Tipps,
+ * eigene Zeile und die übrigen in Reihenfolge. Unentschieden hat keine Schlüsselzeile. `null` außerhalb des
+ * Partieendes, eine Rundenwertung gibt es bei Durak nicht.
+ */
+export function dkSheet(v: View): Sheet | null {
   const r = durakResult(v);
-  if (v.phase !== 'over' || !r) {
-    ov.innerHTML = '';
-    return;
-  }
-  if (holdOverlay()) return;
-  if (App.peek) {
-    ov.innerHTML = peekHTML(v, pById(v, App.me));
-    return;
-  }
-  const me = pById(v, App.me);
+  if (v.phase !== 'over' || !r) return null;
   const loser = r.durak;
   const names = r.names ?? {};
   const nm = (id: string) => esc(nameOf(v, id, names[id]));
@@ -414,59 +466,57 @@ export function renderDkOverlay(v: View): void {
       : loser
         ? `${nm(loser)} ist der <span class="r">Durak!</span>`
         : 'Unentschieden!';
-  // Nur wer allein zuerst fertig war, gilt als Erster
+  // Nur wer allein zuerst fertig war, gilt als Erster. Das zeigen Krone und Zeile, die Einleitung erklärt nur das
+  // Unentschieden, sonst kostet sie am Handy die Zeile, die zum Platz für acht fehlt
   const first = v.winner;
-  const lead = !loser
-    ? 'Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.'
-    : first === App.me
-      ? 'Du warst zuerst fertig.'
-      : first
-        ? `${nm(first)} war zuerst fertig.`
-        : 'Vorne sind mehrere gleichzeitig fertig geworden.';
-  let tt = '';
-  let good = false;
+  const lead = loser ? '' : 'Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.';
+  let tt: Sheet['taunt'] = null;
   if (loser) {
     const seed = `d${v.games}`;
-    if (loser === App.me) tt = taunt('dkLoserSelf', null, seed);
-    else if (first === App.me) {
-      tt = taunt('dkWinSelf', null, seed);
-      good = true;
-    } else tt = taunt('dkLoserOther', { name: nameOf(v, loser, names[loser]) }, seed);
+    if (loser === App.me) tt = { text: taunt('dkLoserSelf', null, seed), good: false };
+    else if (first === App.me) tt = { text: taunt('dkWinSelf', null, seed), good: true };
+    else tt = { text: taunt('dkLoserOther', { name: nameOf(v, loser, names[loser]) }, seed), good: false };
   }
-  const rline = rematchLine(v);
   const order = loser ? [...r.ranking, loser] : r.ranking;
-  const rows = order
-    .map((id, i) => {
-      const p = pById(v, id);
-      const isL = id === loser;
-      const P = v.dk?.P[id];
-      const left: Card[] = isL && Array.isArray(P) ? P : [];
-      // Wer im selben Angriff fertig wurde, teilt sich den Platz. Die Krone gibt es nur für einen allein vorn
-      const place = num(p?.place) || i + 1;
-      const top = v.winner === id;
-      const what = isL
-        ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
-        : top
-          ? 'zuerst fertig'
-          : place === 1
-            ? 'gleichzeitig fertig'
-            : 'fertig';
-      const hat = isL ? `<span class="hat">${LOSER_MARK.durak}</span>` : top ? '<span class="hat">👑</span>' : '';
-      const leftCards = left.length
-        ? `<div class="mini shleft">${left
-            .slice(0, 8)
-            .map((c) => cardHTML(c))
-            .join('')}${left.length > 8 ? `<span class="more">+${left.length - 8}</span>` : ''}</div>`
-        : '';
-      return (
-        `<div class="row${isL ? ' lose' : top ? ' win' : ''}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val" style="min-width:34px;text-align:left">${place}.</div>` +
-        `<div class="who"><b>${hat}${nm(id)}${rematchMark(v, id)}</b><span>${what}${p?.dkc ? ` · ${num(p.dkc)}× Durak` : ''}</span>${leftCards}</div></div>`
-      );
-    })
-    .join('');
-  ov.innerHTML =
-    `<div class="modal"><div class="paper sheet result"><div class="trophy">${loser === App.me ? LOSER_MARK.durak : loser ? '🏆' : '🤝'}</div>` +
-    `<h2>${title}</h2><p class="lead">${lead}</p>` +
-    (rline ? `<p class="taunt rv">${rline}</p>` : tt ? `<p class="taunt${good ? ' good' : ''}">${esc(tt)}</p>` : '') +
-    `<div class="rows">${rows}</div>${betResultHTML(v, r.bets, loser, 'Durak')}${overlayFoot(v, me)}</div></div>`;
+  const rows: SheetRow[] = order.map((id, i) => {
+    const p = pById(v, id);
+    const isL = id === loser;
+    const P = v.dk?.P[id];
+    const left: Card[] = isL && Array.isArray(P) ? P : [];
+    // Wer im selben Angriff fertig wurde, teilt sich den Platz. Die Krone gibt es nur für einen allein vorn
+    const place = num(p?.place) || i + 1;
+    const top = first === id;
+    const what = isL
+      ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
+      : top
+        ? 'zuerst fertig'
+        : place === 1
+          ? 'gleichzeitig fertig'
+          : 'fertig';
+    return {
+      id,
+      place,
+      name: nm(id),
+      hat: isL ? LOSER_MARK.durak : top ? '👑' : undefined,
+      core: `${what}${p?.dkc ? ` · ${num(p.dkc)}× Durak` : ''}`,
+      cards: isL ? left : undefined,
+      tone: isL ? 'lose' : top ? 'win' : undefined,
+    };
+  });
+  return {
+    icon: loser === App.me ? LOSER_MARK.durak : loser ? '🏆' : '🤝',
+    title,
+    lead,
+    key: loser,
+    taunt: tt,
+    bets: betResultHTML(v, r.bets, loser, 'Durak'),
+    rows,
+    next: 'game',
+    cls: 'dk',
+  };
+}
+
+/** Ergebnis am Ende über das gemeinsame Blatt. */
+export function renderDkOverlay(v: View): void {
+  renderResult(v, dkSheet(v));
 }

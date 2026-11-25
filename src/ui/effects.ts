@@ -4,7 +4,9 @@ import { emojiFly } from './animations';
 import { App } from './app';
 import { $opt, listJoin } from './dom';
 import { REMATCH_ANN_MS } from '../game/constants';
-import { announce, chatBubble, fixedLabel, holdForAnnouncements, tauntLabel, toast } from './feedback';
+import { beginBatch, chatBubble, emit, fixedLabel, noteBig, tauntLabel, toast } from './feedback';
+import { cueOf, type LevelCtx } from './levels';
+import { SEAT } from '../content/texts/seat';
 import { myMoveNow, myTurn, nameOf, pById } from './helpers';
 import { betEffect, BETUI } from './render/bets';
 import { duelResult, duelRunning, rematchAnn } from './render/rematch';
@@ -23,51 +25,48 @@ import { schnautzEffect } from './schnautz/effects';
  */
 export function effects(prev: View, v: View, seqd = false): void {
   const fresh = v.log.filter((e) => e.n > App.seenN);
+  // Der Shithead-Ablauf hat seinen Schub schon begonnen (src/ui/apply.ts), dort zählt sein Großes mit
+  if (!seqd) beginBatch(fresh);
+  const c: LevelCtx = { prev, v, fresh, me: App.me, seqd };
+  // Der Ablauf zeigt Verbrennen und Bombe selbst, ein großes davon belegt das Große dieses Zugs
+  if (seqd && fresh.some((e) => e.k === 'shburn' && cueOf(e, c)?.level === 'big')) noteBig();
   fresh.forEach((e) => {
-    const mine = e.p === App.me;
     if (e.k === 'emote') emojiFly(e.p, e.e);
-    if (e.k === 'timeout' && mine) {
-      // Zu lange gebraucht: Damit klar ist, warum plötzlich etwas passiert ist
-      sfx('timeout');
-      try {
-        navigator.vibrate?.([60, 60, 60]);
-      } catch {
-        // Manche Browser verbieten Vibration ohne vorherige Geste
-      }
-      announce({
-        icon: '⏰',
-        tone: 'red',
-        title: 'Zeit um!',
-        // Ein Satz für alle Spiele, nur beim Ansehen zu Beginn einer Cabo-Runde zeigt die KI zwei Karten
-        sub: prev.phase === 'peek' ? 'Die KI hat dir zwei Karten gezeigt.' : 'Die KI hat einmal für dich gespielt.',
-        ms: 2000,
-      });
-    }
+    if (e.k === 'timeout') timeoutEffect(c, e);
+    seatEffect(c, e);
     if (e.k === 'chat' && e.p !== App.me) {
       setTimeout(() => {
         chatBubble(e.p, e.text);
       }, 30);
       if (!e.bot && !document.body.classList.contains('logopen')) App.unread++;
     }
-    gameEffect(prev, v, e, fresh, seqd);
+    gameEffect(c, e);
     if (e.k === 'rematch') {
-      sfx('duel');
       const a = rematchAnn(v, e);
-      announce({ icon: '⚔️', tone: 'red', title: a.title, sub: a.sub, ms: REMATCH_ANN_MS });
+      emit(cueOf(e, c), {
+        text: 'Revanche!',
+        icon: '⚔️',
+        tone: 'red',
+        title: a.title,
+        sub: a.sub,
+        ms: REMATCH_ANN_MS,
+        sfx: 'duel',
+      });
     }
-    if (e.k === 'rematchend' && v.players.length > 2 && [e.p, e.to].some((id) => !pById(v, id ?? '')?.bot)) {
+    if (e.k === 'rematchend') {
       const full = duelResult(v, { by: e.p ?? '', vs: e.to, res: e.res }, e.name, e.tn);
       const cut = full.indexOf('! ');
-      announce({
+      emit(cueOf(e, c), {
+        text: full,
         icon: '⚔️',
         tone: e.res === 'won' ? 'gold' : e.res === 'lost' ? 'red' : '',
         title: full.slice(0, cut + 1),
         sub: full.slice(cut + 2),
         ms: 2200,
+        hold: 300,
       });
-      holdForAnnouncements(300);
     }
-    if (e.k === 'shbet') betEffect(v, e);
+    if (e.k === 'shbet') betEffect(c, e);
   });
   if (prev.phase === 'lobby' && v.phase === 'lobby') lobbyPeople(prev, v, fresh);
   // Zu Beginn der Revanche-Partie ein kurzer Hinweis am Tisch
@@ -82,6 +81,7 @@ export function effects(prev: View, v: View, seqd = false): void {
   // Ein Spruch zum ersten Tipp auf mich wartet, bis ich nicht mehr dran bin
   if (BETUI.pend && (BETUI.pend.games !== v.games || v.phase !== 'play')) BETUI.pend = null;
   if (BETUI.pend && !myTurn(v)) {
+    sfxCalm('msg', 500, 0.7);
     tauntLabel(BETUI.pend.text);
     BETUI.pend = null;
   }
@@ -98,22 +98,70 @@ export function effects(prev: View, v: View, seqd = false): void {
 }
 
 /** Weiche nach Spiel: Jedes Spiel reagiert auf seine eigenen Logarten. */
-function gameEffect(prev: View, v: View, e: LogEntry, fresh: readonly LogEntry[], seqd: boolean): void {
-  switch (v.game) {
+function gameEffect(c: LevelCtx, e: LogEntry): void {
+  switch (c.v.game) {
     case 'shithead':
-      shitheadEffect(prev, v, e, fresh, seqd);
+      shitheadEffect(c, e);
       return;
     case 'durak':
-      durakEffect(prev, v, e, fresh, seqd);
+      durakEffect(c, e);
       return;
     case 'cabo':
-      caboEffect(prev, v, e, fresh);
+      caboEffect(c, e);
       return;
     case 'schnautz':
-      schnautzEffect(v, e);
+      schnautzEffect(c, e);
       return;
     default:
-      return unreachable(v.game);
+      return unreachable(c.v.game);
+  }
+}
+
+/**
+ * Zeit um: Die eigene ist ein Takt mit Ton und Vibration (Durak nach reinem Passen klein), fremde klein mit leisem
+ * Ton, weil die KI automatisch gezogen hat.
+ */
+function timeoutEffect(c: LevelCtx, e: Extract<LogEntry, { k: 'timeout' }>): void {
+  const cue = cueOf(e, c);
+  if (e.p !== App.me) {
+    emit(cue, { text: SEAT.timeout(nameOf(c.v, e.p, e.name)) });
+    return;
+  }
+  // Zu lange gebraucht: Damit klar ist, warum plötzlich etwas passiert ist
+  try {
+    navigator.vibrate?.([60, 60, 60]);
+  } catch {
+    // Manche Browser verbieten Vibration ohne vorherige Geste
+  }
+  emit(cue, {
+    text: cue?.level === 'big' ? SEAT.timeoutTitle : SEAT.timeoutPassSelf,
+    icon: '⏰',
+    tone: 'red',
+    // Ein Satz für alle Spiele, nur beim Ansehen zu Beginn einer Cabo-Runde zeigt die KI zwei Karten
+    sub: c.prev.phase === 'peek' ? SEAT.timeoutPeekSub : SEAT.timeoutSub,
+    ms: 2000,
+    sfx: 'timeout',
+  });
+}
+
+/** Kommen, Gehen, Zurück und Übernahme am Tisch: klein in der Spielfläche, Automatisches mit leisem Ton. */
+function seatEffect(c: LevelCtx, e: LogEntry): void {
+  const nm = () => nameOf(c.v, e.p, e.name);
+  switch (e.k) {
+    case 'takeover':
+      emit(cueOf(e, c), { text: SEAT.takeover(e.name ?? nm(), e.from) });
+      return;
+    case 'tobot':
+      emit(cueOf(e, c), { text: SEAT.tobot(nm()) });
+      return;
+    case 'back':
+      emit(cueOf(e, c), { text: SEAT.back(nm()) });
+      return;
+    case 'join':
+      emit(cueOf(e, c), { text: SEAT.join(nm()) });
+      return;
+    default:
+      return;
   }
 }
 
@@ -124,14 +172,18 @@ function gameEffect(prev: View, v: View, e: LogEntry, fresh: readonly LogEntry[]
 function lobbyPeople(prev: View, v: View, fresh: LogEntry[]): void {
   const came: string[] = [];
   const went: string[] = [];
+  /** Übernahmen nennen den Platz, in der Lobby ohne „samt Karten“ */
+  const taken: string[] = [];
   fresh.forEach((e) => {
     if (!e.p || e.p === App.me) return;
-    if ((e.k === 'join' && !e.bot) || e.k === 'takeover' || e.k === 'back') came.push(nameOf(v, e.p, e.name));
+    if (e.k === 'takeover') taken.push(SEAT.takeover(nameOf(v, e.p, e.name), e.from));
+    else if ((e.k === 'join' && !e.bot) || e.k === 'back') came.push(nameOf(v, e.p, e.name));
     const was = pById(prev, e.p);
     if (e.k === 'leave' && was && !was.bot) went.push(e.name ?? was.name);
   });
+  if (came.length || taken.length) sfxCalm('msg', 400);
+  for (const t of taken) toast(t);
   if (came.length) {
-    sfxCalm('msg', 400);
     toast(`${listJoin(came)} ${came.length === 1 ? 'sitzt' : 'sitzen'} jetzt mit am Tisch.`);
   }
   if (went.length) {

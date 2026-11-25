@@ -1,39 +1,39 @@
-import type { LogEntry, View } from '../../game/types';
+import type { LogEntry } from '../../game/types';
 import { confetti } from '../animations';
 import { App } from '../app';
 import { esc } from '../dom';
-import { type Announcement, announce, centerLabel, floatLabel, holdForAnnouncements, shakePanel } from '../feedback';
+import { type Announcement, emit, holdForAnnouncements, shakePanel } from '../feedback';
+import { cueOf, type LevelCtx } from '../levels';
 import { nameOf, roundBest, vb } from '../helpers';
 import { sfx } from '../sound';
 import { taunt } from '../taunts';
 
 /** Schnautz: Klopfen, Schieben, Behalten, Tauschen, neue Mitte, Rundenergebnis und Partiesieg. */
-export function schnautzEffect(v: View, e: LogEntry): void {
+export function schnautzEffect(c: LevelCtx, e: LogEntry): void {
+  const { v } = c;
+  const cue = cueOf(e, c);
   const RN = (id: string | null | undefined, fb?: string) => nameOf(v, id, fb);
   const N = (id: string | null | undefined, fb?: string) => esc(RN(id, fb));
   const mine = e.p === App.me;
   if (e.k === 'knock') {
-    sfx('knock');
-    announce({
+    emit(cue, {
+      pid: e.p,
+      text: 'klopft',
+      mine: 'klopfst',
       icon: '✊',
       tone: 'wood',
       title: mine ? 'Du klopfst!' : 'Klopf, klopf!',
       sub: mine ? 'Alle anderen haben noch einen Zug.' : N(e.p, e.name) + ' klopft. Alle anderen haben noch einen Zug.',
+      sfx: 'knock',
     });
     if (!mine) shakePanel(e.p);
   }
   if ((e.k === 'swap' || e.k === 'swapAll') && !mine) sfx('card');
-  if (e.k === 'swapAll' && !mine)
-    setTimeout(() => {
-      floatLabel(e.p, 'tauscht alle drei');
-    }, 60);
-  if (e.k === 'renew')
-    setTimeout(() => {
-      centerLabel('Neue Mitte');
-    }, 60);
-  if (e.k === 'pass' && !mine) floatLabel(e.p, 'schiebt');
-  if (e.k === 'keep' && !mine) floatLabel(e.p, 'behält');
-  if (e.k === 'take' && !mine) floatLabel(e.p, 'nimmt blind');
+  if (e.k === 'swapAll') emit(cue, { pid: e.p, text: 'tauscht alle drei' });
+  if (e.k === 'renew') emit(cue, { text: 'Neue Mitte' });
+  if (e.k === 'pass') emit(cue, { pid: e.p, text: 'schiebt' });
+  if (e.k === 'keep') emit(cue, { pid: e.p, text: 'behält' });
+  if (e.k === 'take') emit(cue, { pid: e.p, text: 'nimmt blind' });
   if (e.k === 'result') {
     const best = roundBest(v);
     const c = e.changes?.[App.me];
@@ -79,7 +79,7 @@ export function schnautzEffect(v: View, e: LogEntry): void {
         e.n,
       );
     }
-    if (tt) lines.push('<span class="tt">' + esc(tt) + '</span>');
+
     if (c) {
       tone = c.to === 'swim' ? 'sea' : 'red';
       icon = c.to === 'out' ? '🫧' : c.to === 'swim' ? '🛟' : '💔';
@@ -88,24 +88,24 @@ export function schnautzEffect(v: View, e: LogEntry): void {
       icon = '👑';
       lines.push('Du hattest die beste Hand.');
     }
-    if (e.reason !== 'quit') announce({ icon, tone, title, sub: lines.join(' '), ms: 2300 });
-    holdForAnnouncements(400);
+    emit(cue, { text: title, icon, tone, sub: lines.join(' '), taunt: tt, ms: 2300, hold: 400 });
+    // Wer den Tisch verlässt, beendet die Runde ohne Meldung, das Ergebnis wartet trotzdem kurz
+    if (e.reason === 'quit') holdForAnnouncements(400);
     setTimeout(() => {
       sfx(c ? 'lose' : 'win');
     }, 300);
   }
   if (e.k === 'winner' && e.p) {
-    announce({
+    emit(cue, {
+      pid: e.p,
+      text: 'gewinnt die Partie!',
+      mine: 'gewinnst die Partie!',
       icon: '🏆',
       tone: 'gold',
-      title: mine ? 'Du gewinnst die Partie!' : N(e.p, e.name) + ' gewinnt die Partie!',
-      sub:
-        '<span class="tt">' +
-        esc(mine ? taunt('gameWinSelf', null, e.n) : taunt('gameLoseSelf', { name: RN(e.p, e.name) }, e.n)) +
-        '</span>',
+      taunt: mine ? taunt('gameWinSelf', null, e.n) : taunt('gameLoseSelf', { name: RN(e.p, e.name) }, e.n),
       ms: 2600,
+      hold: 300,
     });
-    holdForAnnouncements(300);
     if (mine) setTimeout(confetti, 600);
   }
 }

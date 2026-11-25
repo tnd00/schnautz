@@ -185,16 +185,11 @@ function render(r: Reject, ctx: RejectCtx): string | null {
 }
 
 /**
- * Text zur Ablehnung aus Sicht von `ctx.me`. Texte von noch nicht umgestellten Stellen gehen unverändert durch.
- * Fehlt ein Argument oder passt es nicht, steht `fallback` da.
+ * Text zur Ablehnung aus Sicht von `ctx.me`. Unbekannter Code (Gastgeber neuer als Gast), fehlendes oder krummes
+ * Argument: dann steht `fallback` da.
  */
-export function rejectText(
-  r: Reject | string | null | undefined,
-  ctx: RejectCtx,
-  fallback = 'Das geht gerade nicht.',
-): string {
+export function rejectText(r: Reject | null | undefined, ctx: RejectCtx, fallback = 'Das geht gerade nicht.'): string {
   if (r == null) return '';
-  if (typeof r === 'string') return r;
   return (isReject(r) && render(r, ctx)) || fallback;
 }
 
@@ -209,9 +204,8 @@ export function ctxOfState(st: State | null | undefined, me: string): RejectCtx 
 }
 
 /** Fürs Protokoll: Text und Code mit Argumenten, Platz-IDs stehen dort als ID. */
-export function rejectLog(r: Reject | string | null | undefined, ctx?: RejectCtx): string {
+export function rejectLog(r: Reject | null | undefined, ctx?: RejectCtx): string {
   if (r == null) return '';
-  if (typeof r === 'string') return r;
   const args = Object.entries(r.a ?? {})
     .map(([k, v]) => ` ${k}=${v}`)
     .join('');

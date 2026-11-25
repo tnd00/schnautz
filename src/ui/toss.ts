@@ -8,7 +8,8 @@ import { App } from './app';
 import { burst } from './burst';
 import { carouselRelease, carouselShow, offscreen } from './carousel';
 import { $, $opt, esc, reduceMotion, type Timer } from './dom';
-import { floatLabel, shakeEl } from './feedback';
+import { emit, shakeEl } from './feedback';
+import { cueOf } from './levels';
 import { seatOrder } from './helpers';
 import { sfx, type SoundName } from './sound';
 
@@ -232,7 +233,13 @@ function land(e: TossEntry): void {
   if (hitMe) hitMeFx(e.item);
   if (hitMe && e.p && now - TOSS.hintAt >= 1500) {
     TOSS.hintAt = now;
-    floatLabel(e.p, TOSS_TEXT[e.item].hit);
+    const v = App.view;
+    if (v)
+      emit(cueOf(e, { prev: v, v, fresh: [e], me: App.me, seqd: false }), {
+        pid: e.p,
+        text: TOSS_TEXT[e.item].hit,
+        delay: 0,
+      });
   }
   if (mine) {
     if (TOSS.back) clearTimeout(TOSS.back);

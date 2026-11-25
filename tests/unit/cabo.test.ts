@@ -10,7 +10,7 @@ import { reignOf } from '../../src/game/games';
 import { addPlayer, newState } from '../../src/game/state';
 import type { Action, CaboResult, Card, CbState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { msgOf, rngF } from './helpers';
+import { codeOf, msgOf, rngF } from './helpers';
 
 /** Cabo-Tisch mit `n` Leuten, gestartet (Ansehen läuft). */
 function table(n: number, seed: number, rules: { snap?: boolean; target?: number } = {}): { st: State; C: CbState } {
@@ -158,7 +158,7 @@ describe('Cabo: Runde', () => {
     act(st, cur(st), { type: 'cbdraw', from: 'deck' });
     expect(act(st, a, { type: 'cbdiscard' })).toBeNull();
     expect(C.power?.kind).toBe('peek');
-    expect(msgOf(act(st, a, { type: 'cbspy', to: b, id: C.P[b][0].id }))).toMatch(/9 oder 10/);
+    expect(codeOf(act(st, a, { type: 'cbspy', to: b, id: C.P[b][0].id }))).toBe('cb.noSpy');
     expect(act(st, a, { type: 'cbpeek', id: C.P[a][3].id })).toBeNull();
     expect(viewFor(st, a).cb?.reveal?.items[0]).toMatchObject({ owner: a, slot: C.P[a][3].id });
     // b weiß, was auf seinem Platz 0 liegt, a tauscht blind dagegen: b weiß dann, was jetzt bei a liegt
@@ -297,7 +297,7 @@ describe('Cabo: Grenzfälle', () => {
     lookAll(st);
     const a = cur(st);
     C.P[a] = [];
-    expect(msgOf(act(st, a, { type: 'cbdraw', from: 'pile' }))).toMatch(/Ablage nicht/);
+    expect(codeOf(act(st, a, { type: 'cbdraw', from: 'pile' }))).toBe('cb.pileNoCards');
     expect(act(st, a, { type: 'cbdraw', from: 'deck' })).toBeNull();
     expect(act(st, a, { type: 'cbswap', ids: [1] })).not.toBeNull();
     // Der Ersatzzug legt ab und überspringt eine Fähigkeit

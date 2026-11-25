@@ -1,5 +1,7 @@
 /* Eingaben: Klicks auf Karten und Knöpfe (über data-act), Tastatur, Formulare. */
 import { rankOf } from '../game/cards';
+import { rj } from '../game/reject';
+import { szWhyNot } from '../game/schnautz';
 import { shCanBomb, shCanThrow } from '../game/shithead';
 import { seatLimit } from '../game/state';
 import { EMOTE_GAP_MS, SOUND_GAP_MS, SOUNDS, TOSS_ITEMS, TURN_SECS } from '../game/constants';
@@ -27,7 +29,8 @@ import { CAR, initCarousel, layoutOpps } from './carousel';
 import { fitDesktop } from './fit';
 import { FX_WAKE_MS } from './livefx';
 import { $, esc } from './dom';
-import { noteTap, shakeEl, skipAnnouncement, toast } from './feedback';
+import { initLazy, openRules, openUpdates } from './lazy';
+import { noteTap, shakeEl, showReject, skipAnnouncement, toast } from './feedback';
 import { ceremonyOn, ZER } from './ceremony';
 import { myTurn, pById } from './helpers';
 import { boardHTML } from './render/board';
@@ -37,7 +40,6 @@ import { legendOn, renderLegend } from './render/legend';
 import { fitLobby, renderLobby, turnLabel, turnText } from './render/lobby';
 import { openGameSettings, resetRulesFor } from './render/gamesettings';
 import { renderLog } from './render/log';
-import { rulesHTML } from './render/rules';
 import { FFWD_ON_HTML } from './render/result';
 import { renderGame } from './render/schnautz';
 import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
@@ -46,10 +48,10 @@ import { openBetModal, renderBetModal } from './render/bets';
 import { inviteHTML } from './render/invite';
 import { netInfoHTML } from './render/netinfo';
 import { armBackHint, type BackMark, closeUpdate, reloadApp } from './update';
-import { updatesHTML } from './render/updates';
 import { resetTableUI } from './reset';
 import { copyLink, setNet, setWait, shareLink, showScreen, updateTitle } from './screens';
 import { fitHand, grabRects } from './shithead/hand';
+import { shWhyTap } from './shithead/input';
 import { setSbBlock } from './soundboard';
 import { renderSoundBtn, setSbVolume, sfx, unlockAudio } from './sound';
 import { initStart, lastGame, leaveInvite, readName, renderResume, showStartError } from './start';
@@ -85,6 +87,8 @@ function shTap(kind: 'h' | 'u', i: number): void {
   const src = kind === 'h' ? 'hand' : 'up';
   const arr = P[src];
   if (!arr[i] || shSrc(v) !== src) return;
+  // Ausgegraute Karte: Grund am Tisch statt stiller Auswahl
+  if (shWhyTap(kind, i)) return;
   const cur = App.ss;
   // Gleiche Werte lassen sich zusammen auswählen, ein anderer Wert startet neu
   if (cur.src !== src || !cur.idx.length || rankOf(arr[cur.idx[0]]) !== rankOf(arr[i])) App.ss = { src, idx: [i] };
@@ -113,7 +117,18 @@ function shSelectAll(): void {
 /** Schnautz: Karte aus Hand oder Mitte zum Tauschen wählen. */
 function selCard(kind: 'h' | 'm', i: number): void {
   const v = App.view;
-  if (!v || !myTurn(v)) return;
+  if (!v) return;
+  if (!myTurn(v)) {
+    // Grund am Tisch: Wer nicht dran ist, erfährt warum, statt dass nichts passiert
+    const why = v.phase === 'play' || v.phase === 'choose' ? szWhyNot(v, App.me, 'swap') : null;
+    if (why) {
+      noteTap('swap', [
+        kind === 'h' ? `#me [data-act="hand"][data-i="${i}"]` : `#center [data-act="mid"][data-i="${i}"]`,
+      ]);
+      showReject(why, 'swap');
+    }
+    return;
+  }
   unlockAudio();
   if (kind === 'h') App.sel.h = App.sel.h === i ? null : i;
   else App.sel.m = App.sel.m === i ? null : i;
@@ -419,11 +434,10 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       doAct({ type: 'rmbot', id: String(t.dataset.id) });
       break;
     case 'rulestab':
-      $('#modal').innerHTML = rulesHTML(t.dataset.g as GameKind);
+      openRules(t.dataset.g as GameKind);
       break;
     case 'menurules':
-      $('#menu').hidden = true;
-      $('#modal').innerHTML = rulesHTML();
+      openRules(undefined, () => ($('#menu').hidden = true));
       break;
     case 'invite':
       $('#menu').hidden = true;
@@ -436,8 +450,12 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
     case 'swap':
       if (App.sel.h != null && App.sel.m != null) {
         sfx('card');
+        noteTap('swap', [
+          `#me [data-act="hand"][data-i="${App.sel.h}"]`,
+          `#center [data-act="mid"][data-i="${App.sel.m}"]`,
+        ]);
         doAct({ type: 'swap', h: App.sel.h, m: App.sel.m });
-      }
+      } else if (v) showReject(szWhyNot(v, App.me, 'swap') ?? rj('any.pickCard'), 'swap');
       break;
     case 'swapAll':
       sfx('card');
@@ -446,10 +464,17 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
     case 'pass':
       doAct({ type: 'pass' });
       break;
-    case 'knock':
+    case 'knock': {
+      // Gleicher Code wie beim Gastgeber, aber ohne Klopfgeräusch und ohne Umweg übers Netz
+      const why = v ? szWhyNot(v, App.me, 'knock') : null;
+      if (why) {
+        showReject(why, 'knock');
+        break;
+      }
       sfx('knock');
       doAct({ type: 'knock' });
       break;
+    }
     case 'keep':
       doAct({ type: 'keep' });
       break;
@@ -554,8 +579,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       document.body.classList.remove('startform');
       break;
     case 'updates':
-      $('#menu').hidden = true;
-      $('#modal').innerHTML = updatesHTML();
+      openUpdates(() => ($('#menu').hidden = true));
       break;
     case 'reloadapp':
       reloadApp();
@@ -854,6 +878,8 @@ function aimAt(pid: string): void {
 
 /** Alle Ereignis-Listener einmal beim Start registrieren. */
 export function initEvents(): void {
+  // Regeln und Updates laden erst bei Bedarf nach (src/ui/lazy.ts)
+  initLazy();
   initCarousel(aimAt, (el) => el.dataset.act && onAction(el.dataset.act, el, true));
   document.addEventListener('visibilitychange', () => {
     updateTitle();
@@ -977,9 +1003,7 @@ export function initEvents(): void {
     else $('#btn-host').click();
   });
   $('#btn-cancel').onclick = cancelConnect;
-  $('#btn-rules').onclick = () => {
-    $('#modal').innerHTML = rulesHTML();
-  };
+  $('#btn-rules').onclick = () => openRules();
   $('#modal').addEventListener('click', (e) => {
     if ((e.target as Element).classList.contains('modal')) $('#modal').innerHTML = '';
   });

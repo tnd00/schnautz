@@ -6,9 +6,9 @@ import { betPart, shBetCandidates, shBetQuote, shBetsOn, shCanBet } from '../../
 import type { LogEntry, View } from '../../game/types';
 import { App } from '../app';
 import { $, $opt, esc, num } from '../dom';
-import { floatLabel, tauntLabel } from '../feedback';
+import { emit } from '../feedback';
+import { cueOf, type LevelCtx } from '../levels';
 import { myTurn, nameOf, seatOrder } from '../helpers';
-import { sfx } from '../sound';
 import { taunt } from '../taunts';
 import { LOSER_NAME } from '../../game/games';
 
@@ -133,20 +133,29 @@ export function renderBetModal(v: View): void {
 
 type BetEntry = Extract<LogEntry, { k: 'shbet' }>;
 
-/** Jemand hat getippt: Spruch für die Person, auf die getippt wurde, sonst ein kleiner Hinweis. */
-export function betEffect(v: View, e: BetEntry): void {
+/**
+ * Jemand hat getippt: Tippt jemand auf mich, ist es mittel (der erste mit Spruch, der wartet, solange ich dran bin),
+ * sonst ein kleiner Hinweis. Die Stufe kommt aus cueOf.
+ */
+export function betEffect(c: LevelCtx, e: BetEntry): void {
+  const { v } = c;
   const by = nameOf(v, e.p, e.name);
   const on = nameOf(v, e.on, e.onName);
+  const cue = cueOf(e, c);
   if (e.on === App.me && e.p !== App.me) {
     const bets = shBetsOn(v, App.me);
-    if (bets[0]?.n === e.n) {
-      // Der Spruch nennt den Titel des Spiels über {what}, damit bei Durak nicht vom Shithead die Rede ist
-      const text = taunt('betOnMe', { name: by, what: LOSER_NAME[v.game] }, e.n);
-      if (myTurn(v)) BETUI.pend = { games: v.games, text };
-      else tauntLabel(text);
-    } else floatLabel(undefined, `Schon ${bets.length} tippen auf dich 🔮`);
+    // Der Spruch nennt den Titel des Spiels über {what}, damit bei Durak nicht vom Shithead die Rede ist
+    const text = taunt('betOnMe', { name: by, what: LOSER_NAME[v.game] }, e.n);
+    const first = bets[0]?.n === e.n;
+    if (first && myTurn(v)) {
+      BETUI.pend = { games: v.games, text };
+      return;
+    }
+    emit(cue, {
+      text: first ? `${by} tippt auf dich 🔮` : `Schon ${bets.length} tippen auf dich 🔮`,
+      taunt: text,
+    });
     return;
   }
-  floatLabel(e.p, `tippt auf ${on}`, `tippst auf ${on}`);
-  if (e.p !== App.me) sfx('pop');
+  emit(cue, { pid: e.p, text: `tippt auf ${on}`, mine: `tippst auf ${on}`, sfx: e.p !== App.me ? 'pop' : undefined });
 }

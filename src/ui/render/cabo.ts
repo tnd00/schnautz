@@ -3,7 +3,7 @@
  * Karte und Ablage, unten die eigene Reihe mit Knöpfen. Was man ansieht, blitzt nur kurz auf (App.cbShow), danach
  * muss man es sich merken. Was ich gerade tun kann, steht in `cbRole`. Tipps verarbeitet src/ui/cabo/input.ts.
  */
-import { cbKamikaze, cbPower, cbWaiting } from '../../game/cabo';
+import { cbPower, cbWaiting } from '../../game/cabo';
 import { cbVal, rankOf, suitOf } from '../../game/cards';
 import { CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO, CB_REVEAL_MS } from '../../game/constants';
 import type { CaboResult, Card, CbSlotView, CbView, Player, View } from '../../game/types';
@@ -11,14 +11,16 @@ import { App } from '../app';
 import { cardHTML } from '../cards';
 import { layoutOpps } from '../carousel';
 import { markClocks } from '../clock';
-import { $, esc, listJoin, num } from '../dom';
-import { holdOverlay } from '../feedback';
-import { nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb, W } from '../helpers';
+import { $, esc, num } from '../dom';
+import { nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb } from '../helpers';
 import { taunt } from '../taunts';
 import { markTosses } from '../toss';
 import { aimAttrs, marksHTML, reignHTML } from './marks';
-import { rematchLine, rematchMark } from './rematch';
-import { botsOnlyHTML, overlayFoot, peekHTML } from './result';
+import { botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
+import { OFFLINE_WAIT, offline, playFor, STATUS } from '../../content/texts/status';
+import { CB_STATUS, cbHeld, cbLastSub, cbOtherDeck, cbOtherPile, cbOtherPower } from '../../content/texts/status-cb';
+import { ceremonyOn } from '../ceremony';
+import { endMain, renderStatus, turnMain, waitSub, type Status } from '../status';
 
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 
@@ -27,11 +29,6 @@ export type CbRole = 'look' | 'looked' | 'draw' | 'hold' | 'ownpeek' | 'spy' | '
 /** Was eine abgelegte Karte kann: Zeichen, Name für Knöpfe und Etiketten, Verb für Hinweise („du darfst …“). */
 const POWER_ICON = { peek: '👁️', spy: '🔍', swap: '🔀' } as const;
 const POWER_NAME = { peek: 'Ansehen', spy: 'Spionieren', swap: 'Blindtausch' } as const;
-export const CB_POWER_SHORT = {
-  peek: `${POWER_ICON.peek} ${POWER_NAME.peek}`,
-  spy: `${POWER_ICON.spy} ${POWER_NAME.spy}`,
-  swap: `${POWER_ICON.swap} ${POWER_NAME.swap}`,
-} as const;
 const POWER_LONG = {
   peek: 'eine eigene Karte ansehen',
   spy: 'spionieren',
@@ -112,13 +109,16 @@ const valBadge = (c: Card): string => `<span class="cbv${cbVal(c) === 0 ? ' zero
 interface SlotOpts {
   act?: string;
   sel?: boolean;
+  /** Leuchtet als wählbar. Ohne Angabe jede Karte mit `act`, sonst bleibt sie antippbar und nennt ihren Grund */
+  pick?: boolean;
 }
 
 /** Ein Platz: verdeckt, offen für alle, oder nur für mich gerade kurz zu sehen. */
 function slotHTML(owner: string, s: CbSlotView, o: SlotOpts = {}): string {
   const seen = s.c ? null : cbSeen(owner, s.id);
   const c = s.c ?? seen;
-  const cls = ['cbslot', s.up && 'up', seen && 'seen', o.sel && 'sel', o.act && 'pick'].filter(Boolean).join(' ');
+  const pick = o.pick ?? !!o.act;
+  const cls = ['cbslot', s.up && 'up', seen && 'seen', o.sel && 'sel', pick && 'pick'].filter(Boolean).join(' ');
   // Der Balken, der die Restzeit zeigt, läuft beim Neuzeichnen an derselben Stelle weiter
   const left = seen ? Math.max(0, App.cbShow.until - Date.now()) : 0;
   const style = seen ? ` style="--cbms:${CB_REVEAL_MS}ms; --cbgone:${CB_REVEAL_MS - left}ms"` : '';
@@ -199,6 +199,10 @@ export function renderCbCenter(v: View): void {
   const under = C.pile[C.pile.length - 2];
   const canPile = role === 'draw' && !!top && !!cbMine(v)?.length;
   const pileAct = canPile ? 'cbpile' : role === 'hold' && C.hold?.from === 'deck' ? 'cbdiscard' : '';
+  // Stapel und Ablage bleiben während der Runde antippbar und nennen sonst ihren Grund, leuchten aber nur, wenn es geht
+  const live = play && !!cbMine(v);
+  const deckTap = live || deckAct;
+  const pileTap = pileAct || (live ? (role === 'hold' ? 'cbdiscard' : 'cbpile') : '');
   const tap = (act: string, label: string) => ` data-act="${act}" role="button" tabindex="0" aria-label="${label}"`;
   const deck = dn
     ? cardHTML(null) +
@@ -216,7 +220,10 @@ export function renderCbCenter(v: View): void {
   if (mineHeld && C.hold?.c) {
     hold = cardHTML(C.hold.c, 'held') + valBadge(C.hold.c);
     const pw = C.hold.from === 'deck' ? cbPower(C.hold.c) : null;
-    holdCnt = pw ? `Deine Karte · ${CB_POWER_SHORT[pw]}` : 'Deine Karte';
+    // Am Handy bleibt nur das Zeichen der Fähigkeit, wie im Knopf „Ablegen 🔀“
+    holdCnt = pw
+      ? `<span class="cnl">Deine Karte · </span>${POWER_ICON[pw]}<span class="cnl"> ${POWER_NAME[pw]}</span>`
+      : 'Deine Karte';
   } else if (C.power) {
     // Die Karte liegt schon auf der Ablage, hier steht nur, was sie gerade erlaubt
     hold = `<div class="emptyslot cbpow">${POWER_ICON[C.power.kind]}</div>`;
@@ -231,115 +238,106 @@ export function renderCbCenter(v: View): void {
   else if (v.phase === 'peek') cap = `Runde ${num(v.round)} · alle sehen sich zwei Karten an`;
   $('#center').innerHTML =
     `<span class="cap">${cap}</span>` +
-    `<div class="deck cbdeck${deckAct ? ' can' : ''}" title="Stapel"${deckAct ? tap('cbdeck', 'Vom Stapel ziehen') : ''}>${deck}</div>` +
+    `<div class="deck cbdeck${deckAct ? ' can' : ''}" title="Stapel"${deckTap ? tap('cbdeck', 'Vom Stapel ziehen') : ''}>${deck}</div>` +
     `<div class="cbhold${mineHeld || C.power ? ' on' : ''}">${hold}${holdCnt ? `<span class="cnt">${holdCnt}</span>` : ''}</div>` +
-    `<div class="pile cbpile${pileAct ? ' can' : ''}" title="Ablage"${pileAct ? tap(pileAct, pileAct === 'cbpile' ? 'Von der Ablage nehmen' : 'Ablegen') : ''}>${pile}</div>`;
+    `<div class="pile cbpile${pileAct ? ' can' : ''}" title="Ablage"${pileTap ? tap(pileTap, pileTap === 'cbpile' ? 'Von der Ablage nehmen' : 'Ablegen') : ''}>${pile}</div>`;
 }
 
-/** Status über dem eigenen Platz: was ich tun soll oder worauf wir warten. */
-function statusHTML(v: View, C: CbView): string {
+/** Name im Nebensatz, ohne KI-Zeichen (das trägt nur die Hauptzeile) */
+const plainName = (v: View, id: string | null): string => esc(nameOf(v, id));
+
+/**
+ * Status über dem eigenen Platz als Daten: was ich tun soll oder worauf wir warten. Ohne DOM, damit Vitest jede
+ * Phase prüfen kann. `renderStatus` (src/ui/status.ts) schreibt ihn.
+ */
+export function cbStatus(v: View): Status {
+  const C = v.cb;
+  if (!C) return { main: '', sub: '', tone: 'calm' };
   const role = cbRole(v);
   const n = App.cs.ids.length;
   const cur = turnId(v);
-  let main = '';
-  let sub = '';
+  const cards = !!cbMine(v)?.length;
+  let st: Status = { main: '', sub: '', tone: 'calm' };
   let quick = '';
   switch (role) {
     case 'look':
-      main = '<em>Sieh dir zwei Karten an.</em>';
-      sub =
-        n === 1
-          ? 'Noch eine. Sie sind nur ein paar Sekunden zu sehen, merk sie dir gut.'
-          : 'Tippe zwei deiner Karten an. Sie sind nur ein paar Sekunden zu sehen, merk sie dir gut.';
+      st = { main: `<em>${CB_STATUS.peek}</em>`, sub: n === 1 ? CB_STATUS.peekOne : CB_STATUS.peekSub, tone: 'turn' };
       break;
-    case 'looked': {
-      main = 'Gut merken!';
-      const rest = v.players.filter((p) => !p.ready && C.P[p.id]).map((p) => esc(p.name));
-      sub = rest.length ? `Warte auf ${listJoin(rest)}.` : "Los geht's.";
+    case 'looked':
+      st = { main: CB_STATUS.peek, sub: waitSub(v, cbWaiting(v)) || CB_STATUS.peekGo, tone: 'calm' };
       break;
-    }
     case 'draw': {
-      main = C.cabo ? '<em>Dein letzter Zug!</em>' : '<em>Du bist dran.</em>';
       const after = C.left.filter((id) => id !== App.me).length;
-      const pile = cbMine(v)?.length ? 'oder nimm die Ablage' : '';
-      if (C.cabo)
-        sub =
-          `Zieh vom Stapel ${pile}`.trim() +
-          (after
-            ? `. Danach ${after === 1 ? 'ist noch eine Person' : `sind noch ${after}`} dran, dann wird aufgedeckt.`
-            : ', dann wird aufgedeckt.');
-      else
-        sub = cbMine(v)?.length
-          ? 'Zieh vom Stapel, nimm die oberste Ablage oder ruf Cabo, wenn du glaubst, du hast am wenigsten.'
-          : 'Du hast keine Karten mehr. Zieh vom Stapel und leg ab oder ruf Cabo.';
+      st = C.cabo
+        ? { main: `<em>${CB_STATUS.last}</em>`, sub: cbLastSub(after, cards), tone: 'knock' }
+        : { main: `<em>${STATUS.myTurn}</em>`, sub: cards ? CB_STATUS.draw : CB_STATUS.drawNoCards, tone: 'turn' };
       break;
     }
     case 'hold': {
       const c = C.hold?.c;
       const fromPile = C.hold?.from === 'pile';
-      const cw = c ? cbCardWords(c, false) : null;
-      main = cw
-        ? `<em>Du hast ${cw.name} ${fromPile ? 'genommen' : 'gezogen'}${cw.val}.</em>`
-        : '<em>Du hast gezogen.</em>';
       const pw = !fromPile && c ? cbPower(c) : null;
-      if (n > 1) sub = `Du tauschst ${n} Karten auf einmal ein. Sind sie nicht alle gleich, gibt es eine Strafkarte.`;
-      else if (fromPile) sub = 'Tausch sie gegen eine deiner Karten oder mehrere gleiche ein. Sie liegt danach offen.';
-      else if (pw) sub = `Tausch sie gegen eine deiner Karten ein oder leg sie ab, dann darfst du ${POWER_LONG[pw]}.`;
-      else sub = 'Tausch sie gegen eine oder mehrere gleiche Karten ein oder leg sie ab.';
+      const sub =
+        n > 1
+          ? CB_STATUS.holdMany(n)
+          : fromPile
+            ? CB_STATUS.holdPile
+            : pw
+              ? CB_STATUS.holdPower(POWER_LONG[pw])
+              : CB_STATUS.holdPlain;
+      st = { main: `<em>${c ? cbHeld(cbCardWords(c, false).name, fromPile) : STATUS.myTurn}</em>`, sub, tone: 'turn' };
       break;
     }
     case 'ownpeek':
-      main = '<em>Ansehen!</em>';
-      sub = 'Tippe eine deiner Karten an. Nur du siehst sie.';
+      st = { main: `<em>${CB_STATUS.ownpeek}</em>`, sub: CB_STATUS.ownpeekSub, tone: 'turn' };
       break;
     case 'spy':
-      main = '<em>Spionieren!</em>';
-      sub = 'Tippe eine Karte von jemand anderem an. Nur du siehst sie.';
+      st = { main: `<em>${CB_STATUS.spy}</em>`, sub: CB_STATUS.spySub, tone: 'turn' };
       break;
     case 'blind':
-      main = '<em>Blindtausch!</em>';
-      sub =
-        n && App.cs.opp
-          ? 'Alles gewählt. Tippe auf Blind tauschen.'
-          : 'Wähle eine eigene und eine fremde Karte. Was du bekommst, siehst du nicht.';
+      st = {
+        main: `<em>${CB_STATUS.blind}</em>`,
+        sub: n && App.cs.opp ? CB_STATUS.blindReady : CB_STATUS.blindSub,
+        tone: 'turn',
+      };
       break;
     case 'wait': {
-      main = `${W(v, cur)} ist dran.`;
-      if (C.power?.by === cur) sub = `${esc(nameOf(v, cur))} darf ${POWER_LONG[C.power.kind]}.`;
+      let sub = '';
+      if (C.power?.by === cur) sub = cbOtherPower(plainName(v, cur), POWER_LONG[C.power.kind]);
       else if (C.hold?.by === cur) {
         const cw = C.hold.from === 'pile' && C.hold.c ? cbCardWords(C.hold.c, true) : null;
-        sub = cw
-          ? `${esc(nameOf(v, cur))} hat ${cw.name} von der Ablage genommen${cw.val}.`
-          : `${esc(nameOf(v, cur))} hat vom Stapel gezogen und überlegt.`;
-      } else if (C.cabo)
-        sub = C.left.includes(App.me) ? 'Du bist danach noch einmal dran.' : 'Du hast keinen Zug mehr in dieser Runde.';
-      if (cbCanSnap(v) && App.cs.snap)
-        sub = 'Tippe die Karte an, die zur Ablage passt. Daneben gibt es eine Strafkarte.';
+        sub = cw ? cbOtherPile(plainName(v, cur), cw.name, cw.val) : cbOtherDeck(plainName(v, cur));
+      } else if (C.cabo) sub = C.left.includes(App.me) ? CB_STATUS.again : CB_STATUS.noMore;
+      st = { main: turnMain(v, cur), sub, tone: C.cabo ? 'knock' : 'calm' };
       break;
     }
     case 'none':
-      if (v.phase === 'end') main = 'Runde vorbei.';
-      else if (v.phase === 'over') main = 'Partie vorbei.';
-      else if (v.phase === 'play' && !cbMine(v)) {
-        main = 'Du spielst ab der nächsten Runde mit.';
+      if (v.phase === 'end' || v.phase === 'over') {
+        const revealing = v.phase === 'over' && (!!App.zerHide || ceremonyOn());
+        st = { main: endMain(v, revealing), sub: revealing ? CB_STATUS.overSub : '', tone: 'over' };
+      } else if (v.phase === 'play' || v.phase === 'peek') {
+        // Erst ab der nächsten Runde dabei: zusehen, bei reinen KI-Runden abkürzen
+        st = {
+          main: v.phase === 'play' ? turnMain(v, cur) : CB_STATUS.peek,
+          sub: CB_STATUS.nextRound,
+          tone: 'calm',
+        };
         if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
       }
       break;
   }
-  if (role === 'draw' && cbCanSnap(v) && App.cs.snap)
-    sub = 'Tippe die Karte an, die zur Ablage passt. Daneben gibt es eine Strafkarte.';
-  // Wer gerade aufhält und offline ist
+  if ((role === 'draw' || role === 'wait') && cbCanSnap(v) && App.cs.snap) st = { ...st, sub: CB_STATUS.snap };
+  // Wer gerade aufhält und offline ist. Wer selbst noch ansehen muss, liest erst seinen eigenen Hinweis
   const waiting = cbWaiting(v);
   const off = v.players.find((p) => waiting.includes(p.id) && !p.online && !p.bot && p.id !== App.me);
-  if ((v.phase === 'play' || v.phase === 'peek') && off) {
-    sub =
-      `${esc(off.name)} ist gerade offline.` +
-      (App.role === 'host'
-        ? ` <button class="btn ghost small" data-act="skip">Für ${esc(off.name)} spielen</button>`
-        : ' Das Spiel wartet.');
+  if ((v.phase === 'play' || v.phase === 'peek') && off && role !== 'look') {
+    const nm = esc(off.name);
+    if (App.role === 'host' && !quick) {
+      st = { ...st, main: offline(`<b>${nm}</b>`) };
+      quick = `<button class="btn ghost small" data-act="skip"><span class="qlbl">${playFor(nm)}</span></button>`;
+    } else st = { ...st, sub: `${offline(nm)} ${OFFLINE_WAIT}` };
   }
-  const second = quick ? `<div class="quick">${quick}</div>` : sub ? `<div class="sub">${sub}</div>` : '';
-  return `<div class="main">${main}</div>${second}`;
+  return quick ? { ...st, quick } : st;
 }
 
 /**
@@ -349,8 +347,9 @@ function statusHTML(v: View, C: CbView): string {
 function actionsHTML(v: View, C: CbView): string {
   const role = cbRole(v);
   const n = App.cs.ids.length;
+  // Ausgegraut bleibt antippbar und nennt dann den Grund (cbWhyNot in src/ui/cabo/input.ts)
   const btn = (act: string, cls: string, label: string, ok: boolean) =>
-    `<button class="btn ${cls}" data-act="${act}"${ok ? '' : ' disabled'}>${label}</button>`;
+    `<button class="btn ${cls}" data-act="${act}"${ok ? '' : ' aria-disabled="true"'}>${label}</button>`;
   const two = (long: string, short: string) => `<span class="blong">${long}</span><span class="bshort">${short}</span>`;
   const btns: string[] = [];
   switch (role) {
@@ -363,7 +362,9 @@ function actionsHTML(v: View, C: CbView): string {
       const fromDeck = C.hold?.from === 'deck';
       const pw = fromDeck && C.hold?.c ? cbPower(C.hold.c) : null;
       btns.push(btn('cbswap', 'primary', n > 1 ? `${n} eintauschen` : 'Eintauschen', n > 0));
-      btns.push(btn('cbdiscard', 'ghost', pw ? `Ablegen + ${POWER_NAME[pw]}` : 'Ablegen', fromDeck));
+      // Am Handy reicht das Zeichen der Fähigkeit, sonst bricht „Eintauschen“ daneben um
+      const discard = pw ? two(`Ablegen + ${POWER_NAME[pw]}`, `Ablegen ${POWER_ICON[pw]}`) : 'Ablegen';
+      btns.push(btn('cbdiscard', 'ghost', discard, fromDeck));
       break;
     }
     case 'ownpeek':
@@ -397,6 +398,8 @@ function myPlaceHTML(v: View, C: CbView, me: Player, row: CbSlotView[]): string 
   const role = cbRole(v);
   const pickable =
     role === 'look' || role === 'hold' || role === 'ownpeek' || role === 'blind' || (App.cs.snap && cbCanSnap(v));
+  // Auch sonst antippbar, dann nennt die Karte ihren Grund (src/ui/cabo/input.ts)
+  const tappable = pickable || ((v.phase === 'play' || v.phase === 'peek') && role !== 'looked');
   const sel = new Set(App.cs.ids);
   const r = caboResult(v);
   const score =
@@ -407,7 +410,7 @@ function myPlaceHTML(v: View, C: CbView, me: Player, row: CbSlotView[]): string 
     `<span class="pill">${cbShownPoints(v, me)} ${cbShownPoints(v, me) === 1 ? 'Punkt' : 'Punkte'}</span></div>`;
   h +=
     `<div class="cbrow mine${row.length > 4 ? ' many' : ''}${App.cs.snap && cbCanSnap(v) ? ' snapping' : ''}" style="--ov:${overlap(row.length, 6).toFixed(3)}">` +
-    row.map((s) => slotHTML(App.me, s, { act: pickable ? 'cbm' : '', sel: sel.has(s.id) })).join('') +
+    row.map((s) => slotHTML(App.me, s, { act: tappable ? 'cbm' : '', pick: pickable, sel: sel.has(s.id) })).join('') +
     '</div>';
   return h + actionsHTML(v, C);
 }
@@ -422,9 +425,7 @@ export function renderCb(v: View): void {
     .map((p) => opponentHTML(v, C, p, waiting))
     .join('');
   renderCbCenter(v);
-  const stEl = $('#status');
-  stEl.className = 'status';
-  stEl.innerHTML = statusHTML(v, C);
+  renderStatus(v);
   const meEl = $('#me');
   const myTurnNow = waiting.includes(App.me) && v.phase === 'play';
   meEl.className = `me shme cbme${myTurnNow ? ' turn' : ''}${cbRole(v) === 'look' ? ' looking' : ''}`;
@@ -439,21 +440,21 @@ export function caboResult(v: View): CaboResult | null {
   return v.result?.reason === 'cabo' ? v.result : null;
 }
 
-/** Was in der Zeile einer Person steht: Summe, Cabo-Ruf, Kamikaze, einmal zurück auf weniger Punkte. */
-function rowNote(r: CaboResult, id: string): string {
-  const bits: string[] = [];
+/**
+ * Kernzahl jeder Zeile, kurz, damit lange Namen stehen bleiben. Der Stand steht rechts. Die Summe nur, wenn sie von
+ * den Punkten abweicht (Rufer, Kamikaze, Strafe). Am Partieende steht das Urteil der letzten Runde in der Zeile,
+ * denn der Kopf nennt dann nur den König.
+ */
+function rowNote(r: CaboResult, id: string, over: boolean): string {
   const sum = num(r.sums[id]);
-  const sc = num(r.scores[id]);
-  if (r.kami && cbKamikaze(r.hands[id] ?? [])) bits.push('💥 Kamikaze! 0 Punkte');
-  else if (r.kami) bits.push(`Summe ${sum} · Kamikaze kostet ${CB_KAMI}`);
-  else if (r.caller === id)
-    bits.push(
-      r.ok ? `Summe ${sum} · Cabo geschafft, 0 Punkte` : `Summe ${sum} · Cabo daneben, ${CB_PENALTY} Strafpunkte`,
-    );
-  else bits.push(`Summe ${sum}`);
-  bits.push(`+${sc}`);
-  if (r.resets.includes(id)) bits.push(`genau ${CB_RESET_AT}, zurück auf ${CB_RESET_TO}`);
-  return bits.join(' · ');
+  const score = num(r.scores[id]);
+  const reset = r.resets.includes(id) ? ` · auf ${CB_RESET_TO}` : '';
+  if (over) {
+    if (reset) return `genau 100 · auf ${CB_RESET_TO}`;
+    const why = r.kami === id ? 'Kamikaze · ' : r.caller === id && r.ok === false ? 'Cabo daneben · ' : '';
+    return `${why}+${score}`;
+  }
+  return `${score === sum ? '' : `Summe ${sum} · `}+${score}${reset}`;
 }
 
 /** Spruch passend zum Ende der Runde oder der Partie, aus meiner Sicht. */
@@ -480,27 +481,16 @@ function overlayTaunt(v: View, r: CaboResult): { text: string; good: boolean } {
   return { text: '', good: false };
 }
 
-/** Welches Ergebnis schon einmal offen war, damit nur beim ersten Öffnen gescrollt wird */
-const OV = { key: '' };
-
-/** Ergebnis der Runde oder der Partie: alle Karten offen, Summen, Punkte, Stand. */
-export function renderCbOverlay(v: View): void {
-  const ov = $('#overlay');
+/**
+ * Ergebnisblatt als Daten. Am Rundenende ist die Schlüsselzeile, wer Cabo rief (oder Kamikaze hatte), mit Karten,
+ * am Partieende der neue Cabo-König ohne Karten. Alle Zeilen nach Stand, rechts die Gesamtpunkte. Sonst `null`.
+ */
+export function cbSheet(v: View): Sheet | null {
   const r = caboResult(v);
-  if ((v.phase !== 'end' && v.phase !== 'over') || !r) {
-    ov.innerHTML = '';
-    return;
-  }
-  if (holdOverlay()) return;
-  const me = pById(v, App.me);
-  if (App.peek) {
-    ov.innerHTML = peekHTML(v, me);
-    return;
-  }
+  if ((v.phase !== 'end' && v.phase !== 'over') || !r) return null;
   const names = r.names ?? {};
   const nm = (id: string) => esc(nameOf(v, id, names[id]));
   const over = v.phase === 'over';
-  const target = num(v.rules.cb?.target ?? 100);
   let icon = '🃏';
   let title: string;
   let lead: string;
@@ -510,58 +500,56 @@ export function renderCbOverlay(v: View): void {
     title = w
       ? `${nm(w)}${vb(w, ' bist', ' ist')} <span class="g" style="white-space:nowrap">Cabo-König!</span>`
       : 'Unentschieden!';
-    const high = Object.keys(r.totals).filter((id) => r.totals[id] > target);
-    const verb = high.length === 1 ? vb(high[0], 'bist', 'ist') : high.includes(App.me) ? 'seid' : 'sind';
-    lead =
-      (high.length ? `${listJoin(high.map(nm))} ${verb} über ${target} Punkte gekommen.` : '') +
-      (w ? '' : ' Vorne liegen mehrere gleichauf, diesmal gibt es keinen neuen König.');
+    // Wer über die Grenze kam, zeigen die Punkte rechts. Bei acht Leuten kostet der Satz sonst zwei Zeilen
+    lead = w ? '' : 'Vorne liegen mehrere gleichauf, diesmal gibt es keinen neuen König.';
   } else if (r.kami) {
     icon = '💥';
     title = 'Kamikaze!';
-    lead = `${nm(r.kami)}${vb(r.kami, ' hast', ' hat')} zwei Damen und zwei schwarze Könige. Alle anderen bekommen ${CB_KAMI}.`;
+    lead = `Alle anderen bekommen ${CB_KAMI} Punkte.`;
   } else if (r.caller) {
     icon = r.ok ? '🎯' : '🙈';
     title = r.ok ? 'Cabo geschafft!' : 'Cabo daneben!';
+    // Kurz, bei acht Leuten und langen Namen zählt jede Zeile
     lead = r.ok
-      ? `${nm(r.caller)}${vb(r.caller, ' hattest', ' hatte')} am wenigsten und ${vb(r.caller, 'bekommst', 'bekommt')} 0 Punkte.`
-      : `${nm(r.caller)}${vb(r.caller, ' hast', ' hat')} Cabo gerufen, aber jemand hatte weniger. Das gibt ${CB_PENALTY} Strafpunkte obendrauf.`;
+      ? `${nm(r.caller)}${vb(r.caller, ' hattest', ' hatte')} am wenigsten.`
+      : `${nm(r.caller)} ${vb(r.caller, 'bekommst', 'bekommt')} ${CB_PENALTY} Strafpunkte obendrauf.`;
   } else {
     title = 'Stapel leer!';
     lead = 'Keine Karten mehr, die Runde ist vorbei.';
   }
-  const rline = rematchLine(v);
-  const tt = overlayTaunt(v, r);
+  const key = over ? (r.winner ?? null) : (r.kami ?? r.caller ?? null);
   const order = Object.keys(r.totals).sort((a, b) => r.totals[a] - r.totals[b] || num(r.scores[a]) - num(r.scores[b]));
-  const rows = order
-    .map((id, i) => {
-      const p = pById(v, id);
-      const win = over && v.winner === id;
-      const place = over ? num(p?.place) || i + 1 : i + 1;
-      const hand = r.hands[id] ?? [];
-      const hat = win ? '<span class="hat">👑</span>' : r.caller === id ? '<span class="hat">📣</span>' : '';
-      const cls =
-        win || (!over && r.caller === id && r.ok) ? ' win' : !over && r.caller === id && r.ok === false ? ' lose' : '';
-      return (
-        `<div class="row cbr${cls}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val cbpl">${place}.</div>` +
-        `<div class="who"><b>${hat}${nm(id)}${rematchMark(v, id)}</b><span>${rowNote(r, id)}</span></div>` +
-        `<div class="mini cbhand">${hand.map((c) => cardHTML(c)).join('')}</div>` +
-        `<div class="val cbtot" title="Punkte gesamt">${num(r.totals[id])}</div></div>`
-      );
-    })
-    .join('');
-  ov.innerHTML =
-    `<div class="modal"><div class="paper sheet result cbres"><div class="trophy">${icon}</div>` +
-    `<h2>${title}</h2><p class="lead">${lead}</p>` +
-    (rline
-      ? `<p class="taunt rv">${rline}</p>`
-      : tt.text
-        ? `<p class="taunt${tt.good ? ' good' : ''}">${esc(tt.text)}</p>`
-        : '') +
-    `<div class="rows">${rows}</div>${overlayFoot(v, me)}</div></div>`;
-  // Beim ersten Öffnen die eigene Zeile ins Bild holen, bei acht Leuten liegt sie sonst womöglich unten
-  const key = `${v.games}.${v.round}.${v.phase}`;
-  if (OV.key !== key) {
-    OV.key = key;
-    ov.querySelector(`.row[data-pid="${CSS.escape(App.me)}"]`)?.scrollIntoView({ block: 'nearest' });
-  }
+  const rows: SheetRow[] = order.map((id, i) => {
+    const win = over && v.winner === id;
+    const ok = !over && r.caller === id && r.ok;
+    const fail = !over && r.caller === id && r.ok === false;
+    return {
+      id,
+      place: over ? num(pById(v, id)?.place) || i + 1 : i + 1,
+      name: nm(id),
+      hat: win ? '👑' : r.kami === id ? '💥' : r.caller === id ? '📣' : undefined,
+      core: rowNote(r, id, over),
+      val: String(num(r.totals[id])),
+      // Am Rundenende zählen die Karten von Rufer oder Kamikaze, am Partieende nur noch die Punkte
+      cards: over ? undefined : (r.hands[id] ?? []),
+      tone: win || ok ? 'win' : fail ? 'lose' : undefined,
+    };
+  });
+  const tt = overlayTaunt(v, r);
+  return {
+    icon,
+    title,
+    lead,
+    key,
+    taunt: tt.text ? tt : null,
+    bets: '',
+    rows,
+    next: over ? 'game' : 'round',
+    cls: 'cbsheet',
+  };
+}
+
+/** Ergebnis der Runde oder der Partie über das gemeinsame Blatt. */
+export function renderCbOverlay(v: View): void {
+  renderResult(v, cbSheet(v));
 }

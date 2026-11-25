@@ -2,7 +2,8 @@
  * Sichtbare Texte nach CLAUDE.md und Glossar (Stufe 2.7 „Klare Worte“).
  * Teil A rendert jede Logart aus mehreren Blickwinkeln und sucht nach kaputten Sätzen.
  * Teil B liest alle sichtbaren Literale aus dem Quelltext (TypeScript-API, Kommentare fallen dabei weg),
- * dazu die Spruchtöpfe, index.html und die Changelog-Einträge ab 2.7.
+ * dazu die Spruchtöpfe, index.html und die Changelog-Einträge ab 2.7. Jede Vorlage aus src/content/texts wird
+ * zusätzlich gerendert geprüft, und src/game muss textfrei bleiben (nur Codes, keine Sätze in return-Zeilen).
  * Teil C prüft die Spruchtöpfe selbst (Spielnamen, Platzhalter, Bedingungen, Kronen).
  * Jede Prüfung sammelt alle Funde und vergleicht am Ende mit einer leeren Liste, damit die Ausgabe vollständig ist.
  */
@@ -19,11 +20,15 @@ import tauntsCabo from '../../src/content/taunts/cabo.json' with { type: 'json' 
 import tauntsSchnautz from '../../src/content/taunts/schnautz.json' with { type: 'json' };
 import { TAUNTS as tauntsJson } from '../../src/content/taunts';
 import { cmpVersion } from '../../src/content/version';
+import { ctxOfState, REJECT_TEXT, rejectText } from '../../src/content/texts';
+import { REJECT_CODES, rj } from '../../src/game/reject';
+import { newState } from '../../src/game/state';
 import type { GameKind, LogEntry, LogKind, View } from '../../src/game/types';
 import { App } from '../../src/ui/app';
 import { logLine } from '../../src/ui/render/log';
 import { burnAnn } from '../../src/ui/shithead/sequence';
 import { taunt } from '../../src/ui/taunts';
+import { REJECT_SAMPLES } from './helpers';
 
 const ROOT = path.resolve(__dirname, '../..');
 
@@ -548,6 +553,109 @@ describe('Teil B: sichtbare Texte im Quelltext', () => {
   it('hält CLAUDE.md und das Glossar ein', () => {
     const hits: string[] = [];
     for (const u of units) for (const r of check(u.text, RULES)) hits.push(`${u.at} ${r}: „${u.text}“`);
+    expect(hits).toEqual([]);
+  });
+
+  it('liest jede Datei des Textkatalogs', () => {
+    const dir = path.join(ROOT, 'src/content/texts');
+    const missing = fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith('.ts') && f !== 'index.ts')
+      .filter((f) => !units.some((u) => u.at.startsWith(`src/content/texts/${f}:`)));
+    expect(missing).toEqual([]);
+  });
+
+  it('rendert jede Ablehnung aus jedem Blickwinkel nach denselben Regeln', () => {
+    const st = newState('a', 'Lena');
+    st.players.push({ ...st.players[0], id: 'b', name: 'Tom & Jo' }, { ...st.players[0], id: 'c', name: 'Elfi' });
+    // Beispiele zeigen auf echte Plätze, damit Namen und „du“ wirklich eingesetzt werden
+    const seat = (k: string, v: string | number) => (k === 'p' || k === 'on' ? 'b' : v);
+    const hits: string[] = [];
+    for (const e of REJECT_CODES) {
+      const a = Object.fromEntries(Object.entries(REJECT_SAMPLES[e] ?? {}).map(([k, v]) => [k, seat(k, v)]));
+      const r = rj(e, Object.keys(a).length ? a : undefined);
+      for (const me of ['a', 'b', 'o']) {
+        const t = rejectText(r, ctxOfState(st, me), '');
+        if (!t) hits.push(`${e} aus Sicht von ${me}: leer`);
+        for (const rule of check(t, [...RENDER_RULES, ...RULES])) hits.push(`${e} aus Sicht von ${me} ${rule}: „${t}“`);
+      }
+    }
+    expect(Object.keys(REJECT_TEXT).length).toBe(REJECT_CODES.length);
+    expect(hits).toEqual([]);
+  });
+
+  it('prüft jede feste Vorlage aus src/content/texts, auch in Listen und Gruppen', async () => {
+    const dir = path.join(ROOT, 'src/content/texts');
+    const hits: string[] = [];
+    let seen = 0;
+    const visitValue = (where: string, v: unknown, depth: number): void => {
+      if (typeof v === 'string') {
+        // {p} und Co. sind in festen Vorlagen erlaubt, sie werden erst beim Rendern ersetzt
+        const t = v.replace(/\{\w+\}/g, 'Lena');
+        if (!looksVisible(t)) return;
+        seen++;
+        for (const r of check(t, [...TEMPLATE_RULES, ...RULES])) hits.push(`${where} ${r}: „${v}“`);
+      } else if (v && typeof v === 'object' && depth < 4)
+        for (const [k, x] of Object.entries(v)) visitValue(`${where}.${k}`, x, depth + 1);
+    };
+    for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.ts') && x !== 'index.ts')) {
+      const mod = (await import(path.join(dir, f))) as Record<string, unknown>;
+      for (const [name, v] of Object.entries(mod)) visitValue(`${f} ${name}`, v, 0);
+    }
+    expect(seen).toBeGreaterThan(50);
+    expect(hits).toEqual([]);
+  });
+});
+
+/** Für feste Vorlagen gelten die Regeln fürs Zusammensetzen, nur Platzhalter und „Jemand“ sind dort gewollt */
+const TEMPLATE_RULES = RENDER_RULES.filter(
+  ([name]) => name !== '„Jemand“ statt Name' && name !== 'Platzhalter oder leerer Wert',
+);
+
+/**
+ * Sätze in src/game: Die Spiellogik liefert Codes (src/game/reject.ts), Texte baut der Katalog. Gesucht werden
+ * Literale mit mindestens zwei Wörtern in return-Zeilen und kurzen Pfeilfunktionen, `throw new Error` ist erlaubt.
+ */
+function gameSentences(file: string, src: string): Unit[] {
+  const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true);
+  const out: Unit[] = [];
+  const returned = (n: ts.Node): boolean => {
+    for (let p = n.parent; p && !ts.isSourceFile(p) && !ts.isBlock(p); p = p.parent) {
+      if (ts.isNewExpression(p) && /Error$/.test(p.expression.getText(sf))) return false;
+      if (ts.isReturnStatement(p)) return true;
+      if (ts.isArrowFunction(p)) return !ts.isBlock(p.body);
+    }
+    return false;
+  };
+  const visit = (n: ts.Node): void => {
+    const t = literalText(n);
+    const words = t?.match(/[A-Za-zÄÖÜäöüß]{2,}/g)?.length ?? 0;
+    if (t !== null && /\s/.test(t) && words >= 2 && returned(n))
+      out.push({ at: `${file}:${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`, text: t });
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return out;
+}
+
+describe('Teil B: src/game bleibt textfrei', () => {
+  it('findet Sätze in return-Zeilen, aber nicht in Fehlern für Entwickler', () => {
+    const sample = [
+      "function a() { return 'Du bist nicht dran.'; }",
+      'const b = (n: number) => `Noch ${n} Karten.`;',
+      "function c() { return ok ? null : 'Das geht nicht.'; }",
+      "function d() { throw new Error('Kein Zustand da'); }",
+      "function e() { return rj('any.notYourTurn', { p: 'h' }); }",
+      "function f() { return new Error('Kaputter Zustand hier'); }",
+    ].join('\n');
+    expect(gameSentences('probe.ts', sample).map((u) => u.at)).toEqual(['probe.ts:1', 'probe.ts:2', 'probe.ts:3']);
+  });
+
+  it('hat in src/game keine Sätze in return-Zeilen', () => {
+    const hits = walk(path.join(ROOT, 'src/game'))
+      .filter((f) => f.endsWith('.ts'))
+      .flatMap((f) => gameSentences(path.relative(ROOT, f), fs.readFileSync(f, 'utf8')))
+      .map((u) => `${u.at}: „${u.text}“`);
     expect(hits).toEqual([]);
   });
 });
