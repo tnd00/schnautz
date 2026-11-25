@@ -84,6 +84,22 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
       continue;
     }
     moves++;
+    // Die einfache Regel unten kann sich mit der KI im Endspiel endlos im Kreis drehen (Aufnehmen, Asse, Aufnehmen).
+    // Nach 80 eigenen Zügen spielt der Gastgeber deshalb mit der Strategie der KI weiter, deren Partien immer enden.
+    if (moves > 80) {
+      const ok = await host.evaluate((id) => {
+        const w = window.__schnautz;
+        const st = w?.H.st;
+        if (!w || !st || w.SEQ.busy) return false;
+        const a = w.botDecide(w.viewFor(st, id, true));
+        if (!a || w.act(st, id, a)) return false;
+        w.hostCommit();
+        return true;
+      }, me);
+      if (ok) await waitForChange(host, v.n);
+      else await host.waitForTimeout(250);
+      continue;
+    }
     const P = S.P[me];
     const hand = Array.isArray(P.hand) ? P.hand : [];
     // Klicks mit Zeitgrenze: Ganz selten hängt ein Klick in Chrome, dann im nächsten Durchgang neu
