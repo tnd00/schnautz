@@ -226,6 +226,44 @@ describe('Shithead: 4er reinwerfen und Bombe', () => {
     shCardsOk(st);
   });
 
+  it('macht die Person am Zug die Vierer im Fenster voll, ist es eine Bombe ohne außer der Reihe', () => {
+    // Dieselbe Aufstellung wie oben, nur ist diesmal p2 am Zug und wirft die letzten zwei Vieren selbst
+    const { st, S } = shTable(['h', 'p1', 'p2'], 78);
+    const rng = rngF(2);
+    readyAll(st, rng);
+    assert.ok(S.win);
+    give(S, 'h', ['C4', 'H4', 'SK']);
+    give(S, 'p1', ['H9', 'H5', 'HK']);
+    give(S, 'p2', ['S4', 'D4', 'S5']);
+    shCardsOk(st);
+    st.turn = 2;
+    expect(act(st, 'h', { type: 'shthrow' }, rng)).toBeNull();
+    expect(st.log.some((x) => x.k === 'shburn')).toBe(false);
+    expect(act(st, 'p2', { type: 'shthrow' }, rng)).toBeNull();
+    expect(S.pile).toEqual([]);
+    expect(S.burned).toHaveLength(4);
+    expect(st.players[st.turn].id).toBe('p2');
+    expect(st.log.filter((x) => x.k === 'shburn').pop()).toMatchObject({ p: 'p2', four: true, cut: false });
+    shCardsOk(st);
+  });
+
+  it('nennt die vierte 4 nur außer der Reihe, wenn jemand anderes dran war', () => {
+    // h wirft die letzten beiden Vieren, während p1 am Zug ist: außer der Reihe
+    const { st, S } = shTable(['h', 'p1', 'p2'], 78);
+    const rng = rngF(2);
+    readyAll(st, rng);
+    assert.ok(S.win);
+    give(S, 'h', ['C4', 'H4', 'SK']);
+    give(S, 'p1', ['S4', 'D4', 'HK']);
+    give(S, 'p2', ['H9', 'H5', 'S5']);
+    st.turn = 1;
+    expect(act(st, 'p1', { type: 'shthrow' }, rng)).toBeNull();
+    expect(act(st, 'h', { type: 'shthrow' }, rng)).toBeNull();
+    expect(st.log.filter((x) => x.k === 'shburn').pop()).toMatchObject({ p: 'h', four: true, cut: true });
+    expect(st.players[st.turn].id).toBe('h');
+    shCardsOk(st);
+  });
+
   it('öffnet das Fenster nach 10, vier Gleichen, Aufnehmen und Bombe, aber nicht nach einer 2', () => {
     const { st, S } = shTable(['h', 'p1'], 79);
     const rng = rngF(3);

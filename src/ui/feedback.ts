@@ -6,6 +6,12 @@ import { sfxCalm } from './sound';
 
 const ms = (x: number | undefined, d: number) => x || d;
 
+/** Am PC mit Maus heißt es Klicken, sonst Antippen. Erst beim Aufruf gefragt, damit das Modul auch ohne Browser lädt. */
+export function skipHint(): string {
+  const mouse = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
+  return mouse ? 'Klicken zum Überspringen' : 'Antippen zum Überspringen';
+}
+
 export function toast(msg: string, duration?: number): void {
   const el = document.createElement('div');
   el.className = 'toast';
@@ -190,7 +196,7 @@ function annNext(): void {
     (o.icon ? `<div class="ann-ic">${o.icon}</div>` : '') +
     `<div class="ann-t">${o.title}</div>` +
     (o.sub ? `<div class="ann-s">${o.sub}</div>` : '');
-  el.title = 'Antippen zum Überspringen';
+  el.title = skipHint();
   el.addEventListener('click', skipAnnouncement);
   placeInField($('#announce'));
   $('#announce').appendChild(el);
@@ -213,7 +219,7 @@ function annClose(skipped = false): void {
   }, 240);
 }
 
-/** Laufende Meldung überspringen (Antippen, Esc). */
+/** Laufende Meldung überspringen (Antippen, Klicken, Esc). */
 export function skipAnnouncement(): void {
   clearTimeout(ANN.t);
   ANN.curEnd = Date.now();

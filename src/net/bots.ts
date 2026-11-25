@@ -575,7 +575,10 @@ export function botChatter(): void {
         }
         break;
       case 'shthrow':
-        say(bot(e.p), 'throw4', 0.35);
+        // Macht der Wurf die Vier voll, kommt der Bomben-Spruch statt des 4er-Spruchs
+        if (fresh.some((x) => x.k === 'shburn' && x.p === e.p && x.four && x.n > e.n)) {
+          if (bot(e.p)) say(bot(e.p), 'bomb', 0.7);
+        } else say(bot(e.p), 'throw4', 0.35);
         break;
       case 'shblindfail':
         if (!bot(e.p)) say(anyBot(), 'mockBlindFail', 0.3);

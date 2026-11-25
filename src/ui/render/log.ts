@@ -14,7 +14,7 @@ const NUM_WORD: Readonly<Record<number, string>> = { 2: 'zwei', 3: 'drei', 4: 'v
 /** Cabo: was die abgelegte Karte erlaubt, nach "darf" */
 const CB_POWER: Readonly<Record<'peek' | 'spy' | 'swap', string>> = {
   peek: 'eine eigene Karte ansehen',
-  spy: 'bei jemand anderem spicken',
+  spy: 'spionieren',
   swap: 'blind tauschen',
 };
 
@@ -44,9 +44,17 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
         who() + vb(p, ' übernimmst', ' übernimmt') + ' den Platz von <b>' + esc(e.from) + '</b> samt Karten.',
       ];
     case 'tobot':
-      return ['big', who() + ' ist gegangen. Ab jetzt spielt die KI für ' + who() + ' weiter.'];
+      return [
+        'big',
+        who() +
+          vb(
+            p,
+            ' bist gegangen. Ab jetzt spielt die KI für dich weiter.',
+            ' ist gegangen. Ab jetzt spielt die KI für ' + whom(p, e.name) + ' weiter.',
+          ),
+      ];
     case 'timeout':
-      return ['big', '⏱ Zeit um! Für ' + (p === App.me ? 'dich' : who()) + ' zieht jetzt die KI.'];
+      return ['big', '⏰ Zeit um, die KI spielt einmal für ' + whom(p, e.name) + '.'];
     case 'back':
       return ['big', who() + vb(p, ' bist zurück und spielst wieder selbst.', ' ist zurück und spielt wieder selbst.')];
     case 'game':
@@ -71,7 +79,10 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
           '.',
       ];
     case 'shburn':
-      return ['big', (e.four ? 'Bombe! ' : '') + who() + vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.')];
+      return [
+        'big',
+        (e.four ? '💣 Bombe! ' : '🔥 ') + who() + vb(p, ' verbrennst den Stapel.', ' verbrennt den Stapel.'),
+      ];
     case 'shpickup':
       return [
         '',
@@ -110,7 +121,7 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
           vb(p, ' wirfst ', ' wirft ') +
           (e.cards || []).map(cardChip).join(' ') +
           (e.out ? ' außer der Reihe' : '') +
-          ' zur Bombe ein.',
+          ' als Bombe ein.',
       ];
     case 'emote':
       return null;
@@ -182,7 +193,7 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
           who() +
           vb(p, ' wehrst alles ab, ', ' wehrt alles ab, ') +
           cards(e.cnt) +
-          (num(e.cnt) === 1 ? ' ist weg.' : ' sind weg.'),
+          (num(e.cnt) === 1 ? ' geht auf den Bito-Stapel.' : ' gehen auf den Bito-Stapel.'),
       ];
     case 'dkpickup':
       return [
@@ -190,16 +201,13 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
         who() + vb(p, ' nimmst ', ' nimmt ') + cards(e.cnt) + ' auf.' + (num(e.cnt) >= 8 ? ' Schöner Fächer.' : ''),
       ];
     case 'dkout':
-      return [
-        'big',
-        who() + vb(p, ' hast keine Karten mehr! Platz ', ' hat keine Karten mehr! Platz ') + num(e.place) + '.',
-      ];
+      return ['big', who() + vb(p, ' bist fertig! Platz ', ' ist fertig! Platz ') + num(e.place) + '.'];
     case 'dkend':
       return [
         'big',
         e.p
           ? LOSER_MARK.durak + ' ' + who() + vb(p, ' bist der Durak!', ' ist der Durak!')
-          : 'Unentschieden! Die Letzten sind gleichzeitig raus, einen Durak gibt es diesmal nicht.',
+          : '🤝 Unentschieden! Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.',
       ];
     case 'cbdeal':
       return ['round', 'Runde ' + num(e.r) + ' · ' + esc(nameOf(v, e.start)) + vb(e.start, ' fängst an', ' fängt an')];
@@ -231,7 +239,7 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
             chips(e.out) +
             ').',
         ];
-      return ['', who() + vb(p, ' tauschst und wirfst ', ' tauscht und wirft ') + chips(e.out) + ' ab.'];
+      return ['', who() + vb(p, ' tauschst ein und wirfst ', ' tauscht ein und wirft ') + chips(e.out) + ' ab.'];
     }
     case 'cbdiscard':
       return [
@@ -246,7 +254,7 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
     case 'cbpeek':
       return ['', who() + vb(p, ' schaust dir eine eigene Karte an.', ' schaut sich eine eigene Karte an.')];
     case 'cbspy':
-      return ['', '👀 ' + who() + vb(p, ' spionierst ', ' spioniert ') + whom(e.to, e.tn) + ' aus.'];
+      return ['', '🔍 ' + who() + vb(p, ' spionierst ', ' spioniert ') + whom(e.to, e.tn) + ' aus.'];
     case 'cbblind':
       return [
         '',
@@ -284,9 +292,10 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
           CB_KAMI +
           '.';
       else if (c && e.ok === true)
-        head = W(v, c) + vb(c, ' hattest mit Cabo recht, 0 Punkte.', ' hatte mit Cabo recht, 0 Punkte.');
+        head = '🎯 ' + W(v, c) + vb(c, ' hattest mit Cabo recht, 0 Punkte.', ' hatte mit Cabo recht, 0 Punkte.');
       else if (c && e.ok === false)
         head =
+          '🙈 ' +
           W(v, c) +
           vb(c, ' hast dich mit Cabo verzockt, ', ' hat sich mit Cabo verzockt, ') +
           CB_PENALTY +
@@ -317,7 +326,7 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
               who() +
               vb(p, ' verteidigst die Krone und bleibst Cabo-König!', ' verteidigt die Krone und bleibt Cabo-König!')
             : '👑 ' + who() + vb(p, ' bist der neue Cabo-König!', ' ist der neue Cabo-König!')
-          : 'Gleichstand ganz vorne! Diesmal gibt es keinen neuen Cabo-König.',
+          : '🤝 Unentschieden! Vorne liegen mehrere gleichauf. Diesmal gibt es keinen neuen Cabo-König.',
       ];
     case 'lobby':
       return ['sys', 'Zurück in der Lobby.'];
@@ -360,10 +369,14 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
       ];
     case 'result': {
       const parts: string[] = [];
-      if (e.reason === 'schnautz') parts.push('Schnautz! ' + who() + vb(p, ' hast 31.', ' hat 31.'));
-      else if (e.reason === 'feuer') parts.push('Feuer! ' + who() + vb(p, ' hast drei Asse.', ' hat drei Asse.'));
+      // Wer 31 oder Feuer hat, steht in `by`, nicht in `p`
+      const by = e.by;
+      const byName = () => W(v, by, by ? e.names?.[by] : undefined);
+      if (e.reason === 'schnautz' && by) parts.push('Schnautz! ' + byName() + vb(by, ' hast 31.', ' hat 31.'));
+      else if (e.reason === 'feuer' && by)
+        parts.push('Feuer! ' + byName() + vb(by, ' hast drei Asse.', ' hat drei Asse.'));
       else parts.push('Aufgedeckt.');
-      if (e.tie) parts.push('Gleichstand, niemand verliert ein Leben.');
+      if (e.tie) parts.push('Gleichstand. Niemand verliert ein Leben.');
       Object.keys(e.changes || {}).forEach((id) => {
         const c = e.changes[id],
           w = W(v, id, e.names?.[id]);

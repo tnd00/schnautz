@@ -10,7 +10,7 @@ import { confetti, dropOn } from './animations';
 import { App } from './app';
 import { focusOpp, CAR_GLIDE_MS } from './carousel';
 import { $opt, esc, num, reduceMotion, type Timer } from './dom';
-import { announce, dropAnnouncements, holdForAnnouncements, holdOverlay, panelFor } from './feedback';
+import { announce, dropAnnouncements, holdForAnnouncements, holdOverlay, panelFor, skipHint } from './feedback';
 import { nameOf, pById } from './helpers';
 import { render } from './render/index';
 import { renderLog } from './render/log';
@@ -295,7 +295,7 @@ function message(v: View, e: EndEntry): { title: string; sub: string } {
   const bet = (v.sh?.bets ?? v.dk?.bets)?.[App.me];
   if (hit) sub += `<span class="tt bt">🔮 Richtig getippt! +${num(hit.q)} ${hit.q === 1 ? 'Punkt' : 'Punkte'}.</span>`;
   else if (bet && typeof bet.on === 'string') sub += '<span class="tt bt">🔮 Tipp daneben.</span>';
-  sub += '<span class="zer-hint">Antippen zum Überspringen</span>';
+  sub += `<span class="zer-hint">${skipHint()}</span>`;
   const cls = look.crown ? 'g' : 'r';
   return {
     title: mine

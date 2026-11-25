@@ -427,9 +427,10 @@ function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: num
       addLog(st, { k: 'shthrow', p: pid, cards, src: t.src });
       st.last = { k: 'shplay', p: pid, n: st.n, cards, src: t.src, thrown: true };
       if (shFour(st)) {
-        // Die vierte 4 ist eine Bombe: Wer sie reinwirft, ist dran
+        // Die vierte 4 ist eine Bombe: Wer sie reinwirft, ist dran. Außer der Reihe nur, wenn jemand anderes dran war
+        const out = pi !== st.turn;
         S.win = null;
-        shBurnNow(st, pid, true);
+        shBurnNow(st, pid, out);
         st.turn = pi;
         shFinishCheck(st, pid, 0);
         // Ohne Bombe bleibt die Reihenfolge. Nur wer am Zug war und jetzt fertig ist, gibt weiter

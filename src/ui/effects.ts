@@ -3,7 +3,7 @@ import type { LogEntry, View } from '../game/types';
 import { confetti, emojiFly } from './animations';
 import { App } from './app';
 import { $opt, esc, listJoin, num } from './dom';
-import { REMATCH_ANN_MS, SUIT_SYM } from '../game/constants';
+import { CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO, REMATCH_ANN_MS, SUIT_SYM } from '../game/constants';
 import {
   type Announcement,
   announce,
@@ -49,14 +49,8 @@ export function effects(prev: View, v: View, seqd = false): void {
         icon: '⏰',
         tone: 'red',
         title: 'Zeit um!',
-        sub:
-          prev.phase === 'swap'
-            ? 'Die KI hat für dich getauscht.'
-            : prev.phase === 'peek'
-              ? 'Die KI hat zwei Karten für dich aufgedeckt. Schnell merken!'
-              : prev.game === 'cabo'
-                ? 'Die KI hat deinen Zug gemacht.'
-                : 'Die KI hat für dich gezogen.',
+        // Ein Satz für alle Spiele, nur beim Ansehen zu Beginn einer Cabo-Runde zeigt die KI zwei Karten
+        sub: prev.phase === 'peek' ? 'Die KI hat dir zwei Karten gezeigt.' : 'Die KI hat einmal für dich gespielt.',
         ms: 2000,
       });
     }
@@ -66,7 +60,9 @@ export function effects(prev: View, v: View, seqd = false): void {
         icon: '✊',
         tone: 'wood',
         title: mine ? 'Du klopfst!' : 'Klopf, klopf!',
-        sub: mine ? 'Alle anderen haben noch einen Zug.' : N(e.p, e.name) + ' klopft. Jeder andere hat noch einen Zug.',
+        sub: mine
+          ? 'Alle anderen haben noch einen Zug.'
+          : N(e.p, e.name) + ' klopft. Alle anderen haben noch einen Zug.',
       });
       if (!mine) shakePanel(e.p);
     }
@@ -142,12 +138,16 @@ export function effects(prev: View, v: View, seqd = false): void {
         title = 'Schnautz!';
         icon = '⭐';
         tone = 'gold';
-        lines.unshift(N(e.by) + vb(e.by, ' hast', ' hat') + ' 31.');
+        lines.unshift(N(e.by, e.by ? e.names?.[e.by] : undefined) + vb(e.by, ' hast', ' hat') + ' 31.');
       } else if (e.reason === 'feuer') {
         title = 'Feuer!';
         icon = '🔥';
         tone = 'red';
-        lines = [N(e.by) + vb(e.by, ' hast', ' hat') + ' drei Asse. Alle anderen verlieren ein Leben.'];
+        lines = [
+          N(e.by, e.by ? e.names?.[e.by] : undefined) +
+            vb(e.by, ' hast', ' hat') +
+            ' drei Asse. Alle anderen verlieren ein Leben.',
+        ];
       } else {
         title = 'Aufgedeckt!';
         icon = '🃏';
@@ -167,7 +167,7 @@ export function effects(prev: View, v: View, seqd = false): void {
       if (tt) lines.push('<span class="tt">' + esc(tt) + '</span>');
       if (c) {
         tone = c.to === 'swim' ? 'sea' : 'red';
-        icon = c.to === 'out' ? '🚪' : c.to === 'swim' ? '🏊' : '🍺';
+        icon = c.to === 'out' ? '🫧' : c.to === 'swim' ? '🛟' : '💔';
       } else if (best.indexOf(App.me) >= 0 && ids.length && e.reason !== 'feuer') {
         tone = 'gold';
         icon = '👑';
@@ -251,8 +251,10 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
   if (seqd) return;
   const mine = e.p === App.me;
   const N = (id: string | null | undefined, fb?: string) => esc(nameOf(v, id, fb));
-  /** Wen etwas trifft, aus Sicht dieses Browsers: dich statt Du */
+  /** Wen etwas trifft, aus Sicht dieses Browsers: dich statt Du. Für Ansagen (HTML, maskiert) */
   const whom = (id: string | null | undefined, fb?: string) => (id === App.me ? 'dich' : N(id, fb));
+  /** Dasselbe als reiner Text für floatLabel, das selbst nur textContent setzt */
+  const whomText = (id: string | null | undefined, fb?: string) => (id === App.me ? 'dich' : nameOf(v, id, fb));
   const cards = (n: number) => `${n} ${n === 1 ? 'Karte' : 'Karten'}`;
   // Endet die Partie im selben Schub, haben Sprüche zum einzelnen Angriff Pause bis nach der Enthüllung
   const ending = fresh.some((x) => x.k === 'dkend');
@@ -278,7 +280,7 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
       return;
     case 'dktransfer': {
       sfx('knock');
-      const to = whom(e.to, e.tn ?? 'den Nächsten');
+      const to = whomText(e.to, e.tn ?? 'den Nächsten');
       setTimeout(() => floatLabel(e.p, `schiebt weiter an ${to}`, `schiebst weiter an ${to}`), 60);
       if (e.to === App.me && !mine) tauntLabel(taunt('dkTransferOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
       return;
@@ -316,7 +318,7 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
       announce({
         icon: solo ? '🥇' : '✅',
         tone: 'gold',
-        title: N(e.p, e.name) + vb(e.p, ' bist raus!', ' ist raus!'),
+        title: N(e.p, e.name) + vb(e.p, ' bist fertig!', ' ist fertig!'),
         sub:
           'Platz ' +
           num(e.place) +
@@ -335,7 +337,7 @@ function durakEffect(prev: View, v: View, e: DkEntry, fresh: LogEntry[], seqd: b
           icon: '🤝',
           tone: 'gold',
           title: 'Unentschieden!',
-          sub: 'Die Letzten sind gleichzeitig raus. Diesmal gibt es keinen Durak.',
+          sub: 'Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.',
           ms: 2600,
         });
         // Das Ergebnisfenster wartet, bis die Meldungen durch sind
@@ -351,7 +353,7 @@ const isCb = (e: LogEntry): e is CbEntry => e.k.startsWith('cb');
 
 /** Was eine abgelegte Karte erlaubt, als kurzer Hinweis am Platz. */
 const CB_POWER_LABEL = {
-  peek: ['darf eigene ansehen', 'darfst eigene ansehen'],
+  peek: ['darf eine eigene Karte ansehen', 'darfst eine eigene Karte ansehen'],
   spy: ['darf spionieren', 'darfst spionieren'],
   swap: ['darf blind tauschen', 'darfst blind tauschen'],
 } as const;
@@ -360,7 +362,8 @@ const CB_POWER_LABEL = {
 function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
   const mine = e.p === App.me;
   const N = (id: string | null | undefined, fb?: string) => esc(nameOf(v, id, fb));
-  const whom = (id: string | null | undefined, fb?: string) => (id === App.me ? 'dir' : N(id, fb));
+  /** Name nach „bei“ oder „mit“ als reiner Text, nur für floatLabel (setzt textContent, maskiert selbst) */
+  const toWhom = (id: string | null | undefined, fb?: string) => (id === App.me ? 'dir' : nameOf(v, id, fb));
   // Endet die Partie im selben Schub, wartet alles Kleine bis nach der Krönung
   const ending = fresh.some((x) => x.k === 'cbend');
   switch (e.k) {
@@ -408,7 +411,7 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
       return;
     case 'cbspy':
       if (mine) return;
-      setTimeout(() => floatLabel(e.p, `spioniert bei ${whom(e.to, e.tn)}`), 60);
+      setTimeout(() => floatLabel(e.p, `spioniert bei ${toWhom(e.to, e.tn)}`), 60);
       if (e.to === App.me) {
         sfx('knock');
         if (e.n % 2 === 0) tauntLabel(taunt('cbSpyOnMe', { name: nameOf(v, e.p, e.name) }, e.n));
@@ -417,7 +420,7 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
     case 'cbblind':
       sfx('smack');
       setTimeout(
-        () => floatLabel(e.p, `tauscht blind mit ${whom(e.to, e.tn)}`, `tauschst blind mit ${whom(e.to, e.tn)}`),
+        () => floatLabel(e.p, `tauscht blind mit ${toWhom(e.to, e.tn)}`, `tauschst blind mit ${toWhom(e.to, e.tn)}`),
         60,
       );
       if (e.to === App.me && !mine) {
@@ -439,7 +442,7 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
         icon: '📣',
         tone: 'red',
         title: mine ? 'Du rufst Cabo!' : `${N(e.p, e.name)} ruft Cabo!`,
-        sub: `${mine ? 'Alle anderen haben' : 'Jeder andere hat'} noch einen Zug.<span class="tt">${esc(t)}</span>`,
+        sub: `Alle anderen haben noch einen Zug.<span class="tt">${esc(t)}</span>`,
         ms: 2400,
       });
       return;
@@ -465,15 +468,15 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
         icon = '💥';
         title = 'Kamikaze!';
         tone = 'red';
-        sub = `${N(e.kami)}${vb(e.kami, ' hast', ' hat')} zwei Damen und zwei schwarze Könige. Alle anderen bekommen 50.`;
+        sub = `${N(e.kami)}${vb(e.kami, ' hast', ' hat')} zwei Damen und zwei schwarze Könige. Alle anderen bekommen ${CB_KAMI}.`;
         sfx('bomb');
       } else if (e.caller) {
-        icon = e.ok ? '🎯' : '🤡';
+        icon = e.ok ? '🎯' : '🙈';
         title = e.ok ? 'Cabo geschafft!' : 'Cabo daneben!';
         tone = e.ok ? 'gold' : 'red';
         sub = e.ok
           ? `${N(e.caller)}${vb(e.caller, ' hattest', ' hatte')} am wenigsten.`
-          : `${N(e.caller)}${vb(e.caller, ' bekommst', ' bekommt')} 10 Strafpunkte obendrauf.`;
+          : `${N(e.caller)}${vb(e.caller, ' bekommst', ' bekommt')} ${CB_PENALTY} Strafpunkte obendrauf.`;
         setTimeout(() => sfx(e.ok === (e.caller === App.me) ? 'win' : 'lose'), 250);
       }
       announce({ icon, tone, title, sub, ms: ending ? 1600 : 2200 });
@@ -482,7 +485,12 @@ function caboEffect(prev: View, v: View, e: CbEntry, fresh: LogEntry[]): void {
     }
     case 'cbreset':
       setTimeout(
-        () => floatLabel(e.p, 'landet genau auf 100 und fällt auf 50', 'landest genau auf 100 und fällst auf 50'),
+        () =>
+          floatLabel(
+            e.p,
+            `landet genau auf ${CB_RESET_AT} und fällt auf ${CB_RESET_TO}`,
+            `landest genau auf ${CB_RESET_AT} und fällst auf ${CB_RESET_TO}`,
+          ),
         400,
       );
       return;

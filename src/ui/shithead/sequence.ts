@@ -64,18 +64,21 @@ export function resetSeq(): void {
 
 export function burnAnn(v: View, e: Entry<'shburn'>): Announcement {
   const nm = nameOf(v, e.p, e.name);
+  const mine = e.p === App.me;
+  // `cut` heißt außer der Reihe: Jemand anderes war dran. Nur dann kommen die Sprüche übers Dazwischenfunken
   if (e.cut) {
-    const t = e.p === App.me ? taunt('bombSelf', null, e.n) : taunt('bombOther', { name: nm }, e.n);
+    const t = mine ? taunt('bombSelf', null, e.n) : taunt('bombOther', { name: nm }, e.n);
     return { icon: '💣', tone: 'red', title: 'Bombe!', sub: `<span class="tt">${esc(t)}</span>`, ms: 2000 };
   }
-  // Vier Gleiche heißen auch im eigenen Zug Bombe
+  // Vier Gleiche heißen auch im eigenen Zug Bombe. Erst die Tatsache, dann der Spruch
   if (e.four) {
+    const t = mine ? taunt('fourSelf', null, e.n) : taunt('fourOther', { name: nm }, e.n);
     return {
       icon: '💣',
       tone: 'red',
       title: 'Bombe!',
-      sub: `${esc(nm)}${vb(e.p, ' machst', ' macht')} die vier voll. Der Stapel ist weg.`,
-      ms: 1500,
+      sub: `${esc(nm)}${vb(e.p, ' machst', ' macht')} die vier voll.<span class="tt">${esc(t)}</span>`,
+      ms: 2000,
     };
   }
   return {

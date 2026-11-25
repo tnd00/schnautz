@@ -1,18 +1,18 @@
 {
   "screen": {
     "shLoserSelf": [
-      "Glückwunsch, der Titel gehört dir. Trag ihn mit Würde 👑",
+      "Glückwunsch, der Titel gehört dir. Trag ihn mit Würde 💩",
       "Einer muss es ja sein. Heute bist es halt du.",
       "Shithead steht dir erstaunlich gut.",
       "Die Karten waren schuld. Ganz sicher. Bestimmt.",
       "Letzter Platz ist auch fast ein Platz auf dem Treppchen.",
       "Du darfst jetzt mischen. Ehrenamt verpflichtet 💩",
-      "Kopf hoch, sonst rutscht die Krone.",
+      "Kopf hoch. Die nächste Partie kann nur besser werden.",
       "Revanche? Du hast sie dringend nötig."
     ],
     "shLoserOther": [
       "{name} ist Shithead. Bitte alle einmal mitfühlend nicken.",
-      "Applaus für {name}, frisch gekrönt zum Shithead 💩",
+      "Applaus für {name}, frisch gekürt zum Shithead 💩",
       "{name} hat sich den Titel redlich erarbeitet.",
       "Irgendwer musste es werden. Danke, {name}!",
       "{name} mischt die nächste Runde. So will es das Gesetz.",
@@ -46,12 +46,12 @@
       "{name} hatte die schwächste Hand. Kommt vor. Hier öfter.",
       "Da schrumpft das Polster von {name}. Wie schade aber auch.",
       "{name} zahlt die Runde mit einem Leben.",
-      "Schon wieder {name}? Na gut, das Leben nehmen wir gern.",
+      "Ausgerechnet {name}? Na gut, das Leben nehmen wir gern.",
       "{name} verliert ein Leben. Die Fassung hoffentlich nicht.",
       "Leben adé, {name}. Das kommt nicht wieder 👋"
     ],
     "scSwimSelf": [
-      "Du schwimmst. Schwimmflügel nicht vergessen 🏊",
+      "Du schwimmst. Schwimmflügel nicht vergessen 🛟",
       "Alle Leben weg. Ab jetzt wird gepaddelt.",
       "Willkommen im tiefen Wasser. Ist frisch, oder?",
       "Noch ein Patzer, dann gehst du unter. Kein Druck.",
@@ -62,7 +62,7 @@
     ],
     "scSwimOther": [
       "{name} schwimmt! Wirft wer einen Rettungsring? Nein? Gut.",
-      "{name} paddelt jetzt um alles 🏊",
+      "{name} paddelt jetzt um alles 🛟",
       "Kein Leben mehr bei {name}. Ab jetzt wird es nass.",
       "{name} ist im tiefen Becken angekommen.",
       "Noch ein Fehler, dann geht {name} baden 🌊",
@@ -157,32 +157,52 @@
       "Der Stapel brennt. Die anderen gucken nur noch.",
       "Niemand hat dich gefragt. Genau deshalb war es so schön.",
       "Vier voll, Stapel Asche. Das saß.",
-      "Reingeworfen, abgeräumt, breit gegrinst 😏",
+      "Eingeworfen, abgeräumt, breit gegrinst 😏",
       "Das nennt man Timing. Die anderen nennen es anders."
     ],
     "bombOther": [
       "{name} funkt dazwischen. Vier Gleiche, Stapel weg 💣",
-      "Bumm! {name} hat einfach reingeworfen. Frechheit.",
+      "Bumm! {name} hat einfach eingeworfen. Frechheit.",
       "{name} war gar nicht dran. Abgeräumt wird trotzdem.",
       "Der Stapel brennt. Bedank dich bei {name} 🔥",
       "{name} drängelt sich vor. Jetzt steht alles in Flammen.",
       "Bombe von {name}. Dein schöner Plan ist jetzt Asche.",
-      "Da war {name} schneller, als erlaubt sein sollte.",
+      "Da war {name} schneller als du. Völlig erlaubt, trotzdem gemein.",
       "{name} macht die Vier voll. Warst du mitten im Zug? Schade."
     ],
+    "fourSelf": [
+      "Vier Gleiche, Stapel weg. Sauber 💣",
+      "Vollgemacht und abgefackelt. So geht das.",
+      "Der Stapel hatte gegen dich keine Chance.",
+      "Vier auf einen Streich. Die anderen schauen nur zu.",
+      "Bumm! Der Stapel ist Geschichte.",
+      "Stapel Asche, Hand leichter. So soll das sein 😏",
+      "Vier Gleiche. Das war kein Glück, das war Planung. Oder doch Glück.",
+      "Einmal alles abfackeln, bitte. Gern geschehen 🔥"
+    ],
+    "fourOther": [
+      "{name} räumt den Stapel ab. Einfach so.",
+      "Vier Gleiche von {name}. Das war bestimmt Absicht.",
+      "Der Stapel ist weg. {name} grinst schon.",
+      "{name} macht kurzen Prozess mit dem Stapel 💣",
+      "Bumm! {name} hat aufgeräumt. Danke für nichts.",
+      "{name} legt die Vierte drauf. Tschüss, Stapel 👋",
+      "Asche statt Stapel. Bedank dich bei {name} 🔥",
+      "{name} fackelt alles ab. Da war wohl jemand vorbereitet."
+    ],
     "betOnMe": [
-      "{name} tippt auf dich als Shithead. Zeig, dass das Quatsch ist!",
-      "{name} hält dich für den Shithead. Frechheit.",
+      "{name} tippt auf dich als {what}. Zeig, dass das Quatsch ist!",
+      "{name} hält dich für den {what}. Frechheit.",
       "{name} setzt auf dich. Als Verlierer. Autsch.",
       "Die Kristallkugel von {name} sieht dich ganz hinten 🔮",
       "{name} wettet gegen dich. Das schreit nach Rache.",
       "{name} glaubt nicht an dich. Noch nicht.",
-      "Laut {name} bist du heute der Shithead. Wirklich?",
+      "Laut {name} bist du heute der {what}. Wirklich?",
       "{name} hat dich getippt. Mach daraus eine Pleite für {name}."
     ],
     "dkLoserSelf": [
       "Du bist Durak. Die Narrenkappe passt wie angegossen 🤡",
-      "Alle sind raus, nur du hältst noch Karten. Schöner Fächer übrigens.",
+      "Alle sind fertig, nur du hältst noch Karten. Schöner Fächer übrigens.",
       "Durak heißt Narr. Das weißt du jetzt aus erster Hand.",
       "Die anderen sind fertig. Du bist es auch, nur auf andere Art.",
       "Die Kappe gehört dir, bis jemand anders patzt. Kann dauern.",
@@ -212,7 +232,7 @@
       "So geht Durak. Wer Fragen hat, meldet sich später.",
       "Vor allen anderen fertig. Fast schon unverschämt.",
       "Zuerst alle Karten los. Die Kappe holt sich jemand anders 👋",
-      "Raus aus der Nummer. Die Kappe hätte dir eh nicht gestanden.",
+      "Fertig, bevor es eng wurde. Die Kappe hätte dir eh nicht gestanden.",
       "Du bist durch. Die anderen verteidigen jetzt nur noch ihre Ehre."
     ],
     "dkTakeSelf": [
@@ -271,9 +291,9 @@
       "Plötzlich verteidigst du. {name} lächelt ganz unschuldig."
     ],
     "dkBitoSelf": [
-      "Alles geschlagen. Weg damit 🧹",
+      "Alles geschlagen. Bito! 🧹",
       "Abgewehrt! Die Angreifer dürfen sich warm anziehen 😏",
-      "Kein Kratzer. Die Karten wandern auf den Abwurf.",
+      "Kein Kratzer. Die Karten wandern auf den Bito-Stapel.",
       "Sauber verteidigt. Die anderen schauen ganz bedröppelt.",
       "Mauer gebaut, Angriff abgeprallt.",
       "Das war eine Abwehr wie aus dem Lehrbuch.",
@@ -424,7 +444,7 @@
       "{name} hat getauscht. Hoffentlich war es nicht deine beste Karte."
     ],
     "cbSpyOnMe": [
-      "{name} hat in deine Karten geguckt. Unverschämt 👀",
+      "{name} hat in deine Karten geguckt. Unverschämt 🔍",
       "{name} kennt jetzt eine deiner Karten. Du hoffentlich auch.",
       "Neugierig, {name}? Eine deiner Karten ist jetzt kein Geheimnis mehr.",
       "{name} schaut dir in die Karten. Bitte nicht rot werden.",
@@ -509,13 +529,13 @@
       "Der Stapel hat schon nach dir gerufen 📣"
     ],
     "bomb": [
-      "Bumm! Entschuldigung, war ich nicht dran? 💣",
+      "Bumm! Vier Gleiche, Stapel weg 💣",
       "Vier Gleiche. Musste einfach sein, sorry.",
-      "Ich funk mal kurz dazwischen. Stapel ist weg.",
+      "Stapel ist weg. Ich hab mal kurz aufgeräumt.",
       "Ihr wart mir zu langsam, da hab ich abgeräumt 🔥",
       "Hoppla, ist mir so aus der Hand gerutscht.",
       "Der Stapel hat mich angeschaut. Ich musste ihn anzünden.",
-      "Dazwischengrätschen kann ich am besten."
+      "Bomben werfen kann ich am besten."
     ],
     "throw4": [
       "Meine 4 ist drin. Wo bleibt ihr?",

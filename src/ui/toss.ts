@@ -338,7 +338,8 @@ export function markTosses(): void {
       const s = document.createElement('span');
       s.className = `tossmark ${m.item}`;
       if (m.until - now <= FADE_MS) s.classList.add('out');
-      s.title = `${TOSS_TEXT[m.item].title} ${nameOf(m.by)}`;
+      // „Tomate von dir“, nie „von Du“
+      s.title = `${TOSS_TEXT[m.item].title} ${m.by === App.me ? 'dir' : nameOf(m.by)}`;
       s.style.animationDelay = `-${now - m.at}ms`;
       if (BLOB.includes(m.item)) s.innerHTML = '<i></i><i></i><i></i>';
       else s.textContent = TOSS_ICON[m.item];

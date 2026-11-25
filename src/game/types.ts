@@ -421,6 +421,7 @@ export type LogEntry = LogBase &
     | { k: 'shplay'; cards: Card[]; src: ShSource }
     | { k: 'shthrow'; cards: Card[]; src?: ShSource }
     | { k: 'shbomb'; cards: Card[]; src: ShSource; out: boolean }
+    /** cut: außer der Reihe, jemand anderes war dran (nicht zu verwechseln mit rules.sh.cut, der Regel „Bombe einwerfen“) */
     | { k: 'shburn'; four: boolean; cut: boolean }
     | { k: 'shpickup'; cnt: number }
     | { k: 'shblindfail'; card: Card; cnt: number }
