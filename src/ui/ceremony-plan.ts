@@ -41,6 +41,8 @@ export interface Stage {
   count: (v: View, pid: string) => number;
   /** Zug für die Zeitlupe, heute nur Shithead */
   slow: (fresh: readonly LogEntry[]) => PlayEntry | null;
+  /** So lange nach dem Ablauf (und einer Zeitlupe) beginnt ungefähr die Enthüllung */
+  leadMs: number;
 }
 
 export type CeremonyPlan = { kind: 'none' } | Stage;
@@ -82,6 +84,11 @@ export const slowExtraMs = (e: { cards?: Card[] }): number =>
 
 const noSlow = (): null => null;
 
+/** Fertig-Meldung, kurze Pause und Anlauf der Bühne bis zur Enthüllung */
+const DONE_LEAD_MS = ZER_SHDONE_MS + 240 + 600;
+/** Lief im letzten Zug die Uhr ab, steht vorher noch „Zeit um!“ da (src/ui/effects.ts, 2000 ms plus Pause) */
+const TIMEOUT_LEAD_MS = 2240;
+
 /** Wie die Zeremonie in diesem Spiel aussieht und klingt. Schnautz hat (noch) keine. */
 export function planOf(game: GameKind): CeremonyPlan {
   switch (game) {
@@ -98,6 +105,7 @@ export function planOf(game: GameKind): CeremonyPlan {
         taunts: { self: 'shLoserSelf', other: 'shLoserOther' },
         count: (v, id) => num(seat(v, id)?.shc),
         slow: decisivePlay,
+        leadMs: DONE_LEAD_MS,
       };
     case 'durak':
       return {
@@ -112,6 +120,8 @@ export function planOf(game: GameKind): CeremonyPlan {
         taunts: { self: 'dkLoserSelf', other: 'dkLoserOther' },
         count: (v, id) => num(seat(v, id)?.dkc),
         slow: noSlow,
+        // Wer zuletzt rausgeht, steht wie bei Shithead kurz als Fertig-Meldung da
+        leadMs: DONE_LEAD_MS,
       };
     case 'cabo':
       return {
@@ -126,6 +136,8 @@ export function planOf(game: GameKind): CeremonyPlan {
         taunts: { self: 'cbKingSelf', other: 'cbKingOther', stays: 'cbKingStays' },
         count: (v, id) => num(seat(v, id)?.stats?.cabo?.wins),
         slow: noSlow,
+        // Vor der Krönung steht die Rundenmeldung (1600 ms plus Pause), das trifft ungefähr dieselbe Zeit
+        leadMs: DONE_LEAD_MS,
       };
     case 'schnautz':
       // Schnautz schreibt kein Partieende mit Zeremonie, ein alter Eintrag im Verlauf darf keine 💩-Show auslösen
@@ -135,24 +147,15 @@ export function planOf(game: GameKind): CeremonyPlan {
   }
 }
 
-/** Ungefähr ab hier läuft die Shithead-Enthüllung. Die KI wartet so lange mit Spott und Würfen. */
-export function zerRevealDelay(fresh: readonly LogEntry[], seqMs: number): number {
-  return delayOf(decisivePlay, fresh, seqMs);
-}
-
-function delayOf(slow: Stage['slow'], fresh: readonly LogEntry[], seqMs: number): number {
-  const d = seqMs > 0 ? slow(fresh) : null;
-  // Lief im letzten Zug die Uhr ab, steht vorher noch „Zeit um!“ da (src/ui/effects.ts, 2000 ms plus Pause)
-  const late = fresh.some((e) => e.k === 'timeout') ? 2240 : 0;
-  return seqMs + (d ? slowExtraMs(d) : 0) + late + ZER_SHDONE_MS + 240 + 600;
-}
-
 /**
  * Ab wann ungefähr die Enthüllung läuft, 0 ohne Partieende dieses Spiels im Schub. Ohne View, weil der Gastgeber
- * mit State rechnet. Für Shithead genau `zerRevealDelay`, Durak und Cabo nutzen dieselben Zeiten ohne Zeitlupe.
+ * mit State rechnet. Die KI wartet so lange mit Sprüchen, Würfen und Klängen, der Countdown zur nächsten Runde
+ * ebenso. `seqMs` ist die Dauer des Shithead-Ablaufs, nur dann gibt es eine Zeitlupe.
  */
 export function revealDelayOf(game: GameKind, entries: readonly LogEntry[], seqMs: number): number {
   const plan = planOf(game);
   if (plan.kind === 'none' || !entries.some((e) => e.k === plan.endKind)) return 0;
-  return delayOf(plan.slow, entries, seqMs);
+  const d = seqMs > 0 ? plan.slow(entries) : null;
+  const late = entries.some((e) => e.k === 'timeout') ? TIMEOUT_LEAD_MS : 0;
+  return seqMs + (d ? slowExtraMs(d) : 0) + late + plan.leadMs;
 }

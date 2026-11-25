@@ -9,8 +9,9 @@
  */
 import { shPlaceBet, shSettleBets } from './bets';
 import { dkBeats, dkDeck, dkSort, rankOf, rnd, suitOf } from './cards';
-import { DK_HAND, DK_MAX_ATTACK, MAX_SEATS, SH_ORD } from './constants';
+import { DK_HAND, DK_MAX_ATTACK, MAX_SEATS, MIN_SEATS, SH_ORD } from './constants';
 import { reignOf, setReign } from './games';
+import { phaseReject, rj, type Reject } from './reject';
 import { offerRematch, settleDuel } from './rematch';
 import { addLog, countGame, pIdx, statsOf } from './state';
 import type { Action, ActResult, Card, DkPair, DkState, DkView, Rng, State, Suit, Table } from './types';
@@ -111,50 +112,44 @@ export function dkAttackers(t: Table): string[] {
 }
 
 /** Darf `pid` diese Karten (Indizes seiner Hand) jetzt angreifen oder nachlegen? Sonst die Erklärung. */
-export function dkAttackError(t: Table, pid: string, cards: Card[]): string | null {
+export function dkAttackError(t: Table, pid: string, cards: Card[]): Reject | null {
   const D = t.dk;
-  if (!D || t.phase !== 'play') return 'Das geht gerade nicht.';
-  if (pid === D.def) return 'Du verteidigst gerade.';
-  if (!cards.length) return 'Wähle zuerst eine Karte.';
+  if (!D) return phaseReject(t) ?? rj('any.notStarted');
+  if (t.phase !== 'play') return phaseReject(t);
+  if (pid === D.def) return rj('dk.defending');
+  if (!cards.length) return rj('any.pickCard');
   if (!D.table.length) {
-    if (pid !== D.att) return 'Zuerst greift jemand anderes an.';
+    if (pid !== D.att) return rj('dk.notLead', { p: D.att });
     const r = rankOf(cards[0]);
-    if (!cards.every((c) => rankOf(c) === r)) return 'Angreifen geht nur mit gleichen Werten.';
+    if (!cards.every((c) => rankOf(c) === r)) return rj('any.sameRank');
   } else {
     // Passen gilt, bis ein neuer Wert liegt oder aufgenommen wird. Das hängt nur am offenen Tisch, nie an Handkarten
-    if (D.done.includes(pid))
-      return D.take
-        ? 'Du hast gepasst. In diesen Angriff legst du nichts mehr nach.'
-        : 'Du hast gepasst. Nachlegen geht erst wieder bei einem neuen Wert oder wenn aufgenommen wird.';
+    if (D.done.includes(pid)) return rj(D.take ? 'dk.passedTake' : 'dk.passed');
     const ranks = dkTableRanks(D);
-    if (!cards.every((c) => ranks.has(rankOf(c))))
-      return 'Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.';
+    if (!cards.every((c) => ranks.has(rankOf(c)))) return rj('dk.rankNotOnTable');
   }
   const room = dkRoom(D);
-  if (cards.length > room)
-    return room === 1
-      ? 'Es passt nur noch eine Karte in diesen Angriff.'
-      : room
-        ? `Es passen nur noch ${room} Karten in diesen Angriff.`
-        : 'In diesen Angriff passt nichts mehr.';
+  if (cards.length > room) return rj('dk.room', { n: room });
   return null;
 }
 
 /** Kann der Verteidiger mit diesen Karten weiterschieben? Sonst die Erklärung. */
-export function dkTransferError(t: Table, pid: string, cards: Card[]): string | null {
+export function dkTransferError(t: Table, pid: string, cards: Card[]): Reject | null {
   const D = t.dk;
-  if (!D || t.phase !== 'play') return 'Das geht gerade nicht.';
-  if (!t.rules.dk?.transfer) return 'Weiterschieben ist an diesem Tisch aus.';
-  if (pid !== D.def) return 'Weiterschieben kann nur, wer verteidigt.';
-  if (D.take || !D.table.length || D.table.some((p) => p.d))
-    return 'Weiterschieben geht nur, bevor du etwas geschlagen hast.';
-  if (!cards.length) return 'Wähle zuerst eine Karte.';
+  if (!D) return phaseReject(t) ?? rj('any.notStarted');
+  if (t.phase !== 'play') return phaseReject(t);
+  if (!t.rules.dk?.transfer) return rj('dk.transferOff');
+  if (pid !== D.def) return rj('dk.notDefender', { p: D.def });
+  if (D.take) return rj('dk.taking');
+  if (!D.table.length) return rj('dk.tableEmpty', { p: D.att });
+  if (D.table.some((p) => p.d)) return rj('dk.transferLate');
+  if (!cards.length) return rj('any.pickCard');
   const r = rankOf(D.table[0].a);
-  if (!cards.every((c) => rankOf(c) === r)) return 'Weiterschieben geht nur mit dem gleichen Wert.';
+  if (!cards.every((c) => rankOf(c) === r)) return rj('dk.transferRank', { c: D.table[0].a });
   const total = D.table.length + cards.length;
-  if (total > DK_MAX_ATTACK) return 'Mehr als sechs Karten gehen in keinen Angriff.';
+  if (total > DK_MAX_ATTACK) return rj('dk.room', { n: Math.max(0, DK_MAX_ATTACK - D.table.length) });
   const nd = dkNextTarget(t, pid);
-  if (nd === pid || dkCount(t, nd) < total) return 'Der Nächste hat dafür zu wenige Karten.';
+  if (nd === pid || dkCount(t, nd) < total) return rj('dk.nextShort', { p: nd });
   return null;
 }
 
@@ -195,8 +190,8 @@ function beginBout(st: State, att: string, def?: string): void {
 
 export function dkStart(st: State, rng?: Rng): ActResult {
   const keep = st.players.filter((p) => p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone));
-  if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
-  if (keep.length > MAX_SEATS.durak) return `Durak geht mit höchstens ${MAX_SEATS.durak} Leuten.`;
+  if (keep.length < MIN_SEATS) return rj('seat.tooFew', { min: MIN_SEATS });
+  if (keep.length > MAX_SEATS.durak) return rj('seat.tooMany', { max: MAX_SEATS.durak, g: 'durak' });
   st.players = keep;
   st.players.forEach((p) => {
     p.out = false;
@@ -293,14 +288,15 @@ function pick(hand: Card[], raw: unknown, cards?: unknown): number[] | null {
   return idx;
 }
 
-const GONE = 'Die Karte hast du nicht mehr auf der Hand.';
+const GONE = rj('any.cardGone');
 
 export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng): ActResult {
   const D = st.dk;
-  if (!D) return 'Das geht gerade nicht.';
+  if (!D) return rj('any.notStarted');
   if (a.type === 'shbet') return shPlaceBet(st, pid, a.on);
-  if (st.phase !== 'play') return 'Das geht gerade nicht.';
-  if (!dkLive(st, pid)) return 'Du bist schon fertig.';
+  if (st.phase !== 'play') return phaseReject(st);
+  if (!(pid in D.P)) return rj('any.notPlaying');
+  if (!dkLive(st, pid)) return rj('any.done');
   const hand = D.P[pid];
   switch (a.type) {
     case 'dkattack': {
@@ -319,17 +315,17 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       return null;
     }
     case 'dkdefend': {
-      if (pid !== D.def) return 'Schlagen kann nur, wer verteidigt.';
-      if (D.take) return 'Du nimmst schon auf.';
+      if (pid !== D.def) return rj('dk.notDefender', { p: D.def });
+      if (D.take) return rj('dk.taking');
       // Mit Karten statt Indizes: gemeint ist genau dieser Angriff und genau diese Karte
       const pair = a.ac ? D.table.find((p) => p.a === a.ac) : D.table[Number(a.a) | 0];
-      if (!pair) return 'Diese Karte liegt nicht auf dem Tisch.';
-      if (pair.d) return 'Diese Karte ist schon geschlagen.';
+      if (!pair) return rj('dk.pairGone');
+      if (pair.d) return rj('dk.beaten', { a: pair.a });
       const hi = a.c ? hand.indexOf(a.c) : Number(a.i) | 0;
       if (a.c && hi < 0) return GONE;
       const c = hand[hi];
-      if (!c || hi < 0) return 'Wähle zuerst eine Karte.';
-      if (!dkBeats(c, pair.a, dkTrump(D))) return 'Die Karte schlägt das nicht.';
+      if (!c || hi < 0) return rj('any.pickCard');
+      if (!dkBeats(c, pair.a, dkTrump(D))) return rj('dk.noBeat', { c, a: pair.a });
       // Nur ein neuer Wert auf dem Tisch bringt neue Möglichkeiten zum Nachlegen. Das hängt nur vom Tisch ab,
       // nie von Handkarten, sonst verriete das Etikett „passt ✓“, wer den Wert hat
       const fresh = !dkTableRanks(D).has(rankOf(c));
@@ -342,9 +338,9 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       return null;
     }
     case 'dktake': {
-      if (pid !== D.def) return 'Aufnehmen kann nur, wer verteidigt.';
+      if (pid !== D.def) return rj('dk.notDefender', { p: D.def });
       if (D.take) return null;
-      if (!dkOpen(D).length) return 'Alles ist geschlagen.';
+      if (!dkOpen(D).length) return rj('dk.allBeaten');
       D.take = true;
       D.done = [];
       addLog(st, { k: 'dktake', p: pid });
@@ -353,9 +349,9 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       return null;
     }
     case 'dkpass': {
-      if (pid === D.def) return 'Du verteidigst gerade.';
-      if (!D.table.length) return pid === D.att ? 'Du musst zuerst angreifen.' : 'Noch liegt nichts auf dem Tisch.';
-      if (!D.take && dkOpen(D).length) return 'Erst muss alles geschlagen sein.';
+      if (pid === D.def) return rj('dk.defending');
+      if (!D.table.length) return pid === D.att ? rj('dk.leadFirst') : rj('dk.tableEmpty', { p: D.att });
+      if (!D.take && dkOpen(D).length) return rj('dk.openCards', { p: D.def });
       if (D.done.includes(pid)) return null;
       D.done.push(pid);
       addLog(st, { k: 'dkpass', p: pid });
@@ -383,7 +379,7 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       return null;
     }
   }
-  return 'Das geht gerade nicht.';
+  return rj('any.unknown');
 }
 
 /** Nach jedem Zug: Ist der Angriff vorbei? */

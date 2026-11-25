@@ -21,6 +21,7 @@ import type {
 import { shPlaceBet, shSettleBets } from './bets';
 import { offerRematch, settleDuel } from './rematch';
 import { setReign } from './games';
+import { phaseReject, rj, type Reject } from './reject';
 
 type PileTable = { rules: Pick<Rules, 'sh'>; sh: { pile: Card[] } | null };
 
@@ -75,7 +76,7 @@ export const shDecksFor = (n: number, R: ShRules): number =>
 
 export function shStart(st: State, rng?: Rng): ActResult {
   const keep = st.players.filter((p) => p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone));
-  if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
+  if (keep.length < 2) return rj('seat.tooFew', { min: 2 });
   st.players = keep;
   st.players.forEach((p) => {
     p.out = false;
@@ -221,6 +222,27 @@ export function shCanThrow(st: Table, pid: string): ThrowOption | null {
     if (rankOf(c) === S.win?.r) idx.push(i);
   });
   return idx.length ? { src, idx } : null;
+}
+
+/** Warum gerade keine 4er reingehen. Nur sinnvoll, wenn shCanThrow null liefert. */
+export function shThrowWhy(st: Table, pid: string): Reject {
+  if (st.phase !== 'play') return phaseReject(st) ?? rj('sh.winClosed');
+  if (!canAct(st, pid)) return rj('any.done');
+  const own = ownCards(st, pid);
+  if (own && !own.hand.length && !own.up.length) return rj('sh.blindOnly');
+  return st.sh?.win ? rj('sh.noFour') : rj('sh.winClosed');
+}
+
+/** Warum gerade keine Bombe geht. Nur sinnvoll, wenn shCanBomb null liefert. */
+export function shBombWhy(st: Table, pid: string): Reject {
+  if (st.phase !== 'play') return phaseReject(st) ?? rj('sh.bombLate');
+  if (!canAct(st, pid)) return rj('any.done');
+  // Dauerhafte Gründe zuerst, „Moment“ verspricht sonst, dass Warten hilft
+  if (!shR(st).cut) return rj('sh.cutOff');
+  const own = ownCards(st, pid);
+  if (own && !own.hand.length && !own.up.length) return rj('sh.blindOnly');
+  if (st.sh?.win) return rj('sh.bombWin');
+  return rj('sh.bombLate');
 }
 
 export function shBurnNow(st: State, pid: string, cut: boolean): void {
@@ -382,19 +404,19 @@ function takeAt(arr: Card[], idx: number[]): Card[] {
 
 export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng): ActResult {
   const S = st.sh;
-  if (!S) return 'Das geht gerade nicht.';
+  if (!S) return rj('any.notStarted');
   const P = S.P[pid];
-  if (!P || st.players[pi].out) return 'Du spielst diese Partie nicht mit.';
+  if (!P || st.players[pi].out) return rj('any.notPlaying');
   switch (a.type) {
     case 'shbet':
       // Tippen ändert weder Zug noch Uhr noch 4er-Fenster
       return shPlaceBet(st, pid, a.on);
     case 'shswap': {
-      if (st.phase !== 'swap') return 'Tauschen geht nur vor dem Start.';
-      if (st.players[pi].ready) return 'Du hast schon auf Fertig gedrückt.';
+      if (st.phase !== 'swap') return st.phase === 'play' ? rj('sh.swapOver') : (phaseReject(st) ?? rj('sh.swapOver'));
+      if (st.players[pi].ready) return rj('any.ready');
       const h = a.h | 0;
       const u = a.u | 0;
-      if (h < 0 || h >= P.hand.length || u < 0 || u >= P.up.length) return 'Ungültige Karte.';
+      if (h < 0 || h >= P.hand.length || u < 0 || u >= P.up.length) return rj('any.cardGone');
       [P.hand[h], P.up[u]] = [P.up[u], P.hand[h]];
       shSort(P.hand);
       return null;
@@ -405,7 +427,7 @@ export function shAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       checkReady(st, rng);
       return null;
   }
-  if (st.phase !== 'play') return 'Das geht gerade nicht.';
+  if (st.phase !== 'play') return phaseReject(st) ?? rj('any.unknown');
   const err = shPlayAct(st, S, P, pid, pi, a);
   if (!err) shSyncWin(st);
   return err;
@@ -419,7 +441,7 @@ function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: num
       return null;
     case 'shthrow': {
       const t = shCanThrow(st, pid);
-      if (!t) return S.win ? 'Du hast keine 4.' : 'Zu spät, die erste Karte liegt schon.';
+      if (!t) return shThrowWhy(st, pid);
       const cards = takeAt(P[t.src], t.idx);
       S.pile.push(...cards);
       if (!S.win?.by.includes(pid)) S.win?.by.push(pid);
@@ -439,7 +461,7 @@ function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: num
     }
     case 'shbomb': {
       const bm = shCanBomb(st, pid);
-      if (!bm) return S.win ? 'Moment, die 4er werden noch reingeworfen.' : 'Zu spät, das geht nicht mehr.';
+      if (!bm) return shBombWhy(st, pid);
       const cards = takeAt(P[bm.src], bm.idx);
       S.pile.push(...cards);
       const out = pi !== st.turn;
@@ -452,28 +474,34 @@ function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: num
       return null;
     }
   }
-  if (pi !== st.turn) return 'Du bist gerade nicht dran.';
-  if (S.win?.lock) return 'Kurz warten, erst dürfen alle ihre 4er reinwerfen.';
+  if (pi !== st.turn) {
+    const now = st.players[st.turn]?.id;
+    return now ? rj('any.notYourTurn', { p: now }) : rj('any.notYourTurn');
+  }
+  if (S.win?.lock) return rj('sh.winLock');
   switch (a.type) {
     case 'shplay': {
       const src = a.from === 'up' ? 'up' : 'hand';
-      if (src === 'up' && P.hand.length) return 'Erst die Handkarten ausspielen.';
+      if (src === 'up' && P.hand.length) return rj('sh.handFirst');
       const arr = P[src];
       const idx: number[] = [];
       (Array.isArray(a.idx) ? a.idx.slice(0, 60) : []).forEach((raw) => {
         const i = raw | 0;
         if (i >= 0 && i < arr.length && !idx.includes(i)) idx.push(i);
       });
-      if (!idx.length) return 'Wähle zuerst eine Karte.';
+      if (!idx.length) return rj('any.pickCard');
       const r = rankOf(arr[idx[0]]);
-      if (!idx.every((i) => rankOf(arr[i]) === r)) return 'Zusammen geht nur mit gleichem Wert.';
-      if (!shCanPlay(st, r)) return 'Die Karte passt nicht auf den Stapel.';
+      if (!idx.every((i) => rankOf(arr[i]) === r)) return rj('any.sameRank');
+      if (!shCanPlay(st, r)) {
+        const top = S.pile[S.pile.length - 1];
+        return rj('sh.noFit', top ? { c: arr[idx[0]], top } : { c: arr[idx[0]] });
+      }
       // Die erste Karte schließt das 4er-Fenster
       S.win = null;
       return shAfterPlay(st, pid, takeAt(arr, idx), src);
     }
     case 'shpickup': {
-      if (!S.pile.length) return 'Der Stapel ist leer. Leg einfach eine Karte.';
+      if (!S.pile.length) return rj('sh.pileEmpty');
       S.win = null;
       const cnt = S.pile.length;
       P.hand.push(...S.pile);
@@ -485,9 +513,9 @@ function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: num
       return null;
     }
     case 'shblind': {
-      if (P.hand.length || P.up.length) return 'Erst Hand und offene Karten spielen.';
+      if (P.hand.length || P.up.length) return rj('sh.blindLast');
       const bi = a.i | 0;
-      if (bi < 0 || bi >= P.down.length) return 'Ungültige Karte.';
+      if (bi < 0 || bi >= P.down.length) return rj('any.cardGone');
       S.win = null;
       const [c] = P.down.splice(bi, 1);
       if (shCanPlay(st, rankOf(c))) return shAfterPlay(st, pid, [c], 'down');
@@ -501,5 +529,5 @@ function shPlayAct(st: State, S: ShState, P: ShPlayerState, pid: string, pi: num
       return null;
     }
   }
-  return 'Unbekannte Aktion.';
+  return rj('any.unknown');
 }

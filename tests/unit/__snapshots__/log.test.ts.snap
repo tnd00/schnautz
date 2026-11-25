@@ -1,0 +1,1907 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Verlauf aus dem Textkatalog > rendert jede Logart wortgleich zur Fassung vor dem Umbau 1`] = `
+{
+  "abort {"k":"abort","p":"a","game":"durak","bets":true} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> hast die Partie abgebrochen. Die Tipps verfallen.",
+  ],
+  "abort {"k":"abort","p":"a","game":"durak","bets":true} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> hat die Partie abgebrochen. Die Tipps verfallen.",
+  ],
+  "abort {"k":"abort","p":"a","game":"durak","bets":true} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> hat die Partie abgebrochen. Die Tipps verfallen.",
+  ],
+  "abort {"k":"abort","p":"a","game":"shithead"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> hast die Partie abgebrochen.",
+  ],
+  "abort {"k":"abort","p":"a","game":"shithead"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> hat die Partie abgebrochen.",
+  ],
+  "abort {"k":"abort","p":"a","game":"shithead"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> hat die Partie abgebrochen.",
+  ],
+  "back {"k":"back","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> bist zurück und spielst wieder selbst.",
+  ],
+  "back {"k":"back","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> ist zurück und spielt wieder selbst.",
+  ],
+  "back {"k":"back","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> ist zurück und spielt wieder selbst.",
+  ],
+  "cbblind {"k":"cbblind","p":"a","to":"b","tn":"Tom & Jo","id":1,"oid":2} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> tauschst blind eine Karte mit <b>Tom &amp; Jo</b>.",
+  ],
+  "cbblind {"k":"cbblind","p":"a","to":"b","tn":"Tom & Jo","id":1,"oid":2} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> tauscht blind eine Karte mit dir. Hoffentlich war es nicht dein roter König.",
+  ],
+  "cbblind {"k":"cbblind","p":"a","to":"b","tn":"Tom & Jo","id":1,"oid":2} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> tauscht blind eine Karte mit <b>Tom &amp; Jo</b>.",
+  ],
+  "cbblind {"k":"cbblind","p":"a","to":"z","tn":"Zora","id":1,"oid":2} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> tauschst blind eine Karte mit <b>Zora</b>.",
+  ],
+  "cbblind {"k":"cbblind","p":"a","to":"z","tn":"Zora","id":1,"oid":2} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> tauscht blind eine Karte mit <b>Zora</b>.",
+  ],
+  "cbblind {"k":"cbblind","p":"a","to":"z","tn":"Zora","id":1,"oid":2} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> tauscht blind eine Karte mit <b>Zora</b>.",
+  ],
+  "cbcabo {"k":"cbcabo","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "📣 <b>Du</b> rufst CABO! Alle anderen haben noch einen Zug.",
+  ],
+  "cbcabo {"k":"cbcabo","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "📣 <b>Lena</b> ruft CABO! Alle anderen haben noch einen Zug.",
+  ],
+  "cbcabo {"k":"cbcabo","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "📣 <b>Lena</b> ruft CABO! Alle anderen haben noch einen Zug.",
+  ],
+  "cbdeal {"k":"cbdeal","r":1,"start":"a"} aus Sicht von a (shithead)": [
+    "round",
+    "Runde 1 · Du fängst an",
+  ],
+  "cbdeal {"k":"cbdeal","r":1,"start":"a"} aus Sicht von b (shithead)": [
+    "round",
+    "Runde 1 · Lena fängt an",
+  ],
+  "cbdeal {"k":"cbdeal","r":1,"start":"a"} aus Sicht von o (shithead)": [
+    "round",
+    "Runde 1 · Lena fängt an",
+  ],
+  "cbdeal {"k":"cbdeal","r":2,"start":"b"} aus Sicht von a (shithead)": [
+    "round",
+    "Runde 2 · Tom &amp; Jo fängt an",
+  ],
+  "cbdeal {"k":"cbdeal","r":2,"start":"b"} aus Sicht von b (shithead)": [
+    "round",
+    "Runde 2 · Du fängst an",
+  ],
+  "cbdeal {"k":"cbdeal","r":2,"start":"b"} aus Sicht von o (shithead)": [
+    "round",
+    "Runde 2 · Tom &amp; Jo fängt an",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H3"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥3</span> ab.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H3"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥3</span> ab.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H3"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥3</span> ab.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H7","power":"peek"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥7</span> ab und darfst eine eigene Karte ansehen.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H7","power":"peek"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> ab und darf eine eigene Karte ansehen.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H7","power":"peek"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> ab und darf eine eigene Karte ansehen.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H9","power":"spy"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥9</span> ab und darfst spionieren.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H9","power":"spy"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥9</span> ab und darf spionieren.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"H9","power":"spy"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥9</span> ab und darf spionieren.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"HB","power":"swap"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥B</span> ab und darfst blind tauschen.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"HB","power":"swap"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥B</span> ab und darf blind tauschen.",
+  ],
+  "cbdiscard {"k":"cbdiscard","p":"a","c":"HB","power":"swap"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥B</span> ab und darf blind tauschen.",
+  ],
+  "cbdraw {"k":"cbdraw","p":"a","from":"deck"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> ziehst vom Stapel.",
+  ],
+  "cbdraw {"k":"cbdraw","p":"a","from":"deck"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> zieht vom Stapel.",
+  ],
+  "cbdraw {"k":"cbdraw","p":"a","from":"deck"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> zieht vom Stapel.",
+  ],
+  "cbdraw {"k":"cbdraw","p":"a","from":"pile","c":"H5"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst <span class="cs r">♥5</span> von der Ablage.",
+  ],
+  "cbdraw {"k":"cbdraw","p":"a","from":"pile","c":"H5"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt <span class="cs r">♥5</span> von der Ablage.",
+  ],
+  "cbdraw {"k":"cbdraw","p":"a","from":"pile","c":"H5"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt <span class="cs r">♥5</span> von der Ablage.",
+  ],
+  "cbend {"k":"cbend","p":"a","again":true} aus Sicht von a (shithead)": [
+    "big",
+    "👑 <b>Du</b> verteidigst die Krone und bleibst Cabo-König!",
+  ],
+  "cbend {"k":"cbend","p":"a","again":true} aus Sicht von b (shithead)": [
+    "big",
+    "👑 <b>Lena</b> verteidigt die Krone und bleibt Cabo-König!",
+  ],
+  "cbend {"k":"cbend","p":"a","again":true} aus Sicht von o (shithead)": [
+    "big",
+    "👑 <b>Lena</b> verteidigt die Krone und bleibt Cabo-König!",
+  ],
+  "cbend {"k":"cbend","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "👑 <b>Du</b> bist der neue Cabo-König!",
+  ],
+  "cbend {"k":"cbend","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "👑 <b>Lena</b> ist der neue Cabo-König!",
+  ],
+  "cbend {"k":"cbend","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "👑 <b>Lena</b> ist der neue Cabo-König!",
+  ],
+  "cbend {"k":"cbend"} aus Sicht von a (shithead)": [
+    "big",
+    "🤝 Unentschieden! Vorne liegen mehrere gleichauf. Diesmal gibt es keinen neuen Cabo-König.",
+  ],
+  "cbend {"k":"cbend"} aus Sicht von b (shithead)": [
+    "big",
+    "🤝 Unentschieden! Vorne liegen mehrere gleichauf. Diesmal gibt es keinen neuen Cabo-König.",
+  ],
+  "cbend {"k":"cbend"} aus Sicht von o (shithead)": [
+    "big",
+    "🤝 Unentschieden! Vorne liegen mehrere gleichauf. Diesmal gibt es keinen neuen Cabo-König.",
+  ],
+  "cblook {"k":"cblook","p":"a","ids":[0,1]} aus Sicht von a (shithead)": null,
+  "cblook {"k":"cblook","p":"a","ids":[0,1]} aus Sicht von b (shithead)": null,
+  "cblook {"k":"cblook","p":"a","ids":[0,1]} aus Sicht von o (shithead)": null,
+  "cbpeek {"k":"cbpeek","p":"a","id":0} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> schaust dir eine eigene Karte an.",
+  ],
+  "cbpeek {"k":"cbpeek","p":"a","id":0} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> schaut sich eine eigene Karte an.",
+  ],
+  "cbpeek {"k":"cbpeek","p":"a","id":0} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> schaut sich eine eigene Karte an.",
+  ],
+  "cbreset {"k":"cbreset","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> landest genau auf 100 und fällst zurück auf 50. Glück gehabt!",
+  ],
+  "cbreset {"k":"cbreset","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> landet genau auf 100 und fällt zurück auf 50. Glück gehabt!",
+  ],
+  "cbreset {"k":"cbreset","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> landet genau auf 100 und fällt zurück auf 50. Glück gehabt!",
+  ],
+  "cbround {"k":"cbround","scores":{"a":0,"b":12,"c":5},"caller":"a","ok":true,"kami":null} aus Sicht von a (shithead)": [
+    "big",
+    "🎯 <b>Du</b> hattest mit Cabo recht, 0 Punkte. Du +0 · Elfi +5 · Tom &amp; Jo +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":0,"b":12,"c":5},"caller":"a","ok":true,"kami":null} aus Sicht von b (shithead)": [
+    "big",
+    "🎯 <b>Lena</b> hatte mit Cabo recht, 0 Punkte. Lena +0 · Elfi +5 · Du +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":0,"b":12,"c":5},"caller":"a","ok":true,"kami":null} aus Sicht von o (shithead)": [
+    "big",
+    "🎯 <b>Lena</b> hatte mit Cabo recht, 0 Punkte. Lena +0 · Elfi +5 · Tom &amp; Jo +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":0,"b":50,"c":50},"caller":null,"ok":null,"kami":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "💥 Kamikaze! <b>Du</b> hast zwei Damen und zwei schwarze Könige, alle anderen kassieren 50. Du +0 · Tom &amp; Jo +50 · Elfi +50",
+  ],
+  "cbround {"k":"cbround","scores":{"a":0,"b":50,"c":50},"caller":null,"ok":null,"kami":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "💥 Kamikaze! <b>Lena</b> hat zwei Damen und zwei schwarze Könige, alle anderen kassieren 50. Lena +0 · Du +50 · Elfi +50",
+  ],
+  "cbround {"k":"cbround","scores":{"a":0,"b":50,"c":50},"caller":null,"ok":null,"kami":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "💥 Kamikaze! <b>Lena</b> hat zwei Damen und zwei schwarze Könige, alle anderen kassieren 50. Lena +0 · Tom &amp; Jo +50 · Elfi +50",
+  ],
+  "cbround {"k":"cbround","scores":{"a":22,"b":12,"c":5},"caller":"a","ok":false,"kami":null} aus Sicht von a (shithead)": [
+    "big",
+    "🙈 <b>Du</b> hast dich mit Cabo verzockt, 10 Strafpunkte obendrauf. Elfi +5 · Tom &amp; Jo +12 · Du +22",
+  ],
+  "cbround {"k":"cbround","scores":{"a":22,"b":12,"c":5},"caller":"a","ok":false,"kami":null} aus Sicht von b (shithead)": [
+    "big",
+    "🙈 <b>Lena</b> hat sich mit Cabo verzockt, 10 Strafpunkte obendrauf. Elfi +5 · Du +12 · Lena +22",
+  ],
+  "cbround {"k":"cbround","scores":{"a":22,"b":12,"c":5},"caller":"a","ok":false,"kami":null} aus Sicht von o (shithead)": [
+    "big",
+    "🙈 <b>Lena</b> hat sich mit Cabo verzockt, 10 Strafpunkte obendrauf. Elfi +5 · Tom &amp; Jo +12 · Lena +22",
+  ],
+  "cbround {"k":"cbround","scores":{"a":8,"b":12,"c":5},"caller":"b","ok":null,"kami":null} aus Sicht von a (shithead)": [
+    "big",
+    "Aufgedeckt! Elfi +5 · Du +8 · Tom &amp; Jo +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":8,"b":12,"c":5},"caller":"b","ok":null,"kami":null} aus Sicht von b (shithead)": [
+    "big",
+    "Aufgedeckt! Elfi +5 · Lena +8 · Du +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":8,"b":12,"c":5},"caller":"b","ok":null,"kami":null} aus Sicht von o (shithead)": [
+    "big",
+    "Aufgedeckt! Elfi +5 · Lena +8 · Tom &amp; Jo +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":8,"b":12,"c":5},"caller":null,"ok":null,"kami":null} aus Sicht von a (shithead)": [
+    "big",
+    "Der Stapel ist leer, alle decken auf. Elfi +5 · Du +8 · Tom &amp; Jo +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":8,"b":12,"c":5},"caller":null,"ok":null,"kami":null} aus Sicht von b (shithead)": [
+    "big",
+    "Der Stapel ist leer, alle decken auf. Elfi +5 · Lena +8 · Du +12",
+  ],
+  "cbround {"k":"cbround","scores":{"a":8,"b":12,"c":5},"caller":null,"ok":null,"kami":null} aus Sicht von o (shithead)": [
+    "big",
+    "Der Stapel ist leer, alle decken auf. Elfi +5 · Lena +8 · Tom &amp; Jo +12",
+  ],
+  "cbround {"k":"cbround","scores":{},"caller":null,"ok":null,"kami":null} aus Sicht von a (shithead)": [
+    "big",
+    "Der Stapel ist leer, alle decken auf.",
+  ],
+  "cbround {"k":"cbround","scores":{},"caller":null,"ok":null,"kami":null} aus Sicht von b (shithead)": [
+    "big",
+    "Der Stapel ist leer, alle decken auf.",
+  ],
+  "cbround {"k":"cbround","scores":{},"caller":null,"ok":null,"kami":null} aus Sicht von o (shithead)": [
+    "big",
+    "Der Stapel ist leer, alle decken auf.",
+  ],
+  "cbskip {"k":"cbskip","p":"a"} aus Sicht von a (shithead)": null,
+  "cbskip {"k":"cbskip","p":"a"} aus Sicht von b (shithead)": null,
+  "cbskip {"k":"cbskip","p":"a"} aus Sicht von o (shithead)": null,
+  "cbsnap {"k":"cbsnap","p":"a","c":"H5","ok":false} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> schnappst mit <span class="cs r">♥5</span> daneben. Zu gierig! Die Karte bleibt offen liegen, dazu gibt es eine Strafkarte.",
+  ],
+  "cbsnap {"k":"cbsnap","p":"a","c":"H5","ok":false} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> schnappt mit <span class="cs r">♥5</span> daneben. Zu gierig! Die Karte bleibt offen liegen, dazu gibt es eine Strafkarte.",
+  ],
+  "cbsnap {"k":"cbsnap","p":"a","c":"H5","ok":false} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> schnappt mit <span class="cs r">♥5</span> daneben. Zu gierig! Die Karte bleibt offen liegen, dazu gibt es eine Strafkarte.",
+  ],
+  "cbsnap {"k":"cbsnap","p":"a","c":"H5","ok":true} aus Sicht von a (shithead)": [
+    "",
+    "⚡ <b>Du</b> schnappst <span class="cs r">♥5</span> auf die Ablage.",
+  ],
+  "cbsnap {"k":"cbsnap","p":"a","c":"H5","ok":true} aus Sicht von b (shithead)": [
+    "",
+    "⚡ <b>Lena</b> schnappt <span class="cs r">♥5</span> auf die Ablage.",
+  ],
+  "cbsnap {"k":"cbsnap","p":"a","c":"H5","ok":true} aus Sicht von o (shithead)": [
+    "",
+    "⚡ <b>Lena</b> schnappt <span class="cs r">♥5</span> auf die Ablage.",
+  ],
+  "cbspy {"k":"cbspy","p":"a","to":"b","tn":"Tom & Jo","id":1} aus Sicht von a (shithead)": [
+    "",
+    "🔍 <b>Du</b> spionierst <b>Tom &amp; Jo</b> aus.",
+  ],
+  "cbspy {"k":"cbspy","p":"a","to":"b","tn":"Tom & Jo","id":1} aus Sicht von b (shithead)": [
+    "",
+    "🔍 <b>Lena</b> spioniert dich aus.",
+  ],
+  "cbspy {"k":"cbspy","p":"a","to":"b","tn":"Tom & Jo","id":1} aus Sicht von o (shithead)": [
+    "",
+    "🔍 <b>Lena</b> spioniert <b>Tom &amp; Jo</b> aus.",
+  ],
+  "cbspy {"k":"cbspy","p":"a","to":"z","tn":"Zora","id":1} aus Sicht von a (shithead)": [
+    "",
+    "🔍 <b>Du</b> spionierst <b>Zora</b> aus.",
+  ],
+  "cbspy {"k":"cbspy","p":"a","to":"z","tn":"Zora","id":1} aus Sicht von b (shithead)": [
+    "",
+    "🔍 <b>Lena</b> spioniert <b>Zora</b> aus.",
+  ],
+  "cbspy {"k":"cbspy","p":"a","to":"z","tn":"Zora","id":1} aus Sicht von o (shithead)": [
+    "",
+    "🔍 <b>Lena</b> spioniert <b>Zora</b> aus.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S5","C5","D5","H5","S5","C5"],"ok":true,"slots":7} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> wirfst 7 gleiche auf einmal ab (<span class="cs r">♥5</span> <span class="cs">♠5</span> <span class="cs">♣5</span> <span class="cs r">♦5</span> <span class="cs r">♥5</span> <span class="cs">♠5</span> <span class="cs">♣5</span>).",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S5","C5","D5","H5","S5","C5"],"ok":true,"slots":7} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> wirft 7 gleiche auf einmal ab (<span class="cs r">♥5</span> <span class="cs">♠5</span> <span class="cs">♣5</span> <span class="cs r">♦5</span> <span class="cs r">♥5</span> <span class="cs">♠5</span> <span class="cs">♣5</span>).",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S5","C5","D5","H5","S5","C5"],"ok":true,"slots":7} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> wirft 7 gleiche auf einmal ab (<span class="cs r">♥5</span> <span class="cs">♠5</span> <span class="cs">♣5</span> <span class="cs r">♦5</span> <span class="cs r">♥5</span> <span class="cs">♠5</span> <span class="cs">♣5</span>).",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S5"],"ok":true,"slots":2} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> wirfst zwei gleiche auf einmal ab (<span class="cs r">♥5</span> <span class="cs">♠5</span>).",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S5"],"ok":true,"slots":2} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> wirft zwei gleiche auf einmal ab (<span class="cs r">♥5</span> <span class="cs">♠5</span>).",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S5"],"ok":true,"slots":2} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> wirft zwei gleiche auf einmal ab (<span class="cs r">♥5</span> <span class="cs">♠5</span>).",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S6"],"ok":false,"slots":2,"pen":true} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> willst <span class="cs r">♥5</span> <span class="cs">♠6</span> zusammen loswerden. Daneben! Die Karten liegen jetzt offen, dazu kriegst du eine Strafkarte.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S6"],"ok":false,"slots":2,"pen":true} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> will <span class="cs r">♥5</span> <span class="cs">♠6</span> zusammen loswerden. Daneben! Die Karten liegen jetzt offen, dazu gibt es eine Strafkarte.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S6"],"ok":false,"slots":2,"pen":true} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> will <span class="cs r">♥5</span> <span class="cs">♠6</span> zusammen loswerden. Daneben! Die Karten liegen jetzt offen, dazu gibt es eine Strafkarte.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S6"],"ok":false,"slots":2} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> willst <span class="cs r">♥5</span> <span class="cs">♠6</span> zusammen loswerden. Daneben! Die Karten liegen jetzt offen.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S6"],"ok":false,"slots":2} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> will <span class="cs r">♥5</span> <span class="cs">♠6</span> zusammen loswerden. Daneben! Die Karten liegen jetzt offen.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5","S6"],"ok":false,"slots":2} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> will <span class="cs r">♥5</span> <span class="cs">♠6</span> zusammen loswerden. Daneben! Die Karten liegen jetzt offen.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5"],"ok":true,"slots":1} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> tauschst ein und wirfst <span class="cs r">♥5</span> ab.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5"],"ok":true,"slots":1} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> tauscht ein und wirft <span class="cs r">♥5</span> ab.",
+  ],
+  "cbswap {"k":"cbswap","p":"a","out":["H5"],"ok":true,"slots":1} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> tauscht ein und wirft <span class="cs r">♥5</span> ab.",
+  ],
+  "chat {"k":"chat","p":"a","text":"Hallo <i>"} aus Sicht von a (shithead)": [
+    "chat mine",
+    "Hallo &lt;i&gt;",
+  ],
+  "chat {"k":"chat","p":"a","text":"Hallo <i>"} aus Sicht von b (shithead)": [
+    "chat",
+    "<b>Lena</b>Hallo &lt;i&gt;",
+  ],
+  "chat {"k":"chat","p":"a","text":"Hallo <i>"} aus Sicht von o (shithead)": [
+    "chat",
+    "<b>Lena</b>Hallo &lt;i&gt;",
+  ],
+  "chat {"k":"chat","p":"b","text":"Na & so","bot":true} aus Sicht von a (shithead)": [
+    "chat",
+    "<b>Tom &amp; Jo</b>Na &amp; so",
+  ],
+  "chat {"k":"chat","p":"b","text":"Na & so","bot":true} aus Sicht von b (shithead)": [
+    "chat mine",
+    "Na &amp; so",
+  ],
+  "chat {"k":"chat","p":"b","text":"Na & so","bot":true} aus Sicht von o (shithead)": [
+    "chat",
+    "<b>Tom &amp; Jo</b>Na &amp; so",
+  ],
+  "dev {"k":"dev","fx":"confetti"} aus Sicht von a (shithead)": null,
+  "dev {"k":"dev","fx":"confetti"} aus Sicht von b (shithead)": null,
+  "dev {"k":"dev","fx":"confetti"} aus Sicht von o (shithead)": null,
+  "dkattack {"k":"dkattack","p":"a","cards":["H7"],"lead":true} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> greifst mit <span class="cs r">♥7</span> an.",
+  ],
+  "dkattack {"k":"dkattack","p":"a","cards":["H7"],"lead":true} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> greift mit <span class="cs r">♥7</span> an.",
+  ],
+  "dkattack {"k":"dkattack","p":"a","cards":["H7"],"lead":true} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> greift mit <span class="cs r">♥7</span> an.",
+  ],
+  "dkattack {"k":"dkattack","p":"a","cards":["S7","C7"]} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs">♠7</span> <span class="cs">♣7</span> nach.",
+  ],
+  "dkattack {"k":"dkattack","p":"a","cards":["S7","C7"]} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs">♠7</span> <span class="cs">♣7</span> nach.",
+  ],
+  "dkattack {"k":"dkattack","p":"a","cards":["S7","C7"]} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs">♠7</span> <span class="cs">♣7</span> nach.",
+  ],
+  "dkbito {"k":"dkbito","p":"a","cnt":1} aus Sicht von a (shithead)": [
+    "",
+    "Bito! <b>Du</b> wehrst alles ab, 1 Karte geht auf den Bito-Stapel.",
+  ],
+  "dkbito {"k":"dkbito","p":"a","cnt":1} aus Sicht von b (shithead)": [
+    "",
+    "Bito! <b>Lena</b> wehrt alles ab, 1 Karte geht auf den Bito-Stapel.",
+  ],
+  "dkbito {"k":"dkbito","p":"a","cnt":1} aus Sicht von o (shithead)": [
+    "",
+    "Bito! <b>Lena</b> wehrt alles ab, 1 Karte geht auf den Bito-Stapel.",
+  ],
+  "dkbito {"k":"dkbito","p":"a","cnt":6} aus Sicht von a (shithead)": [
+    "",
+    "Bito! <b>Du</b> wehrst alles ab, 6 Karten gehen auf den Bito-Stapel.",
+  ],
+  "dkbito {"k":"dkbito","p":"a","cnt":6} aus Sicht von b (shithead)": [
+    "",
+    "Bito! <b>Lena</b> wehrt alles ab, 6 Karten gehen auf den Bito-Stapel.",
+  ],
+  "dkbito {"k":"dkbito","p":"a","cnt":6} aus Sicht von o (shithead)": [
+    "",
+    "Bito! <b>Lena</b> wehrt alles ab, 6 Karten gehen auf den Bito-Stapel.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b","prev":true} aus Sicht von a (shithead)": [
+    "big",
+    "Trumpf ist <span class="cs r">♥6</span>. 🤡 <b>Tom &amp; Jo</b> war letztes Mal der Durak und kriegt als Erstes eins drauf. <b>Du</b> greifst an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b","prev":true} aus Sicht von b (shithead)": [
+    "big",
+    "Trumpf ist <span class="cs r">♥6</span>. 🤡 <b>Du</b> warst letztes Mal der Durak und kriegst als Erstes eins drauf. <b>Lena</b> greift an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b","prev":true} aus Sicht von o (shithead)": [
+    "big",
+    "Trumpf ist <span class="cs r">♥6</span>. 🤡 <b>Tom &amp; Jo</b> war letztes Mal der Durak und kriegt als Erstes eins drauf. <b>Lena</b> greift an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b","rnd":true} aus Sicht von a (shithead)": [
+    "",
+    "Trumpf ist <span class="cs r">♥6</span>. <b>Du</b> greifst <b>Tom &amp; Jo</b> als Erstes an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b","rnd":true} aus Sicht von b (shithead)": [
+    "",
+    "Trumpf ist <span class="cs r">♥6</span>. <b>Lena</b> greift dich als Erstes an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b","rnd":true} aus Sicht von o (shithead)": [
+    "",
+    "Trumpf ist <span class="cs r">♥6</span>. <b>Lena</b> greift <b>Tom &amp; Jo</b> als Erstes an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b"} aus Sicht von a (shithead)": [
+    "",
+    "Trumpf ist <span class="cs r">♥6</span>. <b>Du</b> greifst <b>Tom &amp; Jo</b> als Erstes an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b"} aus Sicht von b (shithead)": [
+    "",
+    "Trumpf ist <span class="cs r">♥6</span>. <b>Lena</b> greift dich als Erstes an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"a","def":"b"} aus Sicht von o (shithead)": [
+    "",
+    "Trumpf ist <span class="cs r">♥6</span>. <b>Lena</b> greift <b>Tom &amp; Jo</b> als Erstes an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"b","def":"a","prev":true} aus Sicht von a (shithead)": [
+    "big",
+    "Trumpf ist <span class="cs r">♥6</span>. 🤡 <b>Du</b> warst letztes Mal der Durak und kriegst als Erstes eins drauf. <b>Tom &amp; Jo</b> greift an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"b","def":"a","prev":true} aus Sicht von b (shithead)": [
+    "big",
+    "Trumpf ist <span class="cs r">♥6</span>. 🤡 <b>Lena</b> war letztes Mal der Durak und kriegt als Erstes eins drauf. <b>Du</b> greifst an.",
+  ],
+  "dkdeal {"k":"dkdeal","trump":"H6","att":"b","def":"a","prev":true} aus Sicht von o (shithead)": [
+    "big",
+    "Trumpf ist <span class="cs r">♥6</span>. 🤡 <b>Lena</b> war letztes Mal der Durak und kriegt als Erstes eins drauf. <b>Tom &amp; Jo</b> greift an.",
+  ],
+  "dkdefend {"k":"dkdefend","p":"a","a":"H7","d":"H9"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> schlägst <span class="cs r">♥7</span> mit <span class="cs r">♥9</span>.",
+  ],
+  "dkdefend {"k":"dkdefend","p":"a","a":"H7","d":"H9"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> schlägt <span class="cs r">♥7</span> mit <span class="cs r">♥9</span>.",
+  ],
+  "dkdefend {"k":"dkdefend","p":"a","a":"H7","d":"H9"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> schlägt <span class="cs r">♥7</span> mit <span class="cs r">♥9</span>.",
+  ],
+  "dkend {"k":"dkend","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "🤡 <b>Du</b> bist der Durak!",
+  ],
+  "dkend {"k":"dkend","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "🤡 <b>Lena</b> ist der Durak!",
+  ],
+  "dkend {"k":"dkend","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "🤡 <b>Lena</b> ist der Durak!",
+  ],
+  "dkend {"k":"dkend"} aus Sicht von a (shithead)": [
+    "big",
+    "🤝 Unentschieden! Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.",
+  ],
+  "dkend {"k":"dkend"} aus Sicht von b (shithead)": [
+    "big",
+    "🤝 Unentschieden! Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.",
+  ],
+  "dkend {"k":"dkend"} aus Sicht von o (shithead)": [
+    "big",
+    "🤝 Unentschieden! Die Letzten sind gleichzeitig fertig geworden. Diesmal gibt es keinen Durak.",
+  ],
+  "dkout {"k":"dkout","p":"a","place":2} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> bist fertig! Platz 2.",
+  ],
+  "dkout {"k":"dkout","p":"a","place":2} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> ist fertig! Platz 2.",
+  ],
+  "dkout {"k":"dkout","p":"a","place":2} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> ist fertig! Platz 2.",
+  ],
+  "dkpass {"k":"dkpass","p":"a"} aus Sicht von a (shithead)": null,
+  "dkpass {"k":"dkpass","p":"a"} aus Sicht von b (shithead)": null,
+  "dkpass {"k":"dkpass","p":"a"} aus Sicht von o (shithead)": null,
+  "dkpickup {"k":"dkpickup","p":"a","cnt":1} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst 1 Karte auf.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":1} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt 1 Karte auf.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":1} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt 1 Karte auf.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":3} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst 3 Karten auf.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":3} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt 3 Karten auf.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":3} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt 3 Karten auf.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":9} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst 9 Karten auf. Schöner Fächer.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":9} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt 9 Karten auf. Schöner Fächer.",
+  ],
+  "dkpickup {"k":"dkpickup","p":"a","cnt":9} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt 9 Karten auf. Schöner Fächer.",
+  ],
+  "dktake {"k":"dktake","p":"a"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> gibst auf und nimmst alles. Die anderen dürfen dir noch was dazulegen.",
+  ],
+  "dktake {"k":"dktake","p":"a"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> gibt auf und nimmt alles. Jetzt noch schnell nachlegen!",
+  ],
+  "dktake {"k":"dktake","p":"a"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> gibt auf und nimmt alles. Jetzt noch schnell nachlegen!",
+  ],
+  "dktransfer {"k":"dktransfer","p":"a","cards":["S7"],"to":"b","tn":"Tom & Jo"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> schiebst <span class="cs">♠7</span> weiter an <b>Tom &amp; Jo</b>.",
+  ],
+  "dktransfer {"k":"dktransfer","p":"a","cards":["S7"],"to":"b","tn":"Tom & Jo"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> schiebt <span class="cs">♠7</span> weiter an dich.",
+  ],
+  "dktransfer {"k":"dktransfer","p":"a","cards":["S7"],"to":"b","tn":"Tom & Jo"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> schiebt <span class="cs">♠7</span> weiter an <b>Tom &amp; Jo</b>.",
+  ],
+  "dktransfer {"k":"dktransfer","p":"a","cards":["S7"],"to":"z","tn":"Zora"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> schiebst <span class="cs">♠7</span> weiter an <b>Zora</b>.",
+  ],
+  "dktransfer {"k":"dktransfer","p":"a","cards":["S7"],"to":"z","tn":"Zora"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> schiebt <span class="cs">♠7</span> weiter an <b>Zora</b>.",
+  ],
+  "dktransfer {"k":"dktransfer","p":"a","cards":["S7"],"to":"z","tn":"Zora"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> schiebt <span class="cs">♠7</span> weiter an <b>Zora</b>.",
+  ],
+  "emote {"k":"emote","p":"a","e":"😀"} aus Sicht von a (shithead)": null,
+  "emote {"k":"emote","p":"a","e":"😀"} aus Sicht von b (shithead)": null,
+  "emote {"k":"emote","p":"a","e":"😀"} aus Sicht von o (shithead)": null,
+  "ffwd {"k":"ffwd","p":"a"} aus Sicht von a (shithead)": [
+    "sys",
+    "⏩ <b>Du</b> spulst vor. Die KIs spielen die Partie zügig aus.",
+  ],
+  "ffwd {"k":"ffwd","p":"a"} aus Sicht von b (shithead)": [
+    "sys",
+    "⏩ <b>Lena</b> spult vor. Die KIs spielen die Partie zügig aus.",
+  ],
+  "ffwd {"k":"ffwd","p":"a"} aus Sicht von o (shithead)": [
+    "sys",
+    "⏩ <b>Lena</b> spult vor. Die KIs spielen die Partie zügig aus.",
+  ],
+  "game {"k":"game","g":1} aus Sicht von a (shithead)": [
+    "round",
+    "Partie 1 beginnt",
+  ],
+  "game {"k":"game","g":1} aus Sicht von b (shithead)": [
+    "round",
+    "Partie 1 beginnt",
+  ],
+  "game {"k":"game","g":1} aus Sicht von o (shithead)": [
+    "round",
+    "Partie 1 beginnt",
+  ],
+  "game {"k":"game","g":2,"game":"shithead"} aus Sicht von a (shithead)": [
+    "round",
+    "Partie 2 beginnt · Shithead",
+  ],
+  "game {"k":"game","g":2,"game":"shithead"} aus Sicht von b (shithead)": [
+    "round",
+    "Partie 2 beginnt · Shithead",
+  ],
+  "game {"k":"game","g":2,"game":"shithead"} aus Sicht von o (shithead)": [
+    "round",
+    "Partie 2 beginnt · Shithead",
+  ],
+  "game {"k":"game","g":3,"game":"schnautz"} aus Sicht von a (shithead)": [
+    "round",
+    "Partie 3 beginnt",
+  ],
+  "game {"k":"game","g":3,"game":"schnautz"} aus Sicht von b (shithead)": [
+    "round",
+    "Partie 3 beginnt",
+  ],
+  "game {"k":"game","g":3,"game":"schnautz"} aus Sicht von o (shithead)": [
+    "round",
+    "Partie 3 beginnt",
+  ],
+  "game {"k":"game","g":4,"game":"cabo"} aus Sicht von a (shithead)": [
+    "round",
+    "Partie 4 beginnt · Cabo",
+  ],
+  "game {"k":"game","g":4,"game":"cabo"} aus Sicht von b (shithead)": [
+    "round",
+    "Partie 4 beginnt · Cabo",
+  ],
+  "game {"k":"game","g":4,"game":"cabo"} aus Sicht von o (shithead)": [
+    "round",
+    "Partie 4 beginnt · Cabo",
+  ],
+  "join {"k":"join","p":"a","bot":true} aus Sicht von a (shithead)": [
+    "sys",
+    "<b>Du</b> (KI) setzt sich an den Tisch.",
+  ],
+  "join {"k":"join","p":"a","bot":true} aus Sicht von b (shithead)": [
+    "sys",
+    "<b>Lena</b> (KI) setzt sich an den Tisch.",
+  ],
+  "join {"k":"join","p":"a","bot":true} aus Sicht von o (shithead)": [
+    "sys",
+    "<b>Lena</b> (KI) setzt sich an den Tisch.",
+  ],
+  "join {"k":"join","p":"a"} aus Sicht von a (shithead)": [
+    "sys",
+    "<b>Du</b> sitzt jetzt mit am Tisch.",
+  ],
+  "join {"k":"join","p":"a"} aus Sicht von b (shithead)": [
+    "sys",
+    "<b>Lena</b> sitzt jetzt mit am Tisch.",
+  ],
+  "join {"k":"join","p":"a"} aus Sicht von o (shithead)": [
+    "sys",
+    "<b>Lena</b> sitzt jetzt mit am Tisch.",
+  ],
+  "keep {"k":"keep","p":"a"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> behältst das eigene Blatt.",
+  ],
+  "keep {"k":"keep","p":"a"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> behält das eigene Blatt.",
+  ],
+  "keep {"k":"keep","p":"a"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> behält das eigene Blatt.",
+  ],
+  "knock {"k":"knock","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> klopfst! Alle anderen haben noch einen Zug.",
+  ],
+  "knock {"k":"knock","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> klopft! Alle anderen haben noch einen Zug.",
+  ],
+  "knock {"k":"knock","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> klopft! Alle anderen haben noch einen Zug.",
+  ],
+  "leave {"k":"leave","p":"a","name":"Lena"} aus Sicht von a (shithead)": [
+    "sys",
+    "<b>Lena</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"a","name":"Lena"} aus Sicht von b (shithead)": [
+    "sys",
+    "<b>Lena</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"a","name":"Lena"} aus Sicht von o (shithead)": [
+    "sys",
+    "<b>Lena</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"z","name":"Zora <3"} aus Sicht von a (shithead)": [
+    "sys",
+    "<b>Zora &lt;3</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"z","name":"Zora <3"} aus Sicht von b (shithead)": [
+    "sys",
+    "<b>Zora &lt;3</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"z","name":"Zora <3"} aus Sicht von o (shithead)": [
+    "sys",
+    "<b>Zora &lt;3</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"z"} aus Sicht von a (shithead)": [
+    "sys",
+    "<b>Jemand</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"z"} aus Sicht von b (shithead)": [
+    "sys",
+    "<b>Jemand</b> ist gegangen.",
+  ],
+  "leave {"k":"leave","p":"z"} aus Sicht von o (shithead)": [
+    "sys",
+    "<b>Jemand</b> ist gegangen.",
+  ],
+  "lobby {"k":"lobby"} aus Sicht von a (shithead)": [
+    "sys",
+    "Zurück in der Lobby.",
+  ],
+  "lobby {"k":"lobby"} aus Sicht von b (shithead)": [
+    "sys",
+    "Zurück in der Lobby.",
+  ],
+  "lobby {"k":"lobby"} aus Sicht von o (shithead)": [
+    "sys",
+    "Zurück in der Lobby.",
+  ],
+  "pass {"k":"pass","p":"a"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> schiebst.",
+  ],
+  "pass {"k":"pass","p":"a"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> schiebt.",
+  ],
+  "pass {"k":"pass","p":"a"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> schiebt.",
+  ],
+  "quit {"k":"quit","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> hast den Tisch verlassen und bist raus.",
+  ],
+  "quit {"k":"quit","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> hat den Tisch verlassen und ist raus.",
+  ],
+  "quit {"k":"quit","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> hat den Tisch verlassen und ist raus.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":1} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Du forderst <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert dich zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":"b","tn":"Tom & Jo","c":2} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ <b>Lena</b> fordert <b>Tom &amp; Jo</b> zur Revanche Nummer 2.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Du willst Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Du willst Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Du willst Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Du willst Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"a","to":null,"c":1} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ <b>Lena</b> will Revanche.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematch {"k":"rematch","p":"z","name":"Zora","to":"y","tn":"Yuri","c":3} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ <b>Zora</b> fordert <b>Yuri</b> zur Revanche Nummer 3.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ Revanche verpatzt! Du bleibst vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ Revanche verpatzt! Du bleibst vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ Revanche verpatzt! Du bleibst vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ Revanche verpatzt! Du bleibst vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"lost","c":1} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ Revanche verpatzt! Tom &amp; Jo bleibt vorne.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Unentschieden! Ihr habt gleich viele Punkte.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Unentschieden! Ihr seid gleichzeitig fertig geworden.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Unentschieden! Ihr fliegt beide in derselben Runde raus.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Unentschieden! Ihr seid gleichzeitig fertig geworden.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ Unentschieden! Ihr habt gleich viele Punkte.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ Unentschieden! Ihr seid gleichzeitig fertig geworden.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ Unentschieden! Ihr fliegt beide in derselben Runde raus.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ Unentschieden! Ihr seid gleichzeitig fertig geworden.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ Unentschieden! Lena und Tom &amp; Jo haben gleich viele Punkte.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ Unentschieden! Lena und Tom &amp; Jo sind gleichzeitig fertig geworden.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ Unentschieden! Lena und Tom &amp; Jo fliegen in derselben Runde raus.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"tie","c":1} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ Unentschieden! Lena und Tom &amp; Jo sind gleichzeitig fertig geworden.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Revanche geglückt! Du schlägst Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Revanche geglückt! Du schlägst Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Revanche geglückt! Du schlägst Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Revanche geglückt! Du schlägst Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt dich.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt dich.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt dich.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt dich.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"a","to":"b","tn":"Tom & Jo","res":"won","c":1} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ Revanche geglückt! Lena schlägt Tom &amp; Jo.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von a (cabo)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von a (durak)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von a (schnautz)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von a (shithead)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von b (cabo)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von b (durak)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von b (schnautz)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von b (shithead)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von o (cabo)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von o (durak)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von o (schnautz)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "rematchend {"k":"rematchend","p":"z","name":"Zora","to":"y","tn":"Yuri","res":"won","c":1} aus Sicht von o (shithead)": [
+    "big",
+    "⚔️ Revanche geglückt! Zora schlägt Yuri.",
+  ],
+  "renew {"k":"renew"} aus Sicht von a (shithead)": [
+    "sys",
+    "Alle haben geschoben. Drei neue Karten liegen aus.",
+  ],
+  "renew {"k":"renew"} aus Sicht von b (shithead)": [
+    "sys",
+    "Alle haben geschoben. Drei neue Karten liegen aus.",
+  ],
+  "renew {"k":"renew"} aus Sicht von o (shithead)": [
+    "sys",
+    "Alle haben geschoben. Drei neue Karten liegen aus.",
+  ],
+  "result {"k":"result","reason":"feuer","by":"a","changes":{"b":{"n":1,"to":"out"},"c":{"n":1,"to":"life"}},"tie":false,"names":{"b":"Tom & Jo","c":"Elfi"}} aus Sicht von a (shithead)": [
+    "big",
+    "Feuer! <b>Du</b> hast drei Asse. <b>Tom &amp; Jo</b> ist raus. <b>Elfi</b> verliert ein Leben.",
+  ],
+  "result {"k":"result","reason":"feuer","by":"a","changes":{"b":{"n":1,"to":"out"},"c":{"n":1,"to":"life"}},"tie":false,"names":{"b":"Tom & Jo","c":"Elfi"}} aus Sicht von b (shithead)": [
+    "big",
+    "Feuer! <b>Lena</b> hat drei Asse. <b>Du</b> bist raus. <b>Elfi</b> verliert ein Leben.",
+  ],
+  "result {"k":"result","reason":"feuer","by":"a","changes":{"b":{"n":1,"to":"out"},"c":{"n":1,"to":"life"}},"tie":false,"names":{"b":"Tom & Jo","c":"Elfi"}} aus Sicht von o (shithead)": [
+    "big",
+    "Feuer! <b>Lena</b> hat drei Asse. <b>Tom &amp; Jo</b> ist raus. <b>Elfi</b> verliert ein Leben.",
+  ],
+  "result {"k":"result","reason":"knock","by":null,"changes":{"b":{"n":2,"to":"life"}},"tie":false,"names":{}} aus Sicht von a (shithead)": [
+    "big",
+    "Aufgedeckt. <b>Tom &amp; Jo</b> verliert zwei Leben.",
+  ],
+  "result {"k":"result","reason":"knock","by":null,"changes":{"b":{"n":2,"to":"life"}},"tie":false,"names":{}} aus Sicht von b (shithead)": [
+    "big",
+    "Aufgedeckt. <b>Du</b> verlierst zwei Leben.",
+  ],
+  "result {"k":"result","reason":"knock","by":null,"changes":{"b":{"n":2,"to":"life"}},"tie":false,"names":{}} aus Sicht von o (shithead)": [
+    "big",
+    "Aufgedeckt. <b>Tom &amp; Jo</b> verliert zwei Leben.",
+  ],
+  "result {"k":"result","reason":"knock","by":null,"changes":{},"tie":true,"names":{}} aus Sicht von a (shithead)": [
+    "big",
+    "Aufgedeckt. Gleichstand. Niemand verliert ein Leben.",
+  ],
+  "result {"k":"result","reason":"knock","by":null,"changes":{},"tie":true,"names":{}} aus Sicht von b (shithead)": [
+    "big",
+    "Aufgedeckt. Gleichstand. Niemand verliert ein Leben.",
+  ],
+  "result {"k":"result","reason":"knock","by":null,"changes":{},"tie":true,"names":{}} aus Sicht von o (shithead)": [
+    "big",
+    "Aufgedeckt. Gleichstand. Niemand verliert ein Leben.",
+  ],
+  "result {"k":"result","reason":"quit","by":null,"changes":{"a":{"n":1,"to":"out"}},"tie":false,"names":{"a":"Lena"}} aus Sicht von a (shithead)": [
+    "big",
+    "Aufgedeckt. <b>Du</b> bist raus.",
+  ],
+  "result {"k":"result","reason":"quit","by":null,"changes":{"a":{"n":1,"to":"out"}},"tie":false,"names":{"a":"Lena"}} aus Sicht von b (shithead)": [
+    "big",
+    "Aufgedeckt. <b>Lena</b> ist raus.",
+  ],
+  "result {"k":"result","reason":"quit","by":null,"changes":{"a":{"n":1,"to":"out"}},"tie":false,"names":{"a":"Lena"}} aus Sicht von o (shithead)": [
+    "big",
+    "Aufgedeckt. <b>Lena</b> ist raus.",
+  ],
+  "result {"k":"result","reason":"schnautz","by":"a","changes":{"b":{"n":1,"to":"life"},"c":{"n":1,"to":"swim"}},"tie":false,"names":{"b":"Tom & Jo","c":"Elfi"}} aus Sicht von a (shithead)": [
+    "big",
+    "Schnautz! <b>Du</b> hast 31. <b>Tom &amp; Jo</b> verliert ein Leben. <b>Elfi</b> schwimmt jetzt.",
+  ],
+  "result {"k":"result","reason":"schnautz","by":"a","changes":{"b":{"n":1,"to":"life"},"c":{"n":1,"to":"swim"}},"tie":false,"names":{"b":"Tom & Jo","c":"Elfi"}} aus Sicht von b (shithead)": [
+    "big",
+    "Schnautz! <b>Lena</b> hat 31. <b>Du</b> verlierst ein Leben. <b>Elfi</b> schwimmt jetzt.",
+  ],
+  "result {"k":"result","reason":"schnautz","by":"a","changes":{"b":{"n":1,"to":"life"},"c":{"n":1,"to":"swim"}},"tie":false,"names":{"b":"Tom & Jo","c":"Elfi"}} aus Sicht von o (shithead)": [
+    "big",
+    "Schnautz! <b>Lena</b> hat 31. <b>Tom &amp; Jo</b> verliert ein Leben. <b>Elfi</b> schwimmt jetzt.",
+  ],
+  "result {"k":"result","reason":"schnautz","by":"z","changes":{"z":{"n":1,"to":"out"}},"tie":false,"names":{"z":"Zora"}} aus Sicht von a (shithead)": [
+    "big",
+    "Schnautz! <b>Zora</b> hat 31. <b>Zora</b> ist raus.",
+  ],
+  "result {"k":"result","reason":"schnautz","by":"z","changes":{"z":{"n":1,"to":"out"}},"tie":false,"names":{"z":"Zora"}} aus Sicht von b (shithead)": [
+    "big",
+    "Schnautz! <b>Zora</b> hat 31. <b>Zora</b> ist raus.",
+  ],
+  "result {"k":"result","reason":"schnautz","by":"z","changes":{"z":{"n":1,"to":"out"}},"tie":false,"names":{"z":"Zora"}} aus Sicht von o (shithead)": [
+    "big",
+    "Schnautz! <b>Zora</b> hat 31. <b>Zora</b> ist raus.",
+  ],
+  "round {"k":"round","r":1,"p":"a"} aus Sicht von a (shithead)": [
+    "round",
+    "Runde 1 · Du gibst",
+  ],
+  "round {"k":"round","r":1,"p":"a"} aus Sicht von b (shithead)": [
+    "round",
+    "Runde 1 · Lena gibt",
+  ],
+  "round {"k":"round","r":1,"p":"a"} aus Sicht von o (shithead)": [
+    "round",
+    "Runde 1 · Lena gibt",
+  ],
+  "round {"k":"round","r":2,"p":"a","start":"b"} aus Sicht von a (shithead)": [
+    "round",
+    "Runde 2 · Du gibst, Tom &amp; Jo fängt an",
+  ],
+  "round {"k":"round","r":2,"p":"a","start":"b"} aus Sicht von b (shithead)": [
+    "round",
+    "Runde 2 · Lena gibt, du fängst an",
+  ],
+  "round {"k":"round","r":2,"p":"a","start":"b"} aus Sicht von o (shithead)": [
+    "round",
+    "Runde 2 · Lena gibt, Tom &amp; Jo fängt an",
+  ],
+  "round {"k":"round","r":2,"p":"b","start":"a"} aus Sicht von a (shithead)": [
+    "round",
+    "Runde 2 · Tom &amp; Jo gibt, du fängst an",
+  ],
+  "round {"k":"round","r":2,"p":"b","start":"a"} aus Sicht von b (shithead)": [
+    "round",
+    "Runde 2 · Du gibst, Lena fängt an",
+  ],
+  "round {"k":"round","r":2,"p":"b","start":"a"} aus Sicht von o (shithead)": [
+    "round",
+    "Runde 2 · Tom &amp; Jo gibt, Lena fängt an",
+  ],
+  "shbet {"k":"shbet","p":"a","on":"b","onName":"Tom & Jo","q":2} aus Sicht von a (shithead)": null,
+  "shbet {"k":"shbet","p":"a","on":"b","onName":"Tom & Jo","q":2} aus Sicht von b (shithead)": null,
+  "shbet {"k":"shbet","p":"a","on":"b","onName":"Tom & Jo","q":2} aus Sicht von o (shithead)": null,
+  "shblindfail {"k":"shblindfail","p":"a","card":"HK","cnt":1} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> deckst blind <span class="cs r">♥K</span> auf. Die passt nicht. Du nimmst 1 Karte auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"a","card":"HK","cnt":1} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Lena nimmt 1 Karte auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"a","card":"HK","cnt":1} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Lena nimmt 1 Karte auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"a","card":"HK","cnt":5} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> deckst blind <span class="cs r">♥K</span> auf. Die passt nicht. Du nimmst 5 Karten auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"a","card":"HK","cnt":5} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Lena nimmt 5 Karten auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"a","card":"HK","cnt":5} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Lena nimmt 5 Karten auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"z","name":"Zora","card":"HK","cnt":5} aus Sicht von a (shithead)": [
+    "",
+    "<b>Zora</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Zora nimmt 5 Karten auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"z","name":"Zora","card":"HK","cnt":5} aus Sicht von b (shithead)": [
+    "",
+    "<b>Zora</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Zora nimmt 5 Karten auf.",
+  ],
+  "shblindfail {"k":"shblindfail","p":"z","name":"Zora","card":"HK","cnt":5} aus Sicht von o (shithead)": [
+    "",
+    "<b>Zora</b> deckt blind <span class="cs r">♥K</span> auf. Die passt nicht. Zora nimmt 5 Karten auf.",
+  ],
+  "shbomb {"k":"shbomb","p":"a","cards":["H9","S9","C9","D9"],"src":"hand","out":true} aus Sicht von a (shithead)": [
+    "big",
+    "💣 <b>Du</b> wirfst <span class="cs r">♥9</span> <span class="cs">♠9</span> <span class="cs">♣9</span> <span class="cs r">♦9</span> außer der Reihe als Bombe ein.",
+  ],
+  "shbomb {"k":"shbomb","p":"a","cards":["H9","S9","C9","D9"],"src":"hand","out":true} aus Sicht von b (shithead)": [
+    "big",
+    "💣 <b>Lena</b> wirft <span class="cs r">♥9</span> <span class="cs">♠9</span> <span class="cs">♣9</span> <span class="cs r">♦9</span> außer der Reihe als Bombe ein.",
+  ],
+  "shbomb {"k":"shbomb","p":"a","cards":["H9","S9","C9","D9"],"src":"hand","out":true} aus Sicht von o (shithead)": [
+    "big",
+    "💣 <b>Lena</b> wirft <span class="cs r">♥9</span> <span class="cs">♠9</span> <span class="cs">♣9</span> <span class="cs r">♦9</span> außer der Reihe als Bombe ein.",
+  ],
+  "shbomb {"k":"shbomb","p":"a","cards":["H9","S9","C9","D9"],"src":"up","out":false} aus Sicht von a (shithead)": [
+    "big",
+    "💣 <b>Du</b> wirfst <span class="cs r">♥9</span> <span class="cs">♠9</span> <span class="cs">♣9</span> <span class="cs r">♦9</span> als Bombe ein.",
+  ],
+  "shbomb {"k":"shbomb","p":"a","cards":["H9","S9","C9","D9"],"src":"up","out":false} aus Sicht von b (shithead)": [
+    "big",
+    "💣 <b>Lena</b> wirft <span class="cs r">♥9</span> <span class="cs">♠9</span> <span class="cs">♣9</span> <span class="cs r">♦9</span> als Bombe ein.",
+  ],
+  "shbomb {"k":"shbomb","p":"a","cards":["H9","S9","C9","D9"],"src":"up","out":false} aus Sicht von o (shithead)": [
+    "big",
+    "💣 <b>Lena</b> wirft <span class="cs r">♥9</span> <span class="cs">♠9</span> <span class="cs">♣9</span> <span class="cs r">♦9</span> als Bombe ein.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":false,"cut":false} aus Sicht von a (shithead)": [
+    "big",
+    "🔥 <b>Du</b> verbrennst den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":false,"cut":false} aus Sicht von b (shithead)": [
+    "big",
+    "🔥 <b>Lena</b> verbrennt den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":false,"cut":false} aus Sicht von o (shithead)": [
+    "big",
+    "🔥 <b>Lena</b> verbrennt den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":true,"cut":false} aus Sicht von a (shithead)": [
+    "big",
+    "💣 Bombe! <b>Du</b> verbrennst den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":true,"cut":false} aus Sicht von b (shithead)": [
+    "big",
+    "💣 Bombe! <b>Lena</b> verbrennt den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":true,"cut":false} aus Sicht von o (shithead)": [
+    "big",
+    "💣 Bombe! <b>Lena</b> verbrennt den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":true,"cut":true} aus Sicht von a (shithead)": [
+    "big",
+    "💣 Bombe! <b>Du</b> verbrennst den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":true,"cut":true} aus Sicht von b (shithead)": [
+    "big",
+    "💣 Bombe! <b>Lena</b> verbrennt den Stapel.",
+  ],
+  "shburn {"k":"shburn","p":"a","four":true,"cut":true} aus Sicht von o (shithead)": [
+    "big",
+    "💣 Bombe! <b>Lena</b> verbrennt den Stapel.",
+  ],
+  "shdeal {"k":"shdeal"} aus Sicht von a (shithead)": [
+    "sys",
+    "Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.",
+  ],
+  "shdeal {"k":"shdeal"} aus Sicht von b (shithead)": [
+    "sys",
+    "Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.",
+  ],
+  "shdeal {"k":"shdeal"} aus Sicht von o (shithead)": [
+    "sys",
+    "Die Karten sind verteilt. Vor dem Start darf jeder Hand- und Tischkarten tauschen.",
+  ],
+  "shdone {"k":"shdone","p":"a","place":1} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> bist fertig! Platz 1.",
+  ],
+  "shdone {"k":"shdone","p":"a","place":1} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> ist fertig! Platz 1.",
+  ],
+  "shdone {"k":"shdone","p":"a","place":1} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> ist fertig! Platz 1.",
+  ],
+  "shend {"k":"shend","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "💩 <b>Du</b> bist der Shithead!",
+  ],
+  "shend {"k":"shend","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "💩 <b>Lena</b> ist der Shithead!",
+  ],
+  "shend {"k":"shend","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "💩 <b>Lena</b> ist der Shithead!",
+  ],
+  "shend {"k":"shend"} aus Sicht von a (shithead)": [
+    "big",
+    "Die Partie ist vorbei.",
+  ],
+  "shend {"k":"shend"} aus Sicht von b (shithead)": [
+    "big",
+    "Die Partie ist vorbei.",
+  ],
+  "shend {"k":"shend"} aus Sicht von o (shithead)": [
+    "big",
+    "Die Partie ist vorbei.",
+  ],
+  "shpickup {"k":"shpickup","p":"a","cnt":1} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst den Stapel auf (1 Karte).",
+  ],
+  "shpickup {"k":"shpickup","p":"a","cnt":1} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt den Stapel auf (1 Karte).",
+  ],
+  "shpickup {"k":"shpickup","p":"a","cnt":1} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt den Stapel auf (1 Karte).",
+  ],
+  "shpickup {"k":"shpickup","p":"a","cnt":7} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst den Stapel auf (7 Karten).",
+  ],
+  "shpickup {"k":"shpickup","p":"a","cnt":7} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt den Stapel auf (7 Karten).",
+  ],
+  "shpickup {"k":"shpickup","p":"a","cnt":7} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt den Stapel auf (7 Karten).",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7","S7"],"src":"hand"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥7</span> <span class="cs">♠7</span>.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7","S7"],"src":"hand"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> <span class="cs">♠7</span>.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7","S7"],"src":"hand"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> <span class="cs">♠7</span>.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7"],"src":"down"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥7</span> blind.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7"],"src":"down"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> blind.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7"],"src":"down"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> blind.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7:2"],"src":"up"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥7</span> vom Tisch.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7:2"],"src":"up"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> vom Tisch.",
+  ],
+  "shplay {"k":"shplay","p":"a","cards":["H7:2"],"src":"up"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> vom Tisch.",
+  ],
+  "shstart {"k":"shstart","p":"a","card":"H3"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> fängst an (niedrigste Karte <span class="cs r">♥3</span>).",
+  ],
+  "shstart {"k":"shstart","p":"a","card":"H3"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> fängt an (niedrigste Karte <span class="cs r">♥3</span>).",
+  ],
+  "shstart {"k":"shstart","p":"a","card":"H3"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> fängt an (niedrigste Karte <span class="cs r">♥3</span>).",
+  ],
+  "shstart {"k":"shstart","p":"a","card":null} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> fängst an.",
+  ],
+  "shstart {"k":"shstart","p":"a","card":null} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> fängt an.",
+  ],
+  "shstart {"k":"shstart","p":"a","card":null} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> fängt an.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"],"src":"hand"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> wirfst <span class="cs r">♥4</span> rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"],"src":"hand"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> wirft <span class="cs r">♥4</span> rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"],"src":"hand"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> wirft <span class="cs r">♥4</span> rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"],"src":"up"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> wirfst <span class="cs r">♥4</span> vom Tisch rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"],"src":"up"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> wirft <span class="cs r">♥4</span> vom Tisch rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"],"src":"up"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> wirft <span class="cs r">♥4</span> vom Tisch rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"]} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> wirfst <span class="cs r">♥4</span> rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"]} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> wirft <span class="cs r">♥4</span> rein.",
+  ],
+  "shthrow {"k":"shthrow","p":"a","cards":["H4"]} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> wirft <span class="cs r">♥4</span> rein.",
+  ],
+  "sound {"k":"sound","p":"a","s":"tusch"} aus Sicht von a (shithead)": null,
+  "sound {"k":"sound","p":"a","s":"tusch"} aus Sicht von b (shithead)": null,
+  "sound {"k":"sound","p":"a","s":"tusch"} aus Sicht von o (shithead)": null,
+  "swap {"k":"swap","p":"a","take":"H7","give":"SK"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst <span class="cs r">♥7</span> und legst <span class="cs">♠K</span> hin.",
+  ],
+  "swap {"k":"swap","p":"a","take":"H7","give":"SK"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt <span class="cs r">♥7</span> und legt <span class="cs">♠K</span> hin.",
+  ],
+  "swap {"k":"swap","p":"a","take":"H7","give":"SK"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt <span class="cs r">♥7</span> und legt <span class="cs">♠K</span> hin.",
+  ],
+  "swapAll {"k":"swapAll","p":"a"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> tauschst alle drei Karten.",
+  ],
+  "swapAll {"k":"swapAll","p":"a"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> tauscht alle drei Karten.",
+  ],
+  "swapAll {"k":"swapAll","p":"a"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> tauscht alle drei Karten.",
+  ],
+  "take {"k":"take","p":"a"} aus Sicht von a (shithead)": [
+    "",
+    "<b>Du</b> nimmst blind das zweite Blatt.",
+  ],
+  "take {"k":"take","p":"a"} aus Sicht von b (shithead)": [
+    "",
+    "<b>Lena</b> nimmt blind das zweite Blatt.",
+  ],
+  "take {"k":"take","p":"a"} aus Sicht von o (shithead)": [
+    "",
+    "<b>Lena</b> nimmt blind das zweite Blatt.",
+  ],
+  "takeover {"k":"takeover","p":"a","from":"KI Igor & Co"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> übernimmst den Platz von <b>KI Igor &amp; Co</b> samt Karten.",
+  ],
+  "takeover {"k":"takeover","p":"a","from":"KI Igor & Co"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> übernimmt den Platz von <b>KI Igor &amp; Co</b> samt Karten.",
+  ],
+  "takeover {"k":"takeover","p":"a","from":"KI Igor & Co"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> übernimmt den Platz von <b>KI Igor &amp; Co</b> samt Karten.",
+  ],
+  "timeout {"k":"timeout","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für dich.",
+  ],
+  "timeout {"k":"timeout","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Lena</b>.",
+  ],
+  "timeout {"k":"timeout","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Lena</b>.",
+  ],
+  "timeout {"k":"timeout","p":"z","name":"Zora"} aus Sicht von a (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Zora</b>.",
+  ],
+  "timeout {"k":"timeout","p":"z","name":"Zora"} aus Sicht von b (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Zora</b>.",
+  ],
+  "timeout {"k":"timeout","p":"z","name":"Zora"} aus Sicht von o (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Zora</b>.",
+  ],
+  "timeout {"k":"timeout","p":"z"} aus Sicht von a (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Jemand</b>.",
+  ],
+  "timeout {"k":"timeout","p":"z"} aus Sicht von b (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Jemand</b>.",
+  ],
+  "timeout {"k":"timeout","p":"z"} aus Sicht von o (shithead)": [
+    "big",
+    "⏰ Zeit um, die KI spielt einmal für <b>Jemand</b>.",
+  ],
+  "tobot {"k":"tobot","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> bist gegangen. Ab jetzt spielt die KI für dich weiter.",
+  ],
+  "tobot {"k":"tobot","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> ist gegangen. Ab jetzt spielt die KI für <b>Lena</b> weiter.",
+  ],
+  "tobot {"k":"tobot","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> ist gegangen. Ab jetzt spielt die KI für <b>Lena</b> weiter.",
+  ],
+  "tobot {"k":"tobot","p":"z","name":"Zora"} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Zora</b> ist gegangen. Ab jetzt spielt die KI für <b>Zora</b> weiter.",
+  ],
+  "tobot {"k":"tobot","p":"z","name":"Zora"} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Zora</b> ist gegangen. Ab jetzt spielt die KI für <b>Zora</b> weiter.",
+  ],
+  "tobot {"k":"tobot","p":"z","name":"Zora"} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Zora</b> ist gegangen. Ab jetzt spielt die KI für <b>Zora</b> weiter.",
+  ],
+  "toss {"k":"toss","p":"a","item":"tomato","to":"b"} aus Sicht von a (shithead)": null,
+  "toss {"k":"toss","p":"a","item":"tomato","to":"b"} aus Sicht von b (shithead)": null,
+  "toss {"k":"toss","p":"a","item":"tomato","to":"b"} aus Sicht von o (shithead)": null,
+  "winner {"k":"winner","p":"a"} aus Sicht von a (shithead)": [
+    "big",
+    "🏆 <b>Du</b> gewinnst die Partie!",
+  ],
+  "winner {"k":"winner","p":"a"} aus Sicht von b (shithead)": [
+    "big",
+    "🏆 <b>Lena</b> gewinnt die Partie!",
+  ],
+  "winner {"k":"winner","p":"a"} aus Sicht von o (shithead)": [
+    "big",
+    "🏆 <b>Lena</b> gewinnt die Partie!",
+  ],
+  "winner {"k":"winner"} aus Sicht von a (shithead)": [
+    "big",
+    "Die Partie ist vorbei.",
+  ],
+  "winner {"k":"winner"} aus Sicht von b (shithead)": [
+    "big",
+    "Die Partie ist vorbei.",
+  ],
+  "winner {"k":"winner"} aus Sicht von o (shithead)": [
+    "big",
+    "Die Partie ist vorbei.",
+  ],
+}
+`;
+
+exports[`Verlauf aus dem Textkatalog > übersteht Einträge mit fehlenden oder fremden Feldern wie vor dem Umbau 1`] = `
+{
+  "{"k":"cbdiscard","n":11,"p":"a","c":"H7"} aus Sicht von a": [
+    "",
+    "<b>Du</b> legst <span class="cs r">♥7</span> ab.",
+  ],
+  "{"k":"cbdiscard","n":11,"p":"a","c":"H7"} aus Sicht von b": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> ab.",
+  ],
+  "{"k":"cbdiscard","n":11,"p":"a","c":"H7"} aus Sicht von o": [
+    "",
+    "<b>Lena</b> legt <span class="cs r">♥7</span> ab.",
+  ],
+  "{"k":"cbround","n":4} aus Sicht von a": [
+    "big",
+    "Der Stapel ist leer, alle decken auf.",
+  ],
+  "{"k":"cbround","n":4} aus Sicht von b": [
+    "big",
+    "Der Stapel ist leer, alle decken auf.",
+  ],
+  "{"k":"cbround","n":4} aus Sicht von o": [
+    "big",
+    "Der Stapel ist leer, alle decken auf.",
+  ],
+  "{"k":"cbround","n":5,"scores":{"a":"x","b":3},"caller":"a","ok":true} aus Sicht von a": [
+    "big",
+    "🎯 <b>Du</b> hattest mit Cabo recht, 0 Punkte. Du +0 · Tom &amp; Jo +3",
+  ],
+  "{"k":"cbround","n":5,"scores":{"a":"x","b":3},"caller":"a","ok":true} aus Sicht von b": [
+    "big",
+    "🎯 <b>Lena</b> hatte mit Cabo recht, 0 Punkte. Lena +0 · Du +3",
+  ],
+  "{"k":"cbround","n":5,"scores":{"a":"x","b":3},"caller":"a","ok":true} aus Sicht von o": [
+    "big",
+    "🎯 <b>Lena</b> hatte mit Cabo recht, 0 Punkte. Lena +0 · Tom &amp; Jo +3",
+  ],
+  "{"k":"cbswap","n":10,"p":"a","out":["H5"],"ok":true,"slots":9} aus Sicht von a": [
+    "",
+    "<b>Du</b> wirfst 9 gleiche auf einmal ab (<span class="cs r">♥5</span>).",
+  ],
+  "{"k":"cbswap","n":10,"p":"a","out":["H5"],"ok":true,"slots":9} aus Sicht von b": [
+    "",
+    "<b>Lena</b> wirft 9 gleiche auf einmal ab (<span class="cs r">♥5</span>).",
+  ],
+  "{"k":"cbswap","n":10,"p":"a","out":["H5"],"ok":true,"slots":9} aus Sicht von o": [
+    "",
+    "<b>Lena</b> wirft 9 gleiche auf einmal ab (<span class="cs r">♥5</span>).",
+  ],
+  "{"k":"dkattack","n":3,"p":"a","cards":"H7"} aus Sicht von a": [
+    "",
+    "<b>Du</b> legst  nach.",
+  ],
+  "{"k":"dkattack","n":3,"p":"a","cards":"H7"} aus Sicht von b": [
+    "",
+    "<b>Lena</b> legt  nach.",
+  ],
+  "{"k":"dkattack","n":3,"p":"a","cards":"H7"} aus Sicht von o": [
+    "",
+    "<b>Lena</b> legt  nach.",
+  ],
+  "{"k":"dkbito","n":9,"p":"a","cnt":"viele"} aus Sicht von a": [
+    "",
+    "Bito! <b>Du</b> wehrst alles ab, 0 Karten gehen auf den Bito-Stapel.",
+  ],
+  "{"k":"dkbito","n":9,"p":"a","cnt":"viele"} aus Sicht von b": [
+    "",
+    "Bito! <b>Lena</b> wehrt alles ab, 0 Karten gehen auf den Bito-Stapel.",
+  ],
+  "{"k":"dkbito","n":9,"p":"a","cnt":"viele"} aus Sicht von o": [
+    "",
+    "Bito! <b>Lena</b> wehrt alles ab, 0 Karten gehen auf den Bito-Stapel.",
+  ],
+  "{"k":"game","n":7,"g":"x","game":"poker"} aus Sicht von a": [
+    "round",
+    "Partie 0 beginnt",
+  ],
+  "{"k":"game","n":7,"g":"x","game":"poker"} aus Sicht von b": [
+    "round",
+    "Partie 0 beginnt",
+  ],
+  "{"k":"game","n":7,"g":"x","game":"poker"} aus Sicht von o": [
+    "round",
+    "Partie 0 beginnt",
+  ],
+  "{"k":"result","n":6,"reason":"knock"} aus Sicht von a": [
+    "big",
+    "Aufgedeckt.",
+  ],
+  "{"k":"result","n":6,"reason":"knock"} aus Sicht von b": [
+    "big",
+    "Aufgedeckt.",
+  ],
+  "{"k":"result","n":6,"reason":"knock"} aus Sicht von o": [
+    "big",
+    "Aufgedeckt.",
+  ],
+  "{"k":"shpickup","n":8,"p":"a"} aus Sicht von a": [
+    "",
+    "<b>Du</b> nimmst den Stapel auf (0 Karten).",
+  ],
+  "{"k":"shpickup","n":8,"p":"a"} aus Sicht von b": [
+    "",
+    "<b>Lena</b> nimmt den Stapel auf (0 Karten).",
+  ],
+  "{"k":"shpickup","n":8,"p":"a"} aus Sicht von o": [
+    "",
+    "<b>Lena</b> nimmt den Stapel auf (0 Karten).",
+  ],
+  "{"k":"shplay","n":1,"p":"a"} aus Sicht von a": [
+    "",
+    "<b>Du</b> legst .",
+  ],
+  "{"k":"shplay","n":1,"p":"a"} aus Sicht von b": [
+    "",
+    "<b>Lena</b> legt .",
+  ],
+  "{"k":"shplay","n":1,"p":"a"} aus Sicht von o": [
+    "",
+    "<b>Lena</b> legt .",
+  ],
+  "{"k":"shplay","n":2,"p":"a","cards":["XX",7],"src":"hand"} aus Sicht von a": [
+    "",
+    "<b>Du</b> legst ? ?.",
+  ],
+  "{"k":"shplay","n":2,"p":"a","cards":["XX",7],"src":"hand"} aus Sicht von b": [
+    "",
+    "<b>Lena</b> legt ? ?.",
+  ],
+  "{"k":"shplay","n":2,"p":"a","cards":["XX",7],"src":"hand"} aus Sicht von o": [
+    "",
+    "<b>Lena</b> legt ? ?.",
+  ],
+  "{"k":"takeover","n":12,"p":"a"} aus Sicht von a": [
+    "big",
+    "<b>Du</b> übernimmst den Platz von <b>undefined</b> samt Karten.",
+  ],
+  "{"k":"takeover","n":12,"p":"a"} aus Sicht von b": [
+    "big",
+    "<b>Lena</b> übernimmt den Platz von <b>undefined</b> samt Karten.",
+  ],
+  "{"k":"takeover","n":12,"p":"a"} aus Sicht von o": [
+    "big",
+    "<b>Lena</b> übernimmt den Platz von <b>undefined</b> samt Karten.",
+  ],
+}
+`;

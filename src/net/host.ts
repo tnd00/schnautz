@@ -16,7 +16,6 @@ import type { Action, GameKind, LogEntry, State, View } from '../game/types';
 import { fitView, viewFor } from '../game/view';
 import { App } from '../ui/app';
 import { applyView } from '../ui/apply';
-import { annLeft } from '../ui/feedback';
 import { num, type Timer } from '../ui/dom';
 import { resetTableUI } from '../ui/reset';
 import { seqMsOf } from '../ui/shithead/sequence';
@@ -614,7 +613,7 @@ export function hostCommit(): void {
   H.conns.forEach((conn, pid) => hostSend(conn, { t: 'state', s: hostView(st, pid) }));
   applyView(hostOwnView(st));
   // Countdown zur nächsten Schnautz-Runde erst, wenn die Meldungen beim Host durch sind, dann allen schicken
-  if (hostAutoNext(st, seqMsOf(fresh) + annLeft() + 400)) {
+  if (hostAutoNext(st, fresh)) {
     H.conns.forEach((conn, pid) => hostSend(conn, { t: 'state', s: hostView(st, pid) }));
     applyView(hostOwnView(st));
   }

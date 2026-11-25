@@ -209,25 +209,29 @@ for (const game of GAMES) {
 const SHEET_JUMP = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-round' } as const;
 
 for (const game of GAMES) {
-  // Welle B, Ergebnisblatt: Heute verdeckt die Fußleiste bei acht Leuten eigene Zeile und Verlierer (Planpunkt 6).
-  // Sobald das gemeinsame Ergebnisblatt steht, fixme entfernen und danach sheetFindings(page, true) als Ziel nehmen.
-  test.fixme(`${game} zu acht: Ergebnisblatt zeigt eigene Zeile und Verlierer`, async ({ browser }) => {
-    test.setTimeout(3 * 60_000);
-    const errors = new Errors();
-    const { host, guest } = await tableOfEight(browser, errors, game);
-    await devJump(host, SHEET_JUMP[game]);
-    await waitSheet(guest);
-    for (const s of SHEET_PHONE) {
-      await resize(guest, s);
-      expect.soft(await sheetFindings(guest), `Ergebnis ${s}`).toEqual([]);
-    }
-    await waitSheet(host);
-    for (const s of SHEET_PC) {
-      await resize(host, s);
-      expect.soft(await sheetFindings(host), `Ergebnis PC ${s}`).toEqual([]);
-    }
-    expect(errors.list).toEqual([]);
-  });
+  // Welle B, Ergebnisblatt: Shithead zeichnet schon das gemeinsame Blatt und darf nicht scrollen (sheetFindings
+  // streng). Die anderen drei folgen, bis dahin verdeckt bei ihnen die Fußleiste eigene Zeile und Verlierer.
+  const strict = game === 'shithead';
+  (strict ? test : test.fixme)(
+    `${game} zu acht: Ergebnisblatt zeigt eigene Zeile und Verlierer`,
+    async ({ browser }) => {
+      test.setTimeout(3 * 60_000);
+      const errors = new Errors();
+      const { host, guest } = await tableOfEight(browser, errors, game);
+      await devJump(host, SHEET_JUMP[game]);
+      await waitSheet(guest);
+      for (const s of SHEET_PHONE) {
+        await resize(guest, s);
+        expect.soft(await sheetFindings(guest, strict), `Ergebnis ${s}`).toEqual([]);
+      }
+      await waitSheet(host);
+      for (const s of SHEET_PC) {
+        await resize(host, s);
+        expect.soft(await sheetFindings(host, strict), `Ergebnis PC ${s}`).toEqual([]);
+      }
+      expect(errors.list).toEqual([]);
+    },
+  );
 }
 
 test('Schnautz am PC: Vorschau beim Tauschen schiebt die Reaktionsleiste nicht weg', async ({ browser }) => {

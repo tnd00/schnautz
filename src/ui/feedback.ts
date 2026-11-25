@@ -3,6 +3,9 @@ import { App } from './app';
 import { $, $opt, esc, type Timer } from './dom';
 import { render } from './render/index';
 import type { Cue } from './levels';
+import type { Reject } from '../game/reject';
+import { ctxOfView, rejectText } from '../content/texts';
+import { myMoveNow } from './helpers';
 import { sfx, sfxCalm, type SoundName } from './sound';
 
 const ms = (x: number | undefined, d: number) => x || d;
@@ -54,23 +57,85 @@ function fieldRect(min = 90): { left: number; top: number; width: number; height
 }
 
 /**
+ * Bin ich am Zug oder in der Tauschrunde? Dann stehen Meldungen als Band über der Statuszeile, nie über eigenen
+ * Karten, Gegnern oder Stapel. Anker ist die Statuszeile, in der Tauschrunde (dort ist sie aus) der Kopf am Platz.
+ */
+function bandAnchor(): DOMRect | null {
+  const v = App.view;
+  if (!v || !document.body.classList.contains('ingame')) return null;
+  const me = v.players.find((p) => p.id === App.me);
+  const swap = v.phase === 'swap' && !!me && !me.ready;
+  if (!swap && !myMoveNow(v)) return null;
+  for (const sel of ['#status', '#me .swhead']) {
+    const r = $opt(sel)?.getBoundingClientRect();
+    if (r && r.height > 0 && r.width > 0) return r;
+  }
+  return null;
+}
+
+/**
+ * Platz im Band: unten bündig mit der Statuszeile, weitere Meldungen stapeln sich nach oben bis zum Stapel. Ist kein
+ * Platz mehr, weichen die älteren, damit nichts über eigene Karten rutscht.
+ */
+function bandSlot(el: HTMLElement, band: DOMRect, h: number): number {
+  const pile = $opt('#center')?.getBoundingClientRect();
+  const floor = Math.min(band.top, pile && pile.height ? pile.bottom : band.top - 40);
+  const base = band.bottom - h - 2;
+  const others = [...document.querySelectorAll<HTMLElement>('#fly .mid.band')].filter(
+    (o) => o !== el && !o.classList.contains('out') && o.style.top !== '-999px',
+  );
+  let top = base;
+  for (const o of others.map((x) => x.getBoundingClientRect()).sort((p, q) => q.top - p.top))
+    if (top < o.bottom + 3 && top + h > o.top - 3) top = o.top - h - 3;
+  if (top >= floor) return top;
+  // Der Grund einer Ablehnung bleibt stehen, die übrigen weichen
+  const keep = el.classList.contains('nopelbl') ? [] : others.filter((o) => o.classList.contains('nopelbl'));
+  for (const o of others) {
+    if (keep.includes(o)) continue;
+    o.classList.add('out');
+    setTimeout(() => o.remove(), 320);
+  }
+  top = base;
+  for (const o of keep.map((x) => x.getBoundingClientRect()))
+    if (top < o.bottom + 3 && top + h > o.top - 3) top = o.top - h - 3;
+  return top;
+}
+
+/**
  * Wohin mit einer Meldung in der Spielfläche?
  * Kleine Hinweise (`cap`) sitzen genau auf dem Label "Stapel" (bei Schnautz "Mitte"): gleiche Unterkante, es wird
  * überdeckt. Sprüche (`center`) stehen mittig wie die großen Meldungen. Mehrere gleichzeitig reihen sich darunter.
+ * Bin ich am Zug, stehen beide als Band über der Statuszeile (bandAnchor).
  * Gibt `false` zurück, wenn kein Tisch zu sehen ist.
  */
 function placeMessage(el: HTMLElement, mode: 'cap' | 'center'): boolean {
   const r = fieldRect(0);
   const c = $opt('#center')?.getBoundingClientRect();
   if (!r && !c) return false;
-  const area = r ?? { left: (c as DOMRect).left, width: (c as DOMRect).width, top: (c as DOMRect).top, height: 0 };
   el.classList.add('mid');
-  el.style.left = `${Math.round(area.left + area.width / 2)}px`;
+  el.dataset.mode = mode;
   el.style.top = '-999px';
   $('#fly').appendChild(el);
+  positionMessage(el, mode);
+  return true;
+}
+
+/** Setzt eine Meldung aus placeMessage (neu) an ihren Platz. Auch nach dem Zeichnen über realignFeedback. */
+function positionMessage(el: HTMLElement, mode: 'cap' | 'center'): void {
+  const r = fieldRect(0);
+  const c = $opt('#center')?.getBoundingClientRect();
+  if (!r && !c) return;
+  const area = r ?? { left: (c as DOMRect).left, width: (c as DOMRect).width, top: (c as DOMRect).top, height: 0 };
+  const band = bandAnchor();
+  el.classList.toggle('band', !!band);
+  el.style.left = `${Math.round(band ? band.left + band.width / 2 : area.left + area.width / 2)}px`;
   const h = el.offsetHeight;
   const cap = $opt('#center .cap')?.getBoundingClientRect();
   const oppsBottom = $opt('#opps')?.getBoundingClientRect().bottom ?? area.top;
+  if (band) {
+    el.style.top = `${Math.round(bandSlot(el, band, h))}px`;
+    return;
+  }
   let top =
     mode === 'cap' && cap?.height
       ? Math.max(oppsBottom, cap.bottom - h)
@@ -84,7 +149,6 @@ function placeMessage(el: HTMLElement, mode: 'cap' | 'center'): boolean {
   const limit = emotesTop() - 6;
   if (top + h > limit) top = Math.max(oppsBottom, limit - h);
   el.style.top = `${Math.round(top)}px`;
-  return true;
 }
 
 /** Legt eine feste Ebene genau über die Spielfläche. Ist es dort eng, wird die Meldung kompakter. */
@@ -432,5 +496,67 @@ export function emit(cue: Cue, m: Msg): void {
  * nachzieht. Läuft am Ende von `render()`. Vorerst ohne Wirkung, damit sich nichts sichtbar ändert.
  */
 export function realignFeedback(): void {
-  // Absichtlich leer, die Neuausrichtung kommt mit dem Umbau der Rückmeldungen
+  // Nur das Band zieht nach (Zug beginnt oder endet), die übrigen Meldungen bleiben, wo sie erschienen sind
+  const band = !!bandAnchor();
+  const live = [...document.querySelectorAll<HTMLElement>('#fly .mid:not(.out)')].filter(
+    (el) => (el.dataset.mode === 'cap' || el.dataset.mode === 'center') && (band || el.classList.contains('band')),
+  );
+  // Der Reihe nach neu setzen, älteste zuerst, damit das Band dieselbe Ordnung behält
+  for (const el of live) el.style.top = '-999px';
+  for (const el of live) positionMessage(el, el.dataset.mode as 'cap' | 'center');
+}
+
+/** Zuletzt angetippte Karten oder Knöpfe je Aktion, damit eine Ablehnung das Richtige wackeln lässt. */
+const TAP = { act: '', sel: [] as string[], at: 0 };
+
+/** Merkt sich, was zur Aktion gehört (Selektoren, weil das nächste Zeichnen die Elemente ersetzt). */
+export function noteTap(act: string, sel: readonly string[]): void {
+  TAP.act = act;
+  TAP.sel = [...sel];
+  TAP.at = Date.now();
+}
+
+/** Aktionen am Tisch: Ablehnungen dazu erscheinen am Stapel, alles andere als Toast. */
+const TABLE_ACT = /^(sh(?!bet)|dk|cb)[a-z]*$|^(swap|swapAll|pass|knock|keep|take|skip)$/;
+
+/** Ablehnungen, die nie an den Tisch gehören: Plätze und Netz. */
+const isSeatOrNet = (r: Reject | string): boolean => typeof r !== 'string' && /^(seat|net)\./.test(r.e);
+
+/** Was soll wackeln? Erst die gemerkten Karten, sonst der Knopf zur Aktion, sonst der eigene Platz. */
+function rejectTargets(act: string | null): HTMLElement[] {
+  if (act && TAP.act === act && Date.now() - TAP.at < 8000) {
+    const els = TAP.sel.map((q) => $opt(q)).filter((x): x is HTMLElement => !!x);
+    if (els.length) return els;
+  }
+  const btn = act ? $opt(`#me [data-act="${act}"], #status [data-act="${act}"], #center [data-act="${act}"]`) : null;
+  if (btn) return [btn];
+  const me = $opt('#me');
+  return me ? [me] : [];
+}
+
+/**
+ * Grund am Tisch: Lehnt der Gastgeber einen Zug ab, wackelt die angetippte Karte und der Grund steht klein am
+ * Stapel. Lobby, Plätze, Netz und alles in Fenstern bleiben Toasts. `act` ist der Typ der abgelehnten Aktion.
+ */
+export function showReject(r: Reject | string, act?: string | null, fallback?: string): void {
+  const text = rejectText(r, ctxOfView(App.view), fallback);
+  if (!text) return;
+  const v = App.view;
+  const atTable =
+    !!v &&
+    v.phase !== 'lobby' &&
+    document.body.classList.contains('ingame') &&
+    !!act &&
+    TABLE_ACT.test(act) &&
+    !isSeatOrNet(r) &&
+    !$opt('#overlay .modal') &&
+    !$opt('#modal .paper') &&
+    !!$opt('#center');
+  if (!atTable) {
+    toast(text);
+    return;
+  }
+  for (const el of rejectTargets(act ?? null)) shakeEl(el);
+  sfxCalm('nope', 400, 0.6);
+  fixedLabel('nopelbl', text, $opt('#center .pile') ?? $opt('#center'), 2600, 14);
 }

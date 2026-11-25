@@ -7,15 +7,17 @@ import { challenge, rematchOpen } from './rematch';
 import { fillForStart, syncSeats } from './seats';
 import { activeList, addBot, addLog, maxSeats, migrate, nextActive, pIdx, removePlayer, sanitizeRules } from './state';
 import type { Action, ActResult, LogEntry, Rng, State } from './types';
-import { GAME_NAME, isGame, unreachable } from './games';
+import { isGame, unreachable } from './games';
 import { dkAct, dkAuto, dkWaiting } from './durak';
 import { cbAct, cbAuto, cbBegin, cbWaiting } from './cabo';
 import { betPart } from './bets';
+import { phaseReject, rj } from './reject';
 
 const MAX_EMOTES_IN_LOG = 6;
 const MAX_TOSSES_IN_LOG = 6;
 const MAX_SOUNDS_IN_LOG = 4;
-const HOST_ONLY = 'Nur der Gastgeber kann das.';
+const HOST_ONLY = rj('any.hostOnly');
+const LOBBY_ONLY = rj('any.lobbyOnly');
 
 /** Reaktionen, Würfe und Klänge haben je einen eigenen Deckel im Verlauf und verdrängen keine Spielzüge. */
 function capLog(st: State, k: LogEntry['k'], max: number): void {
@@ -46,10 +48,10 @@ function logAbort(st: State, pid: string): void {
  * Aktionen von Gästen kommen ungeprüft aus dem Netz, deshalb wird hier alles validiert.
  */
 export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
-  if (!a || typeof a.type !== 'string') return 'Unbekannte Aktion.';
+  if (!a || typeof a.type !== 'string') return rj('any.unknown');
   migrate(st);
   const pi = pIdx(st, pid);
-  if (pi < 0) return 'Du sitzt nicht an diesem Tisch.';
+  if (pi < 0) return rj('any.notSeated');
   const me = st.players[pi];
   const isHost = pid === st.host;
 
@@ -76,7 +78,7 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       if (me.bot && !a.bot) return null;
       const to = String(a.to || '');
       if (to === pid) return null;
-      if (pIdx(st, to) < 0) return 'Die Person sitzt nicht mehr am Tisch.';
+      if (pIdx(st, to) < 0) return rj('any.noSuchSeat');
       capLog(st, 'toss', MAX_TOSSES_IN_LOG);
       addLog(st, { k: 'toss', p: pid, to, item: a.item });
       return null;
@@ -88,8 +90,8 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       return null;
     }
     case 'rules':
-      if (!isHost) return 'Nur der Gastgeber kann die Regeln ändern.';
-      if (st.phase !== 'lobby') return 'Regeln lassen sich nur in der Lobby ändern.';
+      if (!isHost) return HOST_ONLY;
+      if (st.phase !== 'lobby') return LOBBY_ONLY;
       st.rules = sanitizeRules(a.rules, st.rules);
       st.players.forEach((p) => {
         p.lives = st.rules.lives;
@@ -97,31 +99,30 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       syncSeats(st);
       return null;
     case 'game': {
-      if (!isHost) return 'Nur der Gastgeber wählt das Spiel.';
-      if (st.phase !== 'lobby') return 'Das Spiel lässt sich nur in der Lobby wechseln.';
+      if (!isHost) return HOST_ONLY;
+      if (st.phase !== 'lobby') return LOBBY_ONLY;
       const game = isGame(a.game) ? a.game : 'schnautz';
       const humans = st.players.filter((p) => !p.bot).length;
-      if (humans > maxSeats(game)) return `${GAME_NAME[game]} geht mit höchstens ${maxSeats(game)} Leuten.`;
+      if (humans > maxSeats(game)) return rj('seat.tooMany', { max: maxSeats(game), g: game });
       st.game = game;
       syncSeats(st);
       return null;
     }
     case 'start':
-      if (!isHost) return 'Nur der Gastgeber startet die Partie.';
-      if (st.phase !== 'lobby') return 'Die Partie läuft schon.';
+      if (!isHost) return HOST_ONLY;
+      if (st.phase !== 'lobby') return rj('any.running');
       // Alte Tische (Shithead bis 2.5 mit bis zu 10 Plätzen) erst in die heutigen Grenzen bringen
       syncSeats(st);
-      if (st.players.length > maxSeats(st.game))
-        return `Mehr als ${maxSeats(st.game)} Leute gehen bei diesem Spiel nicht.`;
+      if (st.players.length > maxSeats(st.game)) return rj('seat.tooMany', { max: maxSeats(st.game), g: st.game });
       // Mit Auffüllen bekommen erst jetzt alle freien Plätze eine KI. Danach sind es mindestens zwei und nie mehr,
       // als das Spiel erlaubt, die Startfunktion lehnt also nichts mehr ab
       return fillForStart(st, rng) ?? beginGame(st, rng);
     case 'addbot':
-      if (!isHost) return 'Nur der Gastgeber kann KIs hinzufügen.';
+      if (!isHost) return HOST_ONLY;
       return addBot(st, rng);
     case 'rmbot': {
       if (!isHost) return HOST_ONLY;
-      if (st.phase !== 'lobby') return 'KIs lassen sich nur in der Lobby entfernen.';
+      if (st.phase !== 'lobby') return LOBBY_ONLY;
       const bi = pIdx(st, String(a.id || ''));
       const gone = st.players[bi];
       // KIs und Menschen, die gerade offline sind. Wer online sitzt und der Gastgeber selbst bleiben
@@ -137,8 +138,8 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       toLobby(st);
       return null;
     case 'restart':
-      if (!isHost) return 'Nur der Gastgeber startet eine neue Partie.';
-      if (st.phase === 'lobby') return 'Die Partie hat noch gar nicht angefangen.';
+      if (!isHost) return HOST_ONLY;
+      if (st.phase === 'lobby') return rj('any.notStarted');
       logAbort(st, pid);
       toLobby(st);
       return beginGame(st, rng);
@@ -168,11 +169,11 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
 
   switch (st.game) {
     case 'shithead':
-      return a.type.startsWith('sh') ? shAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
+      return a.type.startsWith('sh') ? shAct(st, pid, pi, a, rng) : rj('any.unknown');
     case 'durak':
-      return a.type.startsWith('dk') || a.type === 'shbet' ? dkAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
+      return a.type.startsWith('dk') || a.type === 'shbet' ? dkAct(st, pid, pi, a, rng) : rj('any.unknown');
     case 'cabo':
-      return a.type.startsWith('cb') ? cbAct(st, pid, pi, a, rng) : 'Das geht gerade nicht.';
+      return a.type.startsWith('cb') ? cbAct(st, pid, pi, a, rng) : rj('any.unknown');
     case 'schnautz':
       return schnautzMove(st, pid, pi, a, rng);
     default:
@@ -208,13 +209,13 @@ function skipOffline(st: State, rng?: Rng): ActResult {
       if (st.phase !== 'play' || st.sh?.win?.lock) return null;
       const who = st.players[st.turn];
       if (!who) return null;
-      if (who.online) return `${who.name} ist wieder da.`;
+      if (who.online) return rj('any.allHere', { p: who.id });
       return shAuto(st, who.id, rng);
     }
     case 'cabo': {
       const ids = cbWaiting(st);
       const who = st.players.find((p) => ids.includes(p.id) && !p.online && !p.bot);
-      if (!who) return ids.length ? 'Alle sind da.' : null;
+      if (!who) return ids.length ? rj('any.allHere') : null;
       // Ein Tipp spielt den ganzen Zug: ziehen, ablegen oder tauschen, eine Fähigkeit auslassen
       const t0 = st.cb?.t;
       const phase = st.phase;
@@ -229,13 +230,13 @@ function skipOffline(st: State, rng?: Rng): ActResult {
       // Wer gerade aufhält und offline ist, bekommt einen einfachen Zug
       const ids = dkWaiting(st);
       const who = st.players.find((p) => ids.includes(p.id) && !p.online && !p.bot);
-      if (!who) return ids.length ? 'Alle sind da.' : null;
+      if (!who) return ids.length ? rj('any.allHere') : null;
       return dkAuto(st, who.id, rng);
     }
     case 'schnautz': {
       const who = st.phase === 'choose' ? st.players[st.dealer] : st.phase === 'play' ? st.players[st.turn] : null;
       if (!who) return null;
-      if (who.online) return `${who.name} ist wieder da.`;
+      if (who.online) return rj('any.allHere', { p: who.id });
       return act(st, who.id, { type: st.phase === 'choose' ? 'keep' : 'pass' }, rng);
     }
     default:
@@ -247,8 +248,9 @@ function schnautzMove(st: State, pid: string, pi: number, a: Action, rng?: Rng):
   switch (a.type) {
     case 'keep':
     case 'take': {
-      if (st.phase !== 'choose') return 'Das geht gerade nicht.';
-      if (pi !== st.dealer) return 'Das entscheidet, wer gibt.';
+      // In play sind die Karten schon verteilt, sonst sagt die Phase den Grund
+      if (st.phase !== 'choose') return phaseReject(st) ?? rj('sz.chosen');
+      if (pi !== st.dealer) return rj('sz.dealerOnly', { p: st.players[st.dealer]?.id ?? '' });
       const oldHand = st.hands[pid].slice();
       const spare = st.spare ?? [];
       if (a.type === 'keep') {
@@ -271,16 +273,16 @@ function schnautzMove(st: State, pid: string, pi: number, a: Action, rng?: Rng):
     case 'knock':
       break;
     default:
-      return 'Unbekannte Aktion.';
+      return rj('any.unknown');
   }
-  if (st.phase !== 'play') return 'Das geht gerade nicht.';
-  if (pi !== st.turn) return 'Du bist gerade nicht dran.';
+  if (st.phase !== 'play') return phaseReject(st) ?? rj('any.unknown');
+  if (pi !== st.turn) return rj('any.notYourTurn', { p: st.players[st.turn]?.id ?? '' });
   const hand = st.hands[pid];
   switch (a.type) {
     case 'swap': {
       const h = a.h | 0;
       const m = a.m | 0;
-      if (h < 0 || h > 2 || m < 0 || m > 2) return 'Ungültige Karte.';
+      if (h < 0 || h > 2 || m < 0 || m > 2) return rj('any.cardGone');
       const take = st.middle[m];
       const give = hand[h];
       hand[h] = take;
@@ -307,9 +309,9 @@ function schnautzMove(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       if (!st.knocker && st.passes >= activeList(st).length) renewMiddle(st, rng);
       return endTurn(st, pid);
     case 'knock':
-      if (st.knocker) return 'Es wurde schon geklopft.';
+      if (st.knocker) return rj('sz.knocked', { p: st.knocker });
       if (!st.rules.knockFirst && st.turns < activeList(st).length) {
-        return 'Klopfen geht erst, wenn jeder einmal dran war.';
+        return rj('sz.knockEarly');
       }
       st.knocker = pid;
       st.afterKnock = activeList(st).length - 1;
@@ -320,5 +322,5 @@ function schnautzMove(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       st.turn = nextActive(st, st.turn);
       return null;
   }
-  return 'Unbekannte Aktion.';
+  return rj('any.unknown');
 }

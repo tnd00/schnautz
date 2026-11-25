@@ -1,6 +1,7 @@
 /* Schnautz (Schwimmen, 31) mit 32 Karten. */
 import { newDeck, rankOf, rnd, shuffle, suitOf } from './cards';
-import { RANK_VAL, SUITS } from './constants';
+import { MIN_SEATS, RANK_VAL, SUITS } from './constants';
+import { rj } from './reject';
 import { activeList, addLog, countGame, nextActive, pIdx, prevActive, statsOf } from './state';
 import type { ActResult, Card, HandValue, LifeChange, Player, Rng, Rules, SchnautzReason, State, Suit } from './types';
 import { offerRematch, settleDuel } from './rematch';
@@ -28,7 +29,7 @@ export function handValue(cards: readonly Card[] | number | undefined, rules?: P
 
 export function startGame(st: State, rng?: Rng): ActResult {
   const keep = st.players.filter((p) => p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone));
-  if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
+  if (keep.length < MIN_SEATS) return rj('seat.tooFew', { min: MIN_SEATS });
   st.players = keep;
   st.players.forEach((p) => {
     p.lives = st.rules.lives;

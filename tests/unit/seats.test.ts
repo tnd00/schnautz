@@ -10,7 +10,7 @@ import { GAMES, reignOf, resetRulesFor, setReign } from '../../src/game/games';
 import { DEFAULT_RULES } from '../../src/game/constants';
 import type { Card, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { msgOf, rngF, seatErr, shCardsOk } from './helpers';
+import { codeOf, msgOf, rngF, seatErr, shCardsOk } from './helpers';
 
 const bots = (st: State) => st.players.filter((p) => p.bot);
 const seatId = (r: ReturnType<typeof seatGuest>): string => {
@@ -410,7 +410,7 @@ describe('Neue Partie, wenn nur noch KIs spielen', () => {
     act(st, 'h', { type: 'game', game: 'shithead' }, rng);
     act(st, 'h', { type: 'start' }, rng);
     const games = st.games;
-    expect(msgOf(act(st, 'p1', { type: 'restart' }, rng))).toMatch(/^Nur der Gastgeber/);
+    expect(msgOf(act(st, 'p1', { type: 'restart' }, rng))).toBe('Nur der Gastgeber kann das.');
     expect(act(st, 'h', { type: 'restart' }, rng)).toBeNull();
     expect(st.phase).toBe('swap');
     expect(st.games).toBe(games + 1);
@@ -470,7 +470,7 @@ describe('Kronen je Spiel', () => {
     act(st, 'h', { type: 'rules', rules: { seats: 8 } }, rng);
     for (let i = 1; i < 8; i++) expect(addPlayer(st, `g${i}`, `Gast ${i}`)).toBeNull();
     st.players.push({ ...structuredClone(st.players[1]), id: 'g9', name: 'Gast 9' });
-    expect(msgOf(act(st, 'h', { type: 'start' }, rng))).toMatch(/höchstens|Mehr als 8/);
+    expect(codeOf(act(st, 'h', { type: 'start' }, rng))).toBe('seat.tooMany');
     expect(st.phase).toBe('lobby');
   });
 

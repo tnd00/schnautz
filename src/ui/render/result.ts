@@ -4,13 +4,16 @@
  */
 import { shCanBet } from '../../game/bets';
 import { onlyBotsPlaying } from '../../game/games';
-import type { Player, ShBetResult, View } from '../../game/types';
+import type { Card, Player, ShBetResult, View } from '../../game/types';
 import { ffwdInLog } from '../../net/pace';
 import { App } from '../app';
-import { esc, listJoin, num } from '../dom';
+import { cardHTML } from '../cards';
+import { $, esc, listJoin, num } from '../dom';
+import { holdOverlay } from '../feedback';
+import { aimAttrs } from './marks';
 import { nameOf } from '../helpers';
 import { nextSecs } from '../nextround';
-import { canChallenge, mustAccept } from './rematch';
+import { canChallenge, mustAccept, rematchLine, rematchMark } from './rematch';
 
 /**
  * „Tisch ansehen“ am Ende einer Runde: unten eine Leiste mit Ergebnis, nächster Runde und für den Host am Ende
@@ -128,4 +131,165 @@ export function betResultHTML(v: View, raw: ShBetResult[] | undefined, loser: st
       ` ${mine?.ok ? 'auch ' : ''}richtig getippt.`;
   else if (!mine) text = 'Niemand hat richtig getippt.';
   return `<p class="betres">🔮 ${text}</p>`;
+}
+
+/** Eine Zeile im Ergebnisblatt. */
+export interface SheetRow {
+  /** Platz-ID: data-pid, Wurfziel, Wurfmarken */
+  id: string;
+  /** null, wenn es keinen Platz gibt (Schnautz-Rundenende) */
+  place: number | null;
+  /** HTML, maskiert, „Du“ für mich */
+  name: string;
+  /** Zeichen vor dem Namen (💩 🤡 👑 📣) */
+  hat?: string;
+  /** Kernzahl oder Folge, HTML */
+  core: string;
+  /** Rechte Spalte, Handwert oder Gesamtpunkte */
+  val?: string;
+  /** Minikarten, gekappt auf 8 plus „+n“ */
+  cards?: readonly Card[];
+  tone?: 'win' | 'lose' | 'swim';
+}
+
+/** Ergebnisblatt als Daten. Jedes Spiel baut nur sein Blatt, `renderResult` zeichnet es. */
+export interface Sheet {
+  icon: string;
+  /** HTML, enthält das Wort für die E2E-Prüfung (Shithead, Durak, Cabo-König, Unentschieden) */
+  title: string;
+  /** HTML, darf leer sein */
+  lead: string;
+  /** ID der Schlüsselzeile (Verlierer, König, Sieger), sie steht direkt unter dem Kopf */
+  key: string | null;
+  /** Urteil zur Schlüsselzeile, HTML */
+  keyNote?: string;
+  /** Spruch, rematchLine ersetzt ihn */
+  taunt: { text: string; good: boolean } | null;
+  /** Fertige Tippzeile aus betResultHTML, sonst leer */
+  bets: string;
+  /** Alle Zeilen in Platzreihenfolge, auch Schlüssel und ich, renderSheet ordnet um */
+  rows: SheetRow[];
+  /** Zusatz unter den Zeilen, etwa „Schon raus“-Chips */
+  extra?: string;
+  next: 'round' | 'game';
+  cls?: string;
+}
+
+const MAX_CARDS = 8;
+
+function sheetRowHTML(v: View, r: SheetRow, key: boolean): string {
+  const p = v.players.find((x) => x.id === r.id);
+  const mine = r.id === App.me;
+  const cls = ['row', 'rr', r.tone, key && 'key', mine && 'mine'].filter(Boolean).join(' ');
+  const cards = r.cards ?? [];
+  const mini =
+    key && cards.length
+      ? `<span class="rcards mini">${cards
+          .slice(0, MAX_CARDS)
+          .map((c) => cardHTML(c))
+          .join('')}${cards.length > MAX_CARDS ? `<span class="more">+${cards.length - MAX_CARDS}</span>` : ''}</span>`
+      : '';
+  return (
+    `<div class="${cls}" data-pid="${esc(r.id)}"${aimAttrs(p, true)}>` +
+    `<span class="rpl">${r.place != null ? `${num(r.place)}.` : ''}</span>` +
+    `<span class="rnm">${r.hat ? `<span class="hat">${r.hat}</span>` : ''}<b>${r.name}</b>${rematchMark(v, r.id)}</span>` +
+    `<span class="rcore">${r.core}</span>` +
+    (r.val != null ? `<span class="rval">${r.val}</span>` : '') +
+    mini +
+    '</div>'
+  );
+}
+
+/** Knöpfe des Blatts, in allen Spielen gleich: Zur Lobby, Tisch ansehen, Neue Partie oder Nächste Runde, Revanche. */
+function sheetBtns(v: View, me: Player | null, s: Sheet): string {
+  const ready = !!me?.ready;
+  const host = App.role === 'host';
+  const secs = v.phase === 'end' ? nextSecs() : 0;
+  const next = s.next === 'game' ? 'Neue Partie' : 'Nächste Runde';
+  const label = `${next}${secs ? ` (<b class="nextcd">${secs}</b> s)` : ''}`;
+  let h = '';
+  if (host && v.phase === 'over')
+    h +=
+      '<button class="btn ghost" data-act="lobbynow"><span class="blong">Zur Lobby</span><span class="bshort">Lobby</span></button>';
+  h +=
+    '<button class="btn ghost" data-act="peek"><span class="blong">Tisch ansehen</span><span class="bshort">Tisch</span></button>';
+  if (!me) return h;
+  if (ready) {
+    const waiting = v.players.some(
+      (p) => p.online && !p.ready && !p.bot && p.id !== App.me && (v.phase === 'over' || !p.out),
+    );
+    if (host && waiting) h += '<button class="btn ghost" data-act="force">Nicht warten</button>';
+    return h;
+  }
+  if (mustAccept(v))
+    return h + '<button class="btn primary rv" data-act="ready" aria-label="Revanche annehmen">⚔️ Revanche</button>';
+  if (canChallenge(v))
+    return (
+      h +
+      `<button class="btn ghost" data-act="ready"><span class="blong">${label}</span><span class="bshort">Weiter</span></button>` +
+      '<button class="btn primary rv" data-act="rematch">⚔️ Revanche</button>'
+    );
+  return h + `<button class="btn primary" data-act="ready">${label}</button>`;
+}
+
+/** Wartetext nach dem Bereitmelden, sonst nichts (kostet sonst eine Zeile). */
+function sheetWait(v: View, me: Player | null): string {
+  const secs = v.phase === 'end' ? nextSecs() : 0;
+  if (!me?.ready) return '';
+  const waiting = v.players
+    .filter((p) => p.online && !p.ready && !p.bot && p.id !== App.me && (v.phase === 'over' || !p.out))
+    .map((p) => esc(p.name));
+  const txt = waiting.length ? `Warte auf ${listJoin(waiting)}…` : "Los geht's…";
+  return `<p class="waittxt">${txt}${secs ? ` · Weiter in <b class="nextcd">${secs}</b> s` : ''}</p>`;
+}
+
+/**
+ * Inhalt des Ergebnisblatts: Kopf, Schlüsselzeile, Duell oder Spruch, Tipps, eigene Zeile, alle übrigen als
+ * Einzeiler, Fuß mit Reaktionen und Knöpfen. Jede Platz-ID steht genau einmal als `.row[data-pid]` da.
+ */
+export function renderSheet(v: View, s: Sheet): string {
+  const me = v.players.find((p) => p.id === App.me) ?? null;
+  const key = s.key ? s.rows.find((r) => r.id === s.key) : undefined;
+  const own = s.rows.find((r) => r.id === App.me && r.id !== s.key);
+  const rest = s.rows.filter((r) => r !== key && r !== own);
+  const rline = rematchLine(v);
+  const say = rline
+    ? `<p class="taunt rv">${rline}</p>`
+    : s.taunt
+      ? `<p class="taunt${s.taunt.good ? ' good' : ''}">${esc(s.taunt.text)}</p>`
+      : '';
+  return (
+    `<div class="rhead"><span class="trophy">${s.icon}</span><h2>${s.title}</h2></div>` +
+    (s.lead ? `<p class="lead">${s.lead}</p>` : '') +
+    '<div class="rows">' +
+    (key ? sheetRowHTML(v, key, true) : '') +
+    (s.keyNote ? `<p class="rnote">${s.keyNote}</p>` : '') +
+    say +
+    s.bets +
+    (own ? sheetRowHTML(v, own, false) : '') +
+    rest.map((r) => sheetRowHTML(v, r, false)).join('') +
+    (s.extra ?? '') +
+    '</div>' +
+    '<div class="rfoot">' +
+    (me ? '<div class="emotes oemotes"></div>' : '') +
+    sheetWait(v, me) +
+    `<div class="foot rbtns">${sheetBtns(v, me, s)}</div>` +
+    '</div>'
+  );
+}
+
+/** Schreibt #overlay: wartet auf Meldungen und Zeremonie, zeigt bei „Tisch ansehen“ die Leiste, sonst das Blatt. */
+export function renderResult(v: View, s: Sheet | null): void {
+  const ov = $('#overlay');
+  if (!s) {
+    ov.innerHTML = '';
+    return;
+  }
+  if (holdOverlay()) return;
+  const me = v.players.find((p) => p.id === App.me) ?? null;
+  if (App.peek) {
+    ov.innerHTML = peekHTML(v, me);
+    return;
+  }
+  ov.innerHTML = `<div class="modal"><div class="paper sheet result rs${s.cls ? ` ${s.cls}` : ''}">${renderSheet(v, s)}</div></div>`;
 }

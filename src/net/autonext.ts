@@ -4,9 +4,12 @@
  */
 import { act } from '../game/actions';
 import { AUTO_NEXT_MS } from '../game/constants';
-import type { State, View } from '../game/types';
+import type { LogEntry, State, View } from '../game/types';
 import { App } from '../ui/app';
+import { revealDelayOf } from '../ui/ceremony-plan';
 import type { Timer } from '../ui/dom';
+import { annLeft } from '../ui/feedback';
+import { seqMsOf } from '../ui/shithead/sequence';
 import { H, hostCommit } from './host';
 
 /** So lange laufen ungefähr die Meldungen zur Runde, bevor das Ergebnisfenster steht */
@@ -20,10 +23,19 @@ export function stopAutoNext(): void {
 }
 
 /**
- * Nach jeder Änderung: Steht eine Schnautz-Runde am Ende, läuft der Countdown zur nächsten. Er beginnt erst,
- * wenn die Meldungen zur Runde durch sind (`pauseMs`). Gibt true zurück, wenn gerade ein neuer Countdown beginnt.
+ * Wie lange der Gastgeber nach diesem Schub noch Meldungen zeigt. Läuft eine Zeremonie, zählt sie mit,
+ * damit der Countdown nie in die Show fällt.
  */
-export function hostAutoNext(st: State, pauseMs: number): boolean {
+function pauseOf(st: State, fresh: LogEntry[]): number {
+  const seq = seqMsOf(fresh);
+  return Math.max(seq + annLeft() + 400, revealDelayOf(st.game, fresh, seq));
+}
+
+/**
+ * Nach jeder Änderung: Steht eine Schnautz- oder Cabo-Runde am Ende, läuft der Countdown zur nächsten. Er beginnt
+ * erst, wenn die Meldungen zur Runde durch sind. Gibt true zurück, wenn gerade ein neuer Countdown beginnt.
+ */
+export function hostAutoNext(st: State, fresh: LogEntry[]): boolean {
   if ((st.game !== 'schnautz' && st.game !== 'cabo') || st.phase !== 'end') {
     stopAutoNext();
     return false;
@@ -32,7 +44,7 @@ export function hostAutoNext(st: State, pauseMs: number): boolean {
   if (key === NEXT.key) return false;
   stopAutoNext();
   NEXT.key = key;
-  NEXT.at = Date.now() + Math.max(LEAD_MS, pauseMs) + AUTO_NEXT_MS;
+  NEXT.at = Date.now() + Math.max(LEAD_MS, pauseOf(st, fresh)) + AUTO_NEXT_MS;
   NEXT.t = setTimeout(() => {
     NEXT.t = null;
     const s = H.st;

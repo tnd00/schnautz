@@ -1,8 +1,9 @@
 import { BOT_NAMES } from '../content/names';
 import { rnd } from './cards';
 import { CB_TARGETS, cloneRules, DEFAULT_RULES, LOG_LIMIT, MAX_SEATS, MIN_SEATS, TURN_SECS } from './constants';
-import type { ActResult, GameKind, LogEntry, LogInput, Player, PlayerStats, Rng, Rules, ShRules, State } from './types';
+import type { GameKind, LogEntry, LogInput, Player, PlayerStats, Rng, Rules, ShRules, State } from './types';
 import { isGame, setReign } from './games';
+import { rj, type Reject } from './reject';
 
 export function mkPlayer(id: string, name: string, lives = 3, bot = false): Player {
   const p: Player = { id, name, lives: lives || 3, out: false, ready: false, online: true, wins: 0 };
@@ -122,18 +123,18 @@ export function uniqueName(st: State, name: string, except?: string): string {
   return name;
 }
 
-export function addPlayer(st: State, id: string, name: string): ActResult {
-  if (st.phase !== 'lobby') return 'Die Partie läuft schon. Warte, bis eine neue startet.';
-  if (st.players.length >= seatLimit(st)) return 'Der Tisch ist voll.';
+export function addPlayer(st: State, id: string, name: string): Reject | null {
+  if (st.phase !== 'lobby') return rj('any.running');
+  if (st.players.length >= seatLimit(st)) return rj('seat.full');
   name = uniqueName(st, name);
   st.players.push(mkPlayer(id, name, st.rules.lives));
   addLog(st, { k: 'join', p: id, name });
   return null;
 }
 
-export function addBot(st: State, rng?: Rng): ActResult {
-  if (st.phase !== 'lobby') return 'KIs lassen sich nur in der Lobby hinzufügen.';
-  if (st.players.length >= seatLimit(st)) return 'Der Tisch ist voll.';
+export function addBot(st: State, rng?: Rng): Reject | null {
+  if (st.phase !== 'lobby') return rj('any.lobbyOnly');
+  if (st.players.length >= seatLimit(st)) return rj('seat.full');
   const pool = BOT_NAMES.filter((n) => !nameTaken(st, n));
   const name = pool.length ? pool[Math.floor(rnd(rng) * pool.length)] : `KI ${st.players.length}`;
   const id = `b-${Math.floor(rnd(rng) * 0xffffffffffff)

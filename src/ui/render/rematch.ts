@@ -1,8 +1,9 @@
 /* Revanche in der Oberfläche: Knöpfe, Zeile im Ergebnisfenster, Ansagen und Verlauf. */
-import type { GameKind, LogEntry, RematchDuel, RematchOffer, View } from '../../game/types';
+import type { LogEntry, RematchDuel, RematchOffer, View } from '../../game/types';
+import { duelText, persp } from '../../content/texts/log';
 import { App } from '../app';
 import { esc } from '../dom';
-import { nameOf } from '../helpers';
+import { nameOf, pById } from '../helpers';
 
 /** Offene Revanche dieser Partie und das daraus entstandene Duell, defensiv gelesen. */
 export function rematchOf(v: View): { rm: RematchOffer | null; du: RematchDuel | null } {
@@ -44,33 +45,17 @@ export function rematchLine(v: View): string {
   return `⚔️ ${duelResult(v, d)}`;
 }
 
-/** Wie ein Duell unentschieden ausgeht, je Spiel für „Ihr“ und für zwei andere */
-const TIE_TEXT: Readonly<Record<GameKind, readonly [string, string]>> = {
-  schnautz: ['fliegt beide in derselben Runde raus', 'fliegen in derselben Runde raus'],
-  shithead: ['seid gleichzeitig fertig geworden', 'sind gleichzeitig fertig geworden'],
-  durak: ['seid gleichzeitig fertig geworden', 'sind gleichzeitig fertig geworden'],
-  cabo: ['habt gleich viele Punkte', 'haben gleich viele Punkte'],
-};
-
-/** Ausgang eines Duells aus Sicht der jeweiligen Person. */
+/** Ausgang eines Duells aus Sicht der jeweiligen Person. Der Wortlaut steht im Katalog (duelText). */
 export function duelResult(v: View, d: { by: string; vs: string; res?: string }, bn?: string, vn?: string): string {
-  const by = d.by === App.me;
-  const vs = d.vs === App.me;
-  if (d.res === 'tie') {
-    const [du, er] = TIE_TEXT[v.game];
-    return by || vs ? `Unentschieden! Ihr ${du}.` : `Unentschieden! ${N(v, d.by, bn)} und ${N(v, d.vs, vn)} ${er}.`;
-  }
-  if (d.res === 'won')
-    return by
-      ? `Revanche geglückt! Du schlägst ${N(v, d.vs, vn)}.`
-      : vs
-        ? `Revanche geglückt! ${N(v, d.by, bn)} schlägt dich.`
-        : `Revanche geglückt! ${N(v, d.by, bn)} schlägt ${N(v, d.vs, vn)}.`;
-  return by
-    ? `Revanche verpatzt! ${N(v, d.vs, vn)} bleibt vorne.`
-    : vs
-      ? 'Revanche verpatzt! Du bleibst vorne.'
-      : `Revanche verpatzt! ${N(v, d.vs, vn)} bleibt vorne.`;
+  const t = persp({
+    me: App.me,
+    game: v.game,
+    name: (id, fb) => pById(v, id)?.name ?? fb ?? 'Jemand',
+    wrap: esc,
+    esc,
+    card: () => '',
+  });
+  return duelText(t, d, bn, vn);
 }
 
 /** ⚔️ hinter dem Namen, wer gefordert hat. */
@@ -107,19 +92,4 @@ export function duelRunning(v: View): string {
   if (d.by === App.me) return `⚔️ Revanche läuft. Du gegen ${nameOf(v, d.vs)}.`;
   if (d.vs === App.me) return `⚔️ Revanche läuft. ${nameOf(v, d.by)} gegen dich.`;
   return `⚔️ Revanche läuft. ${nameOf(v, d.by)} gegen ${nameOf(v, d.vs)}.`;
-}
-
-/** Verlaufszeilen für Forderung und Ausgang. */
-export function rematchLog(v: View, e: LogEntry): string | null {
-  if (e.k === 'rematch') {
-    const by = N(v, e.p, e.name);
-    const vs = N(v, e.to, e.tn);
-    const nr = e.c >= 2 ? ` Nummer ${e.c}` : '';
-    if (!e.to) return e.p === App.me ? '⚔️ Du willst Revanche.' : `⚔️ <b>${by}</b> will Revanche.`;
-    if (e.p === App.me) return `⚔️ Du forderst <b>${vs}</b> zur Revanche${nr}.`;
-    if (e.to === App.me) return `⚔️ <b>${by}</b> fordert dich zur Revanche${nr}.`;
-    return `⚔️ <b>${by}</b> fordert <b>${vs}</b> zur Revanche${nr}.`;
-  }
-  if (e.k === 'rematchend') return `⚔️ ${duelResult(v, { by: e.p ?? '', vs: e.to, res: e.res }, e.name, e.tn)}`;
-  return null;
 }

@@ -11,8 +11,18 @@
  * vergisst selbst, Menschen bekommen nur eine kurze Einblendung.
  */
 import { cbVal, rnd, shDeck } from './cards';
-import { CB_HAND, CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO, CB_TWO_DECKS, MAX_SEATS } from './constants';
+import {
+  CB_HAND,
+  CB_KAMI,
+  CB_PENALTY,
+  CB_RESET_AT,
+  CB_RESET_TO,
+  CB_TWO_DECKS,
+  MAX_SEATS,
+  MIN_SEATS,
+} from './constants';
 import { setReign } from './games';
+import { phaseReject, rj } from './reject';
 import { offerRematch, settleDuel } from './rematch';
 import { addLog, countGame, pIdx, statsOf } from './state';
 import type { Action, ActResult, CaboResult, Card, CbReveal, CbSlot, CbState, Rng, State } from './types';
@@ -65,8 +75,8 @@ function forget(st: State, slot: number): void {
 
 export function cbStart(st: State, rng?: Rng): ActResult {
   const keep = st.players.filter((p) => p.id === st.host || (st.phase === 'lobby' ? p.online : !p.gone));
-  if (keep.length < 2) return 'Ihr braucht mindestens zwei Leute am Tisch.';
-  if (keep.length > MAX_SEATS.cabo) return `Cabo geht mit höchstens ${MAX_SEATS.cabo} Leuten.`;
+  if (keep.length < 2) return rj('seat.tooFew', { min: MIN_SEATS });
+  if (keep.length > MAX_SEATS.cabo) return rj('seat.tooMany', { max: MAX_SEATS.cabo, g: 'cabo' });
   st.players = keep;
   st.players.forEach((p) => {
     p.out = false;
@@ -134,16 +144,16 @@ export function cbBegin(st: State): void {
 
 export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng): ActResult {
   const C = st.cb;
-  if (!C) return 'Das geht gerade nicht.';
+  if (!C) return rj('any.notStarted');
   const row = C.P[pid];
-  if (!row) return 'Du spielst diese Runde nicht mit.';
+  if (!row) return rj('any.notPlaying');
   const me = st.players[pi];
   if (a.type === 'cblook') {
-    if (st.phase !== 'peek') return 'Ansehen geht nur zu Beginn der Runde.';
+    if (st.phase !== 'peek') return phaseReject(st) ?? rj('cb.peekOver');
     if (me.ready) return null;
     const ids = Array.isArray(a.ids) ? [...new Set(a.ids.map(Number))] : [];
     const want = Math.min(2, row.length);
-    if (ids.length !== want || ids.some((id) => slotIdx(row, id) < 0)) return 'Wähle zwei deiner Karten.';
+    if (ids.length !== want || ids.some((id) => slotIdx(row, id) < 0)) return rj('cb.pickTwo', { n: want });
     learn(
       st,
       pid,
@@ -155,17 +165,17 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
     return null;
   }
   if (a.type === 'cbsnap') return snap(st, pid, a.id);
-  if (st.phase !== 'play') return 'Das geht gerade nicht.';
-  if (cbCurrent(st) !== pid) return 'Du bist gerade nicht dran.';
+  if (st.phase !== 'play') return phaseReject(st) ?? rj('any.unknown');
+  const cur = cbCurrent(st);
+  if (cur !== pid) return cur ? rj('any.notYourTurn', { p: cur }) : rj('any.notYourTurn');
   switch (a.type) {
     case 'cbdraw': {
-      if (C.hold || C.power) return 'Du hast schon gezogen.';
+      if (C.hold || C.power) return rj('cb.drawn');
       const from = a.from === 'pile' ? 'pile' : 'deck';
       // Die Ablage muss man tauschen, ohne eigene Karten geht das nicht
-      if (from === 'pile' && !row.length)
-        return 'Ohne eigene Karten kannst du die Ablage nicht nehmen. Zieh vom Stapel.';
+      if (from === 'pile' && !row.length) return rj('cb.pileNoCards');
       const src = from === 'pile' ? C.pile : C.deck;
-      if (!src.length) return from === 'pile' ? 'Die Ablage ist leer.' : 'Der Stapel ist leer.';
+      if (!src.length) return rj(from === 'pile' ? 'cb.pileEmpty' : 'cb.deckEmpty');
       const c = src.pop() as Card;
       C.hold = { by: pid, c, from };
       addLog(st, from === 'pile' ? { k: 'cbdraw', p: pid, from, c } : { k: 'cbdraw', p: pid, from });
@@ -173,8 +183,8 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       return null;
     }
     case 'cbcabo': {
-      if (C.hold || C.power) return 'Cabo rufst du statt zu ziehen.';
-      if (C.cabo) return 'Cabo wurde schon gerufen.';
+      if (C.hold || C.power) return rj('cb.caboLate');
+      if (C.cabo) return rj('cb.called', { p: C.cabo });
       C.cabo = pid;
       const n = st.players.length;
       C.left = [];
@@ -190,8 +200,8 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
     case 'cbswap':
       return swap(st, pid, a.ids, rng);
     case 'cbdiscard': {
-      if (!C.hold) return 'Zieh zuerst eine Karte.';
-      if (C.hold.from === 'pile') return 'Eine Karte von der Ablage musst du tauschen.';
+      if (!C.hold) return rj('cb.drawFirst');
+      if (C.hold.from === 'pile') return rj('cb.mustSwap');
       const c = C.hold.c;
       C.hold = null;
       C.pile.push(c);
@@ -203,34 +213,34 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       return null;
     }
     case 'cbpeek': {
-      if (C.power?.kind !== 'peek') return 'Ansehen geht nur mit einer 7 oder 8.';
+      if (C.power?.kind !== 'peek') return rj('cb.noPeek');
       const i = slotIdx(row, a.id);
-      if (i < 0) return 'Wähle eine deiner Karten.';
+      if (i < 0) return rj('cb.pickOwn');
       learn(st, pid, [{ owner: pid, slot: row[i].id, c: row[i].c }]);
       addLog(st, { k: 'cbpeek', p: pid, id: row[i].id });
       endTurn(st, rng);
       return null;
     }
     case 'cbspy': {
-      if (C.power?.kind !== 'spy') return 'Ausspionieren geht nur mit einer 9 oder 10.';
+      if (C.power?.kind !== 'spy') return rj('cb.noSpy');
       const to = otherId(C, pid, a.to);
       const other = to ? C.P[to] : null;
-      if (!to || !other) return 'Wähle eine Karte von jemand anderem.';
+      if (!to || !other) return rj('cb.pickOther');
       const i = slotIdx(other, a.id);
-      if (i < 0) return 'Wähle eine Karte von jemand anderem.';
+      if (i < 0) return rj('cb.pickOther');
       learn(st, pid, [{ owner: to, slot: other[i].id, c: other[i].c }]);
       addLog(st, { k: 'cbspy', p: pid, to, tn: st.players[pIdx(st, to)]?.name, id: other[i].id });
       endTurn(st, rng);
       return null;
     }
     case 'cbblind': {
-      if (C.power?.kind !== 'swap') return 'Blind tauschen geht nur mit Bube oder Dame.';
+      if (C.power?.kind !== 'swap') return rj('cb.noBlind');
       const to = otherId(C, pid, a.to);
       const other = to ? C.P[to] : null;
-      if (!to || !other) return 'Wähle eine Karte von jemand anderem.';
+      if (!to || !other) return rj('cb.pickOther');
       const i = slotIdx(row, a.id);
       const j = slotIdx(other, a.oid);
-      if (i < 0 || j < 0) return 'Wähle eine eigene und eine fremde Karte.';
+      if (i < 0 || j < 0) return rj('cb.pickPair');
       const mine = row[i];
       const theirs = other[j];
       [mine.c, theirs.c] = [theirs.c, mine.c];
@@ -265,17 +275,16 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       return null;
     }
   }
-  return 'Das geht gerade nicht.';
+  return rj('any.unknown');
 }
 
 /** Gezogene Karte gegen einen oder mehrere eigene Plätze tauschen. */
 function swap(st: State, pid: string, raw: unknown, rng?: Rng): ActResult {
   const C = cb(st);
-  if (!C.hold) return 'Zieh zuerst eine Karte.';
+  if (!C.hold) return rj('cb.drawFirst');
   const row = C.P[pid];
   const ids = Array.isArray(raw) ? [...new Set(raw.map(Number))] : [];
-  if (!ids.length || ids.length > row.length || ids.some((id) => slotIdx(row, id) < 0))
-    return 'Wähle die Karten, die du tauschen willst.';
+  if (!ids.length || ids.length > row.length || ids.some((id) => slotIdx(row, id) < 0)) return rj('cb.pickSwap');
   const hold = C.hold;
   C.hold = null;
   const up = hold.from === 'pile';
@@ -319,14 +328,15 @@ function swap(st: State, pid: string, raw: unknown, rng?: Rng): ActResult {
 /** Schnappen: außer der Reihe eine eigene Karte auf eine gleiche oben auf der Ablage werfen. */
 function snap(st: State, pid: string, id: number): ActResult {
   const C = cb(st);
-  if (!st.rules.cb?.snap) return 'Schnappen ist an diesem Tisch aus.';
-  if (st.phase !== 'play') return 'Schnappen geht nur während der Runde.';
+  if (!st.rules.cb?.snap) return rj('cb.snapOff');
+  if (st.phase !== 'play') return phaseReject(st) ?? rj('any.unknown');
   // Mitten im eigenen Zug nicht, sonst könnte man die letzte Karte loswerden und die gezogene nicht mehr tauschen
-  if (C.hold?.by === pid || C.power?.by === pid) return 'Spiel erst deinen Zug zu Ende.';
+  if (C.hold?.by === pid || C.power?.by === pid) return rj('cb.finishTurn');
   const row = C.P[pid];
   const top = C.pile[C.pile.length - 1];
   const i = slotIdx(row, id);
-  if (!top || i < 0) return 'Wähle eine deiner Karten.';
+  if (!top) return rj('cb.pileEmpty');
+  if (i < 0) return rj('cb.pickOwn');
   const s = row[i];
   if (cbVal(s.c) === cbVal(top)) {
     row.splice(i, 1);

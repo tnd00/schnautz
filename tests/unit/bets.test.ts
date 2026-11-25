@@ -5,7 +5,7 @@ import { clockTurn } from '../../src/game/clock';
 import { addPlayer, newState, statsOf } from '../../src/game/state';
 import type { State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { msgOf, playOut, rngF } from './helpers';
+import { codeOf, msgOf, playOut, rngF } from './helpers';
 
 /** Shithead zu fünft, gespielt bis der Erste fertig ist. */
 function firstDone(seed: number): State {
@@ -28,8 +28,10 @@ describe('Tipps bei Shithead', () => {
     expect(shCanBet(st, done)).toBe(true);
     expect(shCanBet(st, other)).toBe(false);
     expect(msgOf(act(st, other, { type: 'shbet', on: done }))).toBe('Tippen kannst du, sobald du fertig bist.');
-    expect(msgOf(act(st, done, { type: 'shbet', on: 'weg' }))).toMatch(/Person sitzt nicht (?:mehr )?am Tisch/);
-    expect(msgOf(act(st, done, { type: 'shbet', on: done }))).toMatch(/schon fertig/);
+    expect(codeOf(act(st, done, { type: 'shbet', on: 'weg' }))).toBe('any.noSuchSeat');
+    expect(msgOf(act(st, done, { type: 'shbet', on: done }), st, done)).toBe(
+      'Du bist schon fertig. Tipp auf jemand anderen.',
+    );
     const q = shBetQuote(st);
     expect(q).toBe(Math.max(1, shBetCandidates(st).length - 1));
     expect(q).toBeGreaterThanOrEqual(1);

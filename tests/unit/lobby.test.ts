@@ -61,7 +61,7 @@ describe('Lobby: Plätze entfernen', () => {
     expect(beginGame(st, rngF(5))).toBeNull();
     expect(st.phase).not.toBe('lobby');
     st.players[pIdx(st, 'p-lena')].online = false;
-    expect(msgOf(act(st, 'h', { type: 'rmbot', id: 'p-lena' }, rngF(5)))).toMatch(/nur in der Lobby/);
+    expect(msgOf(act(st, 'h', { type: 'rmbot', id: 'p-lena' }, rngF(5)))).toBe('Das geht nur in der Lobby.');
     expect(ids(st)).toContain('p-lena');
   });
 

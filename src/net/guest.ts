@@ -3,7 +3,7 @@ import { type DataConnection, Peer } from 'peerjs';
 import { App } from '../ui/app';
 import { applyView } from '../ui/apply';
 import { $, num, type Timer } from '../ui/dom';
-import { toast } from '../ui/feedback';
+import { showReject, toast } from '../ui/feedback';
 import { resetTableUI } from '../ui/reset';
 import { setNet, setWait, showScreen } from '../ui/screens';
 import { endInvite, renderResume, showStartError } from '../ui/start';
@@ -13,9 +13,11 @@ import { APP_VERSION } from '../content/version';
 import { genId, PREFIX, peerOptions } from './ids';
 import {
   asMessage,
+  asReject,
   asSavedGuest,
   isView,
   readReject,
+  rejectAct,
   type GuestMessage,
   type HostMessage,
   type SavedGuest,
@@ -472,7 +474,10 @@ function guestMsg(raw: unknown): void {
     case 'err': {
       const r = readReject(m, ctxOfView(App.view), 'Das geht gerade nicht.');
       dlog('game', `Gastgeber lehnt ab: ${r.text}${r.code ? ` [${r.code}]` : ''}`);
-      toast(r.text);
+      // Mit Code zeigt der Gast den Grund am Tisch (Karte wackelt, Hinweis am Stapel), sonst wie bisher als Toast
+      const rj = asReject(m);
+      if (rj) showReject(rj, rejectAct(m), r.text);
+      else toast(r.text);
       App.busy = false;
       return;
     }

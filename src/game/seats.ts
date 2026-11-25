@@ -2,11 +2,11 @@
 import { MIN_SEATS } from './constants';
 import { addBot, addLog, addPlayer, MAX_SEATS_ALL, pIdx, seatLimit, uniqueName } from './state';
 import type { ActResult, GameKind, Player, Rng, Rules, State } from './types';
-import type { Reject } from './reject';
+import { rj, type Reject } from './reject';
 import { forgetRematch } from './rematch';
 import { betPart } from './bets';
 
-export type SeatResult = { id: string } | { err: Reject | string };
+export type SeatResult = { id: string } | { err: Reject };
 
 /**
  * Lobby: Platzzahl in gültige Grenzen bringen und überzählige KIs abräumen. Freie Plätze bleiben in der Lobby frei,
@@ -168,6 +168,6 @@ export function seatGuest(st: State, pid: string, name: string): SeatResult {
     return { id: seat.id };
   }
   return {
-    err: st.phase === 'lobby' ? 'Der Tisch ist voll.' : 'Die Partie läuft schon und alle Plätze sind besetzt.',
+    err: st.phase === 'lobby' ? rj('seat.full') : rj('seat.fullPlaying'),
   };
 }

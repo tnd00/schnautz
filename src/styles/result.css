@@ -1,1 +1,223 @@
 /* Ergebnisblatt in #overlay für alle Spiele (src/ui/render/result.ts). Lädt nach fit.css und cabo.css. */
+
+/*
+ * Nur das gemeinsame Blatt (Klasse .rs). Kopf in einer Zeile, Schlüsselzeile mit Minikarten, dann Einzeiler.
+ * Bis acht Leute passt alles bei 360x640 und 375x548 ohne Scrollen, der Fuß klebt unten.
+ */
+#overlay .paper.result.rs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 12px;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  text-align: left;
+}
+#overlay .paper.result.rs .rhead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+#overlay .paper.result.rs .trophy {
+  font-size: 30px;
+  line-height: 1;
+  margin: 0;
+  animation: none;
+}
+#overlay .paper.result.rs h2 {
+  margin: 0;
+  font-size: clamp(20px, 5.4vw, 28px);
+  line-height: 1.15;
+  text-align: left;
+  text-wrap: balance;
+}
+#overlay .paper.result.rs .lead {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+}
+#overlay .paper.result.rs .rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  max-height: none;
+  overflow: visible;
+}
+#overlay .paper.result.rs .taunt,
+#overlay .paper.result.rs .betres,
+#overlay .paper.result.rs .rnote {
+  margin: 2px 0;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* Einzeiler: Platz, Name, Kernzahl, rechts der Wert */
+#overlay .paper.result.rs .row.rr {
+  display: grid;
+  grid-template-columns: 1.7em minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 0;
+  min-height: 30px;
+  padding: 3px 10px;
+  margin: 0;
+  border-radius: 10px;
+}
+#overlay .paper.result.rs .row.rr .rpl {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 15px;
+}
+#overlay .paper.result.rs .row.rr .rnm {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+#overlay .paper.result.rs .row.rr .rnm b {
+  font-weight: 800;
+}
+#overlay .paper.result.rs .row.rr .hat {
+  margin-right: 4px;
+}
+#overlay .paper.result.rs .row.rr .rcore {
+  font-size: 12.5px;
+  color: #6a5f4c;
+  white-space: nowrap;
+  text-align: right;
+}
+#overlay .paper.result.rs .row.rr .rval {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+  text-align: right;
+}
+#overlay .paper.result.rs .row.rr.mine {
+  box-shadow: inset 3px 0 0 var(--brass-hi, #d6a24a);
+}
+
+/* Schlüsselzeile: etwas größer, die Karten in einer zweiten Reihe */
+#overlay .paper.result.rs .row.rr.key {
+  padding: 6px 10px;
+}
+#overlay .paper.result.rs .row.rr.key .rnm {
+  font-size: 16px;
+}
+#overlay .paper.result.rs .row.rr.key .rnm {
+  grid-column: 2 / -1;
+}
+#overlay .paper.result.rs .row.rr.key .rcore {
+  grid-column: 2 / -1;
+  text-align: left;
+  white-space: normal;
+}
+#overlay .paper.result.rs .row.rr .rcards {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+#overlay .paper.result.rs .row.rr .rcards .card {
+  --cw: 24px;
+}
+
+/* Fuß: Reaktionen, Wartetext, Knöpfe. Mit Revanche bleiben am Handy alle Knöpfe in einer Reihe */
+#overlay .paper.result.rs .rfoot {
+  position: sticky;
+  bottom: -12px;
+  margin: 4px -16px -12px;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#overlay .paper.result.rs .waittxt {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+}
+#overlay .paper.result.rs .foot.rbtns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+}
+#overlay .paper.result.rs .foot.rbtns .btn {
+  flex: 0 1 auto;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+@media (max-width: 960px) {
+  #overlay .paper.result.rs {
+    padding: 12px 12px 10px;
+    gap: 4px;
+  }
+  #overlay .paper.result.rs .rfoot {
+    margin: 2px -12px -10px;
+    bottom: -10px;
+    padding: 6px 10px 10px;
+  }
+  #overlay .paper.result.rs .foot.rbtns .btn {
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+  /* Mit Revanche vier Knöpfe in einer Reihe, eine zweite Reihe ließe das Blatt am Handy scrollen */
+  #overlay .paper.result.rs .foot.rbtns:has([data-act='rematch']) {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  #overlay .paper.result.rs .foot.rbtns:has([data-act='rematch']) .btn {
+    padding: 0 9px;
+    min-width: 0;
+  }
+}
+@media (max-width: 960px) and (max-height: 600px) {
+  #overlay .paper.result.rs .trophy {
+    font-size: 24px;
+  }
+  #overlay .paper.result.rs h2 {
+    font-size: 20px;
+  }
+  #overlay .paper.result.rs .rows {
+    gap: 2px;
+  }
+  #overlay .paper.result.rs .row.rr {
+    min-height: 24px;
+    padding: 1px 10px;
+  }
+  #overlay .paper.result.rs .row.rr.key {
+    padding: 4px 10px;
+  }
+  #overlay .paper.result.rs .row.rr .rcards {
+    margin-top: 2px;
+  }
+  #overlay .paper.result.rs .row.rr .rcards .card {
+    --cw: 21px;
+  }
+  #overlay .paper.result.rs .rfoot {
+    gap: 4px;
+    padding: 4px 10px 8px;
+  }
+  #overlay .paper.result.rs .foot.rbtns .btn {
+    min-height: 34px;
+  }
+  #overlay .paper.result.rs .taunt,
+  #overlay .paper.result.rs .betres {
+    font-size: 12px;
+  }
+}
+
+/* Wurfziel-Punkt rechts (feedback.css) nicht über die Kernzahl legen */
+#overlay .paper.result.rs .row.rr[data-act='aim'] {
+  padding-right: 26px;
+}

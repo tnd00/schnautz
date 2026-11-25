@@ -11,15 +11,16 @@ import { aimAttrs, marksHTML, reignHTML } from './marks';
 import { markClocks } from '../clock';
 import { markTosses } from '../toss';
 import { $, esc, hashStr, isMobile, listJoin, num } from '../dom';
-import { holdOverlay } from '../feedback';
-import { W, myTurn, nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb } from '../helpers';
+import { myTurn, nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb } from '../helpers';
 import { fitHand } from '../shithead/hand';
 import { SEQ } from '../shithead/sequence';
 import { winLeft, winSecs } from '../shithead/window';
 import { taunt } from '../taunts';
 import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
-import { rematchLine, rematchMark } from './rematch';
-import { betResultHTML, botsOnlyHTML, overlayFoot, peekHTML } from './result';
+import { betResultHTML, botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
+import { STATUS, SH_STATUS, OFFLINE_WAIT, offline, playFor } from '../../content/texts/status';
+import { ceremonyOn } from '../ceremony';
+import { endMain, renderStatus, turnMain, waitSub, type Status } from '../status';
 
 type Source = 'hand' | 'up' | 'down';
 type OwnCards = { hand: Card[]; up: Card[]; down: Card[] | number };
@@ -235,56 +236,70 @@ export function quickHTML(v: View): string {
   return `<button class="btn bomb pulse" data-act="shbomb">💣 Bombe! ${what} einwerfen</button>`;
 }
 
-/** Status über dem eigenen Platz: wer dran ist, neuer Stapel mit 4er-Knopf, Bombe-Knopf. */
-function statusHTML(
-  v: View,
-  S: ShView,
-  me: Player | null,
-  mine: OwnCards | null,
-  src: Source | null,
-  canAny: boolean,
-): string {
+/**
+ * Status über dem eigenen Platz als Daten: wer dran ist, neuer Stapel mit 4er-Knopf, Bombe-Knopf. Ohne DOM, damit
+ * Vitest jede Phase prüfen kann. `renderStatus` (src/ui/status.ts) schreibt ihn.
+ */
+export function shStatus(v: View): Status {
+  const S = v.sh;
+  const me = pById(v, App.me);
+  const mine = shMine(v);
+  const src = shSrc(v);
   const tId = turnId(v);
-  const meDone = S.finished.includes(App.me);
-  let main = '';
-  let sub = '';
-  let quick = '';
-  if (v.phase === 'play') {
-    if (meDone && me) {
-      main = 'Du bist fertig!';
-      sub = betSub(v, num(me.place)) ?? `Platz ${num(me.place)}. Werfen und tröten darfst du trotzdem.`;
-      // Nur noch KIs am Spielen: abkürzen statt zuschauen
-      if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
-    }
-    if (myTurn(v) && S.win?.lock) {
-      const wl = winLeft();
-      main = `<em>Gleich bist du dran.</em><span class="wincd" id="wincd" style="--p:${Math.min(1, wl / SH_WIN_MS).toFixed(3)}"><b>${winSecs(wl)}</b></span>`;
-      sub = 'Neuer Stapel, alle dürfen jetzt ihre 4er reinwerfen, du auch.';
-    } else if (myTurn(v)) {
-      main = src === 'down' ? '<em>Jetzt blind!</em>' : '<em>Du bist dran.</em>';
-      if (src === 'down') sub = 'Tippe eine verdeckte Karte an. Passt sie nicht, nimmst du den Stapel auf.';
-      else if (!canAny) sub = 'Keine Karte passt. Du musst den Stapel aufnehmen.';
-      else if (src === 'up') sub = 'Deine Hand ist leer. Jetzt sind die offenen Tischkarten dran.';
-      else sub = 'Tippe gleiche Karten an und leg sie ab.';
-    } else if (!meDone) {
-      main = `${W(v, tId)} ist dran.`;
-      if (S.win) sub = 'Neuer Stapel, wer eine 4 hat, darf sie jetzt reinwerfen.';
-      else sub = betsOnMeSub(v) ?? '';
-    }
-    if (mine && !quick) quick = quickHTML(v);
-  } else if (v.phase === 'over') main = 'Partie vorbei.';
-
-  const actor = v.phase === 'play' && tId ? pById(v, tId) : null;
-  if (actor && actor.id !== App.me && !actor.online) {
-    sub =
-      `${esc(actor.name)} ist gerade offline.` +
-      (App.role === 'host'
-        ? ` <button class="btn ghost small" data-act="skip"${S.win?.lock ? ' disabled' : ''}>Für ${esc(actor.name)} spielen</button>`
-        : ' Das Spiel wartet.');
+  if (!S) return { main: '', sub: '', tone: 'calm' };
+  if (v.phase === 'swap') {
+    const wait = v.players.filter((p) => !p.ready && !p.out).map((p) => p.id);
+    return me && !me.ready
+      ? { main: `<em>${SH_STATUS.swap}</em>`, sub: SH_STATUS.swapSub, tone: 'turn' }
+      : { main: SH_STATUS.swap, sub: waitSub(v, wait), tone: 'calm' };
   }
-  // Schnelle Knöpfe ersetzen den Hinweis, damit die Zeile nicht springt
-  const second = quick ? `<div class="quick">${quick}</div>` : sub ? `<div class="sub">${sub}</div>` : '';
-  return `<div class="main">${main}</div>${second}`;
+  if (v.phase === 'over') {
+    const revealing = !!App.zerHide || ceremonyOn();
+    return { main: endMain(v, revealing), sub: revealing ? SH_STATUS.overSub : '', tone: 'over' };
+  }
+  if (v.phase !== 'play') return { main: '', sub: '', tone: 'calm' };
+  const canAny = !!mine && (src === 'hand' || src === 'up') && mine[src].some((c) => shCanPlay(v, rankOf(c)));
+  const meDone = S.finished.includes(App.me);
+  let st: Status = { main: '', sub: '', tone: 'calm' };
+  let quick = '';
+  if (meDone && me) {
+    st = {
+      main: STATUS.done,
+      sub: betSub(v, num(me.place)) ?? SH_STATUS.doneSub(num(me.place)),
+      tone: 'calm',
+    };
+    // Nur noch KIs am Spielen: abkürzen statt zuschauen
+    if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
+  }
+  if (myTurn(v) && S.win?.lock) {
+    const wl = winLeft();
+    st = {
+      main: `<em>${STATUS.soon}</em><span class="wincd" id="wincd" style="--p:${Math.min(1, wl / SH_WIN_MS).toFixed(3)}"><b>${winSecs(wl)}</b></span>`,
+      sub: SH_STATUS.winMine,
+      tone: 'alert',
+    };
+  } else if (myTurn(v)) {
+    const sub =
+      src === 'down' ? SH_STATUS.blindSub : !canAny ? SH_STATUS.noFit : src === 'up' ? SH_STATUS.upNow : SH_STATUS.pick;
+    st = { main: `<em>${src === 'down' ? SH_STATUS.blind : STATUS.myTurn}</em>`, sub, tone: 'turn' };
+  } else if (!meDone) {
+    // Mit eigener 4 steht der Knopf statt der Unterzeile (quickHTML), ohne bleibt nur der Tipp-Hinweis
+    const four = !!shCanThrow(v, App.me);
+    st = { main: turnMain(v, tId), sub: betsOnMeSub(v) ?? '', tone: S.win && four ? 'alert' : 'calm' };
+  }
+  if (mine && !quick) quick = quickHTML(v);
+
+  const actor = tId ? pById(v, tId) : null;
+  if (actor && actor.id !== App.me && !actor.online) {
+    const nm = esc(actor.name);
+    // Ein schneller Knopf (4er, Bombe, Vorspulen) hat Vorrang, sonst hätte der Gastgeber gar keine Aktion mehr
+    if (App.role === 'host' && !quick) {
+      if (!meDone) st = { ...st, main: offline(`<b>${nm}</b>`) };
+      quick = `<button class="btn ghost small" data-act="skip"${S.win?.lock ? ' disabled' : ''}><span class="qlbl">${playFor(nm)}</span></button>`;
+    } else st = { ...st, sub: `${offline(nm)} ${OFFLINE_WAIT}` };
+  }
+  // Schnelle Knöpfe ersetzen den Hinweis, die Zeile behält ihre Höhe
+  return quick ? { ...st, quick } : st;
 }
 
 /** Tauschrunde: eigene Tisch- und Handkarten groß über dem Spielfeld, das noch nicht gebraucht wird. */
@@ -387,9 +402,7 @@ export function renderSh(v: View): void {
     .join('');
   renderShCenter(v);
 
-  const stEl = $('#status');
-  stEl.className = 'status';
-  stEl.innerHTML = statusHTML(v, S, me, mine, src, canAny);
+  renderStatus(v);
 
   const playing = myTurn(v) && !S.win?.lock;
   const swap = v.phase === 'swap';
@@ -463,20 +476,13 @@ function shitheadResult(v: View): ShitheadResult | null {
   return v.result?.reason === 'shithead' ? v.result : null;
 }
 
-/** Ergebnis am Ende: Reihenfolge, Shithead mit übrigen Karten und ein frecher Spruch. */
-export function renderShOverlay(v: View): void {
-  const ov = $('#overlay');
+/**
+ * Ergebnisblatt am Ende als Daten: Shithead mit übrigen Karten als Schlüsselzeile, Spruch oder Duell, Tipps,
+ * eigene Zeile und die übrigen in Reihenfolge. `null` außerhalb des Partieendes.
+ */
+export function shSheet(v: View): Sheet | null {
   const r = shitheadResult(v);
-  if (v.phase !== 'over' || !r) {
-    ov.innerHTML = '';
-    return;
-  }
-  if (holdOverlay()) return;
-  if (App.peek) {
-    ov.innerHTML = peekHTML(v, pById(v, App.me));
-    return;
-  }
-  const me = pById(v, App.me);
+  if (v.phase !== 'over' || !r) return null;
   const loser = r.shithead;
   const names = r.names ?? {};
   const nm = (id: string) => esc(nameOf(v, id, names[id]));
@@ -487,56 +493,51 @@ export function renderShOverlay(v: View): void {
         ? `${nm(loser)} ist der <span class="r">Shithead!</span>`
         : 'Partie vorbei';
   const first = r.ranking[0];
-  const lead = r.quit
-    ? `${nm(r.quit)}${vb(r.quit, ' hast', ' hat')} den Tisch verlassen.`
-    : first
-      ? first === App.me
-        ? 'Du warst zuerst fertig.'
-        : `${nm(first)} war zuerst fertig.`
-      : '';
-  let tt = '';
-  let good = false;
+  const lead = r.quit ? `${nm(r.quit)}${vb(r.quit, ' hast', ' hat')} den Tisch verlassen.` : '';
+  let tt: Sheet['taunt'] = null;
   if (!r.quit && loser) {
     const seed = `o${v.games}`;
-    if (loser === App.me) tt = taunt('shLoserSelf', null, seed);
-    else if (first === App.me) {
-      tt = taunt('shWinSelf', null, seed);
-      good = true;
-    } else tt = taunt('shLoserOther', { name: nameOf(v, loser, names[loser]) }, seed);
+    if (loser === App.me) tt = { text: taunt('shLoserSelf', null, seed), good: false };
+    else if (first === App.me) tt = { text: taunt('shWinSelf', null, seed), good: true };
+    else tt = { text: taunt('shLoserOther', { name: nameOf(v, loser, names[loser]) }, seed), good: false };
   }
-  const rline = rematchLine(v);
   const order = loser ? [...r.ranking, loser] : r.ranking;
-  const rows = order
-    .map((id, i) => {
-      const p = pById(v, id);
-      const isL = id === loser;
-      const P = v.sh?.P[id];
-      const left: Card[] =
-        isL && P
-          ? [...(Array.isArray(P.hand) ? P.hand : []), ...(P.up ?? []), ...(Array.isArray(P.down) ? P.down : [])]
-          : [];
-      const what = isL
-        ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
-        : i === 0
-          ? 'zuerst fertig'
-          : 'fertig';
-      const hat = isL ? '<span class="hat">💩</span>' : i === 0 ? '<span class="hat">👑</span>' : '';
-      const leftCards =
-        isL && left.length
-          ? `<div class="mini shleft">${left
-              .slice(0, 8)
-              .map((c) => cardHTML(c))
-              .join('')}${left.length > 8 ? `<span class="more">+${left.length - 8}</span>` : ''}</div>`
-          : '';
-      return (
-        `<div class="row${isL ? ' lose' : i === 0 ? ' win' : ''}" data-pid="${esc(id)}"${aimAttrs(p, true)}><div class="val" style="min-width:34px;text-align:left">${i + 1}.</div>` +
-        `<div class="who"><b>${hat}${nm(id)}${rematchMark(v, id)}</b><span>${what}${p?.shc ? ` · ${num(p.shc)}× Shithead` : ''}</span>${leftCards}</div></div>`
-      );
-    })
-    .join('');
-  ov.innerHTML =
-    `<div class="modal"><div class="paper sheet result"><div class="trophy">${loser === App.me ? '💩' : loser ? '🏆' : '👋'}</div>` +
-    `<h2>${title}</h2><p class="lead">${lead}</p>` +
-    (rline ? `<p class="taunt rv">${rline}</p>` : tt ? `<p class="taunt${good ? ' good' : ''}">${esc(tt)}</p>` : '') +
-    `<div class="rows">${rows}</div>${betResultHTML(v, r.bets, r.shithead, 'Shithead')}${overlayFoot(v, me)}</div></div>`;
+  const rows: SheetRow[] = order.map((id, i) => {
+    const p = pById(v, id);
+    const isL = id === loser;
+    const P = v.sh?.P[id];
+    const left: Card[] =
+      isL && P
+        ? [...(Array.isArray(P.hand) ? P.hand : []), ...(P.up ?? []), ...(Array.isArray(P.down) ? P.down : [])]
+        : [];
+    const what = isL
+      ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
+      : i === 0
+        ? 'zuerst fertig'
+        : 'fertig';
+    return {
+      id,
+      place: i + 1,
+      name: nm(id),
+      hat: isL ? LOSER_MARK.shithead : i === 0 ? '👑' : undefined,
+      core: `${what}${p?.shc ? ` · ${num(p.shc)}× Shithead` : ''}`,
+      cards: isL ? left : undefined,
+      tone: isL ? 'lose' : i === 0 ? 'win' : undefined,
+    };
+  });
+  return {
+    icon: loser === App.me ? LOSER_MARK.shithead : loser ? '🏆' : '👋',
+    title,
+    lead,
+    key: loser,
+    taunt: tt,
+    bets: betResultHTML(v, r.bets, r.shithead, 'Shithead'),
+    rows,
+    next: 'game',
+  };
+}
+
+/** Ergebnis am Ende über das gemeinsame Blatt. */
+export function renderShOverlay(v: View): void {
+  renderResult(v, shSheet(v));
 }

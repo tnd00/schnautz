@@ -27,7 +27,7 @@ import { CAR, initCarousel, layoutOpps } from './carousel';
 import { fitDesktop } from './fit';
 import { FX_WAKE_MS } from './livefx';
 import { $, esc } from './dom';
-import { shakeEl, skipAnnouncement, toast } from './feedback';
+import { noteTap, shakeEl, skipAnnouncement, toast } from './feedback';
 import { ceremonyOn, ZER } from './ceremony';
 import { myTurn, pById } from './helpers';
 import { boardHTML } from './render/board';
@@ -271,6 +271,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       App.busy = true;
       sfx('card');
       App.playRects = { t: Date.now(), src: 'down', rects: [t.getBoundingClientRect()] };
+      noteTap('shblind', [`#me [data-act="shd"][data-i="${i}"]`]);
       doAct({ type: 'shblind', i });
       break;
     case 'shplay': {
@@ -279,6 +280,10 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       App.busy = true;
       sfx('card');
       grabRects(src, idx);
+      noteTap(
+        'shplay',
+        idx.map((k) => `#me [data-act="${src === 'hand' ? 'shh' : 'shu'}"][data-i="${k}"]`),
+      );
       App.ss = { src: null, idx: [] };
       doAct({ type: 'shplay', from: src, idx: idx.slice() });
       break;
@@ -288,6 +293,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       sfx('card');
       const ti = shCanThrow(v, App.me);
       if (ti) grabRects(ti.src, ti.idx);
+      noteTap('shthrow', ['#status [data-act="shthrow"]']);
       doAct({ type: 'shthrow' });
       break;
     }
@@ -295,6 +301,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       if (!v || !quickLock()) break;
       const bm = shCanBomb(v, App.me);
       if (bm) grabRects(bm.src, bm.idx);
+      noteTap('shbomb', ['#status [data-act="shbomb"]']);
       doAct({ type: 'shbomb' });
       break;
     }

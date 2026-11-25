@@ -8,7 +8,6 @@ import {
   slowExtraMs,
   ZER_SHDONE_MS,
   ZER_SLOW_FLIGHT_MS,
-  zerRevealDelay,
 } from '../../src/ui/ceremony-plan';
 
 const e = (x: Partial<LogEntry> & { k: string }, n: number): LogEntry => ({ n, ...x }) as LogEntry;
@@ -24,9 +23,9 @@ describe('Zeitplan der Zeremonie', () => {
     ];
     expect(decisivePlay(fresh)?.n).toBe(2);
     expect(slowExtraMs({ cards: ['H5', 'D5'] })).toBe(ZER_SLOW_FLIGHT_MS + 110);
-    expect(zerRevealDelay(fresh, 1000)).toBe(1000 + ZER_SLOW_FLIGHT_MS + 110 + ZER_SHDONE_MS + 840);
+    expect(revealDelayOf('shithead', fresh, 1000)).toBe(1000 + ZER_SLOW_FLIGHT_MS + 110 + ZER_SHDONE_MS + 840);
     // Ohne Sequenz gibt es keine Zeitlupe
-    expect(zerRevealDelay(fresh, 0)).toBe(ZER_SHDONE_MS + 840);
+    expect(revealDelayOf('shithead', fresh, 0)).toBe(ZER_SHDONE_MS + 840);
   });
 
   it('liefert nichts ohne Shithead oder wenn shdone nicht direkt davor steht', () => {
@@ -71,10 +70,15 @@ describe('Wartezeit bis zur Enthüllung (revealDelayOf)', () => {
     e({ k: 'shend', p: 'c' }, 3),
   ];
 
-  it('ist bei Shithead genau zerRevealDelay', () => {
-    for (const seq of [0, 1000, 2500]) expect(revealDelayOf('shithead', sh, seq)).toBe(zerRevealDelay(sh, seq));
+  it('behält bei Shithead die Zeiten aus 2.6 samt Zeitlupe und Zeit um', () => {
+    const slow = ZER_SLOW_FLIGHT_MS + 110;
+    expect(ZER_SHDONE_MS).toBe(1100);
+    expect(revealDelayOf('shithead', sh, 0)).toBe(1940);
+    expect(revealDelayOf('shithead', sh, 1000)).toBe(1000 + slow + 1940);
+    expect(revealDelayOf('shithead', sh, 2500)).toBe(2500 + slow + 1940);
     const late = [e({ k: 'timeout', p: 'b' }, 0), ...sh];
-    expect(revealDelayOf('shithead', late, 0)).toBe(zerRevealDelay(late, 0));
+    expect(revealDelayOf('shithead', late, 0)).toBe(1940 + 2240);
+    expect(revealDelayOf('shithead', late, 1000)).toBe(1000 + slow + 2240 + 1940);
   });
 
   it('rechnet bei Durak und Cabo mit denselben Zeiten ohne Zeitlupe', () => {
@@ -83,9 +87,29 @@ describe('Wartezeit bis zur Enthüllung (revealDelayOf)', () => {
     expect(revealDelayOf('durak', dk, 0)).toBe(ZER_SHDONE_MS + 840);
     expect(revealDelayOf('cabo', cb, 0)).toBe(ZER_SHDONE_MS + 840);
     expect(revealDelayOf('durak', [e({ k: 'timeout', p: 'b' }, 0), ...dk], 0)).toBe(ZER_SHDONE_MS + 840 + 2240);
-    // Das frühere zerRevealDelay ergab hier dieselben Werte
-    expect(revealDelayOf('durak', dk, 0)).toBe(zerRevealDelay(dk, 0));
-    expect(revealDelayOf('cabo', cb, 0)).toBe(zerRevealDelay(cb, 0));
+    expect(revealDelayOf('cabo', [e({ k: 'timeout', p: 'b' }, 0), ...cb], 0)).toBe(ZER_SHDONE_MS + 840 + 2240);
+    // Ein Shithead-Ablauf zählt mit, eine Zeitlupe gibt es dort aber nie
+    expect(revealDelayOf('durak', dk, 900)).toBe(900 + ZER_SHDONE_MS + 840);
+    expect(revealDelayOf('cabo', cb, 900)).toBe(900 + ZER_SHDONE_MS + 840);
+  });
+
+  it('wartet bei jedem Spiel mit Zeremonie spieleigen', () => {
+    for (const g of GAMES) {
+      const p = planOf(g);
+      if (p.kind === 'none') continue;
+      expect(p.leadMs, g).toBe(ZER_SHDONE_MS + 840);
+      expect(revealDelayOf(g, [e({ k: p.endKind, p: 'c' } as Partial<LogEntry> & { k: string }, 1)], 0), g).toBe(
+        p.leadMs,
+      );
+    }
+  });
+
+  it('fällt bei Schnautz nicht auf Shithead zurück', () => {
+    const p = planOf('schnautz');
+    expect(p.kind).toBe('none');
+    expect(p).not.toHaveProperty('mark');
+    // Auch ein alter Shithead-Eintrag im Verlauf löst an einem Schnautz-Tisch keine Wartezeit aus
+    expect(revealDelayOf('schnautz', sh, 2500)).toBe(0);
   });
 
   it('ist 0 ohne Partieende des eigenen Spiels und bei Schnautz immer', () => {

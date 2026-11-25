@@ -6,6 +6,7 @@
 import { MAX_SEATS } from './constants';
 import { unreachable } from './games';
 import { addLog, pIdx, statsOf } from './state';
+import { rj } from './reject';
 import type { ActResult, GameKind, Player, ShBet, ShBetResult, State, Table } from './types';
 
 /** Der Teil des Spielzustands mit Fertigen, Plätzen und Tipps. Spiele ohne Verlierer am Ende haben keinen. */
@@ -77,15 +78,16 @@ export function shCanBet(t: Table, pid: string): boolean {
 
 export function shPlaceBet(st: State, pid: string, raw: unknown): ActResult {
   const S = betPart(st);
-  if (!S || st.phase !== 'play') return 'Tippen geht nur während der Partie.';
-  if (!S.finished.includes(pid)) return 'Tippen kannst du, sobald du fertig bist.';
-  if (S.bets?.[pid]) return 'Du hast schon getippt.';
+  if (!S || st.phase !== 'play') return rj('bet.closed');
+  if (!S.finished.includes(pid)) return rj('bet.notDone');
+  const had = S.bets?.[pid];
+  if (had) return rj('bet.twice', { on: had.on });
   const on = String(raw ?? '').slice(0, 40);
   const i = pIdx(st, on);
-  if (i < 0) return 'Diese Person sitzt nicht am Tisch.';
+  if (i < 0) return rj('any.noSuchSeat');
   const target = st.players[i];
-  if (target.out || S.finished.includes(on)) return `${target.name} ist schon fertig. Tipp auf jemand anderen.`;
-  if (shBetCandidates(st).length < 2) return 'Tippen geht nur während der Partie.';
+  if (target.out || S.finished.includes(on)) return rj('bet.targetDone', { p: target.id });
+  if (shBetCandidates(st).length < 2) return rj('bet.closed');
   if (!S.bets || typeof S.bets !== 'object') S.bets = {};
   const q = shBetQuote(st);
   addLog(st, { k: 'shbet', p: pid, on, onName: target.name, q });

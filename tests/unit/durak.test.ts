@@ -139,7 +139,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     const { st, D } = fixed();
     expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [0] }))).toBe('Zuerst greift jemand anderes an.');
     expect(msgOf(act(st, 'p1', { type: 'dkattack', idx: [0] }))).toBe('Du verteidigst gerade.');
-    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0, 2] }))).toMatch(/geht nur mit gleiche(?:n Werten|m Wert)\./);
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0, 2] }))).toBe('Zusammen geht nur mit gleichem Wert.');
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1] })).toBeNull();
     expect(D.table.map((p) => p.a)).toEqual(['C7', 'S7']);
     expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [1] }))).toMatch(/schon auf dem Tisch/);
@@ -601,8 +601,6 @@ describe('Durak: Karten statt Indizes', () => {
     expect(act(st, 'p1', { type: 'dkdefend', a: 1, i: 1, ac: 'C7', c: 'C10' })).toBeNull();
     expect(D.table.map((p) => p.d)).toEqual(['S9', 'C10']);
     expect(D.P.p1).toContain('HA');
-    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0], cards: ['S7'] }))).toMatch(
-      /^Die Karte (?:hast du nicht mehr auf der Hand|ist nicht mehr da)\.$/,
-    );
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0], cards: ['S7'] }))).toBe('Die Karte ist nicht mehr da.');
   });
 });

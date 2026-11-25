@@ -1,1 +1,118 @@
 /* Statuszeile am Tisch für alle Spiele (src/ui/status.ts). Lädt nach fit.css und cabo.css, damit sie gewinnt. */
+
+/*
+ * Feste Höhe für Hauptzeile plus zwei Zeilen Hinweis. Gilt nur für Spiele, die ihre Zeile über renderStatus
+ * zeichnen (Klasse .sline). Ein Knopf statt Hinweis passt in dieselbe Höhe.
+ */
+.status.sline {
+  --st-h: 66px;
+  height: var(--st-h);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.status.sline .main {
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status.sline .sub {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.3;
+}
+.status.sline .sub:empty {
+  display: none;
+}
+/* Ring nicht höher als die Zeile, sonst schneidet die feste Höhe ihn ab */
+.status.sline .wincd {
+  width: 1.2em;
+  height: 1.2em;
+  margin-left: 8px;
+}
+.status.sline .wincd b {
+  width: 1.3em;
+  height: 1.3em;
+  font-size: 0.7em;
+}
+.status.sline .quick {
+  margin-top: 4px;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+.status.sline .quick .btn {
+  min-height: 38px;
+  font-size: 15px;
+  padding: 0 16px;
+  box-shadow: none;
+}
+/* Lange Namen kürzen statt umbrechen, die Hauptzeile bleibt stehen */
+.status.sline .quick .btn {
+  max-width: 100%;
+  min-width: 0;
+}
+.status.sline .quick .qlbl {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Vorspulen mit Hinweis braucht zwei Reihen. Nur wer fertig ist, sieht es, dort springt nichts unter Karten */
+.status.sline.hasquick:has(.botsonly, [data-act='ffwd']) {
+  height: auto;
+  min-height: var(--st-h);
+  overflow: visible;
+}
+.status.sline.hasquick:has(.botsonly, [data-act='ffwd']) .quick {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 960px) {
+  .status.sline {
+    --st-h: 56px;
+  }
+  /* Hauptzeile behält ihre Höhe über dem Knopf (20,4 px plus 3 px Abstand plus 32 px Knopf in 56 px) */
+  .status.sline .main {
+    flex: none;
+  }
+  .status.sline .quick {
+    margin-top: 3px;
+  }
+  .status.sline .quick .btn {
+    min-height: 32px;
+    font-size: 14px;
+    padding: 0 14px;
+  }
+}
+@media (max-width: 960px) and (max-height: 650px) {
+  .status.sline {
+    --st-h: 52px;
+  }
+  .status.sline .sub {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+  /* 19 px Hauptzeile plus 32 px Knopf passen so in 52 px */
+  .status.sline .quick {
+    margin-top: 0;
+  }
+}
+
+/* Grund am Tisch (showReject): lange Gründe brechen um statt über den Rand zu laufen */
+#fly .nopelbl.mid {
+  white-space: normal;
+  width: max-content;
+  max-width: min(calc(100vw - 24px), 420px);
+  text-align: center;
+}
+/* Band über der Statuszeile, solange ich am Zug bin */
+#fly .mid.band {
+  z-index: 48;
+}
