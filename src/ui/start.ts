@@ -9,8 +9,10 @@ import { cleanCode, cleanName } from '../net/ids';
 import { asSavedGuest, asSavedHost, GUEST_RESUME_MS, HOST_RESUME_MS } from '../net/protocol';
 import { $, esc, num } from './dom';
 import { shakeEl, toast } from './feedback';
-import { LS, SS } from './storage';
+import { LS } from './storage';
 import { AKA, MARK, TILT } from './gamestickers';
+import { hostLockElsewhere } from '../net/tablock';
+import { clearBackMark, peekBackMark } from './update';
 
 /** Ein frecher Halbsatz pro Spiel, nur wo der Sticker Platz hat */
 const TAG: Readonly<Record<GameKind, string>> = {
@@ -27,6 +29,8 @@ export function showStartError(msg: string): void {
   const e = $('#start-err');
   e.textContent = msg;
   e.hidden = !msg;
+  // Wer mit Meldung auf der Startseite landet (verdrängt, Tisch zu, Fehler), geht nach dem Neuladen nicht zurück
+  if (msg) clearBackMark();
   // Eine Fehlermeldung steht im Formular, also muss es am Handy offen sein
   if (msg) document.body.classList.add('startform');
 }
@@ -50,15 +54,37 @@ function gameStickers(): string {
   }).join('');
 }
 
+/** Zählt jedes Zeichnen der Karten, damit eine späte Antwort der Sperre keine neuere Fassung überschreibt. */
+let resumeDraw = 0;
+
+/**
+ * Hält ein anderer Tab dieses Browsers den Tisch, fragt die Karte, ob er hierher soll. Ohne Sperren (unsicherer
+ * Kontext, alte Browser) bleibt sie wie sie ist, „Fortsetzen“ übernimmt den Tisch dann trotzdem sauber.
+ */
+function markHostElsewhere(code: string): void {
+  const draw = resumeDraw;
+  void hostLockElsewhere().then((other) => {
+    if (!other || draw !== resumeDraw) return;
+    const card = document.querySelector<HTMLElement>('#resume .resume-host');
+    if (!card) return;
+    const p = card.querySelector('p');
+    if (p) p.innerHTML = `Dein Tisch <b class="st-num">${esc(code)}</b> ist in einem anderen Tab offen. Hierher holen?`;
+    const b = card.querySelector('[data-act=resumehost]');
+    if (b) b.textContent = 'Hierher holen';
+    card.classList.add('elsewhere');
+  });
+}
+
 /** Bietet an, einen gespeicherten Tisch fortzusetzen oder an einen Tisch zurückzukehren. Jede Karte hat eine Hauptaktion. */
 export function renderResume(): void {
+  resumeDraw++;
   const box = $('#resume');
   const now = Date.now();
   const hs = asSavedHost(LS.get<unknown>('host', null));
   const gs = asSavedGuest(LS.get<unknown>('guest', null));
   let h = '';
-  // In der Einladung zählt nur der Weg an diesen Tisch: Karten für andere Tische bleiben weg, die für diesen
-  // Tisch bleibt, denn „An den Tisch“ nimmt in einem neuen Tab einen neuen Platz (zweiter Tab im E2E-Test)
+  // In der Einladung zählt nur der Weg an diesen Tisch: Karten für andere Tische bleiben weg, die für diesen Tisch
+  // bleibt. „An den Tisch“ findet den eigenen Platz nur bei gleichem Namen, die Karte auch mit anderem Namen
   const here = (code: string) => !inviteCode || code === inviteCode;
   if (here(hs?.code ?? '') && hs && now - hs.ts < HOST_RESUME_MS) {
     const n = hs.st.players.length;
@@ -70,7 +96,7 @@ export function renderResume(): void {
           ? ` läuft noch (Runde ${num(hs.st.round)}).`
           : ` läuft noch (${GAME_NAME[game]}).`;
     h +=
-      `<div class="resume st st-l1 g-${game}"><p>Dein Tisch <b class="st-num">${esc(hs.code)}</b> mit ${n} ${n === 1 ? 'Person' : 'Leuten'}${state}</p>` +
+      `<div class="resume resume-host st st-l1 g-${game}"><p>Dein Tisch <b class="st-num">${esc(hs.code)}</b> mit ${n} ${n === 1 ? 'Person' : 'Leuten'}${state}</p>` +
       '<div class="resume-acts"><button class="st-btn st-primary" data-act="resumehost">Fortsetzen</button>' +
       '<button class="st-link" data-act="dropresume" data-k="host">Verwerfen</button></div></div>';
   }
@@ -82,6 +108,7 @@ export function renderResume(): void {
   }
   box.innerHTML = h;
   box.hidden = !h;
+  if (hs && box.querySelector('.resume-host')) markHostElsewhere(hs.code);
 }
 
 export function readName(): string | null {
@@ -147,14 +174,16 @@ export function lastGame(): GameKind {
 }
 
 /**
- * Neu geladen wegen einer neuen Version (autoResume in update.ts), aber der Link zeigt auf einen anderen Tisch als
- * den gespeicherten: Dann zählt der eigene Tisch, sonst blendet die Einladung den Knopf zum Fortsetzen aus.
+ * Neu geladen wegen einer neuen Version (Merker in update.ts), aber der Link zeigt auf einen anderen Tisch als den
+ * gespeicherten: Dann zählt der eigene Tisch, sonst blendet die Einladung den Knopf zum Fortsetzen aus. Nach einem
+ * gewöhnlichen Neuladen gewinnt dagegen die Einladung (resumeBack in events.ts geht dann nicht zurück).
  */
 function resumingElsewhere(code: string): boolean {
-  const role = SS.get<string>('autoresume', '');
-  if (!role) return false;
+  const m = peekBackMark();
+  if (!m || m.why !== 'update') return false;
+  if (m.code) return m.code !== code;
   const saved =
-    role === 'host' ? asSavedHost(LS.get<unknown>('host', null)) : asSavedGuest(LS.get<unknown>('guest', null));
+    m.role === 'host' ? asSavedHost(LS.get<unknown>('host', null)) : asSavedGuest(LS.get<unknown>('guest', null));
   return !!saved && saved.code !== code;
 }
 

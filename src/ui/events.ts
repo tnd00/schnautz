@@ -6,9 +6,18 @@ import { EMOTE_GAP_MS, SOUND_GAP_MS, SOUNDS, TOSS_ITEMS, TURN_SECS } from '../ga
 import type { Action, GameKind, TossItem } from '../game/types';
 import { doAct } from '../net/dispatch';
 import { guestLeave, guestStart, guestStop, guestWake } from '../net/guest';
-import { hostCancel, hostClose, hostNew, hostNewVsBots, hostResume } from '../net/host';
+import { hostCancel, hostClose, hostNew, hostNewVsBots, hostResume, sendHostClaim } from '../net/host';
 import { cleanCode, genId } from '../net/ids';
-import { asSavedGuest, asSavedHost, HOST_RESUME_MS } from '../net/protocol';
+import { asSavedGuest, asSavedHost, GUEST_RESUME_MS, HOST_RESUME_MS, type SavedHost } from '../net/protocol';
+import {
+  browserLocks,
+  CLAIM_WAIT_MS,
+  hostLockElsewhere,
+  releaseHostLock,
+  takeHostLock,
+  tryHostLock,
+  waitHostLock,
+} from '../net/tablock';
 import { App, type EmoTab } from './app';
 import { burst } from './burst';
 import { CAR, initCarousel, layoutOpps } from './carousel';
@@ -32,10 +41,10 @@ import { renderTurnNote } from './render/turnnote';
 import { openBetModal, renderBetModal } from './render/bets';
 import { inviteHTML } from './render/invite';
 import { netInfoHTML } from './render/netinfo';
-import { closeUpdate, reloadApp } from './update';
+import { armBackHint, type BackMark, closeUpdate, reloadApp } from './update';
 import { updatesHTML } from './render/updates';
 import { resetTableUI } from './reset';
-import { copyLink, setNet, shareLink, showScreen, updateTitle } from './screens';
+import { copyLink, setNet, setWait, shareLink, showScreen, updateTitle } from './screens';
 import { fitHand, grabRects } from './shithead/hand';
 import { setSbBlock } from './soundboard';
 import { renderSoundBtn, setSbVolume, sfx, unlockAudio } from './sound';
@@ -570,23 +579,23 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       $('#menu').hidden = true;
       const host = App.role === 'host';
       const text = host
-        ? 'Tisch auflösen? Alle anderen fliegen dann raus.'
+        ? 'Tisch auflösen? Dann ist der Tisch für alle zu.'
         : v && v.phase !== 'lobby'
-          ? 'Tisch verlassen? Du scheidest dann aus der Partie aus.'
+          ? 'Tisch verlassen? Die KI spielt für dich weiter, später kannst du an deinen Platz zurück.'
           : 'Tisch wirklich verlassen?';
       confirmBox(text, host ? 'Auflösen' : 'Verlassen', leaveTable);
       break;
     }
     case 'resumehost': {
       const hs = asSavedHost(LS.get<unknown>('host', null));
-      if (hs) hostResume(hs);
+      if (hs) void resumeHostHere(hs.code);
       break;
     }
     case 'resumeguest': {
       const gs = asSavedGuest(LS.get<unknown>('guest', null));
       if (gs) {
-        $<HTMLInputElement>('#name').value = gs.name;
-        guestStart(gs.code, gs.name, gs.pid, gs.key);
+        armBackHint(false);
+        resumeGuest(gs.code, gs.name);
       }
       break;
     }
@@ -597,31 +606,153 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
   }
 }
 
+/** Zählt jeden Versuch, Gastgeber zu werden. Abbrechen macht einen laufenden Versuch ungültig. */
+let hostTry = 0;
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Gastgeber in diesem Tab werden. Hält ein anderer Tab den Tisch, bekommt er einen Anspruch und tritt ab, erst dann
+ * geht es weiter (`go`). `code` ist der Tisch, um den es geht, leer für einen neuen Tisch.
+ */
+async function asHost(code: string, go: () => void): Promise<void> {
+  // Ein Doppeltipp startet keinen zweiten Versuch, der dem ersten die Sperre wieder wegnimmt
+  if (hostBusy) return;
+  hostBusy = true;
+  const my = ++hostTry;
+  try {
+    const api = browserLocks();
+    if (!api) {
+      // Ohne Sperren weiß niemand, ob ein anderer Tab Gastgeber ist: Anspruch schicken und kurz warten
+      sendHostClaim(code);
+      await sleep(CLAIM_WAIT_MS);
+    } else if (!(await tryHostLock(api))) {
+      showScreen('wait');
+      if (code) setWait('Dein Tisch wird in diesen Tab geholt…', 'Der andere Tab gibt ihn gerade ab.');
+      else setWait('Dein Tisch im anderen Tab wird geschlossen…', 'Gleich geht hier der neue auf.');
+      sendHostClaim(code);
+      await takeHostLock(api);
+    }
+  } finally {
+    hostBusy = false;
+  }
+  if (my !== hostTry) {
+    releaseHostLock();
+    return;
+  }
+  go();
+}
+let hostBusy = false;
+
+/** Gespeicherten Tisch fortsetzen. Gelesen wird erst, wenn dieser Tab den Tisch hat, denn der alte speichert zuletzt. */
+async function resumeHostHere(code: string): Promise<void> {
+  showStartError('');
+  unlockAudio();
+  armBackHint(false);
+  await asHost(code, () => {
+    const hs = asSavedHost(LS.get<unknown>('host', null));
+    if (hs) hostResume(hs);
+    else {
+      releaseHostLock();
+      showScreen('start');
+      renderResume();
+      showStartError('Der Tisch ist nicht mehr gespeichert.');
+    }
+  });
+}
+
+/** Zurück an einen Tisch als Gast: zuerst der Platz dieses Tabs, sonst der gespeicherte Platz für diesen Tisch. */
+function resumeGuest(code: string, name: string): boolean {
+  const gs = asSavedGuest(LS.get<unknown>('guest', null));
+  let pid = SS.get<string | null>(`pid:${code}`, null);
+  let key = SS.get<string | null>(`key:${code}`, null);
+  if ((!pid || !key) && gs && gs.code === code) {
+    pid = gs.pid;
+    key = gs.key;
+  }
+  if (!pid || !key) return false;
+  const n = name || (gs?.code === code ? gs.name : '') || LS.get('name', '');
+  if (!n) return false;
+  $<HTMLInputElement>('#name').value = n;
+  guestStart(code, n, pid, key, true);
+  return true;
+}
+
+/**
+ * Nach dem Neuladen am Tisch (Merker aus update.ts): ohne Tippen zurück. Zeigt ein Einladungslink nach einem
+ * gewöhnlichen Neuladen auf einen anderen Tisch, gewinnt die Einladung. Hält beim Gastgeber ein anderer Tab den Tisch
+ * (etwa ein duplizierter Tab), bleibt es bei der Rückfrage auf der Startseite.
+ */
+export async function resumeBack(m: BackMark): Promise<void> {
+  const invite = cleanCode(location.hash.slice(1));
+  if (m.why === 'hide' && invite.length === 5 && m.code && invite !== m.code) return;
+  if (m.role === 'host') {
+    const hs = asSavedHost(LS.get<unknown>('host', null));
+    if (!hs || (m.code && hs.code !== m.code) || Date.now() - hs.ts > HOST_RESUME_MS) return;
+    const my = ++hostTry;
+    // Ein gerade entladenes Dokument gibt die Sperre gleich frei, darauf kurz warten
+    if (!(await waitHostLock(1000))) {
+      renderResume();
+      return;
+    }
+    if (my !== hostTry || App.role) {
+      releaseHostLock();
+      return;
+    }
+    const fresh = asSavedHost(LS.get<unknown>('host', null));
+    if (!fresh) {
+      releaseHostLock();
+      return;
+    }
+    armBackHint();
+    hostResume(fresh);
+    return;
+  }
+  const gs = asSavedGuest(LS.get<unknown>('guest', null));
+  const code = m.code || gs?.code || '';
+  if (!code || App.role) return;
+  if (!m.code && gs && Date.now() - gs.ts > GUEST_RESUME_MS) return;
+  armBackHint();
+  // Ging die Rückkehr gar nicht erst los, kommt auch kein Hinweis
+  if (!resumeGuest(code, m.name)) armBackHint(false);
+}
+
 /**
  * Neuen Tisch aufmachen. Gefragt wird nur, wenn dabei etwas verloren geht: ein eigener Tisch, der noch nicht zu Ende
- * ist und an dem außer dir noch ein Mensch sitzt. Ein Tisch nur mit KIs lässt sich jederzeit neu aufmachen.
+ * ist und an dem außer dir noch ein Mensch sitzt, oder dein Tisch läuft gerade in einem anderen Tab. Ein Tisch nur mit
+ * KIs lässt sich jederzeit neu aufmachen.
  */
-function openTable(go: (name: string) => void): void {
+async function openTable(go: (name: string) => void): Promise<void> {
   const n = readName();
   if (!n) return;
   showStartError('');
   unlockAudio();
-  const hs = asSavedHost(LS.get<unknown>('host', null));
+  armBackHint(false);
+  const hs: SavedHost | null = asSavedHost(LS.get<unknown>('host', null));
+  const start = () => void asHost('', () => go(n));
+  if (await hostLockElsewhere()) {
+    confirmBox(
+      hs
+        ? `Dein Tisch ${hs.code} läuft in einem anderen Tab. Dort beenden und hier neu aufmachen?`
+        : 'Dein Tisch läuft in einem anderen Tab. Dort beenden und hier neu aufmachen?',
+      'Neu aufmachen',
+      start,
+    );
+    return;
+  }
   const others = !!hs && hs.st.players.some((p) => !p.bot && p.id !== hs.me);
   if (hs && others && hs.st.phase !== 'over' && Date.now() - hs.ts < HOST_RESUME_MS) {
-    confirmBox(`Dein laufender Tisch ${hs.code} geht dann verloren. Trotzdem neu anfangen?`, 'Neu anfangen', () =>
-      go(n),
-    );
-  } else go(n);
+    confirmBox(`Dein laufender Tisch ${hs.code} geht dann verloren. Trotzdem neu anfangen?`, 'Neu anfangen', start);
+  } else start();
 }
 
 function startHost(): void {
-  openTable(hostNew);
+  void openTable(hostNew);
 }
 
 /** Gegen die KI: Tisch mit dem zuletzt gespielten Spiel und drei KIs, gestartet wird in der Lobby. */
 function startBots(): void {
-  openTable((n) => hostNewVsBots(n, lastGame()));
+  void openTable((n) => hostNewVsBots(n, lastGame()));
 }
 
 function startJoin(): void {
@@ -636,17 +767,28 @@ function startJoin(): void {
   }
   showStartError('');
   unlockAudio();
+  armBackHint(false);
   let pid = SS.get<string | null>(`pid:${c}`, null);
   let key = SS.get<string | null>(`key:${c}`, null);
   if (!pid || !key) {
-    // Jeder Tab ist ein eigener Platz, auch mit gleichem Namen (tests/e2e/schnautz.spec.ts, zweiter Tab)
-    pid = genId('p');
-    key = genId('k');
+    // Neuer Tab, gleicher Tisch und gleicher Name: Das ist dieselbe Person, sie kommt auf ihren gespeicherten Platz.
+    // Der alte Tab bekommt dann `replaced`. Andere Namen bleiben eigene Plätze (zwei Leute an einem Gerät).
+    const gs = asSavedGuest(LS.get<unknown>('guest', null));
+    const mine = !!gs && gs.code === c && gs.name.toLowerCase() === n.toLowerCase();
+    if (gs && mine && Date.now() - gs.ts < GUEST_RESUME_MS) {
+      pid = gs.pid;
+      key = gs.key;
+    } else {
+      pid = genId('p');
+      key = genId('k');
+    }
   }
   guestStart(c, n, pid, key);
 }
 
 function cancelConnect(): void {
+  // Ein Versuch, den Tisch in diesen Tab zu holen, zählt nicht mehr
+  hostTry++;
   resetTableUI();
   if (App.role === 'host') hostCancel();
   if (App.role === 'guest') guestStop();

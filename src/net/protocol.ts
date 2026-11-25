@@ -27,6 +27,8 @@ export interface SavedHost {
   st: State;
   keys: Record<string, string>;
   ts: number;
+  /** Tab, der zuletzt gespeichert hat (src/net/tablock.ts), fehlt bei älteren Ständen */
+  tab?: string;
 }
 
 /** Gespeicherter Platz eines Gastes. */

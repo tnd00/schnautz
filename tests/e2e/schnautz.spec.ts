@@ -67,14 +67,26 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
   await joinTable(guest, code, 'Lena');
   await expect.poll(() => playerCount(host)).toBe(2);
 
-  await test.step('zweiter Tab im selben Browser bekommt einen eigenen Platz', async () => {
+  await test.step('zweiter Tab im selben Browser mit gleichem Namen übernimmt den eigenen Platz', async () => {
+    const lena = await myId(guest);
     const tab = errors.watch(await guestCtx.newPage(), 'gast2');
     await joinTable(tab, code, 'Lena');
+    expect(await myId(tab)).toBe(lena);
+    await expect(guest.locator('#start-err')).toContainText('anderen Tab');
+    expect(await playerCount(host)).toBe(2);
+    // Ein anderer Name im selben Browser bleibt ein eigener Platz
+    const tom = errors.watch(await guestCtx.newPage(), 'gast3');
+    await joinTable(tom, code, 'Tom');
     await expect.poll(() => playerCount(host)).toBe(3);
-    await expect(guest.locator('#scr-lobby')).toBeVisible();
-    await menuConfirm(tab, '#menu-leave');
+    await menuConfirm(tom, '#menu-leave');
     await expect.poll(() => playerCount(host)).toBe(2);
+    await tom.close();
+    // Der erste Tab holt sich den Platz mit seinen eigenen IDs zurück
     await tab.close();
+    await guest.click('#btn-join');
+    await expect(guest.locator('#scr-lobby')).toBeVisible();
+    expect(await myId(guest)).toBe(lena);
+    expect(await playerCount(host)).toBe(2);
   });
 
   await test.step('Regeln des Hosts kommen beim Gast an', async () => {
@@ -110,17 +122,14 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await waitForPhase(host, ['end', 'over']);
   });
 
-  await test.step('Gast lädt neu und sitzt wieder auf seinem Platz', async () => {
+  await test.step('Gast lädt neu und sitzt ohne Tippen wieder auf seinem Platz', async () => {
     await guest.reload();
-    await expect(guest.locator('#scr-start')).toBeVisible();
-    await guest.click('#btn-join');
     await expect(guest.locator('#scr-game')).toBeVisible();
     expect(await myId(guest)).toBe(ids[1]);
   });
 
-  await test.step('Host lädt neu und setzt den Tisch fort', async () => {
+  await test.step('Host lädt neu und ist ohne Tippen wieder am Tisch', async () => {
     await host.reload();
-    await host.click('[data-act=resumehost]');
     await expect(host.locator('#scr-game')).toBeVisible();
     await expect.poll(async () => (await view(host))?.players.every((p) => p.online), { timeout: 40_000 }).toBe(true);
   });

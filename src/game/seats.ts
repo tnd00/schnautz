@@ -65,11 +65,10 @@ export function takeSeat(st: State, seatId: string, name: string): void {
   forgetRematch(st, p.id);
   const bets = betPart(st)?.bets;
   if (bets) delete bets[p.id];
-  // Was die KI bei Cabo gerade gesehen hat, sieht der Mensch nicht. Läuft noch das Ansehen, sieht er selbst zwei an
-  if (st.cb) {
-    delete st.cb.reveal[p.id];
-    if (st.phase === 'peek') p.ready = false;
-  }
+  // Tauschrunde und Ansehen: Wer übernimmt, entscheidet selbst und meldet sich selbst bereit. Was die KI bei Cabo
+  // gerade gesehen hat, sieht der Mensch nicht, im Ansehen sieht er selbst zwei an
+  if (st.phase === 'swap' || st.phase === 'peek') p.ready = false;
+  if (st.cb) delete st.cb.reveal[p.id];
   addLog(st, { k: 'takeover', p: p.id, name: p.name, from });
 }
 
@@ -85,14 +84,34 @@ export function reclaimSeat(st: State, seatId: string): void {
   delete p.left;
   p.online = true;
   delete p.offSince;
+  // Die KI kann in der Tauschrunde schon bereit gewesen sein, tauschen soll die Person selbst. Beim Cabo-Ansehen
+  // nicht, denn dort hätte sie ihre zwei Karten schon gesehen
+  if (st.phase === 'swap') p.ready = false;
   addLog(st, { k: 'back', p: p.id });
 }
 
 /**
- * Platz für einen Gast: In der Lobby ein freier Platz, sonst ein KI-Platz. Läuft schon eine Partie,
- * geht nur ein KI-Platz, den der Gast dann mitten im Spiel übernimmt.
+ * Ein Mensch mit diesem Namen, der gerade offline am Tisch sitzt: Das ist die Person selbst, etwa mit neuem Tab oder
+ * Browser. Der Gastgeber zählt nicht, KI-Plätze holt `reclaimSeat` zurück.
+ */
+function ghostSeatFor(st: State, name: string): Player | null {
+  const lower = name.toLowerCase();
+  return st.players.find((p) => !p.bot && !p.online && p.id !== st.host && p.name.toLowerCase() === lower) ?? null;
+}
+
+/**
+ * Platz für einen Gast: Sitzt jemand mit gleichem Namen gerade offline am Tisch, ist das sein Platz. Sonst in der
+ * Lobby ein freier Platz, sonst ein KI-Platz. Läuft schon eine Partie, geht nur ein KI-Platz, den der Gast dann
+ * mitten im Spiel übernimmt.
  */
 export function seatGuest(st: State, pid: string, name: string): SeatResult {
+  const ghost = ghostSeatFor(st, name);
+  if (ghost) {
+    ghost.online = true;
+    delete ghost.offSince;
+    delete ghost.gone;
+    return { id: ghost.id };
+  }
   if (st.phase === 'lobby' && st.players.length < seatLimit(st)) {
     const err = addPlayer(st, pid, name);
     return err ? { err } : { id: pid };

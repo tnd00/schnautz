@@ -4,7 +4,7 @@ import { botDecide } from '../../src/bots/index';
 import { act } from '../../src/game/actions';
 import { quitPlayer, toBot } from '../../src/game/flow';
 import { finishRound } from '../../src/game/schnautz';
-import { reclaimSeat, seatGuest } from '../../src/game/seats';
+import { reclaimSeat, seatGuest, takeSeat } from '../../src/game/seats';
 import { addPlayer, migrate, newState, pIdx } from '../../src/game/state';
 import { GAMES, reignOf, resetRulesFor, setReign } from '../../src/game/games';
 import { DEFAULT_RULES } from '../../src/game/constants';
@@ -194,6 +194,127 @@ describe('Plätze am Tisch', () => {
     expect(p1.left).toBeUndefined();
     expect(p1.stats).toEqual({ schnautz: { games: 2, wins: 1 } });
     expect(st.log.at(-1)).toMatchObject({ k: 'back' });
+  });
+});
+
+describe('Rückkehr an den eigenen Platz', () => {
+  it('ein gleicher Name übernimmt in der Lobby den Offline-Platz statt eines neuen', () => {
+    const rng = rngF(21);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { seats: 3 } }, rng);
+    expect(seatId(seatGuest(st, 'p-lena', 'Lena'))).toBe('p-lena');
+    const lena = st.players[pIdx(st, 'p-lena')];
+    lena.online = false;
+    lena.offSince = 123;
+    const n = st.players.length;
+    // Neuer Tab ohne gespeicherte IDs: andere ID, gleicher Name in anderer Schreibweise
+    expect(seatId(seatGuest(st, 'p-neu', 'lena'))).toBe('p-lena');
+    expect(lena.online).toBe(true);
+    expect(lena.offSince).toBeUndefined();
+    expect(lena.name).toBe('Lena');
+    expect(st.players).toHaveLength(n);
+  });
+
+  it('findet den Offline-Platz auch, wenn der Tisch voll ist', () => {
+    const rng = rngF(22);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { seats: 2 } }, rng);
+    seatId(seatGuest(st, 'p-lena', 'Lena'));
+    expect(seatGuest(st, 'p-tom', 'Tom')).toEqual({ err: 'Der Tisch ist voll.' });
+    st.players[pIdx(st, 'p-lena')].online = false;
+    expect(seatId(seatGuest(st, 'p-neu', 'Lena'))).toBe('p-lena');
+  });
+
+  it('übernimmt keinen Platz, der mit gleichem Namen online ist, und nie den des Gastgebers', () => {
+    const rng = rngF(23);
+    const st = newState('h', 'Lena');
+    act(st, 'h', { type: 'rules', rules: { seats: 4 } }, rng);
+    seatId(seatGuest(st, 'p-lena', 'Lena'));
+    expect(st.players[pIdx(st, 'p-lena')].name).toBe('Lena 2');
+    expect(seatId(seatGuest(st, 'p-zwei', 'Lena'))).toBe('p-zwei');
+    expect(st.players[pIdx(st, 'p-zwei')].name).toBe('Lena 3');
+    // Der Gastgeber gilt auch dann nicht als Geisterplatz, wenn er offline wäre
+    st.players[0].online = false;
+    expect(seatId(seatGuest(st, 'p-drei', 'Lena'))).toBe('p-drei');
+    expect(st.players).toHaveLength(4);
+  });
+
+  it('holt mitten in der Partie den Offline-Platz über den Namen zurück, vor jedem KI-Platz', () => {
+    const rng = rngF(24);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { seats: 4, fill: true } }, rng);
+    const lena = seatId(seatGuest(st, 'p-lena', 'Lena'));
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    const p = st.players[pIdx(st, lena)];
+    p.online = false;
+    const botsBefore = bots(st).length;
+    expect(seatId(seatGuest(st, 'p-neu', 'LENA'))).toBe(lena);
+    expect(p.online).toBe(true);
+    expect(bots(st)).toHaveLength(botsBefore);
+  });
+
+  it('lässt in der Tauschrunde tauschen, wer einen schon bereiten KI-Platz übernimmt', () => {
+    const rng = rngF(13);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 3 } }, rng);
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    // Alle KIs sind bereit, der Gastgeber noch nicht
+    bots(st).forEach((b) => expect(act(st, b.id, { type: 'shready' }, rng)).toBeNull());
+    const id = seatId(seatGuest(st, 'p-lena', 'Lena'));
+    const p = st.players[pIdx(st, id)];
+    expect(p.ready).toBe(false);
+    expect(act(st, id, { type: 'shswap', h: 0, u: 0 }, rng)).toBeNull();
+    expect(st.phase).toBe('swap');
+    expect(act(st, id, { type: 'shready' }, rng)).toBeNull();
+  });
+
+  it('lässt in der Tauschrunde wieder tauschen, wer seinen Platz von der KI zurückholt', () => {
+    const rng = rngF(14);
+    const st = newState('h', 'Host');
+    addPlayer(st, 'p1', 'Paul');
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    toBot(st, 'p1', rng);
+    const p1 = st.players[pIdx(st, 'p1')];
+    expect(act(st, 'p1', { type: 'shready' }, rng)).toBeNull();
+    expect(p1.ready).toBe(true);
+    reclaimSeat(st, 'p1');
+    expect(p1.ready).toBe(false);
+    expect(st.phase).toBe('swap');
+    expect(act(st, 'p1', { type: 'shswap', h: 0, u: 0 }, rng)).toBeNull();
+  });
+
+  it('übernimmt beim Zurückholen im Cabo-Ansehen das Bereit der KI, damit niemand vier Karten sieht', () => {
+    const rng = rngF(15);
+    const st = newState('h', 'Host');
+    addPlayer(st, 'p1', 'Paul');
+    act(st, 'h', { type: 'game', game: 'cabo' }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    expect(st.phase).toBe('peek');
+    toBot(st, 'p1', rng);
+    const C = st.cb;
+    assert.ok(C);
+    const p1 = st.players[pIdx(st, 'p1')];
+    expect(act(st, 'p1', { type: 'cblook', ids: C.P.p1.slice(0, 2).map((x) => x.id) }, rng)).toBeNull();
+    expect(p1.ready).toBe(true);
+    reclaimSeat(st, 'p1');
+    expect(p1.ready).toBe(true);
+  });
+
+  it('setzt beim Übernehmen außerhalb von Tauschrunde und Ansehen nichts zurück', () => {
+    const rng = rngF(16);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 3 } }, rng);
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'start' }, rng);
+    st.players.forEach((p) => act(st, p.id, { type: 'shready' }, rng));
+    expect(st.phase).toBe('play');
+    const b = bots(st)[0];
+    b.ready = true;
+    takeSeat(st, b.id, 'Mo');
+    expect(b.ready).toBe(true);
   });
 });
 

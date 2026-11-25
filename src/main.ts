@@ -11,18 +11,18 @@ import { botDecide } from './bots/index';
 import { viewFor } from './game/view';
 import { BOTS } from './net/bots';
 import { G } from './net/guest';
-import { H, hostCommit } from './net/host';
+import { H, hostCommit, initHostTabs } from './net/host';
 import { cleanCode } from './net/ids';
 import { App } from './ui/app';
 import { applyView } from './ui/apply';
 import { $ } from './ui/dom';
-import { initEvents } from './ui/events';
+import { initEvents, resumeBack } from './ui/events';
 import { showScreen } from './ui/screens';
 import { SEQ } from './ui/shithead/sequence';
 import { renderSoundBtn } from './ui/sound';
 import { initStart } from './ui/start';
-import { autoResume, initUpdateCheck } from './ui/update';
-import { LS } from './ui/storage';
+import { initBackMark, initUpdateCheck, reloadApp, showUpdate, takeBackMark, updateText } from './ui/update';
+import { LS, SS } from './ui/storage';
 import { initDevLog } from './ui/devlog';
 import './ui/dialog'; // Fenster: Rolle, Fokus und Rückweg, richtet sich beim Laden selbst ein
 
@@ -46,13 +46,32 @@ declare global {
 
 // Zuerst, damit auch Fehler beim Start im Dev-Menü landen
 initDevLog();
+
+/*
+ * Ein nachgeladenes Stück fehlt, meist weil inzwischen eine neue Version online ist und die alten Dateien weg sind.
+ * Einmal neu laden (es geht danach an den Tisch zurück), beim zweiten Mal binnen einer Minute nur den Hinweis zeigen.
+ */
+window.addEventListener('vite:preloadError', (e) => {
+  const last = SS.get<number>('preloadAt', 0);
+  if (Date.now() - last < 60_000) {
+    showUpdate(updateText(), true);
+    return;
+  }
+  e.preventDefault();
+  SS.set('preloadAt', Date.now());
+  reloadApp();
+});
+
 initEvents();
+initHostTabs();
+initBackMark();
 renderSoundBtn();
 initStart();
 showScreen('start');
 initUpdateCheck();
-// Nach dem Neuladen wegen einer neuen Version gleich zurück an den Tisch
-autoResume();
+// Nach dem Neuladen am Tisch (auch wegen einer neuen Version) ohne Tippen zurück
+const back = takeBackMark();
+if (back) void resumeBack(back);
 if (cleanCode(location.hash.slice(1)) && LS.get('name', '')) $('#btn-join').focus();
 // Zugang für die Ende-zu-Ende-Tests, nur beim Entwickeln oder mit lokalem PeerServer (Testparameter)
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('peerhost')) {

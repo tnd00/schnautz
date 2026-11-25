@@ -23,14 +23,26 @@ import { seqMsOf } from '../ui/shithead/sequence';
 import { setNet, setWait, showScreen } from '../ui/screens';
 import { renderResume, showStartError } from '../ui/start';
 import { LS } from '../ui/storage';
-import { noteGuestVersion } from '../ui/update';
+import { noteGuestVersion, showBackHint } from '../ui/update';
 import { APP_VERSION } from '../content/version';
 import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
-import { asMessage, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
+import { asMessage, asSavedHost, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
 import { allowBurst, newRateBook, rateSound } from './rate';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 import { dlog } from '../ui/devlog';
 import { canShow, GAME_NAME } from '../game/games';
+import {
+  browserBus,
+  browserLocks,
+  claimVerdict,
+  dedupe,
+  holdsHostLock,
+  newClaim,
+  onHostLockLost,
+  releaseHostLock,
+  TAB,
+  type Claim,
+} from './tablock';
 
 const GUEST_ID = /^p-[0-9a-f]{12}$/;
 const HEARTBEAT_MS = 5000;
@@ -66,6 +78,11 @@ export const H = {
   commitN: 0,
   /** Zeitsperren für Würfe und Klänge, nur im Speicher */
   rate: newRateBook(),
+  /**
+   * Der Peer war schon einmal offen. Vorher wird nichts gespeichert, keine KI zieht und keine Uhr läuft, damit ein
+   * zweiter Tab, der noch auf den Tischcode wartet, keine eigene Kopie weiterspielt (Wartebildschirm).
+   */
+  live: false,
 };
 
 function info(conn: DataConnection): ConnInfo {
@@ -101,6 +118,7 @@ function resetHost(): void {
   H.retries = 0;
   H.commitN = 0;
   H.rate = newRateBook();
+  H.live = false;
   App.view = null;
   App.seenN = 0;
 }
@@ -159,15 +177,21 @@ export function hostResume(saved: SavedHost): void {
   });
   resetTableUI();
   migrate(st);
-  // Die Gäste brauchen einen Moment zum Neuverbinden, bevor die 4er-Sperre endet
-  if (st.sh?.win?.lock) st.sh.win.until = Date.now() + RESUME_WINDOW_MS;
-  hostCommit();
+  // Gespeichert, gezeichnet und gezogen wird erst, wenn der Tischcode wirklich diesem Tab gehört (open in hostOpen)
   hostOpen(true);
 }
 
 function hostSave(): void {
-  if (!H.st) return;
-  const saved: SavedHost = { code: App.code, me: App.me, name: App.name, st: H.st, keys: H.keys, ts: Date.now() };
+  if (!H.st || !H.live) return;
+  const saved: SavedHost = {
+    code: App.code,
+    me: App.me,
+    name: App.name,
+    st: H.st,
+    keys: H.keys,
+    ts: Date.now(),
+    tab: TAB,
+  };
   LS.set('host', saved);
 }
 
@@ -191,8 +215,13 @@ function hostOpen(resume: boolean): void {
     opened = true;
     H.retries = 0;
     setNet('online');
+    const first = !H.live;
+    H.live = true;
+    // Die Gäste brauchen einen Moment zum Neuverbinden, bevor die 4er-Sperre endet
+    if (first && resume && H.st?.sh?.win?.lock) H.st.sh.win.until = Date.now() + RESUME_WINDOW_MS;
     if (vsBots && H.st) startVsBots(H.st, vsBots);
     hostCommit();
+    if (first && resume) showBackHint();
   });
   peer.on('connection', (conn) => {
     if (cur()) hostAttach(conn);
@@ -218,14 +247,14 @@ function hostOpen(resume: boolean): void {
         setNet('reconnecting');
         setWait(
           'Dein Tisch wird wieder aufgebaut…',
-          'Der alte Raum wird gerade freigegeben. Das dauert manchmal ein paar Sekunden.',
+          'Der alte Tisch wird gerade freigegeben. Das dauert manchmal ein paar Sekunden.',
         );
         setTimeout(() => {
           if (cur()) hostOpen(true);
         }, 3000);
         return;
       }
-      hostFail('Der Tisch-Code ist gerade belegt. Versuch es in einer Minute noch einmal.');
+      hostFail('Der Tischcode ist gerade belegt. Versuch es in einer Minute noch einmal.');
       return;
     }
     if (t === 'browser-incompatible') {
@@ -243,13 +272,15 @@ function hostOpen(resume: boolean): void {
   H.hb ??= setInterval(hostHeartbeat, HEARTBEAT_MS);
 }
 
-function hostFail(msg: string): void {
+function hostFail(msg: string, destroyDelay = 0): void {
   vsBots = null;
   vsBotsOpened = false;
+  H.live = false;
   resetTableUI();
   const p = H.peer;
   H.peer = null;
-  safeDestroy(p);
+  safeDestroy(p, destroyDelay);
+  releaseHostLock();
   App.role = null;
   App.view = null;
   showScreen('start');
@@ -307,28 +338,19 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
     else takeSeat(st, pid, name);
     takeover = true;
   }
-  if (!p && st.phase !== 'lobby') {
-    // Wer mit neuem Browser zurückkommt, bekommt seinen alten Platz über den Namen
-    const lower = name.toLowerCase();
-    const seat = st.players.find((x) => !x.online && x.id !== st.host && x.name.toLowerCase() === lower);
-    if (seat) {
-      H.alias[pid] = seat.id;
-      pid = seat.id;
-      p = seat;
-      takeover = true;
-    }
-  }
   if (p && H.keys[pid] && H.keys[pid] !== key && !takeover) {
     rejectConn(conn, 'Dieser Platz ist schon besetzt.');
     return;
   }
   if (!p) {
+    // Auch der Platz, auf dem dieselbe Person gerade offline sitzt (neuer Tab oder Browser, gleicher Name)
     const r = seatGuest(st, pid, name);
     if ('err' in r) {
       rejectConn(conn, r.err);
       return;
     }
     if (r.id !== pid) {
+      dlog('net', `${name} bekommt den Platz ${r.id}`);
       H.alias[pid] = r.id;
       pid = r.id;
     }
@@ -462,7 +484,7 @@ function hostDrop(pid: string, noCommit = false): void {
 /** Erkennt Gäste, die still verschwunden sind, und räumt verwaiste Plätze in der Lobby ab. */
 function hostHeartbeat(): void {
   const st = H.st;
-  if (App.role !== 'host' || !st) return;
+  if (App.role !== 'host' || !st || !H.live) return;
   const now = Date.now();
   let changed = false;
   st.players.slice().forEach((p) => {
@@ -549,7 +571,8 @@ export function stopHostClocks(): void {
 /** Nach jeder Änderung: speichern, an alle senden, selbst anzeigen, KI anstoßen. */
 export function hostCommit(): void {
   const st = H.st;
-  if (!st) return;
+  if (!st || !H.live) return;
+  pruneSeats(st);
   const fresh = st.log.filter((e) => e.n > H.commitN);
   H.commitN = st.n;
   hostWin(st, fresh);
@@ -575,9 +598,11 @@ export function hostClose(): void {
   H.conns.forEach((conn) => hostSend(conn, { t: 'closed' }));
   safeDestroy(H.peer, 400);
   H.peer = null;
+  H.live = false;
   LS.del('host');
   H.st = null;
   H.conns = new Map();
+  releaseHostLock();
 }
 
 /** Abbrechen, während der Tisch noch aufgebaut wird. */
@@ -586,6 +611,82 @@ export function hostCancel(): void {
   vsBotsOpened = false;
   safeDestroy(H.peer);
   H.peer = null;
-  if (H.st && H.st.players.length === 1 && H.st.phase === 'lobby') LS.del('host');
+  if (H.live && H.st && H.st.players.length === 1 && H.st.phase === 'lobby') LS.del('host');
+  H.live = false;
   H.st = null;
+  releaseHostLock();
+}
+
+/**
+ * Weg mit Schlüsseln und Umleitungen für Plätze, die es nicht mehr gibt (in der Lobby entfernt). Sonst landet eine
+ * alte Gast-ID über `H.alias` auf einer fremden Platz-ID.
+ */
+function pruneSeats(st: State): void {
+  const seat = (id: string) => pIdx(st, id) >= 0;
+  for (const k of Object.keys(H.alias)) if (!seat(H.alias[k])) delete H.alias[k];
+  if (st.phase !== 'lobby') return;
+  for (const k of Object.keys(H.keys)) if (!seat(k)) delete H.keys[k];
+}
+
+/**
+ * Ein anderer Tab übernimmt. `save`: ein letztes Mal speichern, bevor die Sperre frei wird (nur bei einer frischen,
+ * freiwilligen Übergabe). `end`: Im anderen Tab geht ein neuer Tisch auf, dieser hier ist für alle zu.
+ * Danach speichert dieser Tab nichts mehr, KI und Uhr stehen, der Peer ist zu und gibt den Tischcode frei.
+ */
+function hostYield(save: boolean, end: boolean): void {
+  if (App.role !== 'host' || !H.st) return;
+  dlog('net', `Anderer Tab übernimmt${save ? ', letzter Stand gespeichert' : ''}${end ? ', Tisch zu' : ''}`);
+  // Gespeichert wird nur, solange dieser Tab die Sperre noch hält, sonst liest der neue Tab womöglich schon
+  if (save && (holdsHostLock() || !browserLocks())) hostSave();
+  H.live = false;
+  if (end) {
+    H.conns.forEach((conn) => hostSend(conn, { t: 'closed' }));
+    if (asSavedHost(LS.get<unknown>('host', null))?.code === App.code) LS.del('host');
+  }
+  H.st = null;
+  H.conns = new Map();
+  hostFail(
+    end
+      ? 'In einem anderen Tab hast du einen neuen Tisch aufgemacht. Dieser hier ist jetzt zu.'
+      : 'Der Tisch läuft jetzt im anderen Tab.',
+    end ? 400 : 0,
+  );
+}
+
+function onClaim(c: Claim): void {
+  const v = claimVerdict(c, { tab: TAB, code: App.code, hosting: App.role === 'host' && !!H.st }, Date.now());
+  if (v === 'ignore') return;
+  hostYield(v === 'keep', v === 'end');
+}
+
+const bus = typeof window === 'undefined' ? null : browserBus();
+
+/** Ein anderer Tab will Gastgeber werden: Anspruch an alle Tabs dieses Browsers. Nie mit Schlüssel oder Stand. */
+export function sendHostClaim(code: string): void {
+  dlog('net', `Anspruch auf ${code || 'einen neuen Tisch'} an andere Tabs`);
+  bus?.send(newClaim(code));
+}
+
+/** Einmal beim Start: auf Ansprüche anderer Tabs hören, auf eine weggenommene Sperre und auf fremde Speicherstände. */
+export function initHostTabs(): void {
+  bus?.listen(dedupe(onClaim));
+  onHostLockLost(() => {
+    dlog('net', 'Ein anderer Tab hat sich den Tisch genommen');
+    hostYield(false, false);
+  });
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'schnautz:host' || !e.newValue || App.role !== 'host' || !H.live) return;
+    let tab: unknown;
+    let code: unknown;
+    try {
+      const o = JSON.parse(e.newValue) as { tab?: unknown; code?: unknown };
+      tab = o.tab;
+      code = o.code;
+    } catch {
+      return;
+    }
+    // Ein anderer Tab mit 2.7 schreibt den Eintrag: Er ist jetzt Gastgeber, dieser Tab hört ohne Speichern auf
+    if (typeof tab !== 'string' || tab === TAB) return;
+    hostYield(false, code !== App.code);
+  });
 }
