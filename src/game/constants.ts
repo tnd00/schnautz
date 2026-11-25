@@ -112,6 +112,9 @@ export const SH_ORD: Readonly<Record<Rank, number>> = {
   K: 13,
   A: 14,
 };
+/** Schnautz und Cabo: so lange wartet die nächste Runde, wenn nicht alle bereit sind */
+export const AUTO_NEXT_MS = 10_000;
+
 export const SUIT_ORD: Readonly<Record<Suit, number>> = { C: 0, S: 1, H: 2, D: 3 };
 
 export function cloneRules(r: Readonly<Rules> = DEFAULT_RULES): Rules {

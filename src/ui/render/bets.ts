@@ -140,7 +140,8 @@ export function betEffect(v: View, e: BetEntry): void {
   if (e.on === App.me && e.p !== App.me) {
     const bets = shBetsOn(v, App.me);
     if (bets[0]?.n === e.n) {
-      const text = taunt('betOnMe', { name: by }, e.n);
+      // Der Spruch nennt den Titel des Spiels über {what}, damit bei Durak nicht vom Shithead die Rede ist
+      const text = taunt('betOnMe', { name: by, what: LOSER_NAME[v.game] }, e.n);
       if (myTurn(v)) BETUI.pend = { games: v.games, text };
       else tauntLabel(text);
     } else floatLabel(undefined, `Schon ${bets.length} tippen auf dich 🔮`);

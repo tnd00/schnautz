@@ -1,4 +1,5 @@
 import {
+  AUTO_NEXT_MS,
   CB_HAND,
   CB_KAMI,
   CB_PENALTY,
@@ -8,11 +9,15 @@ import {
   CB_TWO_DECKS,
   DEFAULT_RULES,
   DK_FULL_DECK,
+  DK_HAND,
+  DK_MAX_ATTACK,
+  SH_TWO_DECKS,
   SH_WIN_MS,
 } from '../../game/constants';
 import type { CbRules, DkRules, GameKind, Rules, ShRules } from '../../game/types';
 import { App } from '../app';
 import { num } from '../dom';
+import { CABO_KING_HTML, zuWord } from '../helpers';
 import { legendGrid, legendTitle } from './legend';
 import { sheetHTML } from '../dialog';
 import { GAME_NAME, GAMES, LOSER_MARK, unreachable } from '../../game/games';
@@ -62,16 +67,19 @@ export function rulesHTML(game?: GameKind): string {
   return sheetHTML({ kind: `rules g-${g}`, title: 'Regeln', head: tabs + jumps, body });
 }
 
-/** Zeitlimit je Spiel: Durak hat keine Tauschrunde und keine 4er, Cabo hat statt der Tauschrunde das Ansehen. */
+/**
+ * Zeitlimit je Spiel. Doppelte Zeit gibt es nur in der Shithead-Tauschrunde und beim Ansehen zu Beginn jeder
+ * Cabo-Runde (src/game/clock.ts), Schnautz und Durak haben nichts davon.
+ */
 function timeText(g: GameKind, s: number): string {
-  const ki = 'Läuft die Zeit ab, macht die KI einen Zug für dich, danach spielst du ganz normal weiter.';
+  const ki = 'Läuft die Zeit ab, spielt die KI einmal für dich, danach spielst du ganz normal weiter.';
   switch (g) {
     case 'durak':
+    case 'schnautz':
       return `Jeder Zug hat ${s} Sekunden. ${ki} Solange Karten fliegen, steht die Uhr.`;
     case 'cabo':
       return `Jeder Zug hat ${s} Sekunden, das Ansehen zu Beginn jeder Runde ${s * 2}. ${ki} Solange Karten fliegen, steht die Uhr.`;
     case 'shithead':
-    case 'schnautz':
       return `Jeder Zug hat ${s} Sekunden, die Tauschrunde ${s * 2}. ${ki} Solange Karten fliegen oder 4er reinkommen, steht die Uhr.`;
     default:
       return unreachable(g);
@@ -98,13 +106,14 @@ function rulesSh(R: ShRules, glance: string): string {
   if (R.two) sp.push('Die 2 geht immer. Danach ist wieder alles erlaubt.');
   if (R.three) sp.push('Die 3 ist durchsichtig. Sie geht immer und für den Nächsten zählt die Karte darunter.');
   if (R.seven) sp.push('Nach einer 7 muss der Nächste 7 oder niedriger legen.');
-  if (R.eight) sp.push('Jede 8 lässt einen Spieler aussetzen.');
+  if (R.eight) sp.push('Jede 8 lässt eine Person aussetzen.');
   if (R.ten) sp.push('Die 10 geht immer und verbrennt den Stapel. Wer sie legt, ist gleich nochmal dran.');
   sp.push(
     'Vier gleiche Karten hintereinander sind eine Bombe und verbrennen den Stapel ebenfalls. Wer die vierte legt, ist gleich nochmal dran.',
   );
+  const two = R.deck5 ? SH_TWO_DECKS - 1 : SH_TWO_DECKS;
   return (
-    '<p class="lead">Auch bekannt als Palace oder Karma. Gespielt wird mit 52 Karten, ab 6 Leuten mit zwei Decks. Das Ass ist am höchsten.</p>' +
+    `<p class="lead">Auch bekannt als Palace oder Karma. Gespielt wird mit 52 Karten, ab ${two} Leuten mit zwei Decks. Das Ass ist am höchsten.</p>` +
     glance +
     sec('Worum es geht', 'Werde alle deine Karten los. Wer am Ende als Letzter noch Karten hat, ist der Shithead.') +
     jsec(
@@ -136,7 +145,7 @@ function rulesSh(R: ShRules, glance: string): string {
     (R.cut
       ? sec(
           'Einwerfen',
-          'Liegen oben schon gleiche Karten und du hast genau die fehlenden zu vier gleichen, darfst du sie jederzeit als Bombe reinwerfen, auch wenn du nicht dran bist. Der Stapel verbrennt und du bist als Nächstes dran. Wer zuerst drückt, gewinnt das Rennen.',
+          'Liegen oben schon gleiche Karten und du hast genau die fehlenden zu vier gleichen, darfst du sie jederzeit als Bombe einwerfen, auch wenn du nicht dran bist. Der Stapel verbrennt und du bist als Nächstes dran. Wer zuerst drückt, gewinnt das Rennen.',
         )
       : '') +
     sec(
@@ -153,7 +162,7 @@ function rulesSh(R: ShRules, glance: string): string {
 function rulesDurak(R: DkRules, glance: string): string {
   const small = DK_FULL_DECK - 1;
   return (
-    `<p class="lead">Durak ist Russisch für Dummkopf. Den Titel will keiner haben. Bis ${small} Leute spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} mit allen 52. Das Ass ist am höchsten.</p>` +
+    `<p class="lead">Durak ist Russisch für Narr. Den Titel will keiner haben. Bis ${zuWord(small)} spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} Leuten mit allen 52. Das Ass ist am höchsten.</p>` +
     glance +
     sec(
       'Worum es geht',
@@ -162,14 +171,17 @@ function rulesDurak(R: DkRules, glance: string): string {
     jsec(
       'Aufbau',
       'Geben und Trumpf',
-      'Jeder bekommt sechs Karten. Die unterste Karte des Stapels liegt offen darunter. Ihre Farbe ist Trumpf für die ganze Partie, gezogen wird sie als letzte.',
-      'Spielen sechs Leute mit 36 Karten, bleibt kein Stapel übrig. Dann zeigt die zuletzt gegebene Karte den Trumpf und bleibt auf der Hand.',
+      `Jeder bekommt ${DK_HAND} Karten. Die unterste Karte des Stapels liegt offen darunter. Ihre Farbe ist Trumpf für die ganze Partie, gezogen wird sie als letzte.`,
+      `Spielen ${small} Leute mit 36 Karten, bleibt kein Stapel übrig. Dann zeigt die zuletzt gegebene Karte den Trumpf und bleibt auf der Hand.`,
     ) +
     jsec(
       'Angriff',
       'Angreifen und nachlegen',
       'Wer angreift, legt eine Karte oder mehrere mit gleichem Wert vor den Verteidiger. Solange der Angriff läuft, dürfen alle außer dem Verteidiger nachlegen. Erlaubt sind nur Werte, die schon auf dem Tisch liegen, egal ob angegriffen oder geschlagen.',
-      'In einen Angriff passen höchstens sechs Karten und nie mehr, als der Verteidiger zu Beginn auf der Hand hatte.',
+      'Wer nichts mehr nachlegen will, passt. Wer gepasst hat, darf erst wieder nachlegen, wenn durch Schlagen ein neuer Wert auf den Tisch kommt oder der Verteidiger ' +
+        (R.transfer ? 'weiterschiebt oder aufnimmt.' : 'aufnimmt.') +
+        ' Schlägt er mit einem Wert, der schon liegt, bleibt es beim Passen.',
+      `In einen Angriff passen höchstens ${DK_MAX_ATTACK} Karten und nie mehr, als der Verteidiger zu Beginn auf der Hand hatte.`,
     ) +
     jsec(
       'Abwehr',
@@ -179,8 +191,8 @@ function rulesDurak(R: DkRules, glance: string): string {
     ) +
     sec(
       'Bito und nachziehen',
-      'Ist alles geschlagen und will niemand mehr nachlegen, ist der Angriff abgewehrt. Das heißt Bito. Die Karten sind aus dem Spiel und der Verteidiger greift als Nächstes an. Wer aufgenommen hat, setzt aus, dann greift die Person nach ihm an.',
-      'Danach ziehen alle wieder auf sechs Karten nach, solange der Stapel reicht. Zuerst der Angreifer, dann die anderen reihum, der Verteidiger zuletzt.',
+      'Ist alles geschlagen und haben alle anderen gepasst, ist der Angriff abgewehrt. Das heißt Bito. Die Karten kommen auf den Bito-Stapel und sind aus dem Spiel, der Verteidiger greift als Nächstes an. Wer aufgenommen hat, setzt aus, dann greift die Person nach ihm an.',
+      `Danach ziehen alle wieder auf ${DK_HAND} Karten nach, solange der Stapel reicht. Zuerst der Angreifer, dann die anderen reihum, der Verteidiger zuletzt.`,
     ) +
     (R.transfer
       ? sec(
@@ -199,7 +211,7 @@ function rulesDurak(R: DkRules, glance: string): string {
     jsec(
       'Ende',
       'Ende',
-      'Ist der Stapel leer, ist raus, wer keine Karten mehr hat. Wer als Letzter Karten hält, ist der Durak und trägt den ' +
+      'Ist der Stapel leer, ist fertig, wer keine Karten mehr hat. Wer als Letzter Karten hält, ist der Durak und trägt den ' +
         LOSER_MARK.durak +
         ', bis die nächste Partie Durak vorbei ist.',
       'Werden die Letzten ihre Karten gleichzeitig los, ist es unentschieden. Dann gibt es keinen Durak und in der nächsten Partie fängt wieder der niedrigste Trumpf an.',
@@ -238,16 +250,16 @@ function rulesCabo(R: CbRules, glance: string): string {
     jsec(
       'Zug',
       'Dein Zug',
-      'Du ziehst vom Stapel oder nimmst die oberste Karte der Ablage. Die Karte tauschst du gegen eine deiner Karten, die alte kommt offen auf die Ablage. Eine Karte von der Ablage musst du tauschen, sie liegt danach offen vor dir.',
-      'Du darfst auch mehrere Karten mit gleichem Wert auf einmal gegen die gezogene tauschen. Dann liegen weniger Karten vor dir. Haben sie nicht alle den gleichen Wert, bleiben sie offen liegen, die gezogene geht auf die Ablage und du bekommst eine Strafkarte.',
+      'Du ziehst vom Stapel oder nimmst die oberste Karte der Ablage. Die Karte tauschst du gegen eine deiner Karten ein, die alte kommt offen auf die Ablage. Eine Karte von der Ablage musst du eintauschen, sie liegt danach offen vor dir.',
+      'Du darfst auch mehrere Karten mit gleichem Wert auf einmal gegen die gezogene eintauschen. Dann liegen weniger Karten vor dir. Haben sie nicht alle den gleichen Wert, bleiben sie offen liegen, die gezogene geht auf die Ablage und du bekommst eine Strafkarte.',
       'Eine Karte vom Stapel darfst du auch gleich wieder ablegen. Hat sie eine Fähigkeit, darfst du sie nutzen.',
     ) +
     jsec(
       'Fähigkeiten',
       'Fähigkeiten',
-      'Mit einer 7 oder 8 siehst du dir eine eigene Karte an.',
-      'Mit einer 9 oder 10 schaust du dir eine Karte von jemand anderem an.',
-      'Mit Bube oder Dame tauschst du eine deiner Karten blind gegen eine fremde. Angesehen wird dabei keine der beiden. Kanntest du deine Karte, weißt du danach, was jetzt drüben liegt.',
+      'Mit einer 7 oder 8 darfst du 👁️ ansehen. Du schaust dir eine eigene Karte an.',
+      'Mit einer 9 oder 10 darfst du 🔍 spionieren. Du schaust dir eine Karte von jemand anderem an.',
+      'Mit Bube oder Dame gibt es einen 🔀 Blindtausch. Du tauschst eine deiner Karten gegen eine fremde, angesehen wird dabei keine der beiden. Kanntest du deine Karte, weißt du danach, was jetzt drüben liegt.',
       'Das geht nur mit Karten, die du vom Stapel ziehst und gleich ablegst. Du darfst die Fähigkeit auch verfallen lassen.',
     ) +
     sec(
@@ -258,17 +270,17 @@ function rulesCabo(R: CbRules, glance: string): string {
     jsec(
       'Wertung',
       'Wertung',
-      `Am Ende zählt die Summe deiner Karten. Wer Cabo ruft und am wenigsten hat, bekommt 0 Punkte. Gleichstand reicht dafür. Hat jemand weniger, gibt es die eigene Summe plus ${CB_PENALTY} Strafpunkte. Großes Maul, große Strafe.`,
+      `Am Ende zählt die Summe deiner Karten. Wer Cabo ruft und am wenigsten hat, bekommt 0 Punkte. Gleichstand reicht dafür. Hat jemand weniger, gibt es die eigene Summe und ${CB_PENALTY} Strafpunkte obendrauf. Großes Maul, große Strafe.`,
       `Liegen bei jemandem genau zwei Damen und zwei schwarze Könige und sonst nichts, ist das Kamikaze. Alle anderen bekommen ${CB_KAMI} Punkte, die Person selbst 0. Das schlägt jeden Cabo-Ruf.`,
       `Wer genau auf ${CB_RESET_AT} Punkte kommt, fällt auf ${CB_RESET_TO} zurück. Das klappt einmal pro Partie.`,
     ) +
     sec(
       'Nächste Runde',
-      'Sind alle bereit oder sind 10 Sekunden um, geht es von selbst weiter. In der ersten Runde entscheidet der Zufall, wer anfängt. Danach fängt an, wer in der letzten Runde die wenigsten Punkte bekommen hat.',
+      `Sind alle bereit oder sind ${Math.round(AUTO_NEXT_MS / 1000)} Sekunden um, geht es von selbst weiter. In der ersten Runde entscheidet der Zufall, wer anfängt. Danach fängt an, wer in der letzten Runde die wenigsten Punkte bekommen hat.`,
     ) +
     sec(
       'Ende',
-      `Kommt jemand über ${R.target} Punkte, ist die Partie vorbei. Wer dann die wenigsten Punkte hat, gewinnt und wird Cabo-König. Die Krone bleibt, bis jemand anderes eine Partie Cabo gewinnt.`,
+      `Kommt jemand über ${R.target} Punkte, ist die Partie vorbei. Wer dann die wenigsten Punkte hat, gewinnt und wird ${CABO_KING_HTML}. Die Krone bleibt, bis jemand anderes eine Partie Cabo gewinnt.`,
       `Bei Gleichstand entscheidet die letzte Runde. Ist auch die gleich, gibt es keinen Sieger und die Krone bleibt, wo sie ist. Die Zielpunkte (${targets}) stellt der Gastgeber in der Lobby ein.`,
     ) +
     (R.snap
@@ -287,7 +299,7 @@ function rulesCabo(R: CbRules, glance: string): string {
     ) +
     sec(
       'Revanche',
-      'Wer am Ende die meisten Punkte hat, kann im Ergebnisfenster Revanche gegen den Cabo-König fordern. Das zählt als bereit, der König muss annehmen. In der nächsten Partie gewinnt das Duell, wer weniger Punkte holt.',
+      `Wer am Ende die meisten Punkte hat, kann im Ergebnisfenster Revanche gegen den ${CABO_KING_HTML} fordern. Das zählt als bereit, der König muss annehmen. In der nächsten Partie gewinnt das Duell, wer weniger Punkte holt.`,
     )
   );
 }

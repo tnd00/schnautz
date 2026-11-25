@@ -2,7 +2,7 @@
  * Cabo bedienen: Zu Beginn zwei eigene Karten antippen, dann blitzen sie kurz auf. Am Zug Stapel oder Ablage
  * antippen (oder die Knöpfe), mit der gezogenen Karte eigene Karten wählen und tauschen oder ablegen. Fähigkeiten
  * gehen über Tipps auf eigene oder fremde Karten. Bis die neue Ansicht da ist, ist die Bedienung gesperrt (App.busy).
- * Einblendungen kommen vom Host in `v.cb.reveal` und sind nach CB_REVEAL_MS wieder verdeckt.
+ * Einblendungen kommen vom Gastgeber in `v.cb.reveal` und sind nach CB_REVEAL_MS wieder verdeckt.
  */
 import { CB_REVEAL_MS } from '../../game/constants';
 import type { Action, LogEntry, View } from '../../game/types';
@@ -39,7 +39,7 @@ function send(a: Action): void {
   if (a.type === 'cbdraw' || a.type === 'cbswap' || a.type === 'cbdiscard' || a.type === 'cbsnap') sfx('card');
   const v0 = App.view;
   doAct(a);
-  // Beim Gast dauert die Antwort, und lehnt der Host selbst ab, kommt keine neue Ansicht: Die Auswahl soll trotzdem
+  // Beim Gast dauert die Antwort, und lehnt der Gastgeber selbst ab, kommt keine neue Ansicht: Die Auswahl soll trotzdem
   // sofort verschwinden
   if (App.view === v0) redraw();
 }
@@ -187,7 +187,7 @@ function changedSlots(fresh: readonly LogEntry[], from: number): Set<string> {
 }
 
 /**
- * Neue Einblendung vom Host: kurz zeigen, danach wieder verdecken. Nach dem Laden oder Neuverbinden wird nichts
+ * Neue Einblendung vom Gastgeber: kurz zeigen, danach wieder verdecken. Nach dem Laden oder Neuverbinden wird nichts
  * nachgezeigt, sonst könnte man sich Karten durch Neuladen noch einmal ansehen.
  */
 export function cbSyncReveal(prev: View | null, v: View, fresh: readonly LogEntry[] = []): void {

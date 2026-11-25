@@ -12,7 +12,7 @@ import { crownTitle, loserCount } from './marks';
 const count = (x: string[] | number) => (typeof x === 'number' ? x : x.length);
 const cardsLeft = (P: ShPlayerView) => count(P.hand) + P.up.length + count(P.down);
 
-/** Leben in einem Zeichen: Bierdeckel-Grafik mit Zahl, Schwimmen oder raus. Für die schmale Leiste am Handy. */
+/** Leben in einem Zeichen: Grafik mit Zahl, Schwimmen oder raus. Für die schmale Leiste am Handy. */
 function livesCompact(v: View, p: Player): string {
   if (v.game !== 'schnautz') return '';
   if (p.out) return '<span class="sb-lc" title="raus">raus</span>';
@@ -32,7 +32,8 @@ function caboPoints(v: View, p: Player): string {
 function statusOf(v: View, p: Player): string {
   if (v.game === 'schnautz') return livesHTML(p, v.rules);
   if (v.game === 'cabo') return caboPoints(v, p);
-  if (p.out) return '<span class="tag outt">raus</span>';
+  // „raus“ gibt es nur bei Schnautz, sonst ist die Person gegangen
+  if (p.out) return '<span class="tag outt">gegangen</span>';
   const fin = v.game === 'durak' ? v.dk?.finished : v.sh?.finished;
   if (fin?.includes(p.id)) return `<span class="sb-c">Platz ${num(p.place)}</span>`;
   const P = v.sh?.P[p.id];

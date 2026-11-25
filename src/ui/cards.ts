@@ -146,8 +146,8 @@ export function valHTML(hv: HandValue | null | undefined): string {
   return `${num(hv.v)} <span class="${isRed(hv.suit) ? 'r' : ''}">${hv.suit ? SUIT_SYM[hv.suit] : ''}</span>`;
 }
 
-/** Kennzeichen für KI-Mitspieler neben dem Namen. */
-export const BOT_TAG = '<i class="botb" title="KI-Mitspieler">KI</i>';
+/** Kennzeichen für KI-Plätze neben dem Namen. */
+export const BOT_TAG = '<i class="botb" title="KI-Platz">KI</i>';
 
 /** Drei gefächerte Karten: Zeichen für Handkarten, gut lesbar auch in Pillengröße. */
 export const HAND_ICON =
@@ -160,7 +160,7 @@ export const HAND_ICON =
 export const SWIM_ICON =
   '<svg viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 7c4-4 7 4 11 0s7 4 11 0 7 4 10 0"/><path d="M2 15c4-4 7 4 11 0s7 4 11 0 7 4 10 0"/></svg>';
 
-/** Bierdeckel (Leben) eines Spielers. */
+/** Leben einer Person bei Schnautz. */
 export function livesHTML(p: Pick<Player, 'out' | 'lives'>, rules: Pick<Rules, 'lives'>): string {
   if (p.out) return '<span class="tag outt">raus</span>';
   if (p.lives === 0) return `<span class="swim" title="schwimmt">${SWIM_ICON}<span class="swt">schwimmt</span></span>`;

@@ -3,12 +3,12 @@
  * alle bereit sind. Am Ende der Partie nicht, dann wartet das Ergebnisfenster.
  */
 import { act } from '../game/actions';
+import { AUTO_NEXT_MS } from '../game/constants';
 import type { State, View } from '../game/types';
 import { App } from '../ui/app';
 import type { Timer } from '../ui/dom';
 import { H, hostCommit } from './host';
 
-export const AUTO_NEXT_MS = 10_000;
 /** So lange laufen ungefähr die Meldungen zur Runde, bevor das Ergebnisfenster steht */
 const LEAD_MS = 2500;
 

@@ -3,6 +3,7 @@ import { rankOf } from '../../game/cards';
 import { DEFAULT_RULES, SH_WIN_MS } from '../../game/constants';
 import { shCanBomb, shCanPlay, shCanThrow, shTop, shTopRun } from '../../game/shithead';
 import type { Card, Player, Rank, ShBetResult, ShitheadResult, ShPlayerView, ShView, View } from '../../game/types';
+import { LOSER_MARK } from '../../game/games';
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
 import { layoutOpps } from '../carousel';
@@ -71,7 +72,7 @@ function shPileInfo(v: View, pile: Card[]): string {
 
 const cardStyle = (delay: number) => `style="--d:${delay}s"`;
 
-/** Verdeckte und offene Tischkarten eines Spielers. `focus`: Die Hand ist leer, jetzt sind sie dran. */
+/** Verdeckte und offene Tischkarten einer Person. `focus`: Die Hand ist leer, jetzt sind sie dran. */
 function shTableHTML(v: View, P: ShPlayerView, mine: boolean, focus = false): string {
   const down = count(P.down);
   const up = P.up ?? [];
@@ -147,12 +148,13 @@ function opponentHTML(v: View, S: ShView, p: Player): string {
       : '';
   const done = S.finished.includes(p.id);
   let tag = '';
-  if (p.out) tag = '<span class="tag outt">raus</span>';
+  if (p.out) tag = '<span class="tag outt">gegangen</span>';
   else if (done) tag = `<span class="tag">Platz ${num(p.place)}</span>`;
   // Bis zur Enthüllung verrät auch das Etikett den Shithead nicht
-  else if (over && S.shithead === p.id && App.zerHide !== p.id) tag = '<span class="tag outt">Shithead</span>';
+  else if (over && S.shithead === p.id && App.zerHide !== p.id)
+    tag = `<span class="tag outt">${LOSER_MARK.shithead} Shithead</span>`;
   else if (v.phase === 'swap')
-    tag = p.ready ? '<span class="tag">fertig</span>' : `<span class="tag turn">tauscht${THINKING}</span>`;
+    tag = p.ready ? '<span class="tag done">bereit ✓</span>' : `<span class="tag turn">tauscht${THINKING}</span>`;
   else if (v.phase === 'play' && tId === p.id) tag = `<span class="tag turn">ist dran${THINKING}</span>`;
   else if (v.phase === 'play' && S.win?.by.includes(p.id)) tag = '<span class="tag four">4er rein</span>';
   // Sonst die Zahl der Tipps auf diese Person
@@ -257,7 +259,7 @@ function statusHTML(
     if (myTurn(v) && S.win?.lock) {
       const wl = winLeft();
       main = `<em>Gleich bist du dran.</em><span class="wincd" id="wincd" style="--p:${Math.min(1, wl / SH_WIN_MS).toFixed(3)}"><b>${winSecs(wl)}</b></span>`;
-      sub = 'Neuer Stapel: Alle dürfen jetzt ihre 4er reinwerfen, du auch.';
+      sub = 'Neuer Stapel, alle dürfen jetzt ihre 4er reinwerfen, du auch.';
     } else if (myTurn(v)) {
       main = src === 'down' ? '<em>Jetzt blind!</em>' : '<em>Du bist dran.</em>';
       if (src === 'down') sub = 'Tippe eine verdeckte Karte an. Passt sie nicht, nimmst du den Stapel auf.';
@@ -266,7 +268,7 @@ function statusHTML(
       else sub = 'Tippe gleiche Karten an und leg sie ab.';
     } else if (!meDone) {
       main = `${W(v, tId)} ist dran.`;
-      if (S.win) sub = 'Neuer Stapel: Wer eine 4 hat, darf sie jetzt reinwerfen.';
+      if (S.win) sub = 'Neuer Stapel, wer eine 4 hat, darf sie jetzt reinwerfen.';
       else sub = betsOnMeSub(v) ?? '';
     }
     if (mine && !quick) quick = quickHTML(v);
@@ -293,12 +295,12 @@ function swapHTML(v: View, me: Player, mine: OwnCards): string {
   if (!ready) {
     head =
       '<b>Tauschrunde</b><span>Tippe eine Handkarte und eine Tischkarte an, um sie zu tauschen. Starke Karten gehören auf den Tisch.</span>';
-    foot = '<button class="btn primary" data-act="shready">Fertig getauscht</button>';
+    foot = '<button class="btn primary" data-act="shready">Bereit</button>';
   } else {
     const wn = v.players.filter((p) => !p.ready && !p.out).map((p) => p.name);
     head = wn.length
-      ? `<b>Fertig!</b><span>Warte auf ${esc(listJoin(wn))}${THINKING}</span>`
-      : '<b>Fertig!</b><span>Gleich geht es los.</span>';
+      ? `<b>Bereit!</b><span>Warte auf ${esc(listJoin(wn))}${THINKING}</span>`
+      : '<b>Bereit!</b><span>Gleich geht es los.</span>';
     foot =
       wn.length && App.role === 'host'
         ? '<button class="btn ghost" data-act="force">Nicht warten, jetzt starten</button>'
@@ -554,7 +556,10 @@ export function betResultHTML(v: View, raw: ShBetResult[] | undefined, loser: st
     text = mine.ok
       ? `Richtig getippt! +${num(mine.q)} ${mine.q === 1 ? 'Punkt' : 'Punkte'}.`
       : 'Dein Tipp lag daneben.';
-  if (list.length) text += `${text ? ' ' : ''}${mine ? 'Auch richtig' : 'Richtig getippt'}: ${listJoin(list)}.`;
+  if (list.length)
+    text +=
+      `${text ? ' ' : ''}${listJoin(list)} ${list.length > 1 ? 'haben' : 'hat'}` +
+      ` ${mine?.ok ? 'auch ' : ''}richtig getippt.`;
   else if (!mine) text = 'Niemand hat richtig getippt.';
   return `<p class="betres">🔮 ${text}</p>`;
 }

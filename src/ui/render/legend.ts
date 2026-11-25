@@ -43,7 +43,7 @@ function legendSh(rules: Rules): LegendItem[] {
   if (R.two) it.push(['2', 'Neustart', 'Geht immer. Danach ist wieder alles erlaubt.']);
   if (R.three) it.push(['3', 'Durchsichtig', 'Geht immer. Es zählt die Karte darunter.']);
   if (R.seven) it.push(['7', 'Drunter', 'Der Nächste muss 7 oder niedriger legen.']);
-  if (R.eight) it.push(['8', 'Aussetzen', 'Pro 8 setzt ein Spieler aus.']);
+  if (R.eight) it.push(['8', 'Aussetzen', 'Jede 8 lässt eine Person aussetzen.']);
   if (R.ten) it.push(['10', 'Verbrennt', 'Geht immer. Der Stapel ist weg und du legst nochmal.']);
   it.push([
     '4×',
@@ -55,7 +55,7 @@ function legendSh(rules: Rules): LegendItem[] {
     it.push([
       '💣',
       'Einwerfen',
-      'Hast du die fehlenden Karten zu vier gleichen, wirf sie jederzeit rein. Auch wenn du nicht dran bist.',
+      'Hast du die fehlenden Karten zu vier gleichen, wirf sie jederzeit als Bombe ein. Auch wenn du nicht dran bist.',
       'e',
     ]);
   }
@@ -80,10 +80,14 @@ function legendDurak(rules: Rules): LegendItem[] {
       'e',
     ],
     ['K', 'Schlagen', 'Mit einer höheren Karte derselben Farbe oder mit Trumpf. Sonst nimmst du alles auf.'],
-    ['+', 'Nachlegen', 'Alle außer dem Verteidiger dürfen Werte nachlegen, die schon auf dem Tisch liegen.'],
+    [
+      '+',
+      'Nachlegen',
+      'Alle außer dem Verteidiger dürfen Werte nachlegen, die schon auf dem Tisch liegen. Wer gepasst hat, wartet auf einen neuen Wert.',
+    ],
     [
       `${DK_MAX_ATTACK}×`,
-      'Höchstens sechs',
+      `Höchstens ${DK_MAX_ATTACK}`,
       'Nie mehr Angriffskarten, als der Verteidiger zu Beginn auf der Hand hatte.',
       'e',
     ],
@@ -96,7 +100,12 @@ function legendDurak(rules: Rules): LegendItem[] {
       'e',
     ]);
   }
-  it.push(['✓', 'Bito', 'Alles geschlagen, die Karten sind weg und der Verteidiger greift als Nächstes an.', 'e']);
+  it.push([
+    '✓',
+    'Bito',
+    'Alles geschlagen und alle haben gepasst. Die Karten gehen auf den Bito-Stapel, der Verteidiger greift als Nächstes an.',
+    'e',
+  ]);
   it.push([
     'A',
     'Reihenfolge',
@@ -123,14 +132,14 @@ function legendCabo(rules: Rules): LegendItem[] {
   const it: LegendItem[] = [
     ['A', 'Wenig ist gut', 'Ass 1, 2 bis 10 wie draufsteht, Bube 11, Dame 12.'],
     ['K', 'König 13 oder 0', 'Schwarz zählt 13, Rot zählt 0 und ist Gold wert.', 'r'],
-    ['7/8', 'Eigene ansehen', 'Vom Stapel ziehen, ablegen und eine eigene Karte ansehen.'],
-    ['9/10', 'Fremde ansehen', 'Ablegen und bei jemand anderem eine Karte ansehen.'],
-    ['B/D', 'Blind tauschen', 'Ablegen und eine eigene Karte ungesehen gegen eine fremde tauschen.'],
-    ['2×', 'Gleiche zusammen', 'Gleiche Werte auf einmal tauschen. Daneben kostet eine Strafkarte.', 'e'],
+    ['7/8', 'Ansehen', 'Vom Stapel ziehen, ablegen und eine eigene Karte ansehen.'],
+    ['9/10', 'Spionieren', 'Ablegen und eine Karte von jemand anderem ansehen.'],
+    ['B/D', 'Blindtausch', 'Ablegen und eine eigene Karte ungesehen gegen eine fremde tauschen.'],
+    ['2×', 'Gleiche eintauschen', 'Gleiche Werte auf einmal eintauschen. Daneben kostet eine Strafkarte.', 'e'],
     [
       '📣',
       'Cabo rufen',
-      `Statt zu ziehen. Alle anderen sind noch einmal dran. Nicht am wenigsten heißt ${CB_PENALTY} obendrauf.`,
+      `Statt zu ziehen. Alle anderen sind noch einmal dran. Hast du nicht am wenigsten, gibt es ${CB_PENALTY} Strafpunkte obendrauf.`,
       'e',
     ],
     ['💥', 'Kamikaze', `Zwei Damen und zwei schwarze Könige geben allen anderen ${CB_KAMI}, dir 0.`, 'e'],

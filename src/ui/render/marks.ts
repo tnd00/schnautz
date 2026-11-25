@@ -50,7 +50,7 @@ export function dkcHTML(p: Pick<Player, 'dkc' | 'id'>): string {
 }
 
 /** KI-Zeichen als kleines Quadrat, so groß wie Krone oder 💩. */
-const BOT_SQ = '<i class="botb sq" title="KI-Mitspieler">KI</i>';
+const BOT_SQ = '<i class="botb sq" title="KI-Platz">KI</i>';
 
 /**
  * Alle Zeichen eines Gegners in einem Feld vor dem Namen. Sind es zwei, wechseln sie sich am Handy ab,

@@ -4,14 +4,22 @@
  * Die Lobby (render/lobby.ts) ruft syncGameSettings bei jeder neuen Ansicht auf. Geht die Partie los oder schließt
  * der Tisch, verschwindet der Bogen von selbst. Die Listener für change und input hängen in events.ts am document.
  */
-import { CB_TARGETS, DEFAULT_RULES, DK_FULL_DECK, CB_TWO_DECKS, SH_WIN_MS, TURN_SECS } from '../../game/constants';
+import {
+  CB_TARGETS,
+  CB_TWO_DECKS,
+  DEFAULT_RULES,
+  DK_FULL_DECK,
+  SH_TWO_DECKS,
+  SH_WIN_MS,
+  TURN_SECS,
+} from '../../game/constants';
 import type { CbRules, DkRules, GameKind, Rules, ShRules, View } from '../../game/types';
 import { GAME_NAME, LOSER_MARK, unreachable } from '../../game/games';
 export { resetRulesFor } from '../../game/games';
 import { App } from '../app';
 import { sheetHTML } from '../dialog';
 import { $opt, esc, num } from '../dom';
-import { pById } from '../helpers';
+import { CABO_KING_HTML, pById, zuWord } from '../helpers';
 import { MARK } from '../gamestickers';
 
 export const svg = (d: string, w = 2.5): string =>
@@ -36,12 +44,12 @@ function turnSub(s: number, game: GameKind): string {
   if (!s) return 'Niemand wird gehetzt';
   switch (game) {
     case 'shithead':
-      return `Danach zieht die KI für dich, in der Tauschrunde nach ${s * 2} s`;
+      return `Danach spielt die KI einmal für dich, in der Tauschrunde nach ${s * 2} s`;
     case 'cabo':
-      return `Danach zieht die KI für dich, beim Ansehen nach ${s * 2} s`;
+      return `Danach spielt die KI einmal für dich, beim Ansehen nach ${s * 2} s`;
     case 'schnautz':
     case 'durak':
-      return 'Danach zieht die KI einen Zug für dich';
+      return 'Danach spielt die KI einmal für dich';
     default:
       return unreachable(game);
   }
@@ -74,14 +82,22 @@ export function ruleDefs(r: Rules, g: GameKind): RuleDef[] {
         t('ten', '10 verbrennt', 'Geht immer, der Stapel ist weg und du legst gleich nochmal'),
         t('seven', '7 heißt drunter', 'Der Nächste muss 7 oder niedriger legen'),
         t('three', '3 ist durchsichtig', 'Geht immer, es zählt die Karte darunter'),
-        t('eight', '8 lässt aussetzen', 'Jede 8 überspringt einen Spieler'),
+        t('eight', '8 lässt aussetzen', 'Jede 8 lässt eine Person aussetzen'),
         t(
           'four',
           '4er reinwerfen',
           `Bei jedem neuen Stapel dürfen alle, auch wer dran ist. Gespielt wird nach bis zu ${Math.round(SH_WIN_MS / 1000)} Sekunden`,
         ),
-        t('cut', 'Bombe einwerfen', 'Wer die fehlenden Karten zu vier gleichen hat, darf jederzeit reinwerfen'),
-        t('deck5', 'Zwei Decks schon ab 5', 'Ab 6 Leuten wird immer mit zwei Decks gespielt'),
+        t(
+          'cut',
+          'Bombe einwerfen',
+          'Wer die fehlenden Karten zu vier gleichen hat, darf sie jederzeit als Bombe einwerfen',
+        ),
+        t(
+          'deck5',
+          `Zwei Decks schon ab ${SH_TWO_DECKS - 1}`,
+          `Ab ${SH_TWO_DECKS} Leuten wird immer mit zwei Decks gespielt`,
+        ),
       ];
     }
     case 'durak': {
@@ -139,11 +155,11 @@ export function ruleDefs(r: Rules, g: GameKind): RuleDef[] {
 export function ruleNote(g: GameKind): string {
   switch (g) {
     case 'shithead':
-      return 'Vier gleiche Karten hintereinander sind immer eine Bombe und verbrennen den Stapel. Wer sie vollmacht, legt gleich nochmal.';
+      return 'Vier gleiche Karten hintereinander sind immer eine Bombe und verbrennen den Stapel. Wer die vierte legt, ist gleich nochmal dran.';
     case 'durak':
-      return `Bis ${DK_FULL_DECK - 1} Leute spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} mit allen 52. Wer als Letzter Karten hat, ist der Durak und trägt den ${LOSER_MARK.durak}.`;
+      return `Bis ${zuWord(DK_FULL_DECK - 1)} spielt ihr mit 36 Karten von der 6 bis zum Ass, ab ${DK_FULL_DECK} Leuten mit allen 52. Wer als Letzter Karten hat, ist der Durak und trägt den ${LOSER_MARK.durak}.`;
     case 'cabo':
-      return `Ab ${CB_TWO_DECKS} Leuten wird mit zwei Decks gespielt. Wer am Ende die wenigsten Punkte hat, wird Cabo-König und behält die Krone, bis jemand anderes gewinnt.`;
+      return `Ab ${CB_TWO_DECKS} Leuten wird mit zwei Decks gespielt. Wer am Ende die wenigsten Punkte hat, wird ${CABO_KING_HTML} und behält die Krone, bis jemand anderes gewinnt.`;
     case 'schnautz':
       return '';
     default:

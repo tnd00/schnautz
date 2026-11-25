@@ -32,7 +32,7 @@ export function nameOf(v: View, id: string | null | undefined, fallback?: string
 export const turnId = (v: View): string | null => (v.turn >= 0 ? (v.players[v.turn]?.id ?? null) : null);
 export const dealerId = (v: View): string | null => (v.dealer >= 0 ? (v.players[v.dealer]?.id ?? null) : null);
 export const myTurn = (v: View): boolean => v.phase === 'play' && turnId(v) === App.me;
-/** Muss ich gerade etwas tun? Bei Durak können mehrere dran sein, auch wer nur fertig sagen soll. */
+/** Muss ich gerade etwas tun? Bei Durak können mehrere dran sein, auch wer nur passen soll. */
 export function myMoveNow(v: View): boolean {
   switch (v.game) {
     case 'durak':
@@ -54,7 +54,17 @@ export const vb = (id: string | null | undefined, du: string, er: string): strin
 export const W = (v: View, id: string | null | undefined, fallback?: string): string =>
   `<b>${esc(nameOf(v, id, fallback))}</b>`;
 
-/** Mitspieler in Sitzreihenfolge, beginnend links von mir. */
+/** „zu dritt“: wie viele zusammen spielen, so wie man es sagt */
+const ZU = ['', 'allein', 'zu zweit', 'zu dritt', 'zu viert', 'zu fünft', 'zu sechst', 'zu siebt', 'zu acht'];
+export const zuWord = (n: number): string => ZU[n] ?? `zu ${n}`;
+
+/**
+ * „Cabo-König“ für HTML, ohne Umbruch am Bindestrich. Der Bindestrich bleibt ein normaler, die E2E-Tests suchen
+ * genau dieses Wort.
+ */
+export const CABO_KING_HTML = '<span style="white-space:nowrap">Cabo-König</span>';
+
+/** Leute in Sitzreihenfolge, beginnend links von mir. */
 export function seatOrder(v: View): Player[] {
   const idx = pIdx(v, App.me);
   const n = v.players.length;
@@ -63,7 +73,7 @@ export function seatOrder(v: View): Player[] {
   return out;
 }
 
-/** Spielen gerade nur noch KIs? Dann darf der Host die Partie abkürzen. */
+/** Spielen gerade nur noch KIs? Dann darf der Gastgeber die Partie abkürzen. */
 export function onlyBotsPlaying(v: View): boolean {
   if (v.phase !== 'play' && v.phase !== 'choose' && v.phase !== 'swap' && v.phase !== 'peek') return false;
   const live = livePlayers(v);

@@ -4,8 +4,8 @@
  * muss man es sich merken. Was ich gerade tun kann, steht in `cbRole`. Tipps verarbeitet src/ui/cabo/input.ts.
  */
 import { cbKamikaze, cbPower, cbWaiting } from '../../game/cabo';
-import { cbVal } from '../../game/cards';
-import { CB_RESET_AT, CB_REVEAL_MS } from '../../game/constants';
+import { cbVal, rankOf, suitOf } from '../../game/cards';
+import { CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO, CB_REVEAL_MS } from '../../game/constants';
 import type { CaboResult, Card, CbSlotView, CbView, Player, View } from '../../game/types';
 import { App } from '../app';
 import { cardHTML } from '../cards';
@@ -24,14 +24,43 @@ const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 
 export type CbRole = 'look' | 'looked' | 'draw' | 'hold' | 'ownpeek' | 'spy' | 'blind' | 'wait' | 'none';
 
-/** Was eine abgelegte Karte kann, kurz für Knöpfe und lang für Hinweise. */
-export const CB_POWER_SHORT = { peek: '👁️ eigene', spy: '🔍 fremde', swap: '🔀 tauschen' } as const;
+/** Was eine abgelegte Karte kann: Zeichen, Name für Knöpfe und Etiketten, Verb für Hinweise („du darfst …“). */
 const POWER_ICON = { peek: '👁️', spy: '🔍', swap: '🔀' } as const;
+const POWER_NAME = { peek: 'Ansehen', spy: 'Spionieren', swap: 'Blindtausch' } as const;
+export const CB_POWER_SHORT = {
+  peek: `${POWER_ICON.peek} ${POWER_NAME.peek}`,
+  spy: `${POWER_ICON.spy} ${POWER_NAME.spy}`,
+  swap: `${POWER_ICON.swap} ${POWER_NAME.swap}`,
+} as const;
 const POWER_LONG = {
   peek: 'eine eigene Karte ansehen',
-  spy: 'eine fremde Karte ansehen',
-  swap: 'blind mit jemandem tauschen',
+  spy: 'spionieren',
+  swap: 'blind tauschen',
 } as const;
+
+/** Unbestimmt und bestimmt: „eine Dame“, „die Dame“, „einen roten König“. Zahlen bleiben Zahlen. */
+const CB_WORDS: Record<string, [string, string]> = {
+  A: ['ein Ass', 'das Ass'],
+  B: ['einen Buben', 'den Buben'],
+  D: ['eine Dame', 'die Dame'],
+};
+
+/**
+ * Eine Cabo-Karte im Satz, der Name vor dem Wert: „eine Dame“ und „, 12“. Bei Zahlenkarten ist der Name schon
+ * der Wert, dort gibt es keinen Nachsatz.
+ */
+function cbCardWords(c: Card, def: boolean): { name: string; val: string } {
+  const r = rankOf(c);
+  const red = suitOf(c) === 'H' || suitOf(c) === 'D';
+  const w: [string, string] | undefined =
+    r === 'K'
+      ? red
+        ? ['einen roten König', 'den roten König']
+        : ['einen schwarzen König', 'den schwarzen König']
+      : CB_WORDS[r];
+  if (!w) return { name: `${def ? 'die' : 'eine'} ${r}`, val: '' };
+  return { name: w[def ? 1 : 0], val: `, ${cbVal(c)}` };
+}
 
 /** Eigene Reihe, wenn ich diese Runde mitspiele. */
 export function cbMine(v: View): CbSlotView[] | null {
@@ -109,12 +138,12 @@ function tagOf(v: View, C: CbView, p: Player, waiting: string[]): string {
   if (v.phase === 'over') {
     // Bis zur Krönung keine Plätze, auch Platz 2 und 3 verrieten den König
     if (App.zerHide) return '';
-    if (v.winner === p.id) return '<span class="tag king">👑 Cabo-König</span>';
+    if (v.winner === p.id) return '<span class="tag king" style="white-space:nowrap">👑 Cabo-König</span>';
     return p.place ? `<span class="tag">Platz ${num(p.place)}</span>` : '';
   }
   if (v.phase === 'end' && r && p.id in r.scores) return `<span class="tag">+${num(r.scores[p.id])}</span>`;
   if (v.phase === 'peek')
-    return p.ready ? '<span class="tag done">angesehen ✓</span>' : `<span class="tag turn">schaut${THINKING}</span>`;
+    return p.ready ? '<span class="tag done">bereit ✓</span>' : `<span class="tag turn">schaut${THINKING}</span>`;
   if (C.cabo === p.id) return '<span class="tag cabo">📣 Cabo!</span>';
   if (!waiting.includes(p.id)) return C.cabo && C.left.includes(p.id) ? '<span class="tag">noch einmal</span>' : '';
   if (C.power?.by === p.id) {
@@ -191,7 +220,7 @@ export function renderCbCenter(v: View): void {
   } else if (C.power) {
     // Die Karte liegt schon auf der Ablage, hier steht nur, was sie gerade erlaubt
     hold = `<div class="emptyslot cbpow">${POWER_ICON[C.power.kind]}</div>`;
-    if (C.power.by === App.me) holdCnt = POWER_LONG[C.power.kind];
+    if (C.power.by === App.me) holdCnt = POWER_NAME[C.power.kind];
   }
   let cap = `Runde ${num(v.round)} · bis ${num(v.rules.cb?.target ?? 100)} Punkte`;
   if (C.cabo && play) {
@@ -248,26 +277,27 @@ function statusHTML(v: View, C: CbView): string {
     case 'hold': {
       const c = C.hold?.c;
       const fromPile = C.hold?.from === 'pile';
-      main = c
-        ? `<em>Du hast eine ${cbVal(c)} ${fromPile ? 'genommen' : 'gezogen'}.</em>`
+      const cw = c ? cbCardWords(c, false) : null;
+      main = cw
+        ? `<em>Du hast ${cw.name} ${fromPile ? 'genommen' : 'gezogen'}${cw.val}.</em>`
         : '<em>Du hast gezogen.</em>';
       const pw = !fromPile && c ? cbPower(c) : null;
-      if (n > 1) sub = `Du tauschst ${n} Karten auf einmal. Sind sie nicht alle gleich, gibt es eine Strafkarte.`;
-      else if (fromPile) sub = 'Tausch sie gegen eine deiner Karten oder mehrere gleiche. Sie liegt danach offen.';
-      else if (pw) sub = `Tausch sie gegen deine Karten oder leg sie ab und du darfst ${POWER_LONG[pw]}.`;
-      else sub = 'Tausch sie gegen eine oder mehrere gleiche Karten oder leg sie ab.';
+      if (n > 1) sub = `Du tauschst ${n} Karten auf einmal ein. Sind sie nicht alle gleich, gibt es eine Strafkarte.`;
+      else if (fromPile) sub = 'Tausch sie gegen eine deiner Karten oder mehrere gleiche ein. Sie liegt danach offen.';
+      else if (pw) sub = `Tausch sie gegen eine deiner Karten ein oder leg sie ab, dann darfst du ${POWER_LONG[pw]}.`;
+      else sub = 'Tausch sie gegen eine oder mehrere gleiche Karten ein oder leg sie ab.';
       break;
     }
     case 'ownpeek':
-      main = '<em>Schau dir eine eigene Karte an.</em>';
-      sub = 'Tippe eine deiner Karten an.';
+      main = '<em>Ansehen!</em>';
+      sub = 'Tippe eine deiner Karten an. Nur du siehst sie.';
       break;
     case 'spy':
       main = '<em>Spionieren!</em>';
       sub = 'Tippe eine Karte von jemand anderem an. Nur du siehst sie.';
       break;
     case 'blind':
-      main = '<em>Blind tauschen.</em>';
+      main = '<em>Blindtausch!</em>';
       sub =
         n && App.cs.opp
           ? 'Alles gewählt. Tippe auf Blind tauschen.'
@@ -276,12 +306,12 @@ function statusHTML(v: View, C: CbView): string {
     case 'wait': {
       main = `${W(v, cur)} ist dran.`;
       if (C.power?.by === cur) sub = `${esc(nameOf(v, cur))} darf ${POWER_LONG[C.power.kind]}.`;
-      else if (C.hold?.by === cur)
-        sub =
-          C.hold.from === 'pile' && C.hold.c
-            ? `${esc(nameOf(v, cur))} hat die ${cbVal(C.hold.c)} von der Ablage genommen.`
-            : `${esc(nameOf(v, cur))} hat vom Stapel gezogen und überlegt.`;
-      else if (C.cabo)
+      else if (C.hold?.by === cur) {
+        const cw = C.hold.from === 'pile' && C.hold.c ? cbCardWords(C.hold.c, true) : null;
+        sub = cw
+          ? `${esc(nameOf(v, cur))} hat ${cw.name} von der Ablage genommen${cw.val}.`
+          : `${esc(nameOf(v, cur))} hat vom Stapel gezogen und überlegt.`;
+      } else if (C.cabo)
         sub = C.left.includes(App.me) ? 'Du bist danach noch einmal dran.' : 'Du hast keinen Zug mehr in dieser Runde.';
       if (cbCanSnap(v) && App.cs.snap)
         sub = 'Tippe die Karte an, die zur Ablage passt. Daneben gibt es eine Strafkarte.';
@@ -332,8 +362,8 @@ function actionsHTML(v: View, C: CbView): string {
     case 'hold': {
       const fromDeck = C.hold?.from === 'deck';
       const pw = fromDeck && C.hold?.c ? cbPower(C.hold.c) : null;
-      btns.push(btn('cbswap', 'primary', n > 1 ? `${n} tauschen` : 'Tauschen', n > 0));
-      btns.push(btn('cbdiscard', 'ghost', pw ? `Ablegen · ${CB_POWER_SHORT[pw]}` : 'Ablegen', fromDeck));
+      btns.push(btn('cbswap', 'primary', n > 1 ? `${n} eintauschen` : 'Eintauschen', n > 0));
+      btns.push(btn('cbdiscard', 'ghost', pw ? `Ablegen + ${POWER_NAME[pw]}` : 'Ablegen', fromDeck));
       break;
     }
     case 'ownpeek':
@@ -409,18 +439,20 @@ export function caboResult(v: View): CaboResult | null {
   return v.result?.reason === 'cabo' ? v.result : null;
 }
 
-/** Was in der Zeile einer Person steht: Summe, Cabo-Ruf, Kamikaze, zurück auf 50. */
+/** Was in der Zeile einer Person steht: Summe, Cabo-Ruf, Kamikaze, einmal zurück auf weniger Punkte. */
 function rowNote(r: CaboResult, id: string): string {
   const bits: string[] = [];
   const sum = num(r.sums[id]);
   const sc = num(r.scores[id]);
   if (r.kami && cbKamikaze(r.hands[id] ?? [])) bits.push('💥 Kamikaze! 0 Punkte');
-  else if (r.kami) bits.push(`Summe ${sum} · Kamikaze kostet 50`);
+  else if (r.kami) bits.push(`Summe ${sum} · Kamikaze kostet ${CB_KAMI}`);
   else if (r.caller === id)
-    bits.push(r.ok ? `Summe ${sum} · Cabo geschafft, 0 Punkte` : `Summe ${sum} · Cabo daneben, +10`);
+    bits.push(
+      r.ok ? `Summe ${sum} · Cabo geschafft, 0 Punkte` : `Summe ${sum} · Cabo daneben, ${CB_PENALTY} Strafpunkte`,
+    );
   else bits.push(`Summe ${sum}`);
   bits.push(`+${sc}`);
-  if (r.resets.includes(id)) bits.push('genau 100, zurück auf 50');
+  if (r.resets.includes(id)) bits.push(`genau ${CB_RESET_AT}, zurück auf ${CB_RESET_TO}`);
   return bits.join(' · ');
 }
 
@@ -475,7 +507,9 @@ export function renderCbOverlay(v: View): void {
   if (over) {
     const w = r.winner;
     icon = w ? '👑' : '🤝';
-    title = w ? `${nm(w)}${vb(w, ' bist', ' ist')} <span class="g">Cabo-König!</span>` : 'Unentschieden!';
+    title = w
+      ? `${nm(w)}${vb(w, ' bist', ' ist')} <span class="g" style="white-space:nowrap">Cabo-König!</span>`
+      : 'Unentschieden!';
     const high = Object.keys(r.totals).filter((id) => r.totals[id] > target);
     const verb = high.length === 1 ? vb(high[0], 'bist', 'ist') : high.includes(App.me) ? 'seid' : 'sind';
     lead =
@@ -484,13 +518,13 @@ export function renderCbOverlay(v: View): void {
   } else if (r.kami) {
     icon = '💥';
     title = 'Kamikaze!';
-    lead = `${nm(r.kami)}${vb(r.kami, ' hast', ' hat')} zwei Damen und zwei schwarze Könige. Alle anderen bekommen 50.`;
+    lead = `${nm(r.kami)}${vb(r.kami, ' hast', ' hat')} zwei Damen und zwei schwarze Könige. Alle anderen bekommen ${CB_KAMI}.`;
   } else if (r.caller) {
-    icon = r.ok ? '🎯' : '🤡';
+    icon = r.ok ? '🎯' : '🙈';
     title = r.ok ? 'Cabo geschafft!' : 'Cabo daneben!';
     lead = r.ok
       ? `${nm(r.caller)}${vb(r.caller, ' hattest', ' hatte')} am wenigsten und ${vb(r.caller, 'bekommst', 'bekommt')} 0 Punkte.`
-      : `${nm(r.caller)}${vb(r.caller, ' hast', ' hat')} Cabo gerufen, aber jemand hatte weniger. Das kostet 10 extra.`;
+      : `${nm(r.caller)}${vb(r.caller, ' hast', ' hat')} Cabo gerufen, aber jemand hatte weniger. Das gibt ${CB_PENALTY} Strafpunkte obendrauf.`;
   } else {
     title = 'Stapel leer!';
     lead = 'Keine Karten mehr, die Runde ist vorbei.';
