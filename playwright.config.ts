@@ -18,6 +18,8 @@ const noSandbox = !!process.env.CI || process.getuid?.() === 0;
 
 export default defineConfig({
   testDir: 'tests/e2e',
+  // Eigener Ordner je Lauf, damit parallele Läufe sich nicht die Ausgaben löschen (PW_OUT)
+  outputDir: process.env.PW_OUT ?? 'test-results',
   timeout: 5 * 60_000,
   expect: { timeout: 20_000 },
   // Dateien laufen nebeneinander, Tests einer Datei nacheinander. Lokal vier Worker (12 Kerne), in der CI zwei
