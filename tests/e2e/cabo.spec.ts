@@ -5,6 +5,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { View } from '../../src/game/types';
 import {
+  quickBots,
   fitFindings,
   chooseGame,
   closeAll,
@@ -111,6 +112,8 @@ test('Cabo gegen drei KIs bis zum Ende', async ({ browser }) => {
   const errors = new Errors();
   const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
   await hostTable(host, 'Tahna');
+  // Testmodus: KIs ziehen flott, die echte Taktung prüfen die Partien zwischen zwei Browsern
+  await quickBots(host);
   await chooseCabo(host);
   for (let i = 0; i < 3; i++) await host.click('[data-act=addbot]');
   await expect.poll(() => playerCount(host)).toBe(4);

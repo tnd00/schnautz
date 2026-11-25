@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import { rankOf } from '../../src/game/cards';
 import { shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
 import {
+  quickBots,
   closeAll,
   desktop,
   Errors,
@@ -53,6 +54,8 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
   const errors = new Errors();
   const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
   await hostTable(host, 'Tahna');
+  // Testmodus: KIs ziehen flott, die echte Taktung prüfen die Partien zwischen zwei Browsern
+  await quickBots(host);
   await host.click('[data-act=game][data-g=shithead]');
   await host.click('[data-act=addbot]');
   await expect.poll(() => playerCount(host)).toBe(2);
