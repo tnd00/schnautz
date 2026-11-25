@@ -353,7 +353,7 @@ body:not(.ingame) #netcode {
   padding: 3px 8px 4px;
   font-size: 12px;
 }
-/* KI entfernen: Knopf auf der Ecke, die Tippfläche ist größer als er aussieht */
+/* KI oder offline sitzende Person entfernen: Knopf auf der Ecke, die Tippfläche ist größer als er aussieht */
 #scr-lobby .lx {
   position: absolute;
   top: -13px;
@@ -1270,6 +1270,13 @@ body:not(.ingame) #netcode {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* shithead-flow.css setzt hier jede Übergangsdauer auf 0.01ms, auch bei Elementen ohne eigenen Übergang. Die gehen
+   * dann mit transition-property all durch, jede Größe hält einen Frame lang den alten Wert und fitLobby misst die
+   * vorige Stufe (bis zu 133 px unter der Startleiste). In der Lobby samt Kopfzeile laufen deshalb nur Übergänge, die
+   * eine Regel ausdrücklich nennt */
+  :where(body.inlobby, body.inlobby *) {
+    transition-property: none;
+  }
   #scr-lobby .lgc.on.st-stick {
     animation: none;
   }

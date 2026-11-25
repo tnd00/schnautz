@@ -120,8 +120,10 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       if (!isHost) return HOST_ONLY;
       if (st.phase !== 'lobby') return 'KIs lassen sich nur in der Lobby entfernen.';
       const bi = pIdx(st, String(a.id || ''));
-      if (bi < 0 || !st.players[bi].bot) return null;
-      removePlayer(st, st.players[bi].id);
+      const gone = st.players[bi];
+      // KIs und Menschen, die gerade offline sind. Wer online sitzt und der Gastgeber selbst bleiben
+      if (!gone || gone.id === st.host || !(gone.bot || !gone.online)) return null;
+      removePlayer(st, gone.id);
       // Beim Auffüllen käme sofort eine neue KI, also fällt der Platz weg
       if (st.rules.fill) st.rules.seats = seatLimit(st) - 1;
       syncSeats(st, rng);

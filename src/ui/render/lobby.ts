@@ -9,7 +9,7 @@ import type { GameKind, Player, View } from '../../game/types';
 import { App } from '../app';
 import { BOT_TAG } from '../cards';
 import { $, $opt, esc, num } from '../dom';
-import { pById } from '../helpers';
+import { pById, zuWord } from '../helpers';
 import { AKA, MARK, TILT } from '../gamestickers';
 import { shcHTML } from './shithead';
 import { dkcHTML } from './marks';
@@ -52,8 +52,7 @@ const SEAT_TILT = ['st-l2', 'st-r2', 'st-r1', 'st-l1', 'st-r3', 'st-l3', 'st-l1'
 const tiltOf = (i: number): string => SEAT_TILT[i % SEAT_TILT.length];
 
 /** „zu dritt“: wie viele am Tisch sitzen, so wie man es sagt */
-const ZU = ['', 'allein', 'zu zweit', 'zu dritt', 'zu viert', 'zu fünft', 'zu sechst', 'zu siebt', 'zu acht'];
-const lineup = (n: number): string => ZU[n] ?? `zu ${n}`;
+const lineup = zuWord;
 
 /** Was zuletzt gezeichnet wurde: Nur was neu ist, klebt mit Platsch fest oder blättert um. */
 const LOB = { seats: null as Set<string> | null, game: '', n: 0, code: '', ready: false, live: '' };
@@ -84,7 +83,8 @@ function seatHTML(v: View, p: Player, i: number, fresh: boolean): string {
     marks +
     (p.bot ? BOT_TAG : '') +
     (tag ? `<span class="st-tag stag">${tag}</span>` : '') +
-    (p.bot && host
+    // Entfernen kann der Gastgeber KIs und alle, die gerade offline sind, nie sich selbst
+    (host && !me && p.id !== v.host && (p.bot || !p.online)
       ? `<button class="lx" data-act="rmbot" data-id="${esc(p.id)}" aria-label="${esc(p.name)} entfernen">${ICON_X}</button>`
       : '') +
     '</li>'
