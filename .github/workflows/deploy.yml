@@ -30,6 +30,8 @@ jobs:
       - run: npm test
       # build prüft auch die Typen
       - run: npm run build
+      # Größengrenze für Einstiegsstück und CSS (gzip), siehe tests/size.mjs
+      - run: node tests/size.mjs dist
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:

@@ -148,3 +148,137 @@ export async function menuConfirm(page: Page, item: '#menu-leave' | '#menu-lobby
   await page.click(item);
   await page.click('#cfm-ok');
 }
+
+/**
+ * Was am Bildschirm nicht passt, als Liste (leer heißt alles gut). Nur das Scrollen der Seite zu prüfen reicht nicht,
+ * denn Lobby und Tisch am Handy haben `body { overflow: hidden }`: Zu viel Inhalt wird dort abgeschnitten oder rutscht
+ * unter die Startleiste, statt zu scrollen. Geprüft werden deshalb auch
+ * - jedes Element aus `keys`, es muss ganz im Bild liegen (fehlt es, ist das ein Befund),
+ * - die Lobby-Bereiche, kein Inhalt unter der Startleiste und kein Notbehelf `fscroll`,
+ * - am Tisch das tiefste sichtbare Element in `#table`, es endet über dem unteren Rand.
+ */
+export async function fitFindings(page: Page, keys: string[] = []): Promise<string[]> {
+  return page.evaluate((sel) => {
+    const H = window.innerHeight;
+    const W = window.innerWidth;
+    const se = document.scrollingElement ?? document.documentElement;
+    const shown = (el: Element | null): el is HTMLElement => !!el && el.getClientRects().length > 0;
+    const name = (el: Element) =>
+      el.id ? `#${el.id}` : `${el.tagName.toLowerCase()}.${[...el.classList].slice(0, 2).join('.')}`;
+    const out: string[] = [];
+    if (se.scrollHeight > H + 2) out.push(`Seite ${se.scrollHeight} > ${H}`);
+    if (se.scrollWidth > W + 2) out.push(`quer ${se.scrollWidth} > ${W}`);
+    for (const s of sel) {
+      const el = document.querySelector(s);
+      if (!shown(el)) {
+        out.push(`${s} fehlt`);
+        continue;
+      }
+      const r = el.getBoundingClientRect();
+      if (r.bottom > H + 1 || r.top < -1) out.push(`${s} liegt bei ${Math.round(r.top)} bis ${Math.round(r.bottom)}`);
+    }
+    document.querySelectorAll<HTMLElement>('#scr-lobby .lpane').forEach((p) => {
+      if (!shown(p)) return;
+      if (p.classList.contains('fscroll')) out.push(`Lobby ${p.dataset.pane} scrollt im Notbehelf`);
+      else if (p.scrollHeight > p.clientHeight + 1)
+        out.push(`Lobby ${p.dataset.pane}: ${p.scrollHeight - p.clientHeight} px unter der Startleiste`);
+    });
+    const table = document.querySelector('#table');
+    if (shown(document.querySelector('#scr-game')) && shown(table)) {
+      let max = 0;
+      let who = '';
+      table.querySelectorAll('*').forEach((el) => {
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.display === 'none' || cs.position === 'fixed') return;
+        const r = el.getBoundingClientRect();
+        if (r.width && r.height && r.bottom > max) {
+          max = r.bottom;
+          who = name(el);
+        }
+      });
+      if (max > H + 1) out.push(`Tisch reicht bis ${Math.round(max)} (${who})`);
+    }
+    return out;
+  }, keys);
+}
+
+/**
+ * Kurzform für bestehende Tests: passt alles ins Bild? In der Lobby muss die Startleiste ganz zu sehen sein, am Tisch
+ * der eigene Platz. Strenger als der alte Einzeiler `scrollHeight <= innerHeight + 2`, der Abgeschnittenes übersah.
+ */
+export async function noScroll(page: Page): Promise<boolean> {
+  const keys = await page.evaluate(() =>
+    document.querySelector('#scr-lobby')?.getClientRects().length
+      ? ['.lfoot']
+      : document.querySelector('#scr-game')?.getClientRects().length
+        ? ['#me']
+        : [],
+  );
+  return (await fitFindings(page, keys)).length === 0;
+}
+
+/**
+ * Ergebnisblatt: Blatt im Bild, eigene Zeile und Verlierer über der angehefteten Fußleiste sichtbar.
+ * `strict` verlangt zusätzlich, dass das Blatt in sich gar nicht scrollt.
+ */
+export async function sheetFindings(page: Page, strict = false): Promise<string[]> {
+  return page.evaluate((all) => {
+    const p = document.querySelector<HTMLElement>('#overlay .paper.result');
+    if (!p) return ['kein Ergebnisblatt'];
+    const out: string[] = [];
+    const pr = p.getBoundingClientRect();
+    const fr = p.querySelector('.rfoot')?.getBoundingClientRect();
+    const bottom = fr ? Math.min(pr.bottom, fr.top) : pr.bottom;
+    if (pr.bottom > window.innerHeight + 1) out.push(`Blatt endet bei ${Math.round(pr.bottom)}`);
+    const me = window.__schnautz?.App.me ?? '';
+    const vis = (el: Element | null) => !el || el.getBoundingClientRect().bottom <= bottom + 1;
+    if (!vis(p.querySelector(`.row[data-pid="${me}"]`))) out.push('eigene Zeile verdeckt');
+    if (!vis(p.querySelector('.row.lose'))) out.push('Verlierer verdeckt');
+    if (all && p.scrollHeight > p.clientHeight + 1) out.push(`Blatt scrollt ${p.scrollHeight - p.clientHeight} px`);
+    return out;
+  }, strict);
+}
+
+/** Dev-Menü freischalten (vor dem ersten goto), damit der Zeitraffer erreichbar ist. */
+export async function unlockDev(ctx: BrowserContext): Promise<void> {
+  await ctx.addInitScript(() => localStorage.setItem('schnautz:dev', 'true'));
+}
+
+/**
+ * Zeitraffer aus dem Dev-Menü (`src/dev/menu.ts`), etwa sh-any, dk-any, cb-win, sz-win, sz-round oder cb-round.
+ * Er sucht höchstens 9 Sekunden und meldet sonst „Keine passende Partie gefunden“, deshalb bis zu drei Versuche.
+ */
+export async function devJump(host: Page, id: string, phases = ['end', 'over']): Promise<void> {
+  for (let k = 0; k < 3; k++) {
+    await host.click('#btn-menu');
+    await host.click('#menu-dev');
+    await host.locator(`#modal [data-act=dev][data-dev=${id}]`).click();
+    const ok = await expect
+      .poll(async () => phases.includes((await view(host))?.phase ?? ''), { timeout: 15_000 })
+      .toBe(true)
+      .then(() => true)
+      .catch(() => false);
+    if (ok) return;
+  }
+  throw new Error(`Zeitraffer ${id} fand keine passende Partie`);
+}
+
+/**
+ * Tisch auf n Plätze stellen und mit KIs füllen, direkt über act() beim Gastgeber (spart die Klicks). Verlässt sich
+ * nicht darauf, dass freie Plätze von selbst eine KI bekommen.
+ */
+export async function fillWithBots(host: Page, n: number): Promise<void> {
+  await host.evaluate((want) => {
+    const s = window.__schnautz;
+    if (!s?.H.st) throw new Error('kein Gastgeber');
+    const st = s.H.st;
+    const e = s.act(st, s.App.me, { type: 'rules', rules: { seats: want } });
+    if (e) throw new Error(String(e));
+    for (let i = 0; i < 20 && st.players.length < want; i++) {
+      const err = s.act(st, s.App.me, { type: 'addbot' });
+      if (err) throw new Error(String(err));
+    }
+    s.hostCommit();
+  }, n);
+  await expect.poll(async () => (await view(host))?.players.length).toBe(n);
+}

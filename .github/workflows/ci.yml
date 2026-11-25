@@ -30,6 +30,8 @@ jobs:
       - run: npm test
       # build prüft auch die Typen
       - run: npm run build
+      # Größengrenze für Einstiegsstück und CSS (gzip), siehe tests/size.mjs
+      - run: node tests/size.mjs dist
 
   e2e:
     name: Browser-Tests

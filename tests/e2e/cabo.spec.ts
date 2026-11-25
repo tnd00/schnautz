@@ -5,6 +5,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { View } from '../../src/game/types';
 import {
+  fitFindings,
   chooseGame,
   closeAll,
   desktop,
@@ -94,9 +95,6 @@ async function playToEnd(pages: Page[], check?: (p: Page, v: View, me: string) =
   throw new Error('Cabo ist nicht zu Ende gegangen');
 }
 
-const noScroll = (page: Page): Promise<boolean> =>
-  page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 2);
-
 /** Cabo wählen, kurze Partie bis 50. Danach ist am Handy der Reiter Tisch offen. */
 async function chooseCabo(host: Page, short = true): Promise<void> {
   await chooseGame(host, 'cabo');
@@ -157,7 +155,7 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
     if (C.hold && C.hold.by !== me && C.hold.from === 'deck') expect(C.hold.c).toBeUndefined();
     expect(C.know).toBeUndefined();
     C.reveal?.items.forEach((x) => expect(typeof x.c).toBe('string'));
-    if (checked++ % 10 === 0) expect(await noScroll(guest)).toBe(true);
+    if (checked++ % 10 === 0) expect(await fitFindings(guest, ['#me'])).toEqual([]);
   });
   await waitForPhase(guest, ['over'], 30_000);
   await expect(guest.locator('#overlay .result h2')).toContainText(/Cabo-König|Unentschieden/, { timeout: 30_000 });
@@ -186,7 +184,7 @@ test('Cabo zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ br
   await waitForPhase(host, ['peek'], 20_000);
   expect((await mustView(host)).cb?.decks).toBe(2);
   await host.waitForTimeout(1500);
-  expect(await noScroll(host)).toBe(true);
+  expect(await fitFindings(host, ['#me'])).toEqual([]);
   const me = await myId(host);
   // Ein paar Züge später, auch mit gezogener Karte in der Hand
   let held = false;
@@ -202,7 +200,7 @@ test('Cabo zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ br
     await host.waitForTimeout(300);
   }
   expect(held).toBe(true);
-  expect(await noScroll(host)).toBe(true);
+  expect(await fitFindings(host, ['#me'])).toEqual([]);
   expect(errors.list).toEqual([]);
 });
 

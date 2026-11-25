@@ -19,6 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:fit": "playwright test tests/e2e/fit.spec.ts --workers=4",
+    "size": "vite build --outDir dist-size --emptyOutDir --logLevel warn && node tests/size.mjs dist-size --clean",
     "sim": "vitest run --config vitest.sim.config.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },

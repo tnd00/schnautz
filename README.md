@@ -33,12 +33,14 @@ In VS Code schlägt das Projekt beim ersten Öffnen die passenden Erweiterungen 
 | `npm test`           | Unit-Tests der Spiellogik (Vitest)                              |
 | `npm run test:watch` | Unit-Tests bei jeder Änderung neu ausführen                     |
 | `npm run test:e2e`   | Browser-Tests mit echten Partien über WebRTC (Playwright)       |
+| `npm run test:fit`   | Nur der Layout-Wächter (`tests/e2e/fit.spec.ts`), vier Worker   |
+| `npm run size`       | Baut nach `dist-size` und prüft die Größengrenze                |
 | `npm run sim`        | Kalibriert die KI mit vielen ganzen Partien zwischen den Stufen |
 | `npm run lint`       | ESLint, mit `lint:fix` werden einfache Probleme direkt behoben  |
 | `npm run format`     | Alles mit Prettier formatieren                                  |
 | `npm run check`      | Typen, Lint, Format und Unit-Tests auf einmal (wie in der CI)   |
 
-Für die Browser-Tests einmal `npx playwright install chromium` ausführen. Sie starten selbst einen lokalen PeerServer und brauchen deshalb kein Internet.
+Für die Browser-Tests einmal `npx playwright install chromium` ausführen. Sie starten selbst einen lokalen PeerServer und brauchen deshalb kein Internet. Ports und Build-Ordner lassen sich mit `PW_PORT`, `PEER_PORT` und `PW_DIST` umstellen, etwa wenn Port 9000 belegt ist. Mess-Skripte für das Layout liegen in `tests/design` (Aufrufe in der README dort).
 
 ### Dev-Menü
 
