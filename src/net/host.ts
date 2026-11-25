@@ -5,7 +5,7 @@
  */
 import { type DataConnection, Peer } from 'peerjs';
 import { hostAutoNext, nextFor, stopAutoNext } from './autonext';
-import { botChatter, botTick } from './bots';
+import { botChatter, botTick, fastOn } from './bots';
 import { clockFor, hostClock, resetClock } from './clock';
 import { act, soundOk } from '../game/actions';
 import { EMOTE_HOST_WINDOW_MS, REMATCH_ANN_MS, SH_WIN_MS, TOSS_HOST_WINDOW_MS } from '../game/constants';
@@ -28,6 +28,7 @@ import { APP_VERSION } from '../content/version';
 import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
 import { asMessage, asSavedHost, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
 import { allowBurst, newRateBook, rateSound } from './rate';
+import { FAST } from './pace';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 import { dlog } from '../ui/devlog';
 import { canShow, GAME_NAME } from '../game/games';
@@ -129,6 +130,8 @@ export function hostNew(name: string): void {
   App.me = genId('h');
   App.code = genCode();
   H.st = newState(App.me, name);
+  // Neue Tische füllen freie Plätze beim Start mit KI. Die Spiellogik selbst bleibt bei fill: false (Tests, Sim)
+  H.st.rules.fill = true;
   resetHost();
   resetTableUI();
   hostOpen(false);
@@ -141,8 +144,9 @@ export function hostNewVsBots(name: string, game: GameKind): void {
 }
 
 /**
- * Zuletzt gespieltes Spiel wählen und drei KI-Plätze füllen, mit denselben Aktionen wie in der Lobby. Gestartet wird
- * nicht: Der Host landet in der Lobby und kann Regeln und Plätze noch ändern.
+ * Zuletzt gespieltes Spiel wählen und drei KI-Plätze füllen, mit denselben Aktionen wie in der Lobby. Die KIs
+ * sitzen gleich sichtbar am Tisch, das Auffüllen beim Start würde sie erst später setzen. Gestartet wird nicht: Der
+ * Host landet in der Lobby und kann Regeln und Plätze noch ändern.
  */
 function startVsBots(st: State, game: GameKind): void {
   vsBots = null;
@@ -150,6 +154,9 @@ function startVsBots(st: State, game: GameKind): void {
   const steps: Action[] = [
     { type: 'game', game },
     { type: 'rules', rules: { fill: true, seats: 4 } },
+    { type: 'addbot' },
+    { type: 'addbot' },
+    { type: 'addbot' },
   ];
   for (const a of steps) {
     const e = act(st, App.me, a);
@@ -530,7 +537,8 @@ function hostOwnView(st: State): View {
 
 /**
  * Neuer Stapel: Die Person am Zug wartet kurz, damit alle ihre 4er reinwerfen können.
- * Die Sperre beginnt erst nach der Animation, die alle gerade sehen.
+ * Die Sperre beginnt erst nach der Animation, die alle gerade sehen. Beim Vorspulen (nur noch KIs, Fertige dürfen
+ * nicht reinwerfen) ist sie kurz. hostWin läuft vor botTick, deshalb fastOn statt des rohen Felds.
  */
 function hostWin(st: State, fresh: LogEntry[]): void {
   const w = st.game === 'shithead' && st.phase === 'play' ? st.sh?.win : null;
@@ -539,7 +547,7 @@ function hostWin(st: State, fresh: LogEntry[]): void {
     return;
   }
   if (H.winId === w.id) return;
-  if (!w.until || w.until < Date.now()) w.until = Date.now() + seqMsOf(fresh) + SH_WIN_MS;
+  if (!w.until || w.until < Date.now()) w.until = Date.now() + seqMsOf(fresh) + (fastOn(st) ? FAST.win : SH_WIN_MS);
   H.winId = w.id;
   if (H.winT) clearTimeout(H.winT);
   H.winT = setTimeout(

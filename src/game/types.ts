@@ -412,6 +412,10 @@ export type LogEntry = LogBase &
       }
     | { k: 'winner' }
     | { k: 'lobby' }
+    /** Der Gastgeber bricht die laufende Partie ab (Neue Partie oder Zur Lobby). `bets`: Es lagen Tipps, sie verfallen */
+    | { k: 'abort'; game: GameKind; bets?: boolean }
+    /** Der Gastgeber spult vor, die KIs spielen die Partie zügig aus. Nur der Host schreibt ihn, es gibt keine Aktion */
+    | { k: 'ffwd' }
     | { k: 'chat'; text: string; bot?: boolean }
     | { k: 'emote'; e: string }
     | { k: 'toss'; item: TossItem; to: string }

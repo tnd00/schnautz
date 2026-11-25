@@ -4,23 +4,13 @@ import { beginGame, checkReady, nextRound, toLobby } from './flow';
 import { checkInstant, endTurn, renewMiddle } from './schnautz';
 import { shAct, shAuto, shBegin } from './shithead';
 import { challenge, rematchOpen } from './rematch';
-import { syncSeats } from './seats';
-import {
-  activeList,
-  addBot,
-  addLog,
-  maxSeats,
-  migrate,
-  nextActive,
-  pIdx,
-  removePlayer,
-  sanitizeRules,
-  seatLimit,
-} from './state';
+import { fillForStart, syncSeats } from './seats';
+import { activeList, addBot, addLog, maxSeats, migrate, nextActive, pIdx, removePlayer, sanitizeRules } from './state';
 import type { Action, ActResult, LogEntry, Rng, State } from './types';
 import { GAME_NAME, isGame, unreachable } from './games';
 import { dkAct, dkAuto, dkWaiting } from './durak';
 import { cbAct, cbAuto, cbBegin, cbWaiting } from './cabo';
+import { betPart } from './bets';
 
 const MAX_EMOTES_IN_LOG = 6;
 const MAX_TOSSES_IN_LOG = 6;
@@ -38,6 +28,17 @@ export function soundOk(st: State, pid: string, a: Action): boolean {
   if (a?.type !== 'sound' || !SOUNDS.includes(a.s) || st.phase === 'lobby') return false;
   const me = st.players[pIdx(st, pid)];
   return !!me && !!a.bot === !!me.bot;
+}
+
+/**
+ * Bricht der Gastgeber eine laufende Partie ab, steht es vor „Zurück in der Lobby“ im Verlauf. Nach dem Ende
+ * (`over`) ist nichts mehr abzubrechen. Tipps rechnet niemand ab, sie verfallen.
+ */
+function logAbort(st: State, pid: string): void {
+  if (st.phase !== 'play' && st.phase !== 'choose' && st.phase !== 'swap' && st.phase !== 'peek' && st.phase !== 'end')
+    return;
+  const bets = Object.keys(betPart(st)?.bets ?? {}).length > 0;
+  addLog(st, bets ? { k: 'abort', p: pid, game: st.game, bets: true } : { k: 'abort', p: pid, game: st.game });
 }
 
 /**
@@ -93,7 +94,7 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       st.players.forEach((p) => {
         p.lives = st.rules.lives;
       });
-      syncSeats(st, rng);
+      syncSeats(st);
       return null;
     case 'game': {
       if (!isHost) return 'Nur der Gastgeber wählt das Spiel.';
@@ -102,17 +103,19 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       const humans = st.players.filter((p) => !p.bot).length;
       if (humans > maxSeats(game)) return `${GAME_NAME[game]} geht mit höchstens ${maxSeats(game)} Leuten.`;
       st.game = game;
-      syncSeats(st, rng);
+      syncSeats(st);
       return null;
     }
     case 'start':
       if (!isHost) return 'Nur der Gastgeber startet die Partie.';
       if (st.phase !== 'lobby') return 'Die Partie läuft schon.';
       // Alte Tische (Shithead bis 2.5 mit bis zu 10 Plätzen) erst in die heutigen Grenzen bringen
-      syncSeats(st, rng);
+      syncSeats(st);
       if (st.players.length > maxSeats(st.game))
         return `Mehr als ${maxSeats(st.game)} Leute gehen bei diesem Spiel nicht.`;
-      return beginGame(st, rng);
+      // Mit Auffüllen bekommen erst jetzt alle freien Plätze eine KI. Danach sind es mindestens zwei und nie mehr,
+      // als das Spiel erlaubt, die Startfunktion lehnt also nichts mehr ab
+      return fillForStart(st, rng) ?? beginGame(st, rng);
     case 'addbot':
       if (!isHost) return 'Nur der Gastgeber kann KIs hinzufügen.';
       return addBot(st, rng);
@@ -123,19 +126,20 @@ export function act(st: State, pid: string, a: Action, rng?: Rng): ActResult {
       const gone = st.players[bi];
       // KIs und Menschen, die gerade offline sind. Wer online sitzt und der Gastgeber selbst bleiben
       if (!gone || gone.id === st.host || !(gone.bot || !gone.online)) return null;
+      // Der Platz bleibt frei, mit Auffüllen kommt die KI erst beim Start
       removePlayer(st, gone.id);
-      // Beim Auffüllen käme sofort eine neue KI, also fällt der Platz weg
-      if (st.rules.fill) st.rules.seats = seatLimit(st) - 1;
-      syncSeats(st, rng);
+      syncSeats(st);
       return null;
     }
     case 'tolobby':
       if (!isHost) return HOST_ONLY;
+      logAbort(st, pid);
       toLobby(st);
       return null;
     case 'restart':
       if (!isHost) return 'Nur der Gastgeber startet eine neue Partie.';
       if (st.phase === 'lobby') return 'Die Partie hat noch gar nicht angefangen.';
+      logAbort(st, pid);
       toLobby(st);
       return beginGame(st, rng);
     case 'skip':

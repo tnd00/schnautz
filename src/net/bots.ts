@@ -8,7 +8,7 @@ import { hasBets, shBetsOn, shCanBet } from '../game/bets';
 import { botRematchSeat } from '../game/rematch';
 import { rankOf, suitOf } from '../game/cards';
 import { handValue } from '../game/schnautz';
-import { pIdx } from '../game/state';
+import { addLog, pIdx } from '../game/state';
 import type { Action, Card, LogEntry, Player, State, TossItem } from '../game/types';
 import { viewFor } from '../game/view';
 import { gateAct, H, hostCommit } from './host';
@@ -22,7 +22,8 @@ import { BOT_LINES } from '../bots/lines';
 import { botTossReply } from '../bots/toss';
 import { botBet } from '../bots/bets';
 import { zerRevealDelay } from '../ui/shithead/ceremony-plan';
-import { szResult } from '../game/games';
+import { onlyBotsPlaying, szResult } from '../game/games';
+import { animFloor, fastDelay, fastOk, ffwdInLog, type PaceIn } from './pace';
 
 /** Wie oft die KI eine Gelegenheit außer der Reihe bemerkt (in Prozent). */
 const NOTICE_THROW = 88;
@@ -59,7 +60,44 @@ export const BOTS = {
   rematchKey: '',
   /** Dev-Menü: Bis der gemerkte letzte Zug gespielt ist, planen die KIs nichts */
   hold: false,
+  /** Vorspulen: Partienummer (`st.games`), für die die KIs zügig ausspielen. Bleibt beim Host, reist nicht in der View */
+  fast: null as number | null,
+  /** Vorspulen: bis hierhin gelesene Einträge und bis wann der letzte Zug noch zu sehen ist */
+  paceN: -1,
+  floorAt: 0,
+  /**
+   * Nur für Tests (über window.__schnautz): Die KIs ziehen in der Vorspul-Taktung, auch wenn Menschen mitspielen.
+   * Lange E2E-Partien laufen so in einem Bruchteil der Zeit. Die 4er-Sperre bleibt normal (hostWin fragt fastOn).
+   */
+  quick: false,
 };
+
+/** Spulen die KIs gerade vor? Dieselbe Prüfung wie in botTick, nicht das rohe Feld (siehe hostWin). */
+export const fastOn = (st: State): boolean => fastOk(st, BOTS.fast);
+/** Taktung der KI-Züge: Vorspulen oder Testmodus */
+const paced = (st: State): boolean => BOTS.quick || fastOn(st);
+
+/** Takt beim Vorspulen, mit dem Boden aus dem zuletzt gespielten Zug. */
+const fastMs = (kind: PaceIn['kind'], hold = 0): number =>
+  fastDelay({ kind, r: Math.random(), floor: Math.max(seqLeft(), BOTS.floorAt - Date.now()), hold });
+
+/**
+ * Gastgeber tippt „⏩ Vorspulen“: Geplante lange Denkpausen verwerfen, denn botTick behält bei gleichem Schlüssel
+ * den alten Timer. Der Eintrag `ffwd` sagt allen am Tisch Bescheid.
+ */
+export function fastForward(): void {
+  const st = H.st;
+  if (App.role !== 'host' || !st || !onlyBotsPlaying(st) || BOTS.fast === st.games) return;
+  BOTS.fast = st.games;
+  BOTS.paceN = st.n;
+  BOTS.floorAt = Date.now() + seqLeft();
+  clearTurnTimer();
+  clearReactions();
+  clearSwaps();
+  clearBets();
+  addLog(st, { k: 'ffwd', p: App.me });
+  hostCommit();
+}
 
 function clearBets(): void {
   Object.values(BOTS.bet).forEach((t) => clearTimeout(t));
@@ -83,7 +121,9 @@ function botBets(st: State): void {
       return;
     }
     if (BOTS.bet[p.id]) return;
-    const d = 2500 + Math.random() * 4500 + Math.min(seqLeft(), 2000) + (ANN.busy ? 1500 : 0);
+    const d = paced(st)
+      ? fastMs('bet')
+      : 2500 + Math.random() * 4500 + Math.min(seqLeft(), 2000) + (ANN.busy ? 1500 : 0);
     BOTS.bet[p.id] = setTimeout(() => {
       delete BOTS.bet[p.id];
       const s = H.st;
@@ -166,6 +206,27 @@ export function resetBots(): void {
   BOTS.sndAt = 0;
   clearBets();
   clearRematch();
+  BOTS.fast = null;
+  BOTS.paceN = -1;
+  BOTS.floorAt = 0;
+}
+
+/** Vorspulen beenden, wenn es nicht mehr passt, sonst den Animationsboden aus den neuen Einträgen fortschreiben. */
+function paceTick(st: State): void {
+  if (BOTS.fast !== null && !fastOn(st)) BOTS.fast = null;
+  // Nach dem Neuladen des Gastgebers: Der Verlauf weiß noch, dass vorgespult wird
+  if (BOTS.fast === null && fastOk(st, st.games) && ffwdInLog(st.log)) {
+    BOTS.fast = st.games;
+    BOTS.paceN = st.n;
+    BOTS.floorAt = Date.now() + seqLeft();
+  }
+  if (BOTS.fast === null && !BOTS.quick) {
+    BOTS.paceN = st.n;
+    return;
+  }
+  const fresh = st.log.filter((e) => e.n > BOTS.paceN);
+  BOTS.paceN = st.n;
+  if (fresh.length) BOTS.floorAt = Math.max(BOTS.floorAt, Date.now() + animFloor(st.game, fresh, seqMsOf(fresh)));
 }
 
 /** Reaktionen außer der Reihe (4er reinwerfen, Bombe einwerfen) laufen für jede KI parallel. */
@@ -199,7 +260,9 @@ function botReact(st: State): void {
     // Manchmal bemerkt die KI die Gelegenheit nicht, fest pro Gelegenheit
     if (hashStr(p.id + key) % 100 >= (a.type === 'shthrow' ? NOTICE_THROW : NOTICE_BOMB)) return;
     // Bei einem neuen Stapel muss es schnell gehen, die Person am Zug wartet nur kurz
-    const d = (a.type === 'shthrow' ? 500 + Math.random() * 1900 : 700 + Math.random() * 1600) + seqLeft();
+    const d = paced(st)
+      ? fastMs('react')
+      : (a.type === 'shthrow' ? 500 + Math.random() * 1900 : 700 + Math.random() * 1600) + seqLeft();
     R.t = setTimeout(() => {
       R.t = null;
       if (App.role !== 'host' || !H.st) return;
@@ -213,6 +276,7 @@ function botReact(st: State): void {
 
 /** Wie lange "denkt" die KI über diesen Zug nach? */
 function thinkTime(st: State, who: Player, a: Action): number {
+  if (paced(st)) return fastMs(a.type === 'ready' ? 'ready' : 'turn', App.holdUntil - Date.now());
   const r = Math.random();
   let d: number;
   switch (a.type) {
@@ -300,7 +364,7 @@ function botSwapRound(st: State): void {
         if (a2 && act(s, p.id, a2)) fallbackMove(s, p.id);
         hostCommit();
       },
-      thinkTime(st, p, a) + Math.random() * 900,
+      paced(st) ? fastMs('swap') : thinkTime(st, p, a) + Math.random() * 900,
     );
   });
 }
@@ -309,6 +373,7 @@ function botSwapRound(st: State): void {
 export function botTick(): void {
   const st = H.st;
   if (App.role !== 'host' || !st || BOTS.hold) return;
+  paceTick(st);
   if (st.phase === 'lobby') {
     clearTurnTimer();
     clearBets();

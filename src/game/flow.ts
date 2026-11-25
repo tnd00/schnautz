@@ -69,7 +69,7 @@ export function beginGame(st: State, rng?: Rng): ActResult {
 }
 
 /**
- * Jemand verlässt den Tisch. In der Lobby wird der Platz frei (und bei Bedarf mit KI gefüllt),
+ * Jemand verlässt den Tisch. In der Lobby wird der Platz frei (mit Auffüllen bekommt er beim Start eine KI),
  * mitten in der Partie spielt die KI unter demselben Namen weiter.
  */
 export function quitPlayer(st: State, pid: string, rng?: Rng): void {
@@ -78,7 +78,7 @@ export function quitPlayer(st: State, pid: string, rng?: Rng): void {
   if (st.phase === 'lobby') {
     st.players[i].online = false;
     removePlayer(st, pid);
-    syncSeats(st, rng);
+    syncSeats(st);
     return;
   }
   toBot(st, pid, rng);

@@ -1,17 +1,17 @@
-/* Plätze am Tisch: mit KI auffüllen, Gäste setzen und KI-Plätze an Menschen übergeben. */
+/* Plätze am Tisch: beim Start mit KI auffüllen, Gäste setzen und KI-Plätze an Menschen übergeben. */
 import { MIN_SEATS } from './constants';
 import { addBot, addLog, addPlayer, MAX_SEATS_ALL, pIdx, seatLimit, uniqueName } from './state';
-import type { Player, Rng, State } from './types';
+import type { ActResult, GameKind, Player, Rng, Rules, State } from './types';
 import { forgetRematch } from './rematch';
 import { betPart } from './bets';
 
 export type SeatResult = { id: string } | { err: string };
 
 /**
- * Lobby: Platzzahl in gültige Grenzen bringen, überzählige KIs abräumen und freie Plätze füllen, falls eingestellt.
- * Weniger Plätze als Menschen am Tisch gibt es nicht.
+ * Lobby: Platzzahl in gültige Grenzen bringen und überzählige KIs abräumen. Freie Plätze bleiben in der Lobby frei,
+ * mit KI gefüllt wird erst beim Start (fillForStart). Weniger Plätze als Menschen am Tisch gibt es nicht.
  */
-export function syncSeats(st: State, rng?: Rng): void {
+export function syncSeats(st: State): void {
   if (st.phase !== 'lobby') return;
   const humans = st.players.filter((p) => !p.bot).length;
   // Die Einstellung gilt für beide Spiele, gekürzt wird erst beim Anwenden (seatLimit)
@@ -23,7 +23,50 @@ export function syncSeats(st: State, rng?: Rng): void {
     const [b] = st.players.splice(bi, 1);
     addLog(st, { k: 'leave', p: b.id, name: b.name });
   }
-  if (st.rules.fill) while (st.players.length < seatLimit(st) && !addBot(st, rng));
+}
+
+/** Was der Start aus der Lobby macht, für start() und die Texte in der Lobby. */
+export type StartPlan = {
+  /** Spielen mit: Gastgeber, alle online und die KIs. Wer offline sitzt, fällt beim Start weg */
+  seated: number;
+  /** Davon KIs */
+  bots: number;
+  /** So viele KIs kommen beim Start dazu (nur mit Auffüllen) */
+  add: number;
+  /** So viele Leute spielen die Partie */
+  n: number;
+  /** So viele Plätze bleiben beim Start leer */
+  empty: number;
+};
+
+type SeatsOf = { players: readonly Player[]; rules: Rules; game: GameKind; host: string };
+
+/**
+ * Wer beim Start mitspielt und wie viele KIs dazukommen. Gilt für State und View gleich. Mit Auffüllen kommen KIs bis
+ * zur Platzzahl, nie mehr, als das Spiel erlaubt (seatLimit).
+ */
+export function startPlan(st: SeatsOf): StartPlan {
+  const playing = st.players.filter((p) => p.id === st.host || p.online);
+  const seated = playing.length;
+  const limit = seatLimit(st);
+  const add = st.rules.fill ? Math.max(0, limit - seated) : 0;
+  const n = seated + add;
+  return { seated, bots: playing.filter((p) => p.bot).length, add, n, empty: Math.max(0, limit - n) };
+}
+
+/**
+ * Start mit Auffüllen: Wer offline sitzt, spielt ohnehin nicht mit und räumt den Platz (wie in den Startfunktionen,
+ * ohne Logeintrag), dann kommen KIs auf alle freien Plätze. Ohne Auffüllen bleibt alles, wie es ist.
+ */
+export function fillForStart(st: State, rng?: Rng): ActResult {
+  const plan = startPlan(st);
+  if (st.phase !== 'lobby' || !plan.add) return null;
+  st.players = st.players.filter((p) => p.id === st.host || p.online);
+  for (let i = 0; i < plan.add; i++) {
+    const err = addBot(st, rng);
+    if (err) return err;
+  }
+  return null;
 }
 
 /** Welchen KI-Platz bekommt jemand? Gleicher Name zuerst, dann Plätze, die noch im Spiel sind, sonst der letzte. */

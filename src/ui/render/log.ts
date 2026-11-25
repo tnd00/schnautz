@@ -330,6 +330,15 @@ export function logLine(v: View, e: LogEntry): [cls: string, html: string] | nul
       ];
     case 'lobby':
       return ['sys', 'Zurück in der Lobby.'];
+    case 'abort':
+      return [
+        'big',
+        who() +
+          vb(p, ' hast die Partie abgebrochen.', ' hat die Partie abgebrochen.') +
+          (e.bets ? ' Die Tipps verfallen.' : ''),
+      ];
+    case 'ffwd':
+      return ['sys', '⏩ ' + who() + vb(p, ' spulst vor.', ' spult vor.') + ' Die KIs spielen die Partie zügig aus.'];
     case 'round':
       return [
         'round',

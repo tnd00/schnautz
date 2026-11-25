@@ -5,6 +5,7 @@
  */
 import { MIN_SEATS } from '../../game/constants';
 import { maxSeats, seatLimit } from '../../game/state';
+import { startPlan } from '../../game/seats';
 import type { GameKind, Player, View } from '../../game/types';
 import { App } from '../app';
 import { BOT_TAG } from '../cards';
@@ -91,14 +92,20 @@ function seatHTML(v: View, p: Player, i: number, fresh: boolean): string {
   );
 }
 
-/** Freier Platz als gestrichelter Stanzrand. Der Gastgeber holt mit einem Tipp eine KI dazu. */
+/**
+ * Freier Platz als gestrichelter Stanzrand. Der Gastgeber holt mit einem Tipp eine KI dazu, auch mit Auffüllen
+ * (wer will, holt eine bestimmte KI schon vorher). Mit Auffüllen steht darunter, dass beim Start eine KI kommt.
+ */
 function emptySeat(host: boolean, fill: boolean, i: number): string {
-  if (host && !fill)
+  const cls = `lseat empty ${tiltOf(i)}${fill ? ' fillk' : ''}`;
+  if (host)
     return (
-      `<li class="lseat empty ${tiltOf(i)}"><button class="addseat" data-act="addbot" aria-label="KI dazuholen">` +
-      `<span class="addchip">${ICON_PLUS}KI</span></button></li>`
+      `<li class="${cls}"><button class="addseat" data-act="addbot" aria-label="${fill ? 'KI jetzt dazuholen' : 'KI dazuholen'}">` +
+      `<span class="addchip">${ICON_PLUS}KI</span>` +
+      (fill ? '<span class="freek" aria-hidden="true">KI beim Start</span>' : '') +
+      '</button></li>'
     );
-  return `<li class="lseat empty ${tiltOf(i)}"><span class="freet">frei</span></li>`;
+  return `<li class="${cls}"><span class="freet">${fill ? 'KI beim Start' : 'frei'}</span></li>`;
 }
 
 /** Platzzahl als Zahl-Sticker mit Minus und Plus: nie weniger als die Menschen am Tisch, nie mehr als das Spiel erlaubt. */
@@ -204,22 +211,25 @@ function gamePane(v: View, host: boolean, hostName: string, slap: boolean): stri
  * Auf kurzen Handys steht die Zeile im Knopf selbst (.lu2).
  */
 function startBar(v: View, slap: boolean): string {
-  const n = v.players.length;
-  const bots = v.players.filter((p) => p.bot).length;
-  const free = Math.max(0, seatLimit(v) - n);
+  // Dieselbe Zählung wie beim Start: Wer offline sitzt, spielt nicht mit, mit Auffüllen kommen KIs dazu
+  const { n, bots, add, empty } = startPlan(v);
   const name = GAME_NAME[v.game];
   const fill =
-    '<label class="lfill"><span class="rl"><span class="rt">Freie Plätze mit KI füllen</span>' +
-    '<small>Wer später kommt, übernimmt einen KI-Platz</small></span>' +
+    '<label class="lfill"><span class="rl"><span class="rt">Freie Plätze beim Start mit KI füllen</span>' +
+    '<small>Wer während der Partie kommt, übernimmt einen KI-Platz samt Karten</small></span>' +
     `<input type="checkbox" class="switch" data-rule="fill"${v.rules.fill ? ' checked' : ''}></label>`;
-  const alone = n < 2;
+  const alone = n < MIN_SEATS;
   const line = alone
     ? 'Allein geht es nicht. Hol eine KI dazu oder schick den Link.'
-    : free
-      ? `${free === 1 ? 'Ein Platz bleibt' : `${free} Plätze bleiben`} beim Start leer.`
-      : bots
-        ? `Alle Plätze sind besetzt, ${bots === 1 ? 'einer' : `${bots} davon`} mit KI.`
-        : 'Alle Plätze sind besetzt. Keine Ausreden mehr.';
+    : add
+      ? add === 1
+        ? 'Den freien Platz spielt die KI.'
+        : `Die ${add} freien Plätze spielt die KI.`
+      : empty
+        ? `${empty === 1 ? 'Ein Platz bleibt' : `${empty} Plätze bleiben`} beim Start leer.`
+        : bots
+          ? `Alle Plätze sind besetzt, ${bots === 1 ? 'einer' : `${bots} davon`} mit KI.`
+          : 'Alle Plätze sind besetzt. Keine Ausreden mehr.';
   // Im Knopf ist auf kurzen Handys wenig Platz, dort steht die kurze Fassung
   const short = alone ? 'Hol eine KI dazu oder schick den Link' : line;
   const next =
@@ -229,7 +239,7 @@ function startBar(v: View, slap: boolean): string {
     ? `<button class="lstart lgo-start notyet" disabled aria-describedby="lline">${name} starten` +
       '<span class="lu2" aria-hidden="true">Hol eine KI dazu oder schick den Link</span></button>'
     : `<button class="st-btn st-primary lstart lgo-start${slap ? ' st-stick' : ''}" data-act="start" aria-describedby="lline">` +
-      `<span>${name} starten<span class="lu"> · ${lineup(n)}${bots ? `, ${bots} KI` : ''}</span></span>` +
+      `<span>${name} starten<span class="lu"> · ${lineup(n)}${bots + add ? `, ${bots + add} KI` : ''}</span></span>` +
       `<span class="lu2" aria-hidden="true">${line}</span></button>`;
   return `${fill}<div class="lgo">${next}${start}<p class="lline" id="lline">${line}</p></div>`;
 }
@@ -299,10 +309,12 @@ export function renderLobby(v: View): void {
   $('#rules-form').innerHTML = gamePane(v, host, hostName, slapGame);
   lob.classList.toggle('guest', !host);
 
-  const ready = v.players.length >= 2;
+  const plan = startPlan(v);
+  const ready = plan.n >= MIN_SEATS;
+  const joins = plan.add === 1 ? ', eine KI kommt dazu' : plan.add ? `, ${plan.add} KI kommen dazu` : '';
   $('#lobby-start').innerHTML = host
     ? `<div class="lbar">${startBar(v, !first && ready && !LOB.ready)}</div>`
-    : `<div class="lbar lbar-guest"><p class="lwait">${esc(hostName)} startet gleich ${GAME_NAME[v.game]} ${lineup(v.players.length)}` +
+    : `<div class="lbar lbar-guest"><p class="lwait">${esc(hostName)} startet gleich ${GAME_NAME[v.game]} ${lineup(plan.n)}${joins}` +
       '<span class="thinking"><i></i><i></i><i></i></span></p></div>';
 
   LOB.seats = keys;

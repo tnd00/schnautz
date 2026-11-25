@@ -4,7 +4,8 @@ import type { Player, SchnautzResult, View } from '../game/types';
 import { App } from './app';
 import { esc } from './dom';
 import { szResult, unreachable } from '../game/games';
-import { dkLive, dkWaiting } from '../game/durak';
+export { livePlayers, onlyBotsPlaying } from '../game/games';
+import { dkWaiting } from '../game/durak';
 import { cbWaiting } from '../game/cabo';
 
 export function schnautzResult(v: View): SchnautzResult | null {
@@ -71,27 +72,4 @@ export function seatOrder(v: View): Player[] {
   const out: Player[] = [];
   for (let k = 1; k < n; k++) out.push(v.players[(idx + k + n) % n]);
   return out;
-}
-
-/** Spielen gerade nur noch KIs? Dann darf der Gastgeber die Partie abkürzen. */
-export function onlyBotsPlaying(v: View): boolean {
-  if (v.phase !== 'play' && v.phase !== 'choose' && v.phase !== 'swap' && v.phase !== 'peek') return false;
-  const live = livePlayers(v);
-  return live.length > 0 && live.every((p) => p.bot);
-}
-
-/** Wer in der laufenden Partie noch mitspielt. */
-export function livePlayers(v: View): Player[] {
-  switch (v.game) {
-    case 'shithead':
-      return v.players.filter((p) => !p.out && !!v.sh?.P[p.id] && !v.sh.finished.includes(p.id));
-    case 'durak':
-      return v.players.filter((p) => dkLive(v, p.id));
-    case 'cabo':
-      return v.players.filter((p) => !!v.cb?.P[p.id]);
-    case 'schnautz':
-      return v.players.filter((p) => !p.out);
-    default:
-      return unreachable(v.game);
-  }
 }

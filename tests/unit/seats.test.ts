@@ -4,8 +4,8 @@ import { botDecide } from '../../src/bots/index';
 import { act } from '../../src/game/actions';
 import { quitPlayer, toBot } from '../../src/game/flow';
 import { finishRound } from '../../src/game/schnautz';
-import { reclaimSeat, seatGuest, takeSeat } from '../../src/game/seats';
-import { addPlayer, migrate, newState, pIdx } from '../../src/game/state';
+import { reclaimSeat, seatGuest, startPlan, takeSeat } from '../../src/game/seats';
+import { addPlayer, maxSeats, migrate, newState, pIdx } from '../../src/game/state';
 import { GAMES, reignOf, resetRulesFor, setReign } from '../../src/game/games';
 import { DEFAULT_RULES } from '../../src/game/constants';
 import type { Card, State } from '../../src/game/types';
@@ -33,14 +33,101 @@ function playOut(st: State, rng: () => number): void {
 }
 
 describe('Plätze am Tisch', () => {
-  it('füllt freie Plätze mit KI, gibt sie an Gäste ab und räumt bei weniger Plätzen auf', () => {
+  it('lässt freie Plätze in der Lobby frei, erst der Start füllt sie mit KI bis zur Platzzahl', () => {
     const rng = rngF(1);
     const st = newState('h', 'Host');
     act(st, 'h', { type: 'rules', rules: { fill: true, seats: 4 } }, rng);
-    expect(st.players).toHaveLength(4);
-    expect(bots(st)).toHaveLength(3);
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    expect(st.players).toHaveLength(1);
+    expect(startPlan(st)).toEqual({ seated: 1, bots: 0, add: 3, n: 4, empty: 0 });
 
-    // Wer beitritt, übernimmt einen KI-Platz, die Zahl der Plätze bleibt
+    // Wer beitritt, bekommt einen eigenen freien Platz, keine Übernahme
+    expect(seatId(seatGuest(st, 'p-anna', 'Anna'))).toBe('p-anna');
+    expect(st.log.at(-1)).toMatchObject({ k: 'join', p: 'p-anna', name: 'Anna' });
+    expect(startPlan(st)).toMatchObject({ seated: 2, add: 2, n: 4 });
+
+    // Eine bestimmte KI schon vorher holen geht weiter, × macht den Platz wieder frei, ohne die Platzzahl zu ändern
+    expect(act(st, 'h', { type: 'addbot' }, rng)).toBeNull();
+    expect(startPlan(st)).toMatchObject({ seated: 3, bots: 1, add: 1, n: 4 });
+    expect(act(st, 'h', { type: 'rmbot', id: bots(st)[0].id }, rng)).toBeNull();
+    expect(st.rules.seats).toBe(4);
+    expect(st.players).toHaveLength(2);
+    expect(bots(st)).toHaveLength(0);
+
+    expect(act(st, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(st.phase).toBe('swap');
+    expect(st.players).toHaveLength(4);
+    expect(bots(st)).toHaveLength(2);
+    expect(st.players.slice(0, 2).map((p) => p.id)).toEqual(['h', 'p-anna']);
+    shCardsOk(st);
+  });
+
+  it('füllt beim Start nicht über die Platzzahl des Spiels und lässt ohne Auffüllen alles wie bisher', () => {
+    const rng = rngF(31);
+    // Acht Plätze eingestellt, Durak erlaubt höchstens sechs
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 8 } }, rng);
+    act(st, 'h', { type: 'game', game: 'durak' }, rng);
+    expect(startPlan(st)).toMatchObject({ add: maxSeats('durak') - 1, n: maxSeats('durak') });
+    expect(act(st, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(st.players).toHaveLength(maxSeats('durak'));
+
+    // Ohne Auffüllen spielen nur die, die da sind, freie Plätze bleiben leer
+    const off = newState('h', 'Host');
+    act(off, 'h', { type: 'rules', rules: { seats: 4 } }, rng);
+    seatGuest(off, 'p-1', 'Eins');
+    expect(startPlan(off)).toEqual({ seated: 2, bots: 0, add: 0, n: 2, empty: 2 });
+    expect(act(off, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(off.players.map((p) => p.id)).toEqual(['h', 'p-1']);
+  });
+
+  it('startet allein, wenn aufgefüllt wird, ohne Auffüllen nicht', () => {
+    const rng = rngF(32);
+    const alone = newState('h', 'Host');
+    act(alone, 'h', { type: 'rules', rules: { seats: 2 } }, rng);
+    expect(startPlan(alone)).toMatchObject({ n: 1, add: 0 });
+    expect(act(alone, 'h', { type: 'start' }, rng)).toBe('Ihr braucht mindestens zwei Leute am Tisch.');
+    expect(alone.phase).toBe('lobby');
+    expect(alone.players).toHaveLength(1);
+
+    act(alone, 'h', { type: 'rules', rules: { fill: true } }, rng);
+    expect(startPlan(alone)).toMatchObject({ n: 2, add: 1 });
+    expect(act(alone, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(alone.phase).not.toBe('lobby');
+    expect(bots(alone)).toHaveLength(1);
+  });
+
+  it('zählt offline Sitzende nicht als besetzt, ihr Platz bekommt beim Start eine KI', () => {
+    const rng = rngF(33);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 3 } }, rng);
+    seatGuest(st, 'p-lena', 'Lena');
+    seatGuest(st, 'p-tom', 'Tom');
+    st.players[pIdx(st, 'p-lena')].online = false;
+    // Der Tisch ist voll, aber Lena spielt nicht mit
+    expect(seatGuest(st, 'p-zu', 'Zu viel')).toEqual({ err: 'Der Tisch ist voll.' });
+    expect(startPlan(st)).toEqual({ seated: 2, bots: 0, add: 1, n: 3, empty: 0 });
+    expect(act(st, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(st.players).toHaveLength(3);
+    expect(st.players.some((p) => p.id === 'p-lena')).toBe(false);
+    expect(bots(st)).toHaveLength(1);
+
+    // Auch ein offline markierter Gastgeber spielt mit und zählt
+    const hostOff = newState('h', 'Host');
+    act(hostOff, 'h', { type: 'rules', rules: { fill: true, seats: 2 } }, rng);
+    hostOff.players[0].online = false;
+    expect(startPlan(hostOff)).toMatchObject({ seated: 1, add: 1, n: 2 });
+  });
+
+  it('gibt KI-Plätze an Gäste ab, wenn alle Plätze besetzt sind, und räumt bei weniger Plätzen auf', () => {
+    const rng = rngF(1);
+    const st = newState('h', 'Host');
+    act(st, 'h', { type: 'rules', rules: { fill: true, seats: 4 } }, rng);
+    for (let i = 0; i < 3; i++) expect(act(st, 'h', { type: 'addbot' }, rng)).toBeNull();
+    expect(bots(st)).toHaveLength(3);
+    expect(startPlan(st)).toMatchObject({ seated: 4, bots: 3, add: 0, n: 4 });
+
+    // Alle Plätze belegt: Wer beitritt, übernimmt einen KI-Platz, die Zahl der Plätze bleibt
     const anna = seatId(seatGuest(st, 'p-anna', 'Anna'));
     expect(anna).not.toBe('p-anna');
     const ap = st.players[pIdx(st, anna)];
@@ -55,17 +142,12 @@ describe('Plätze am Tisch', () => {
     act(st, 'h', { type: 'rules', rules: { seats: 1 } }, rng);
     expect(st.rules.seats).toBe(2);
 
-    // Mehr Plätze werden wieder gefüllt, wer in der Lobby geht, macht Platz für eine KI
+    // Mehr Plätze bleiben in der Lobby frei, wer geht, macht seinen Platz frei
     act(st, 'h', { type: 'rules', rules: { seats: 3 } }, rng);
-    expect(bots(st)).toHaveLength(1);
+    expect(bots(st)).toHaveLength(0);
     quitPlayer(st, anna, rng);
-    expect(st.players).toHaveLength(3);
-    expect(bots(st)).toHaveLength(2);
-
-    // Eine KI entfernen heißt beim Auffüllen: ein Platz weniger
-    act(st, 'h', { type: 'rmbot', id: bots(st)[0].id }, rng);
-    expect(st.rules.seats).toBe(2);
-    expect(st.players).toHaveLength(2);
+    expect(st.players).toHaveLength(1);
+    expect(startPlan(st)).toMatchObject({ add: 2, n: 3 });
   });
 
   it('lässt freie Plätze ohne Auffüllen leer und meldet einen vollen Tisch', () => {
@@ -82,6 +164,7 @@ describe('Plätze am Tisch', () => {
     const rng = rngF(3);
     const st = newState('h', 'Host');
     act(st, 'h', { type: 'rules', rules: { fill: true, seats: 4 } }, rng);
+    for (let i = 0; i < 3; i++) act(st, 'h', { type: 'addbot' }, rng);
     const first = bots(st)[0];
     expect(seatId(seatGuest(st, 'p-x', first.name))).toBe(first.id);
   });
@@ -359,6 +442,7 @@ describe('Kronen je Spiel', () => {
     const st = newState('h', 'Host');
     act(st, 'h', { type: 'game', game: 'shithead' }, rng);
     act(st, 'h', { type: 'rules', rules: { fill: true, seats: 8 } }, rng);
+    for (let i = 0; i < 7; i++) act(st, 'h', { type: 'addbot' }, rng);
     expect(addPlayer(st, 'g', 'Gast')).toBe('Der Tisch ist voll.');
     // So sah ein gespeicherter Tisch aus 2.5 aus: zehn Plätze, zwei mehr als heute erlaubt
     const extra = bots(st)

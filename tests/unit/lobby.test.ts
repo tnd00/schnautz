@@ -39,14 +39,16 @@ describe('Lobby: Plätze entfernen', () => {
     expect(ids(st)).toEqual(['h', 'p-lena', 'p-uschi']);
   });
 
-  it('nimmt beim Auffüllen wie bei KIs einen Platz weg, sonst käme sofort eine KI', () => {
+  it('lässt beim Auffüllen den Platz frei, die KI kommt erst beim Start', () => {
     const st = table();
     act(st, 'h', { type: 'rules', rules: { fill: true } }, rngF(4));
-    expect(st.players).toHaveLength(4);
-    expect(act(st, 'h', { type: 'rmbot', id: 'p-lena' }, rngF(4))).toBeNull();
-    expect(st.rules.seats).toBe(3);
     expect(st.players).toHaveLength(3);
-    expect(st.players.some((p) => p.id === 'p-lena')).toBe(false);
+    expect(act(st, 'h', { type: 'rmbot', id: 'p-lena' }, rngF(4))).toBeNull();
+    expect(st.rules.seats).toBe(4);
+    expect(ids(st)).toEqual(['h', 'p-uschi']);
+    expect(act(st, 'h', { type: 'start' }, rngF(4))).toBeNull();
+    expect(st.players).toHaveLength(4);
+    expect(st.players.filter((p) => p.bot)).toHaveLength(2);
   });
 
   it('erlaubt das nur dem Gastgeber und nie mitten in der Partie', () => {

@@ -61,6 +61,16 @@ export const myId = (page: Page): Promise<string> => page.evaluate(() => window.
 /** Läuft gerade eine Shithead-Sequenz? Dann zeigt die Oberfläche noch den alten Stand. */
 export const seqBusy = (page: Page): Promise<boolean> => page.evaluate(() => !!window.__schnautz?.SEQ.busy);
 
+/**
+ * Testmodus für lange Partien: Die KIs des Gastgebers ziehen in der Vorspul-Taktung (BOTS.quick in src/net/bots.ts),
+ * Abläufe und 4er-Sperre bleiben normal. Eine Partie mit echter Taktung behält die Suite trotzdem.
+ */
+export async function quickBots(host: Page): Promise<void> {
+  await host.evaluate(() => {
+    if (window.__schnautz) window.__schnautz.BOTS.quick = true;
+  });
+}
+
 /** Wartet, bis sich der Zustand beim Host geändert hat (Zähler n im Verlauf). */
 export async function waitForChange(page: Page, n0: number, timeout = 20_000): Promise<void> {
   await expect.poll(async () => (await view(page))?.n, { timeout }).not.toBe(n0);
@@ -126,6 +136,16 @@ export async function hostTable(page: Page, name: string): Promise<string> {
     });
     await expect.poll(() => page.evaluate(() => window.__schnautz?.App.view?.rules.turnSecs)).toBe(0);
   });
+  // Ohne Auffüllen beim Start: Die Tests spielen mit genau den Leuten und KIs, die sie selbst an den Tisch holen.
+  // Den Ablauf mit Auffüllen prüft tests/e2e/start.spec.ts
+  await page.evaluate(() => {
+    const s = window.__schnautz;
+    if (!s?.H.st) throw new Error('kein Gastgeber');
+    const e = s.act(s.H.st, s.App.me, { type: 'rules', rules: { fill: false } });
+    if (e) throw new Error(String(e));
+    s.hostCommit();
+  });
+  await expect.poll(() => page.evaluate(() => window.__schnautz?.App.view?.rules.fill)).toBe(false);
   await lobbyTab(page, 'table');
   return code;
 }

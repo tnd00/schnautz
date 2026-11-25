@@ -135,6 +135,11 @@ const SAMPLES: { [K in LogKind]: readonly Omit<Extract<LogEntry, { k: K }>, 'n'>
   ],
   winner: [{ k: 'winner', p: 'a' }, { k: 'winner' }],
   lobby: [{ k: 'lobby' }],
+  abort: [
+    { k: 'abort', p: 'a', game: 'shithead' },
+    { k: 'abort', p: 'a', game: 'durak', bets: true },
+  ],
+  ffwd: [{ k: 'ffwd', p: 'a' }],
   chat: [{ k: 'chat', p: 'a', text: 'Hallo' }],
   emote: [{ k: 'emote', p: 'a', e: '😀' }],
   toss: [{ k: 'toss', p: 'a', item: 'tomato', to: 'b' }],

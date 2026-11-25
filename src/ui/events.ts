@@ -3,7 +3,10 @@ import { rankOf } from '../game/cards';
 import { shCanBomb, shCanThrow } from '../game/shithead';
 import { seatLimit } from '../game/state';
 import { EMOTE_GAP_MS, SOUND_GAP_MS, SOUNDS, TOSS_ITEMS, TURN_SECS } from '../game/constants';
-import type { Action, GameKind, TossItem } from '../game/types';
+import type { Action, GameKind, TossItem, View } from '../game/types';
+import { betPart, hasBets } from '../game/bets';
+import { unreachable } from '../game/games';
+import { fastForward } from '../net/bots';
 import { doAct } from '../net/dispatch';
 import { guestLeave, guestStart, guestStop, guestWake } from '../net/guest';
 import { hostCancel, hostClose, hostNew, hostNewVsBots, hostResume, sendHostClaim } from '../net/host';
@@ -35,7 +38,7 @@ import { fitLobby, renderLobby, turnLabel, turnText } from './render/lobby';
 import { openGameSettings, resetRulesFor } from './render/gamesettings';
 import { renderLog } from './render/log';
 import { rulesHTML } from './render/rules';
-import { renderGame } from './render/schnautz';
+import { FFWD_ON_HTML, renderGame } from './render/schnautz';
 import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
 import { renderTurnNote } from './render/turnnote';
 import { openBetModal, renderBetModal } from './render/bets';
@@ -115,6 +118,27 @@ function selCard(kind: 'h' | 'm', i: number): void {
   else App.sel.m = App.sel.m === i ? null : i;
   App.anim = {};
   renderGame(v);
+}
+
+/** Läuft gerade eine Partie, die ein Abbruch ohne Ergebnis beenden würde? */
+const running = (v: View): boolean =>
+  v.phase === 'play' || v.phase === 'choose' || v.phase === 'swap' || v.phase === 'peek' || v.phase === 'end';
+
+/** Rückfrage vor „Neue Partie“ oder „Zur Lobby“ mitten in der Partie. Tipps erwähnt sie nur, wenn welche liegen. */
+function abortQuestion(v: View): string {
+  const bets = hasBets(v.game) && Object.keys(betPart(v)?.bets ?? {}).length > 0 ? ' Tipps verfallen.' : '';
+  switch (v.game) {
+    case 'shithead':
+      return `Partie ohne Shithead beenden?${bets}`;
+    case 'durak':
+      return `Partie ohne Durak beenden?${bets}`;
+    case 'schnautz':
+      return 'Partie ohne Sieger beenden?';
+    case 'cabo':
+      return 'Partie ohne Cabo-König beenden?';
+    default:
+      return unreachable(v.game);
+  }
 }
 
 export function confirmBox(text: string, ok: string, cb: () => void): void {
@@ -565,11 +589,18 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       break;
     }
     case 'lobbynow':
-      // Am Ende der Partie oder wenn nur noch KIs spielen: ohne Rückfrage
-      doAct({ type: 'tolobby' });
+      // Nach der Partie ohne Rückfrage, mitten in der Partie mit
+      if (v && running(v)) confirmBox(abortQuestion(v), 'Ja, zur Lobby', () => doAct({ type: 'tolobby' }));
+      else doAct({ type: 'tolobby' });
       break;
     case 'restart':
-      doAct({ type: 'restart' });
+      if (v && running(v)) confirmBox(abortQuestion(v), 'Ja, neue Partie', () => doAct({ type: 'restart' }));
+      else doAct({ type: 'restart' });
+      break;
+    case 'ffwd':
+      fastForward();
+      // Nur der Verlauf ändert sich, das zeichnet nicht neu: den Knopf gleich ersetzen
+      t.outerHTML = FFWD_ON_HTML;
       break;
     case 'tolobby':
       $('#menu').hidden = true;

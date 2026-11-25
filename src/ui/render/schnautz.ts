@@ -9,22 +9,13 @@ import { markClocks } from '../clock';
 import { markTosses } from '../toss';
 import { $, esc, listJoin, num } from '../dom';
 import { holdOverlay } from '../feedback';
-import {
-  W,
-  dealerId,
-  myTurn,
-  nameOf,
-  onlyBotsPlaying,
-  pById,
-  roundBest,
-  schnautzResult,
-  seatOrder,
-  turnId,
-  vb,
-} from '../helpers';
+import { W, dealerId, myTurn, nameOf, pById, roundBest, schnautzResult, seatOrder, turnId, vb } from '../helpers';
 import { nextSecs } from '../nextround';
 import { canChallenge, mustAccept, rematchLine, rematchMark } from './rematch';
 import { taunt } from '../taunts';
+import { shCanBet } from '../../game/bets';
+import { onlyBotsPlaying } from '../../game/games';
+import { ffwdInLog } from '../../net/pace';
 
 /** Schnautz-Tisch: Gegner, Mitte, Status und eigene Hand. */
 export function renderGame(v: View): void {
@@ -465,15 +456,33 @@ export function peekHTML(v: View, me: Player | null): string {
   );
 }
 
-/** Ich bin raus und nur noch KIs spielen: Der Host kann abkürzen, Gäste sehen einen Hinweis. */
+/** Statt des Knopfs, sobald vorgespult wird */
+export const FFWD_ON_HTML = '<span class="botsonly">⏩ Die KIs spielen es aus.</span>';
+
+/**
+ * Ich bin raus oder fertig und nur noch KIs spielen: Der Gastgeber spult vor oder beendet die Partie, Gäste sehen
+ * einen Hinweis. Ob schon vorgespult wird, steht im Verlauf (`ffwd` seit Partiebeginn und seit der letzten Übernahme).
+ */
 export function botsOnlyHTML(v: View, small = false): string {
   if (!onlyBotsPlaying(v)) return '';
+  const fast = ffwdInLog(v.log);
   if (App.role !== 'host')
-    return '<span class="botsonly">Nur noch KIs im Spiel. Der Gastgeber kann neu starten.</span>';
+    return `<span class="botsonly">Nur noch KIs im Spiel. ${fast ? 'Die KIs spielen es gleich aus.' : 'Der Gastgeber kann vorspulen.'}</span>`;
   const sz = small ? ' small' : '';
+  // Wer fertig ist und noch tippen kann, soll es vor dem Vorspulen wissen. Gesperrt wird nicht, sonst hält ein
+  // Gast, der nicht mehr hinschaut, den ganzen Tisch auf
+  const bettors = v.players.filter((p) => !p.bot && p.online && shCanBet(v, p.id));
+  const meBets = bettors.some((p) => p.id === App.me);
+  const names = [...(meBets ? ['Du'] : []), ...bettors.filter((p) => p.id !== App.me).map((p) => esc(p.name))];
+  const verb = names.length === 1 ? (meBets ? 'kannst' : 'kann') : meBets ? 'könnt' : 'können';
+  const hint = names.length
+    ? `<span class="botsonly" style="flex-basis:100%;text-align:center">${listJoin(names)} ${verb} noch tippen.</span>`
+    : '';
   return (
-    `<button class="btn ghost${sz}" data-act="lobbynow">Zur Lobby</button>` +
-    `<button class="btn primary${sz}" data-act="restart">Neue Partie</button>`
+    hint +
+    (fast ? FFWD_ON_HTML : `<button class="btn primary${sz}" data-act="ffwd">⏩ Vorspulen</button>`) +
+    `<button class="btn ghost${sz}" data-act="restart">Neue Partie</button>` +
+    `<button class="btn ghost${sz}" data-act="lobbynow">Zur Lobby</button>`
   );
 }
 

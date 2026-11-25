@@ -3,7 +3,7 @@
  * Neue Spiele kommen hier und in `GameKind` dazu. Weichen nach Spiel sind vollständige switch-Anweisungen
  * mit `unreachable` im default, dann meldet der Compiler jede Stelle, die das neue Spiel noch nicht kennt.
  */
-import type { GameKind, Reign, Result, Rules, SchnautzResult, State, Table } from './types';
+import type { GameKind, Player, Reign, Result, Rules, SchnautzResult, State, Table } from './types';
 import { cmpVersion } from '../content/version';
 import { cloneRules, DEFAULT_RULES } from './constants';
 
@@ -70,6 +70,32 @@ export const szResult = (r: Result | null | undefined): SchnautzResult | null =>
 /** Für den default-Zweig einer vollständigen Weiche nach Spiel. */
 export function unreachable(x: never): never {
   throw new Error(`Unbekanntes Spiel: ${String(x)}`);
+}
+
+/**
+ * Wer in der laufenden Partie noch mitspielt. Gilt für den Zustand beim Host und für jede Ansicht.
+ * Durak wie `dkLive` aus durak.ts, hier nachgebaut, denn durak.ts importiert diese Datei.
+ */
+export function livePlayers(t: Table): Player[] {
+  switch (t.game) {
+    case 'shithead':
+      return t.players.filter((p) => !p.out && !!t.sh?.P[p.id] && !t.sh.finished.includes(p.id));
+    case 'durak':
+      return t.players.filter((p) => !!t.dk && p.id in t.dk.P && !t.dk.finished.includes(p.id));
+    case 'cabo':
+      return t.players.filter((p) => !!t.cb?.P[p.id]);
+    case 'schnautz':
+      return t.players.filter((p) => !p.out);
+    default:
+      return unreachable(t.game);
+  }
+}
+
+/** Spielen gerade nur noch KIs? Dann darf der Gastgeber vorspulen oder die Partie beenden. */
+export function onlyBotsPlaying(t: Table): boolean {
+  if (t.phase !== 'play' && t.phase !== 'choose' && t.phase !== 'swap' && t.phase !== 'peek') return false;
+  const live = livePlayers(t);
+  return live.length > 0 && live.every((p) => p.bot);
 }
 
 /** Krone und Titel des Verlierers gelten pro Spiel, bis dort jemand Neues gewinnt oder verliert. */

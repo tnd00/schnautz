@@ -9,6 +9,8 @@ export const RANK_VAL: Readonly<Record<Rank, number>> = { 7: 7, 8: 8, 9: 9, 10: 
 
 export const DEFAULT_RULES: Readonly<Rules> = {
   seats: 4,
+  // Beim Start freie Plätze mit KI füllen. Die Spiellogik bleibt bei false (Unit-Tests, Sim), neue Tische schalten es
+  // in hostNew (src/net/host.ts) ein
   fill: false,
   turnSecs: 20,
   lives: 3,
