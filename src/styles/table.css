@@ -521,6 +521,27 @@
 #table[data-game='schnautz'] .center {
   padding-bottom: 18px;
 }
+/* Wert nach dem Tausch in der Pille: „21 ♥ → 31“, bricht nie um */
+#table[data-game='schnautz'] .pill {
+  white-space: nowrap;
+}
+#table[data-game='schnautz'] .pill.pre .to {
+  font-weight: 800;
+}
+
+/*
+ * Schnautz am PC: Die vier Knöpfe haben feste Breiten und stehen immer in einer Zeile, auch wenn „Alle drei → …“
+ * den höchsten Wert zeigt. Sonst bricht „Klopfen“ um, der Platz wird höher und die Reaktionsleiste rutscht weg.
+ */
+@media (min-width: 961px) {
+  #table[data-game='schnautz'] .me .actions .btn {
+    padding: 0 16px;
+    white-space: nowrap;
+  }
+  #table[data-game='schnautz'] .me .actions [data-act='swapAll'] {
+    width: 168px;
+  }
+}
 
 /*
  * Am PC passt der Tisch ohne Scrollen ins Fenster (fitDesktop in src/ui/fit.ts). Ist Platz übrig,

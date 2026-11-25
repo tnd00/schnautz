@@ -523,10 +523,13 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  /* 0s statt 0.01ms: Sonst bekommt jedes Element ohne eigenen Übergang (transition-property all) für jede
+   * Eigenschaft einen Übergang und zeigt einen Frame lang den alten Wert. fitLobby und Karussell messen dann die
+   * vorige Größe. */
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0s !important;
   }
 }
 

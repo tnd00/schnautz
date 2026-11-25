@@ -1,5 +1,5 @@
 import { handValue } from '../../game/schnautz';
-import type { Card, Player, SchnautzResult, View } from '../../game/types';
+import type { Card, HandValue, Player, SchnautzResult, View } from '../../game/types';
 import { activeList } from '../../game/state';
 import { App } from '../app';
 import { cardHTML, fmtVal, livesHTML, valHTML } from '../cards';
@@ -138,7 +138,8 @@ export function renderGame(v: View): void {
   } else if (v.phase === 'play') {
     if (playing) {
       main = knocked ? W(v, v.knocker) + ' hat geklopft. <em>Dein letzter Zug!</em>' : '<em>Du bist dran.</em>';
-      sub = 'Tippe eine Handkarte und eine Karte aus der Mitte an.';
+      // Auf sehr kurzen Handys entfällt der Tipp, sobald jemand geschoben hat (fit.css), dann zählt der Stand
+      sub = '<span class="tip">Tippe eine Handkarte und eine Karte aus der Mitte an.</span>';
     } else {
       main = knocked
         ? (v.knocker === App.me ? 'Du hast geklopft. ' : W(v, v.knocker) + ' hat geklopft. ') +
@@ -150,11 +151,12 @@ export function renderGame(v: View): void {
       const np = num(v.passes);
       sub =
         (sub ? sub + ' ' : '') +
+        '<span class="np">' +
         np +
         ' von ' +
         activeList(v).length +
         (np === 1 ? ' hat' : ' haben') +
-        ' geschoben. Schieben alle, kommen neue Karten.';
+        ' geschoben. Schieben alle, kommen neue Karten.</span>';
     }
   } else if (v.phase === 'end' || v.phase === 'over') {
     main = 'Runde vorbei.';
@@ -188,6 +190,14 @@ export function renderGame(v: View): void {
       (v.phase === 'play' || v.phase === 'choose' ? `<div class="actions botsrow">${botsOnlyHTML(v)}</div>` : '');
   } else {
     const hv = handValue(handCards ?? undefined, v.rules);
+    // Sind Hand- und Tischkarte gewählt, zeigt die Pille den Wert nach dem Tausch. Der Knopf bleibt gleich breit
+    const both = playing && sel.h != null && sel.m != null && !!mine;
+    let preview = '';
+    if (both && mine && sel.h != null && sel.m != null) {
+      const nh = mine.slice();
+      nh[sel.h] = v.middle[sel.m];
+      preview = shortVal(handValue(nh, v.rules));
+    }
     const liveMe = v.phase === 'choose' || v.phase === 'play';
     const tagMe = !liveMe
       ? ''
@@ -200,7 +210,14 @@ export function renderGame(v: View): void {
       '<div class="mehead"><span class="nm">Du</span>' +
       livesHTML(me, v.rules) +
       tagMe +
-      (handCards ? '<span class="pill' + (hv.v >= 30.5 ? ' hot' : '') + '">' + valHTML(hv) + '</span>' : '') +
+      (handCards
+        ? '<span class="pill' +
+          (hv.v >= 30.5 ? ' hot' : '') +
+          (preview ? ' pre' : '') +
+          '">' +
+          (preview ? shortVal(hv) + ' <span class="to">→ ' + preview + '</span>' : valHTML(hv)) +
+          '</span>'
+        : '') +
       '</div>';
     mh += '<div class="hand">';
     (handCards || []).forEach((c, i) => {
@@ -222,25 +239,16 @@ export function renderGame(v: View): void {
       mh +=
         '<button class="btn primary" data-act="keep">Blatt behalten</button><button class="btn ghost" data-act="take">Zweites Blatt nehmen</button>';
     } else if (playing) {
-      const both = sel.h != null && sel.m != null && !!mine;
-      let label = 'Tauschen';
-      if (both && mine && sel.h != null && sel.m != null) {
-        const nh = mine.slice();
-        nh[sel.h] = v.middle[sel.m];
-        label = 'Tauschen → ' + valHTML(handValue(nh, v.rules));
-      }
       const canKnock = !v.knocker && (v.rules.knockFirst || v.turns >= activeList(v).length);
       mh +=
         '<button class="btn primary' +
         (both ? ' pulse' : '') +
         '" data-act="swap"' +
         (both ? '' : ' disabled') +
-        '>' +
-        label +
-        '</button>';
+        '>Tauschen</button>';
       mh +=
         '<button class="btn ghost" data-act="swapAll" title="Alle drei Karten mit der Mitte tauschen">Alle drei → ' +
-        valHTML(handValue(v.middle, v.rules)) +
+        shortVal(handValue(v.middle, v.rules)) +
         '</button>';
       mh += '<button class="btn ghost" data-act="pass">Schieben</button>';
       mh +=
@@ -268,6 +276,13 @@ export function renderGame(v: View): void {
   meEl.innerHTML = mh;
   markClocks();
   markTosses();
+}
+
+/** Kurzer Handwert für Pille und Knopf: Zahl mit Farbe, besondere Hände nur als Zahl. So bleibt die Breite fest. */
+function shortVal(hv: HandValue): string {
+  if (hv.kind === 'normal') return valHTML(hv);
+  if (hv.kind === 'none') return '';
+  return fmtVal(hv.v);
 }
 
 function resultTitle(v: View): string {
@@ -311,7 +326,7 @@ export function renderOverlay(v: View): void {
   if (myC)
     verdict =
       '<div class="verdict bad">' +
-      (myC.to === 'out' ? '🚪 ' : myC.to === 'swim' ? '🏊 ' : '🍺 ') +
+      (myC.to === 'out' ? '🫧 ' : myC.to === 'swim' ? '🛟 ' : '💔 ') +
       (myC.to === 'out'
         ? 'Du bist raus.'
         : myC.to === 'swim'
@@ -453,7 +468,8 @@ export function peekHTML(v: View, me: Player | null): string {
 /** Ich bin raus und nur noch KIs spielen: Der Host kann abkürzen, Gäste sehen einen Hinweis. */
 export function botsOnlyHTML(v: View, small = false): string {
   if (!onlyBotsPlaying(v)) return '';
-  if (App.role !== 'host') return '<span class="botsonly">Nur noch KIs im Spiel. Der Host kann neu starten.</span>';
+  if (App.role !== 'host')
+    return '<span class="botsonly">Nur noch KIs im Spiel. Der Gastgeber kann neu starten.</span>';
   const sz = small ? ' small' : '';
   return (
     `<button class="btn ghost${sz}" data-act="lobbynow">Zur Lobby</button>` +

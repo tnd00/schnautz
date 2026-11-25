@@ -732,6 +732,36 @@
   }
 }
 
+/*
+ * Schnautz zu acht auf den kürzesten Handys (375x548): Zwei Knopfreihen und ein zweizeiliger Status passen nur mit
+ * engeren Abständen und etwas flacheren Knöpfen. Die Karten bleiben so groß wie vorher.
+ */
+@media (max-width: 960px) and (max-height: 580px) {
+  body.ingame #table[data-game='schnautz'] {
+    gap: 3px;
+  }
+  #table[data-game='schnautz'] .me {
+    gap: 3px;
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+  /* Die Hand behält ihren Abstand nach oben, sonst verdeckt die gewählte Karte die Leben */
+  #table[data-game='schnautz'] .me .actions .btn {
+    min-height: 36px;
+  }
+  /* Haben schon welche geschoben, zählt der Stand mehr als der Tipp, sonst wird der Status dreizeilig */
+  #table[data-game='schnautz'] .status .sub:has(.np) .tip {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  /* Mit Vorschau („18 ♦ → 26 ♣“) braucht die Pille die Breite, das Etikett „du gibst“ tritt so lange zurück */
+  #table[data-game='schnautz'] .mehead:has(.pill.pre) .tag {
+    display: none;
+  }
+}
+
 /* Gegner-Karussell (src/ui/carousel.ts): Position und Breite setzt das Skript */
 .opps.car {
   position: relative;

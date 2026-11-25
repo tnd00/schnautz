@@ -197,6 +197,18 @@ export function carouselRelease(): void {
  */
 export function initCarousel(onTap?: (pid: string) => void, onAct?: (el: HTMLElement) => void): void {
   const el = $('#opps');
+  // Im resize-Ereignis und im Frame danach liefert der Browser manchmal noch Abstände und Höhen der vorigen Größe
+  // (gesehen mit „Bewegung reduzieren“, dann wird das Karussell zu hoch). Erst im übernächsten Frame stimmen sie,
+  // dann noch einmal setzen. Gleitend, damit ein laufendes Drehen nicht abbricht, ohne Änderung bewegt sich nichts
+  let settle = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(settle);
+    settle = requestAnimationFrame(() => {
+      settle = requestAnimationFrame(() => {
+        if (el.classList.contains('car') && !CAR.drag) place(el, CAR.shown, true);
+      });
+    });
+  });
   el.addEventListener('pointerdown', (e) => {
     if (!el.classList.contains('car') || (e.pointerType === 'mouse' && e.button !== 0)) return;
     CAR.drag = { x: e.clientX, off: CAR.shown, moved: false, id: e.pointerId };

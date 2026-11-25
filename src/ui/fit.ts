@@ -13,11 +13,36 @@ function reset(t: HTMLElement): void {
   ['transform', 'transform-origin', 'margin-bottom', 'min-height'].forEach((k) => t.style.removeProperty(k));
 }
 
+/** Höhen der Teile am Tisch (Punkteleiste, Gegner, Mitte, Status, eigener Platz) beim letzten Einpassen. */
+let fitted = '';
+const partHeights = (t: HTMLElement): string =>
+  Array.from(t.children, (c) => (c instanceof HTMLElement ? c.offsetHeight : 0)).join(',');
+
+let watching = false;
+
+/**
+ * Zeichnet ein Weg nur einen Teil des Tisches neu (etwa die Auswahl bei Schnautz), läuft kein render und damit
+ * kein fitDesktop. Deshalb beobachtet der Tisch seine Teile und passt neu ein, sobald sich eine Höhe ändert.
+ * Beobachtet werden die Kinder, nicht #table selbst: fitDesktop setzt Höhe und transform an #table, das gäbe eine
+ * Schleife. Die Kinder ändern dabei ihre Größe nicht (transform zählt nicht, der Rest geht in margin-top: auto).
+ */
+function watch(t: HTMLElement): void {
+  if (watching || typeof ResizeObserver === 'undefined') return;
+  watching = true;
+  const ro = new ResizeObserver(() => {
+    if (isMobile() || !document.body.classList.contains('ingame')) return;
+    if (partHeights(t) !== fitted) fitDesktop();
+  });
+  for (const c of Array.from(t.children)) ro.observe(c);
+}
+
 export function fitDesktop(): void {
   const t = $opt('#table');
   if (!t) return;
+  watch(t);
   if (isMobile() || !document.body.classList.contains('ingame')) {
     reset(t);
+    fitted = '';
     return;
   }
   const bar = $opt('.top');
@@ -38,4 +63,5 @@ export function fitDesktop(): void {
     // transform ändert das Layout nicht, also den gesparten Platz unten zurückgeben
     t.style.marginBottom = `${-Math.ceil(h * (1 - z))}px`;
   }
+  fitted = partHeights(t);
 }
