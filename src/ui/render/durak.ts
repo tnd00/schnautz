@@ -3,19 +3,9 @@
  * weggelegte Karten, Status, eigene Hand mit Knöpfen und das Ergebnis am Ende.
  * Was ich gerade tun kann, steht in `dkRole`. Auswahl und Tipps verarbeitet src/ui/durak/input.ts.
  */
-import { dkBeats, rankOf, suitOf } from '../../game/cards';
+import { dkBeats, suitOf } from '../../game/cards';
 import { SUIT_SYM } from '../../game/constants';
-import {
-  dkAttackError,
-  dkCount,
-  dkLive,
-  dkOpen,
-  dkRoom,
-  dkTableRanks,
-  dkTransferError,
-  dkTrump,
-  dkWaiting,
-} from '../../game/durak';
+import { dkAttackError, dkCount, dkLive, dkOpen, dkRoom, dkTransferError, dkTrump, dkWaiting } from '../../game/durak';
 import { LOSER_MARK } from '../../game/games';
 import type { Card, DkView, DurakResult, Player, Suit, View } from '../../game/types';
 import { App } from '../app';
@@ -228,11 +218,11 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
           : dkOpen(D).length
             ? `${W(v, def)} verteidigt.`
             : '<em>Alles geschlagen.</em>';
-        // Passen gilt, bis ein neuer Wert auf dem Tisch liegt oder aufgenommen wird
+        // Passen gilt, bis ein neuer Wert auf dem Tisch liegt oder aufgenommen wird. Bis dahin kein Nachlegen
         sub = D.done.includes(App.me)
           ? D.take
-            ? 'Du hast gepasst. Nachlegen geht trotzdem noch, die anderen überlegen.'
-            : `Du hast gepasst. Das gilt, bis ein neuer Wert liegt oder ${W(v, def)} aufnimmt. Nachlegen geht trotzdem.`
+            ? 'Du hast gepasst. Die anderen dürfen noch etwas obendrauf legen.'
+            : `Du hast gepasst. Das gilt, bis ein neuer Wert liegt oder ${W(v, def)} aufnimmt.`
           : D.take || !dkOpen(D).length
             ? 'Nachlegen darfst du Werte, die schon liegen. Sonst tippe Passen.'
             : 'Passende Werte darfst du schon nachlegen.';
@@ -343,7 +333,6 @@ function myPlaceHTML(v: View, D: DkView, me: Player, hand: Card[]): string {
   const role = dkRole(v);
   const sel = new Set(dkSelected(v).idx);
   const ts = dkTrump(D);
-  const ranks = dkTableRanks(D);
   const open = dkOpen(D);
   const done = D.finished.includes(App.me);
   let h =
@@ -355,7 +344,8 @@ function myPlaceHTML(v: View, D: DkView, me: Player, hand: Card[]): string {
   hand.forEach((c, i) => {
     let usable = false;
     if (role === 'lead') usable = true;
-    else if (role === 'throw') usable = ranks.has(rankOf(c)) && dkRoom(D) > 0;
+    // Nachlegen: Wert liegt schon, Platz ist frei und ich habe nicht gepasst (dieselbe Prüfung wie beim Host)
+    else if (role === 'throw') usable = !dkAttackError(v, App.me, [c]);
     else if (role === 'defend') usable = open.some((p) => dkBeats(c, p.a, ts)) || !dkTransferError(v, App.me, [c]);
     const cls =
       (usable ? 'pick' : '') +

@@ -67,7 +67,7 @@ function moves(st: State, pid: string): Action[] {
     return out;
   }
   const ranks = new Set(D.table.flatMap((p) => (p.d ? [rankOf(p.a), rankOf(p.d)] : [rankOf(p.a)])));
-  if (D.table.length < D.limit)
+  if (D.table.length < D.limit && !D.done.includes(pid))
     hand.forEach((c, j) => ranks.has(rankOf(c)) && out.push({ type: 'dkattack', idx: [j] }));
   if ((D.take || !open.length) && hand.length && !D.done.includes(pid)) out.push({ type: 'dkpass' });
   return out;
@@ -114,6 +114,8 @@ describe('Durak: Geben und Anfang', () => {
 });
 
 describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
+  const PASSED = 'Du hast gepasst. Nachlegen geht erst wieder bei einem neuen Wert oder wenn aufgenommen wird.';
+  const PASSED_TAKE = 'Du hast gepasst. In diesen Angriff legst du nichts mehr nach.';
   function fixed(): { st: State; D: DkState } {
     const { st, D } = table(3, 7);
     // Feste Karten: Trumpf Herz, h greift p1 an, p2 legt nach
@@ -204,6 +206,8 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'D7', c: 'H8' })).toBeNull(); // 8 liegt schon
     expect(D.done).toEqual(['h']);
     expect(dkWaiting(st)).toEqual(['p2']);
+    // h hat die Pik 7 und die 7 liegt, nachlegen darf h trotzdem nicht
+    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBe(PASSED);
     expect(act(st, 'p2', { type: 'dkpass' })).toBeNull();
     // Bito, ohne dass h ein zweites Mal passen muss
     expect(st.log.some((e) => e.k === 'dkbito' && e.p === 'p1' && e.cnt === 4)).toBe(true);
@@ -218,27 +222,34 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'D7', c: 'D10' })).toBeNull(); // 10 ist neu
     expect(D.done).toEqual([]);
     expect(dkWaiting(st).sort()).toEqual(['h', 'p2']);
+    // Jetzt darf h wieder nachlegen, auch einen Wert, der schon vorher lag
+    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBeNull();
   });
 
-  it('Aufnehmen holt alle zurück, wer selbst nachlegt, hat nicht mehr gepasst', () => {
+  it('wer gepasst hat, legt erst nach dem Aufnehmen wieder nach, wer nicht gepasst hat, die ganze Zeit', () => {
     const { st, D } = fixed();
     act(st, 'h', { type: 'dkattack', idx: [0] }); // C7
     act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' });
     act(st, 'h', { type: 'dkpass' });
-    act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] });
+    // Dieselbe Zahl noch einmal hebt das Passen nicht auf
+    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBe(PASSED);
+    expect(D.table).toHaveLength(1);
+    // Wer nicht gepasst hat, darf weiter nachlegen, das Passen der anderen bleibt stehen
+    expect(act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] })).toBeNull();
+    expect(D.done).toEqual(['h']);
     expect(act(st, 'p1', { type: 'dktake' })).toBeNull();
     expect(D.done).toEqual([]);
     expect(dkWaiting(st).sort()).toEqual(['h', 'p2']);
-    // Wer gepasst hat und dann doch nachlegt, steht nicht mehr in der Liste
-    act(st, 'h', { type: 'dkpass' });
+    // Beim Aufnehmen dürfen alle wieder nachschieben
     expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBeNull();
-    expect(D.done).toEqual([]);
-    // Nachlegen eines anderen lässt ein Passen stehen
-    act(st, 'p2', { type: 'dkpass' });
-    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['H7'] })).toBeNull();
-    expect(D.done).toEqual(['p2']);
+    // Wer jetzt passt, ist für diesen Angriff fertig
     expect(act(st, 'h', { type: 'dkpass' })).toBeNull();
-    expect(st.log.some((e) => e.k === 'dkpickup' && e.p === 'p1' && e.cnt === 5)).toBe(true);
+    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['H7'] })).toBe(PASSED_TAKE);
+    expect(dkWaiting(st)).toEqual(['p2']);
+    expect(act(st, 'p2', { type: 'dkpass' })).toBeNull();
+    expect(st.log.some((e) => e.k === 'dkpickup' && e.p === 'p1' && e.cnt === 4)).toBe(true);
+    expect(D.P.h).toContain('H7');
+    cardsOk(st);
   });
 
   it('nie mehr Angriffskarten als sechs oder als der Verteidiger zu Beginn hatte', () => {

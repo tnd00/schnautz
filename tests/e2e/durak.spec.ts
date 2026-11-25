@@ -8,6 +8,7 @@ import { SH_ORD } from '../../src/game/constants';
 import { dkTrump, dkWaiting } from '../../src/game/durak';
 import type { View } from '../../src/game/types';
 import {
+  quickBots,
   fitFindings,
   chooseGame,
   closeAll,
@@ -107,6 +108,8 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   const errors = new Errors();
   const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
   await hostTable(host, 'Tahna');
+  // Testmodus: KIs ziehen flott, die echte Taktung prüfen die Partien zwischen zwei Browsern
+  await quickBots(host);
   await host.click('[data-act=game][data-g=durak]');
   await host.click('[data-act=addbot]');
   await host.click('[data-act=addbot]');
@@ -121,7 +124,26 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   await expect(host.locator('#center .dkbito')).toContainText('Bito');
   await expect(host.locator('#center .dkbito')).not.toContainText('🗑');
   let passBtn = 0;
+  let passedSeen = 0;
   await playToEnd([host], async (p) => {
+    // Wer gepasst hat, kann nichts nachlegen, bis ein neuer Wert liegt oder aufgenommen wird. Ansicht und
+    // Oberfläche in einem Zug lesen, sonst kommt ein KI-Zug dazwischen
+    const passed = await p.evaluate(() => {
+      const s = window.__schnautz;
+      const D = s?.App.view?.dk;
+      if (!s || !D || s.App.view?.phase !== 'play' || !D.table.length || !D.done.includes(s.App.me)) return null;
+      return {
+        pick: document.querySelectorAll('#me .dkhand [data-act=dkh]').length,
+        go: document.querySelectorAll('#me [data-act=dkgo]:not([disabled])').length,
+        sub: document.querySelector('#status .sub')?.textContent ?? '',
+      };
+    });
+    if (passed) {
+      passedSeen++;
+      expect(passed).toMatchObject({ pick: 0, go: 0 });
+      expect(passed.sub).toMatch(/^Du hast gepasst\./);
+      expect(passed.sub).not.toContain('trotzdem');
+    }
     // Der Knopf heißt Passen, gedrückt Gepasst ✓, das Etikett am Platz passt ✓
     const labels = await p.locator('[data-act=dkpass]').allTextContents();
     labels.forEach((t) => expect(['Passen', 'Gepasst ✓']).toContain(t.trim()));
@@ -130,6 +152,7 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
     tags.forEach((t) => expect(t.trim()).toBe('passt ✓'));
   });
   expect(passBtn).toBeGreaterThan(0);
+  expect(passedSeen).toBeGreaterThan(0);
   await waitForPhase(host, ['over'], 20_000);
   await expect(host.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
   expect(errors.list).toEqual([]);

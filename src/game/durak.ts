@@ -92,7 +92,8 @@ export const dkRoom = (D: Pick<DkAny, 'table' | 'limit'>): number => Math.max(0,
 /**
  * Auf wen die Partie gerade wartet: leerer Tisch heißt der Angreifer, offene Karten der Verteidiger, sonst alle,
  * die noch nachlegen könnten und nicht gepasst haben. Passen gilt, bis durch Schlagen ein neuer Wert auf dem Tisch
- * liegt oder der Verteidiger aufnimmt oder weiterschiebt.
+ * liegt oder der Verteidiger aufnimmt oder weiterschiebt. Bis dahin darf, wer gepasst hat, nicht nachlegen und
+ * wird nicht abgewartet.
  */
 export function dkWaiting(t: Table): string[] {
   const D = t.dk;
@@ -120,6 +121,11 @@ export function dkAttackError(t: Table, pid: string, cards: Card[]): string | nu
     const r = rankOf(cards[0]);
     if (!cards.every((c) => rankOf(c) === r)) return 'Angreifen geht nur mit gleichen Werten.';
   } else {
+    // Passen gilt, bis ein neuer Wert liegt oder aufgenommen wird. Das hängt nur am offenen Tisch, nie an Handkarten
+    if (D.done.includes(pid))
+      return D.take
+        ? 'Du hast gepasst. In diesen Angriff legst du nichts mehr nach.'
+        : 'Du hast gepasst. Nachlegen geht erst wieder bei einem neuen Wert oder wenn aufgenommen wird.';
     const ranks = dkTableRanks(D);
     if (!cards.every((c) => ranks.has(rankOf(c))))
       return 'Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.';
@@ -306,8 +312,7 @@ export function dkAct(st: State, pid: string, _pi: number, a: Action, rng?: Rng)
       const lead = !D.table.length;
       takeAt(hand, idx);
       D.table.push(...cards.map((c) => ({ a: c, by: pid })));
-      // Wer selbst nachlegt, hat nicht mehr gepasst. Wer sonst gepasst hat, bleibt dabei, der Wert liegt ja schon
-      D.done = D.done.filter((id) => id !== pid);
+      // Wer gepasst hat, kommt nicht bis hier (dkAttackError). Das Passen der anderen bleibt stehen
       addLog(st, lead ? { k: 'dkattack', p: pid, cards, lead: true } : { k: 'dkattack', p: pid, cards });
       st.last = { k: 'dkattack', p: pid, n: st.n, cards };
       check(st, rng);

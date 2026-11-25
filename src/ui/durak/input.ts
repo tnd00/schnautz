@@ -142,7 +142,8 @@ export function dkSyncSelection(prev: View | null, v: View): void {
     !!prev &&
     prev.dk?.bout === v.dk?.bout &&
     JSON.stringify(prev.dk?.P[App.me]) === JSON.stringify(v.dk?.P[App.me]);
-  if (!same) {
+  // Gepasst (auch durch die Uhr oder den Gastgeber): Nachlegen geht nicht, eine alte Auswahl bliebe sonst hängen
+  if (!same || (v.dk?.table.length && v.dk.done.includes(App.me))) {
     App.ds = { idx: [], pair: null };
     return;
   }
