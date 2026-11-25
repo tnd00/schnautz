@@ -10,6 +10,43 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.7',
+    date: '2026-11-25',
+    title: 'Klare Worte',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Spielen nur noch KIs, spult der Gastgeber die Partie mit „⏩ Vorspulen“ zügig zu Ende. Zeremonie, Tipps und Bestenliste laufen wie immer.',
+          'Freie Plätze bleiben in der Lobby frei, bis die Partie startet. Erst dann setzt sich die KI dazu. Der Startknopf sagt, wie viele KIs mitspielen. Wer mag, holt eine KI schon vorher an den Tisch.',
+          'Kommst du per Einladungslink an deinen Tisch zurück, landest du mit deinem Namen wieder auf deinem Platz. Einen zweiten Platz „Lena 2“ gibt es nicht mehr.',
+          'Nach dem Neuladen geht es am Tisch ohne Tippen zurück an deinen Platz.',
+          'Dein Tisch läuft immer nur in einem Tab. Öffnest du ihn ein zweites Mal, fragt die Seite „Hierher holen?“ und der alte Tab gibt ab.',
+          'In der Lobby nimmt der Gastgeber auch Leute vom Platz, die gerade offline sind.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Bei Durak legt erst wieder nach, wer gepasst hat, wenn durch Schlagen ein neuer Wert auf den Tisch kommt oder aufgenommen wird. Der Knopf heißt jetzt „Passen“ und abgewehrte Karten gehen auf den Bito-Stapel.',
+          'Überall gelten dieselben Wörter. In der Shithead-Tauschrunde meldest du dich „Bereit“, bei Cabo heißen die Fähigkeiten Ansehen, Spionieren und Blindtausch. Fertig ist, wer alle Karten los ist. „Zeit um!“ klingt in jedem Spiel gleich.',
+          'Der Verlauf nennt wieder die richtigen Namen. „Jemand hat 31“ und „Du ist gegangen“ sind Geschichte.',
+          'Eine Bombe im 4er-Fenster heißt nur noch außer der Reihe, wenn wirklich jemand anderes dran war.',
+          'Tipp-Sprüche bei Durak sticheln jetzt mit dem Durak statt mit dem Shithead.',
+          'Wer in der Shithead-Tauschrunde einen KI-Platz übernimmt, darf selbst tauschen.',
+          'Ein falscher Tischcode meldet sich nach wenigen Sekunden statt nach fast einer Minute.',
+          '„Neue Partie“ und „Zur Lobby“ fragen mitten in der Partie nach. Im Verlauf steht dann, wer abgebrochen hat.',
+          'Die Rückfrage beim Verlassen sagt ehrlich, dass die KI für dich weiterspielt und du später an deinen Platz zurück kannst.',
+          'Bei Schnautz zeigt die Pille mit deinem Handwert, was ein Tausch bringt. Am PC rutscht die Reaktionsleiste beim Auswählen nicht mehr aus dem Bild.',
+          'Schnautz zu acht passt auch auf sehr kurze Handys. Mit „Bewegung reduzieren“ rückt die Lobby nach dem Drehen wieder richtig zusammen.',
+          'Bei Schnautz stehen 💔, 🛟 und 🫧 für ein verlorenes Leben, fürs Schwimmen und fürs Untergehen. Ein danebengegangener Cabo-Ruf zeigt 🙈.',
+          'Regeln, Legende und Einstellungen nehmen ihre Zahlen direkt aus dem Spiel und erklären alles gleich.',
+          'Am PC heißt es über Meldungen „Klicken zum Überspringen“.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.6',
     date: '2026-11-24',
     title: 'Neuer Look',
