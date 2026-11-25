@@ -26,10 +26,11 @@ const sample = (e: RejectCode) => rj(e, REJECT_SAMPLES[e]);
 const OLD_KEEPS = /voll|alle Plätze sind besetzt|Lade die Seite neu/;
 
 /**
- * Wortlaut, auf den sich Gäste von 2.6 verlassen: Sie lesen nur `msg`, und `keepsInvite` prüft dort den Regex oben.
- * Diese Sätze bleiben, solange `msg` gesendet wird (Entscheidung E6). Alle anderen Vorlagen stehen im Schnappschuss
- * und dürfen sich ändern (Entscheidung E2). Viele Spieltests prüfen noch den Wortlaut mit msgOf, wer einen Satz
- * ändert, stellt sie dabei auf codeOf um.
+ * Wortlaut, auf den sich Gäste von 2.6 verlassen. Sie lesen nur `msg`, `keepsInvite` sucht dort nach dem Regex oben.
+ * Diese Sätze bleiben, solange `msg` gesendet wird (Entscheidung E6). Alle übrigen Vorlagen hält der Schnappschuss
+ * fest, sie dürfen sich ändern (Entscheidung E2). Rund 50 Prüfungen in den Spieltests (durak, cabo, seats, lobby und
+ * weitere) lesen den Wortlaut aber weiter über msgOf, manche gerade wegen der eingesetzten Argumente. Wer einen Satz
+ * ändert, erneuert also den Schnappschuss und zieht diese Stellen mit. Wo nur der Grund zählt, prüft man besser codeOf.
  */
 const OLD_GUEST_TEXT: Readonly<Partial<Record<RejectCode, string>>> = {
   'seat.full': 'Der Tisch ist voll.',

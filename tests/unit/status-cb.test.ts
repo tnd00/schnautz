@@ -1,26 +1,26 @@
 /*
- * Cabo: Statuszeile (cbStatus in src/ui/render/cabo.ts) in allen Phasen, ohne DOM, und cbWhyNot (Grund am Tisch)
- * mit denselben Codes wie der Gastgeber. Geprüft wird cbStatus direkt, damit der Test vor und nach dem Umstellen
- * von statusOf gleich läuft.
+ * Cabo: Statuszeile (cbStatus in src/ui/render/cabo.ts) in allen Phasen, ohne DOM, cbWhyNot (Grund am Tisch) mit
+ * denselben Codes wie der Gastgeber und das Ergebnisblatt (cbSheet) aus echt gespielten Runden.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
 import { cbWhyNot } from '../../src/game/cabo';
-import { isReject } from '../../src/game/reject';
 import { addPlayer, newState } from '../../src/game/state';
-import type { Action, State, View } from '../../src/game/types';
+import type { Action, CaboResult, Card, State, View } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
-import { cbStatus } from '../../src/ui/render/cabo';
+import { cbSheet, cbStatus } from '../../src/ui/render/cabo';
+import type { Sheet } from '../../src/ui/render/result';
 import type { Status } from '../../src/ui/status';
-import { rngF } from './helpers';
+import { codeOf, rngF } from './helpers';
 
-/** Cabo zu dritt: h (Gastgeber), a und b, in der Ansehrunde. */
-function table(seed = 3, snap = false): State {
+/** Cabo zu dritt: h (Gastgeber), a und b, dazu auf Wunsch weitere Leute, in der Ansehrunde. */
+function table(seed = 3, snap = false, more: [string, string][] = []): State {
   const rng = rngF(seed);
   const st = newState('h', 'H');
   addPlayer(st, 'a', 'Anna');
   addPlayer(st, 'b', 'Bert');
+  for (const [id, name] of more) addPlayer(st, id, name);
   act(st, 'h', { type: 'game', game: 'cabo' }, rng);
   if (snap) act(st, 'h', { type: 'rules', rules: { cb: { snap: true } } }, rng);
   act(st, 'h', { type: 'start' }, rng);
@@ -28,9 +28,9 @@ function table(seed = 3, snap = false): State {
 }
 
 /** Alle haben angesehen, die Runde läuft. */
-function play(seed = 3, snap = false): State {
-  const st = table(seed, snap);
-  for (const id of ['h', 'a', 'b']) act(st, id, { type: 'cblook', ids: st.cb!.P[id].slice(0, 2).map((s) => s.id) });
+function play(seed = 3, snap = false, more: [string, string][] = []): State {
+  const st = table(seed, snap, more);
+  for (const p of st.players) act(st, p.id, { type: 'cblook', ids: st.cb!.P[p.id].slice(0, 2).map((s) => s.id) });
   return st;
 }
 
@@ -205,13 +205,275 @@ describe('Statuszeile Cabo', () => {
     const { text } = statusFor(st, 'b');
     expect(text).toMatch(/ ist dran\. \| Du spielst ab der nächsten Runde mit\.$/);
   });
+
+  it('am Zug ohne eigene Karten', () => {
+    const st = play();
+    const me = turnOf(st);
+    st.cb!.P[me] = [];
+    const { s, text } = statusFor(st, me);
+    expect(s.tone).toBe('turn');
+    expect(text).toBe('Du bist dran. | Du hast keine Karten mehr. Zieh vom Stapel und leg ab oder ruf Cabo.');
+  });
+
+  it('letzter Zug nach dem Cabo-Ruf ohne Nachfolger, mit und ohne eigene Karten', () => {
+    const st = play();
+    act(st, turnOf(st), { type: 'cbcabo' });
+    // Die nächste Person zieht eine Karte ohne Fähigkeit und legt sie ab, danach kommt die letzte
+    st.cb!.deck.push('H2');
+    const next = turnOf(st);
+    expect(act(st, next, { type: 'cbdraw', from: 'deck' })).toBeNull();
+    expect(act(st, next, { type: 'cbdiscard' })).toBeNull();
+    const last = turnOf(st);
+    expect(st.cb!.left).toEqual([last]);
+    const withCards = statusFor(st, last);
+    expect(withCards.s.tone).toBe('knock');
+    expect(withCards.text).toBe('Dein letzter Zug! | Zieh vom Stapel oder nimm die Ablage, dann wird aufgedeckt.');
+    st.cb!.P[last] = [];
+    expect(statusFor(st, last).text).toBe('Dein letzter Zug! | Zieh vom Stapel, dann wird aufgedeckt.');
+  });
+
+  it('nach dem Ansehen: gleich geht es los, wenn niemand mehr fehlt', () => {
+    const st = table();
+    act(st, 'h', { type: 'cblook', ids: st.cb!.P.h.slice(0, 2).map((s) => s.id) });
+    // Durch act startet die Runde mit dem letzten Ansehen, hier steht die Ansehrunde noch kurz
+    st.players.forEach((p) => (p.ready = true));
+    expect(st.phase).toBe('peek');
+    const { s, text } = statusFor(st, 'h');
+    expect(s.tone).toBe('calm');
+    expect(text).toBe('Karten ansehen | Gleich geht es los.');
+  });
+
+  it('zusehen, wenn nur noch KIs spielen: Gastgeber mit Vorspul-Knöpfen, Gäste mit Satz', () => {
+    const st = play(3, false, [['c', 'Cleo']]);
+    delete st.cb!.P.h;
+    delete st.cb!.P.c;
+    st.players.filter((p) => p.id === 'a' || p.id === 'b').forEach((p) => (p.bot = true));
+    // Am Zug ist eine KI, auch wenn vorher der Gastgeber dran war
+    if (!st.cb!.P[turnOf(st)]) st.turn = st.players.findIndex((p) => p.id === 'a');
+    const host = statusFor(st, 'h', 'host');
+    expect(strip(host.s.main)).toMatch(/^KI (Anna|Bert) ist dran\.$/);
+    expect(host.s.quick).toContain('data-act="ffwd"');
+    expect(host.s.quick).toContain('data-act="restart"');
+    expect(host.s.quick).toContain('data-act="lobbynow"');
+    const guest = statusFor(st, 'c', 'guest');
+    expect(strip(guest.s.quick ?? '')).toBe('Nur noch KIs im Spiel. Der Gastgeber kann vorspulen.');
+    expect(guest.s.quick).not.toContain('data-act=');
+  });
+
+  it('nach dem Ansehen mit jemandem offline: Gastgeber bekommt den Knopf, Gäste lesen, dass es wartet', () => {
+    const st = table();
+    act(st, 'h', { type: 'cblook', ids: st.cb!.P.h.slice(0, 2).map((s) => s.id) });
+    act(st, 'b', { type: 'cblook', ids: st.cb!.P.b.slice(0, 2).map((s) => s.id) });
+    st.players.find((p) => p.id === 'a')!.online = false;
+    const host = statusFor(st, 'h', 'host');
+    expect(strip(host.s.main)).toBe('Anna ist gerade offline.');
+    expect(host.s.quick).toContain('data-act="skip"');
+    expect(strip(host.s.quick ?? '')).toBe('Für Anna spielen');
+    const guest = statusFor(st, 'b', 'guest');
+    expect(guest.s.quick).toBeUndefined();
+    expect(guest.text).toBe('Karten ansehen | Anna ist gerade offline. Das Spiel wartet.');
+  });
+});
+
+/** Karten einer Reihe setzen, die Platz-IDs bleiben, neue Plätze bekommen neue IDs. */
+function setRow(st: State, id: string, cards: Card[]): void {
+  const C = st.cb!;
+  C.P[id] = cards.map((c, i) => ({ id: C.P[id][i]?.id ?? C.sid++, c }));
+}
+
+/**
+ * Eine Runde echt bis zum Aufdecken spielen: Karten und Stände setzen, `caller` ruft Cabo. Ohne Rufer liegt nur eine
+ * Karte im Stapel, die Runde endet mit „Stapel leer“. Alle anderen ziehen vom Stapel und legen ab, der Stapel hat nur
+ * Zweien ohne Fähigkeit, die Hände bleiben also, wie sie gesetzt sind.
+ */
+function finish(hands: Record<string, Card[]>, caller: string | null, pts: Record<string, number> = {}): State {
+  const st = play();
+  for (const [id, cards] of Object.entries(hands)) setRow(st, id, cards);
+  for (const [id, n] of Object.entries(pts)) st.players.find((p) => p.id === id)!.cbp = n;
+  st.cb!.deck = caller ? Array<Card>(8).fill('H2') : ['H2'];
+  if (caller) {
+    st.turn = st.players.findIndex((p) => p.id === caller);
+    expect(act(st, caller, { type: 'cbcabo' })).toBeNull();
+  }
+  for (let k = 0; k < 8 && st.phase === 'play'; k++) {
+    const cur = turnOf(st);
+    expect(act(st, cur, { type: 'cbdraw', from: 'deck' })).toBeNull();
+    expect(act(st, cur, { type: 'cbdiscard' })).toBeNull();
+  }
+  expect(['end', 'over']).toContain(st.phase);
+  return st;
+}
+
+function sheetFor(st: State, me: string): { s: Sheet; r: CaboResult; core: Record<string, string> } {
+  App.me = me;
+  const s = cbSheet(viewFor(st, me));
+  expect(s).not.toBeNull();
+  // Ohne Auszeichnung: Das Urteil am Partieende steckt in einem span (.cbwhy)
+  const core = Object.fromEntries(s!.rows.map((x) => [x.id, strip(x.core)]));
+  return { s: s!, r: st.result as CaboResult, core };
+}
+
+/** Jede Platz-ID der Runde genau einmal, die Schlüsselzeile ist darunter */
+function rowsOnce(s: Sheet, r: CaboResult): void {
+  const ids = s.rows.map((x) => x.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  expect([...ids].sort()).toEqual(Object.keys(r.totals).sort());
+  if (s.key) expect(ids).toContain(s.key);
+}
+
+/** Hände, die nichts Besonderes können: wenig, mittel, viel */
+const LOW: Card[] = ['HA', 'H2', 'H3', 'HK'];
+const MID: Card[] = ['H5', 'D5', 'S5', 'C5'];
+const HIGH: Card[] = ['H9', 'D9', 'S9', 'C9'];
+const KAMI: Card[] = ['SD', 'CD', 'SK', 'CK'];
+
+describe('Ergebnisblatt Cabo', () => {
+  it('außerhalb von Rundenende und Partieende kein Blatt', () => {
+    const st = play();
+    App.me = 'h';
+    expect(cbSheet(viewFor(st, 'h'))).toBeNull();
+    const peek = table();
+    expect(cbSheet(viewFor(peek, 'h'))).toBeNull();
+  });
+
+  it('Cabo geschafft: Rufer als Schlüssel mit Karten, Satz aus Sicht des Rufers und der anderen', () => {
+    const st = finish({ h: LOW, a: MID, b: HIGH }, 'h');
+    expect(st.phase).toBe('end');
+    const self = sheetFor(st, 'h');
+    expect(self.s.title).toBe('Cabo geschafft!');
+    expect(self.s.icon).toBe('🎯');
+    expect(self.s.lead).toBe('Du hattest am wenigsten.');
+    expect(self.s.key).toBe('h');
+    expect(self.s.next).toBe('round');
+    expect(self.s.taunt?.good).toBe(true);
+    rowsOnce(self.s, self.r);
+    const key = self.s.rows.find((x) => x.id === 'h')!;
+    expect(key.name).toBe('Du');
+    expect(key.hat).toBe('📣');
+    expect(key.tone).toBe('win');
+    // Karten am Rundenende in jeder Zeile, die Schlüsselzeile zeigt sie
+    expect(key.cards).toEqual(LOW);
+    expect(self.s.rows.find((x) => x.id === 'b')!.cards).toEqual(HIGH);
+    // Summe nur, wenn sie von den Punkten abweicht
+    expect(self.core).toEqual({ h: 'Summe 6 · +0', a: '+20', b: '+36' });
+    const them = sheetFor(st, 'a');
+    expect(them.s.title).toBe('Cabo geschafft!');
+    expect(them.s.lead).toBe('H hatte am wenigsten.');
+    expect(them.s.key).toBe('h');
+    // Für alle anderen gibt es bei geschafftem Cabo keinen Spruch, dann fällt er weg statt leer Platz zu kosten
+    expect(them.s.taunt).toBeNull();
+  });
+
+  it('Cabo daneben: Strafpunkte in der Kernzahl, Satz für Rufer und andere', () => {
+    const st = finish({ h: LOW, a: ['H2', 'H3', 'H4', 'HA'], b: HIGH }, 'a');
+    const self = sheetFor(st, 'a');
+    expect(self.s.title).toBe('Cabo daneben!');
+    expect(self.s.icon).toBe('🙈');
+    expect(self.s.lead).toBe('Du bekommst 10 Strafpunkte obendrauf.');
+    expect(self.s.key).toBe('a');
+    expect(self.s.taunt?.good).toBe(false);
+    expect(self.s.taunt?.text).toBeTruthy();
+    expect(self.s.rows.find((x) => x.id === 'a')!.tone).toBe('lose');
+    expect(self.core).toEqual({ h: '+6', a: 'Summe 10 · +20', b: '+36' });
+    // Kurzform ohne Summe für lange Namen am Handy (fitRows), nur wo die Summe abweicht
+    expect(self.s.rows.find((x) => x.id === 'a')!.short).toBe('+20');
+    expect(self.s.rows.find((x) => x.id === 'h')!.short).toBeUndefined();
+    const them = sheetFor(st, 'h');
+    expect(them.s.lead).toBe('Anna bekommt 10 Strafpunkte obendrauf.');
+    expect(them.s.taunt?.text).toBeTruthy();
+    rowsOnce(them.s, them.r);
+  });
+
+  it('Kamikaze geht vor dem Rufer', () => {
+    const st = finish({ h: LOW, a: MID, b: KAMI }, 'h');
+    const { s, r, core } = sheetFor(st, 'a');
+    expect(r.caller).toBe('h');
+    expect(r.kami).toBe('b');
+    expect(s.title).toBe('Kamikaze!');
+    expect(s.icon).toBe('💥');
+    expect(s.lead).toBe('Alle anderen bekommen 50 Punkte.');
+    expect(s.key).toBe('b');
+    expect(s.rows.find((x) => x.id === 'b')!.hat).toBe('💥');
+    expect(s.rows.find((x) => x.id === 'h')!.hat).toBe('📣');
+    // Die Summe der anderen zählt bei Kamikaze nicht, ihre 50 erklärt der Satz unter dem Titel
+    expect(core).toEqual({ h: '+50', a: '+50', b: 'Summe 50 · +0' });
+    expect(s.rows.find((x) => x.id === 'b')!.cards).toEqual(KAMI);
+    expect(s.taunt?.text).toBeTruthy();
+    rowsOnce(s, r);
+  });
+
+  it('Stapel leer: ohne Schlüsselzeile und ohne Spruch, genau 100 fällt auf 50', () => {
+    const st = finish({ h: LOW, a: MID, b: HIGH }, null, { h: 94 });
+    expect(st.phase).toBe('end');
+    const them = sheetFor(st, 'a');
+    expect(them.s.title).toBe('Stapel leer!');
+    expect(them.s.lead).toBe('Keine Karten mehr, die Runde ist vorbei.');
+    expect(them.s.key).toBeNull();
+    expect(them.s.taunt).toBeNull();
+    expect(them.s.next).toBe('round');
+    expect(them.core).toEqual({ h: '+6 · auf 50', a: '+20', b: '+36' });
+    expect(them.s.rows.find((x) => x.id === 'h')!.core).toBe('<span class="cbwhy">+6 · auf 50</span>');
+    expect(them.s.rows.find((x) => x.id === 'h')!.val).toBe('50');
+    rowsOnce(them.s, them.r);
+    // Wer zurückfällt, bekommt einen eigenen Spruch
+    expect(sheetFor(st, 'h').s.taunt?.good).toBe(true);
+  });
+
+  it('Partieende: König als Schlüssel ohne Karten, Urteil der letzten Runde in der Zeile', () => {
+    // Anna ruft daneben und kommt über 100, H hat am wenigsten
+    const st = finish({ h: ['HA', 'H2', 'HK', 'DK'], a: ['H2', 'H3', 'H4', 'H5'], b: HIGH }, 'a', { a: 80 });
+    expect(st.phase).toBe('over');
+    const king = sheetFor(st, 'h');
+    expect(king.s.icon).toBe('👑');
+    expect(strip(king.s.title)).toBe('Du bist Cabo-König!');
+    expect(king.s.lead).toBe('');
+    expect(king.s.key).toBe('h');
+    expect(king.s.next).toBe('game');
+    expect(king.s.taunt?.good).toBe(true);
+    expect(king.s.rows.find((x) => x.id === 'h')!.hat).toBe('👑');
+    expect(king.s.rows.find((x) => x.id === 'h')!.tone).toBe('win');
+    // Am Partieende zählen nur noch die Punkte, auch der König steht ohne Karten
+    expect(king.s.rows.every((x) => x.cards === undefined)).toBe(true);
+    expect(king.core).toEqual({ h: '+3', a: 'Cabo daneben · +24', b: '+36' });
+    // Das Urteil kann am Handy unter den Namen rücken
+    expect(king.s.rows.find((x) => x.id === 'a')!.core).toBe('<span class="cbwhy">Cabo daneben · +24</span>');
+    expect(king.s.rows.find((x) => x.id === 'h')!.core).toBe('+3');
+    expect(king.s.rows.map((x) => x.place)).toEqual([1, 2, 3]);
+    rowsOnce(king.s, king.r);
+    const them = sheetFor(st, 'b');
+    expect(strip(them.s.title)).toBe('H ist Cabo-König!');
+    expect(them.s.title).not.toMatch(/Du ist/);
+    expect(them.s.taunt?.good).toBe(false);
+  });
+
+  it('Partieende nach Kamikaze und nach genau 100', () => {
+    const kami = finish({ h: LOW, a: MID, b: KAMI }, null, { h: 60, b: 10 });
+    expect(kami.phase).toBe('over');
+    const k = sheetFor(kami, 'a');
+    expect(k.s.key).toBe('b');
+    expect(k.core).toEqual({ h: '+50', a: '+50', b: 'Kamikaze · +0' });
+    const reset = finish({ h: LOW, a: MID, b: HIGH }, null, { h: 94, a: 95 });
+    expect(reset.phase).toBe('over');
+    const r = sheetFor(reset, 'b');
+    expect(r.core).toEqual({ h: 'genau 100 · auf 50', a: '+20', b: '+36' });
+    expect(r.s.key).toBe('b');
+  });
+
+  it('Unentschieden: kein König, keine Schlüsselzeile, kein Spruch', () => {
+    const st = finish({ h: MID, a: HIGH, b: MID }, null, { a: 90 });
+    expect(st.phase).toBe('over');
+    const { s } = sheetFor(st, 'h');
+    expect(s.title).toBe('Unentschieden!');
+    expect(s.icon).toBe('🤝');
+    expect(s.key).toBeNull();
+    expect(s.taunt).toBeNull();
+    expect(s.lead).toBe('Vorne liegen mehrere gleichauf, diesmal gibt es keinen neuen König.');
+    expect(s.next).toBe('game');
+  });
 });
 
 /** Code einer Ablehnung, null wenn es geht, beim Gastgeber auf einer Kopie gerechnet */
-const hostCode = (st: State, pid: string, a: Action): string | null => {
-  const r = act(structuredClone(st), pid, a);
-  return isReject(r) ? r.e : r == null ? null : 'text';
-};
+const hostCode = (st: State, pid: string, a: Action): string | null => codeOf(act(structuredClone(st), pid, a));
 const viewCode = (st: State, pid: string, a: Action): string | null => cbWhyNot(viewFor(st, pid), pid, a)?.e ?? null;
 
 describe('cbWhyNot: dieselben Codes wie der Gastgeber', () => {
@@ -234,7 +496,9 @@ describe('cbWhyNot: dieselben Codes wie der Gastgeber', () => {
       [cur, { type: 'cbblind', id: -1, to: '', oid: -1 }],
       [cur, { type: 'cblook', ids: [mine] }],
       [cur, { type: 'cbsnap', id: mine }],
+      [cur, { type: 'cbskip' }],
       [o, { type: 'cbdraw', from: 'deck' }],
+      [o, { type: 'cbskip' }],
       [o, { type: 'cbswap', ids: [theirs] }],
       [o, { type: 'cbsnap', id: theirs }],
     ];

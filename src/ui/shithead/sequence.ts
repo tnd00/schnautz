@@ -11,7 +11,7 @@ import { flyG, type Rect } from '../animations';
 import { App } from '../app';
 import { $opt, esc, num, reduceMotion, type Timer } from '../dom';
 import { type Announcement, boomFx, emit, shakeEl } from '../feedback';
-import { cueOf, type LevelCtx } from '../levels';
+import { burnCue, cueOf, type LevelCtx } from '../levels';
 import { nameOf, vb } from '../helpers';
 import { renderSh, renderShCenter } from '../render/shithead';
 import { sfx } from '../sound';
@@ -306,11 +306,10 @@ function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
         c.classList.add('burning');
       });
       boomFx(s.e.four ? '💣' : '🔥', $opt('#center .pile'));
-      // Groß erst ab SAY.burnBig Karten (oder Bombe): Dafür zählt der Stand vor dem Ablauf, den later() erst
-      // nach dem Verbrennen auf s.burned setzt
-      const at = (n: number): View => ({ ...v, sh: v.sh ? { ...v.sh, burned: n } : v.sh });
+      // Stufe nach den Karten dieses Schritts: ov.burned ist der Stand davor (later() setzt ihn erst nach dem
+      // Verbrennen auf s.burned). Ein großes Fertig im Schub (lc.fresh) macht das Verbrennen mittel
       const a = burnAnn(v, s.e);
-      emit(cueOf(s.e, { ...lc, prev: at(ov.burned), v: at(s.burned) }), {
+      emit(burnCue(s.e, s.burned - ov.burned, lc), {
         pid: e.p,
         text: s.e.four ? 'macht die vier voll' : 'verbrennt den Stapel',
         mine: s.e.four ? 'machst die vier voll' : 'verbrennst den Stapel',

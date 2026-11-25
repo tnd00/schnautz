@@ -134,7 +134,8 @@ describe('Plätze am Tisch', () => {
     expect(ap.bot).toBeUndefined();
     expect(ap.name).toBe('Anna');
     expect(st.players).toHaveLength(4);
-    expect(st.log.at(-1)).toMatchObject({ k: 'takeover', name: 'Anna' });
+    // In der Lobby gibt es keine Karten, der Eintrag merkt sich das für den Verlauf (kein „samt Karten“)
+    expect(st.log.at(-1)).toMatchObject({ k: 'takeover', name: 'Anna', lobby: true });
 
     // Weniger Plätze: Erst gehen die KIs, nie die Menschen
     act(st, 'h', { type: 'rules', rules: { seats: 2 } }, rng);
@@ -192,6 +193,9 @@ describe('Plätze am Tisch', () => {
     const n = st.players.length;
 
     expect(seatId(seatGuest(st, 'p-lena', 'Lena'))).toBe(b.id);
+    // Mitten in der Partie gehen die Karten mit, der Eintrag trägt kein Lobby-Zeichen
+    expect(st.log.at(-1)).toMatchObject({ k: 'takeover', name: 'Lena' });
+    expect(st.log.at(-1)).not.toHaveProperty('lobby');
     expect(b.bot).toBeUndefined();
     expect(b.name).toBe('Lena');
     expect(b.stats).toEqual({});

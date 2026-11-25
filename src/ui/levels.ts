@@ -1,12 +1,14 @@
 /*
  * Rückmeldestufen je Logart, ohne DOM, damit Vitest die Tabelle prüfen kann. `src/ui/feedback.ts` setzt sie um.
- * Klein ist ein kurzer Hinweis am Platz ohne Ton, mittel derselbe Hinweis mit Klang und auf Wunsch Spruch,
- * groß ist die Ansage mit Zeichen in der Spielfläche. Was nur klingt (Karten legen) oder eine eigene Ebene hat
- * (Chat, Reaktionen, Klänge, Dev), bekommt keine Stufe.
+ * Klein ist ein kurzer Hinweis am Platz ohne Meldeton, mittel derselbe Hinweis mit Meldeton und auf Wunsch Spruch,
+ * groß ist die Ansage mit Zeichen in der Spielfläche. Der Klang des Ereignisses selbst (Karte, Tipp, Schnappen,
+ * Blindtausch) spielt auf jeder Stufe. Was nur klingt (Karten legen) oder eine eigene Ebene hat (Chat, Reaktionen,
+ * Klänge, Dev), bekommt keine Stufe.
  * Die Tabelle beschreibt die Stufe unabhängig vom Weg. Bei Shithead zeigt der Ablauf (`seqd`) dasselbe wie der Weg
  * ohne Ablauf, die Stufe hängt nicht daran.
  */
 import { shBetsOn } from '../game/bets';
+import { DK_MAX_ATTACK } from '../game/constants';
 import { unreachable } from '../game/games';
 import type { LogEntry, View } from '../game/types';
 
@@ -22,8 +24,8 @@ export interface Cue {
   /** Ein Spruch gehört dazu (Schwellen in SAY) */
   taunt?: true;
   /**
-   * Klein, aber mit leisem Ton. Was automatisch passiert (die KI übernimmt, die Uhr läuft ab), wird nach CLAUDE.md
-   * mit Text und Ton gemeldet, auch wenn es sonst klein wäre.
+   * Klein, aber mit leisem Meldeton. Was automatisch passiert (die KI übernimmt, die Uhr läuft ab), wird nach
+   * CLAUDE.md mit Text und Ton gemeldet, auch wenn es sonst klein wäre.
    */
   sound?: true;
 }
@@ -39,8 +41,6 @@ export interface LevelCtx {
 
 /** Spruch- und Hinweisschwellen, die heute verstreut in effects.ts, sequence.ts und log.ts stehen. */
 export const SAY = {
-  /** Shithead ohne Ablauf: Hinweis „nimmt n Karten“ heute erst ab so vielen Karten (effects.ts) */
-  pickupLabel: 5,
   /** Aufnehmen (Shithead und Durak): ab so vielen Karten Spruch und mittlere Stufe */
   pickupTaunt: 6,
   /** Durak: Spruch zum Aufnehmen anderer bei jeder so vielten Lognummer */
@@ -123,6 +123,30 @@ function doneCue(e: Extract<LogEntry, { k: 'shdone' | 'dkout' }>, c: LevelCtx): 
   return MID;
 }
 
+/**
+ * Steht im Schub ein großes Fertig (eigenes oder Platz 1, kein Takt vor der Zeremonie)? Es hat Vorrang vor Bito
+ * und Verbrennen im selben Zug, die dann mittel werden. So bleibt es bei höchstens einem Großen. Das gehört dem
+ * Fertig, egal in welcher Reihenfolge die Einträge kommen.
+ */
+function bigDoneIn(c: LevelCtx, k: 'shdone' | 'dkout'): boolean {
+  return c.fresh.some((x) => {
+    if ((x.k !== 'shdone' && x.k !== 'dkout') || x.k !== k) return false;
+    const d = doneCue(x, c);
+    return d.level === 'big' && !d.beat;
+  });
+}
+
+/**
+ * Verbrennen bei Shithead: Bombe groß, sonst ab `SAY.burnBig` verbrannten Karten groß, darunter mittel. Ein großes
+ * Fertig im selben Schub macht es mittel. `n` ist die Zahl der Karten, die dieses Verbrennen auf den Stapel
+ * gelegt hat. Ohne Ablauf rechnet `cueOf` sie aus den Ansichten, der Ablauf (src/ui/shithead/sequence.ts) aus
+ * seinem Stand vor und nach dem Schritt. `c.fresh` ist auf beiden Wegen der ganze Schub.
+ */
+export function burnCue(e: Extract<LogEntry, { k: 'shburn' }>, n: number, c: LevelCtx): Cue {
+  if (bigDoneIn(c, 'shdone')) return MID;
+  return e.four || n >= SAY.burnBig ? BIG : MID;
+}
+
 /** Partieende mit Zeremonie oder Unentschieden, nur beim Wechsel nach „over“. */
 function endCue(e: Extract<LogEntry, { k: 'shend' | 'dkend' | 'cbend' }>, c: LevelCtx): Cue | null {
   if (c.prev.phase === 'over' || c.v.phase !== 'over') return null;
@@ -198,11 +222,8 @@ export function cueOf(e: LogEntry, c: LevelCtx): Cue | null {
     case 'shthrow':
     case 'shbomb':
       return SMALL;
-    case 'shburn': {
-      if (e.four) return BIG;
-      const n = (c.v.sh?.burned ?? 0) - (c.prev.sh?.burned ?? 0);
-      return n >= SAY.burnBig ? BIG : MID;
-    }
+    case 'shburn':
+      return burnCue(e, (c.v.sh?.burned ?? 0) - (c.prev.sh?.burned ?? 0), c);
     case 'shpickup':
       return e.cnt >= SAY.pickupTaunt ? withTaunt(MID, true) : SMALL;
     case 'shblindfail':
@@ -227,9 +248,12 @@ export function cueOf(e: LogEntry, c: LevelCtx): Cue | null {
       return withTaunt(SMALL, !ending('dkend') && (mine || e.n % SAY.dkTakeEvery === 0));
     }
     case 'dkbito': {
-      const limit = c.prev.dk?.limit ?? 0;
-      const full = limit > 0 && e.cnt >= 2 * limit && !ending('dkend');
-      return withTaunt(full ? BIG : MID, mine && e.cnt >= SAY.bitoTaunt && !ending('dkend'));
+      // Groß nur nach vollem Tisch mit sechs geschlagenen Angriffen. Das Limit allein reicht nicht, mit ein oder
+      // zwei Handkarten beim Verteidiger wäre sonst jedes Bito groß
+      const full = e.cnt >= 2 * DK_MAX_ATTACK;
+      // Wird jemand im selben Zug groß fertig (meist der Verteidiger selbst), gehören Ansage und Spruch dem Fertig
+      const quiet = ending('dkend') || bigDoneIn(c, 'dkout');
+      return withTaunt(full && !quiet ? BIG : MID, mine && e.cnt >= SAY.bitoTaunt && !quiet);
     }
     case 'dkpickup':
       return e.cnt >= SAY.pickupTaunt ? withTaunt(MID, !ending('dkend')) : SMALL;

@@ -1,13 +1,18 @@
 /*
  * Verlauf aus dem Textkatalog (src/content/texts/log.ts). Jede Logart wird aus mehreren Blickwinkeln gerendert und
  * mit dem Schnappschuss verglichen. Der Schnappschuss stammt aus der Fassung vor dem Umbau (2.6, alles in
- * src/ui/render/log.ts), jede Zeile muss also wortgleich bleiben. Ändert sich ein Text mit Absicht, den Schnappschuss
- * mit `npx vitest run tests/unit/log.test.ts -u` neu schreiben und den Unterschied im Diff prüfen.
+ * src/ui/render/log.ts), jede Zeile bleibt wortgleich, außer sie wurde mit Absicht geändert (2.7: Setzt sich eine KI
+ * an den Tisch, nennt die Zeile den Namen aus dem Eintrag und nie „Du“). Ändert sich ein Text mit Absicht, den
+ * Schnappschuss mit `npx vitest run tests/unit/log.test.ts -u` neu schreiben und den Unterschied im Diff prüfen.
  */
 import { describe, expect, it } from 'vitest';
 import type { GameKind, LogEntry, LogKind, View } from '../../src/game/types';
+import { addBot, addPlayer, newState } from '../../src/game/state';
+import { takeSeat } from '../../src/game/seats';
+import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
 import { logLine } from '../../src/ui/render/log';
+import { rngF } from './helpers';
 
 /** Lena handelt, Tom ist das Ziel, Mia schaut zu. Zora hat den Tisch verlassen und steht nur noch im Eintrag. */
 const PEOPLE = [
@@ -39,6 +44,7 @@ const SAMPLES: { [K in LogKind]: readonly Sample<K>[] } = {
   join: [
     { k: 'join', p: 'a' },
     { k: 'join', p: 'a', bot: true },
+    { k: 'join', p: 'a', name: 'Igor & Co', bot: true },
   ],
   leave: [
     { k: 'leave', p: 'a', name: 'Lena' },
@@ -46,7 +52,10 @@ const SAMPLES: { [K in LogKind]: readonly Sample<K>[] } = {
     { k: 'leave', p: 'z' },
   ],
   quit: [{ k: 'quit', p: 'a' }],
-  takeover: [{ k: 'takeover', p: 'a', from: 'KI Igor & Co' }],
+  takeover: [
+    { k: 'takeover', p: 'a', from: 'KI Igor & Co' },
+    { k: 'takeover', p: 'a', from: 'KI Igor & Co', lobby: true },
+  ],
   tobot: [
     { k: 'tobot', p: 'a' },
     { k: 'tobot', p: 'z', name: 'Zora' },
@@ -268,6 +277,25 @@ function renderAll(): Record<string, ReturnType<typeof logLine>> {
 describe('Verlauf aus dem Textkatalog', () => {
   it('rendert jede Logart wortgleich zur Fassung vor dem Umbau', () => {
     expect(renderAll()).toMatchSnapshot();
+  });
+
+  it('nennt die KI beim Hinsetzen mit dem Namen aus dem Eintrag, auch nachdem jemand ihren Platz übernommen hat', () => {
+    const st = newState('h', 'Tahna');
+    addPlayer(st, 'g', 'Lena');
+    expect(addBot(st, rngF(4))).toBeNull();
+    const seat = st.players[2];
+    const kiName = seat.name;
+    // Die Partie läuft, ein neuer Gast übernimmt den KI-Platz samt ID
+    st.phase = 'play';
+    takeSeat(st, seat.id, 'Bartholomäus-Kim');
+    const join = st.log.find((e) => e.k === 'join' && e.p === seat.id)!;
+    for (const me of [seat.id, 'h', 'g']) {
+      App.me = me;
+      const line = logLine(viewFor(st, me), join);
+      expect(line?.[1], me).toBe(`<b>${kiName}</b> (KI) setzt sich an den Tisch.`);
+      expect(line?.[1]).not.toMatch(/\bDu\b|Bartholom/);
+    }
+    App.me = '';
   });
 
   it('überspringt unbekannte Logarten von neueren Gastgebern still', () => {

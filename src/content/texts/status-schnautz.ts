@@ -47,6 +47,14 @@ export const SZ_SHEET = {
   outBefore: 'schon raus',
   winner: (mine: boolean): string => (mine ? 'bleibst übrig' : 'bleibt übrig'),
   outIn: (round: number): string => `raus in Runde ${round}`,
+  /*
+   * Kurzformen, wenn ein langer Name neben der Kernzahl sonst nicht ganz passt (fitRows in src/ui/render/result.ts).
+   * Wo das Zeichen vor dem Namen es schon sagt (💔 ein Leben weg, 🛟 schwimmt, 👑 beste Hand), bleibt sie leer.
+   */
+  lifeShort: (n: number): string => (n === 1 ? '' : `−${n} Leben`),
+  outShort: 'raus',
+  knockedShort: 'geklopft',
+  outInShort: (round: number): string => `Runde ${round}`,
   /** „Tom ist zuletzt untergegangen.“, `names` schon verbunden, `me` ob „Du“ dabei ist */
   lastDownNote: (names: string, count: number, me: boolean): string =>
     `🫧 ${names} ${count > 1 ? (me ? 'seid' : 'sind') : me ? 'bist' : 'ist'} zuletzt untergegangen.`,

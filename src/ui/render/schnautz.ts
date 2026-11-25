@@ -1,9 +1,9 @@
 import { handValue, szWhyNot } from '../../game/schnautz';
-import type { Card, HandValue, LifeChange, SchnautzResult, View } from '../../game/types';
+import type { Card, HandValue, LifeChange, Player, SchnautzResult, View } from '../../game/types';
 import { activeList } from '../../game/state';
 import { onlyBotsPlaying } from '../../game/games';
 import { App } from '../app';
-import { cardHTML, fmtVal, livesHTML, valHTML } from '../cards';
+import { cardHTML, fmtVal, livesHTML, SWIM_ICON, valHTML } from '../cards';
 import { layoutOpps } from '../carousel';
 import { aimAttrs, marksHTML } from './marks';
 import { markClocks } from '../clock';
@@ -285,11 +285,23 @@ export function szStatus(v: View): Status {
   return quick ? { ...st, quick } : st;
 }
 
-/** Folge für eine Zeile im Blatt: Leben weg, schwimmt, raus. */
-function lifeCore(c: LifeChange, mine: boolean): { hat: string; core: string } {
-  if (c.to === 'out') return { hat: '🫧', core: `<span class="conseq">${SZ_SHEET.outNow(mine)}</span>` };
-  if (c.to === 'swim') return { hat: '🛟', core: `<span class="conseq swim">${SZ_SHEET.swim(mine)}</span>` };
-  return { hat: '💔', core: `<span class="conseq">${SZ_SHEET.life(c.n)}</span>` };
+/**
+ * Folge für eine Zeile im Blatt: Leben weg, schwimmt, raus. Dazu die Kurzform für lange Namen am Handy, leer, wo das
+ * Zeichen vor dem Namen es schon sagt.
+ */
+function lifeCore(c: LifeChange, mine: boolean): { hat: string; core: string; short: string } {
+  const out = (t: string, cls = '') => (t ? `<span class="conseq${cls}">${t}</span>` : '');
+  if (c.to === 'out') return { hat: '🫧', core: out(SZ_SHEET.outNow(mine)), short: out(SZ_SHEET.outShort) };
+  if (c.to === 'swim') return { hat: '🛟', core: out(SZ_SHEET.swim(mine), ' swim'), short: '' };
+  return { hat: '💔', core: out(SZ_SHEET.life(c.n)), short: out(SZ_SHEET.lifeShort(c.n)) };
+}
+
+/** Leben kurz wie in der Punkteleiste: ein Deckel und die Zahl, wer schwimmt, nur das Zeichen */
+function livesShort(p: Pick<Player, 'out' | 'lives'>): string {
+  if (p.out) return SZ_SHEET.outShort;
+  if (p.lives === 0) return `<span class="swim" title="schwimmt">${SWIM_ICON}</span>`;
+  const n = num(p.lives);
+  return `<span class="lives lc" title="${n} Leben"><span class="coaster"></span>${n}</span>`;
 }
 
 /** Bis zu dieser Länge passt „Name gewinnt!“ auch bei 360 px in eine Zeile */
@@ -376,12 +388,20 @@ export function szSheet(v: View): Sheet | null {
           name: nm(p.id),
           hat: lc?.hat ?? (isBest ? '👑' : undefined),
           core: lc?.core ?? (isBest ? `<span class="conseq good">${SZ_SHEET.best}</span>` : livesHTML(p, v.rules)),
+          // Kurz: die 👑 sagt „beste Hand“ schon, die Leben stehen als Deckel mit Zahl
+          short: lc?.short ?? (isBest ? '' : livesShort(p)),
           val: valOf(p.id),
           cards: r.hands[p.id],
           tone: c ? 'lose' : isBest ? 'win' : undefined,
         };
       }),
-      ...before.map((p): SheetRow => ({ id: p.id, place: null, name: nm(p.id), core: SZ_SHEET.outBefore })),
+      ...before.map((p): SheetRow => ({
+        id: p.id,
+        place: null,
+        name: nm(p.id),
+        core: SZ_SHEET.outBefore,
+        short: SZ_SHEET.outShort,
+      })),
     ];
     key = losers.includes(App.me) ? App.me : (r.losers.find((id) => losers.includes(id)) ?? losers[0] ?? null);
     if (!losers.length && r.reason !== 'quit') keyNote = SZ_SHEET.tie;
@@ -414,6 +434,8 @@ export function szSheet(v: View): Sheet | null {
           name: nm(p.id),
           hat: last ? '🫧' : undefined,
           core: p.outRound ? SZ_SHEET.outIn(num(p.outRound)) : SZ_SHEET.outBefore,
+          // 🫧 und der Satz unter dem Sieger sagen schon, wann sie rausflogen
+          short: last ? '' : p.outRound ? SZ_SHEET.outInShort(num(p.outRound)) : SZ_SHEET.outShort,
           val: valOf(p.id),
           tone: last ? 'lose' : undefined,
         };
@@ -427,14 +449,15 @@ export function szSheet(v: View): Sheet | null {
   }
   // Die Schlüsselzeile trägt Karten, ihr Handwert steht mit in der Folge statt allein in der Kartenreihe
   rows = rows.map((row) => {
-    // Wer geklopft hat, steht in der eigenen Zeile, statt einer eigenen Zeile unter dem Titel
-    const core =
-      !over && r.reason === 'knock' && row.id === r.knocker
-        ? `${SZ_SHEET.knocked(row.id === App.me)} · ${row.core}`
-        : row.core;
+    // Wer geklopft hat, steht in der eigenen Zeile, statt einer eigenen Zeile unter dem Titel. Kurz bleibt
+    // „geklopft“, das Zeichen davor sagt, wie es ausging. Nur zwei Leben weg (Klopfen doppelt) steht noch dabei
+    const knocked = !over && r.reason === 'knock' && row.id === r.knocker;
+    const core = knocked ? `${SZ_SHEET.knocked(row.id === App.me)} · ${row.core}` : row.core;
+    const lost2 = r.changes[row.id]?.to === 'life' && r.changes[row.id].n > 1;
+    const short = knocked ? `${SZ_SHEET.knockedShort}${lost2 && row.short ? ` · ${row.short}` : ''}` : row.short;
     return row.id === key && row.val != null
-      ? { ...row, core: `${core} · ${SZ_SHEET.handVal(row.val)}`, val: undefined }
-      : { ...row, core };
+      ? { ...row, core: `${core} · ${SZ_SHEET.handVal(row.val)}`, short: undefined, val: undefined }
+      : { ...row, core, short };
   });
   const myC = r.changes[App.me];
   const icon = over

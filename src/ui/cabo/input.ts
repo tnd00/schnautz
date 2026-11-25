@@ -34,21 +34,24 @@ const clearSel = (): void => {
   App.cs = { ids: [], opp: null, snap: false };
 };
 
+/** Selektor einer eigenen Karte */
+const mineSel = (id: number): string => `#me .cbslot[data-sid="${Number(id)}"]`;
+
 /** Selektoren der Karten, Stapel oder Knöpfe zu einer Aktion, damit eine Ablehnung das Richtige wackeln lässt. */
 function tapSel(a: Action): string[] {
-  const mine = (id: number) => `#me .cbslot[data-sid="${Number(id)}"]`;
   const opp = (to: string, id: number) => `#opps .opp[data-pid="${CSS.escape(to)}"] .cbslot[data-sid="${Number(id)}"]`;
   switch (a.type) {
     case 'cblook':
     case 'cbswap':
-      return a.ids.map(mine);
+      return a.ids.map(mineSel);
     case 'cbpeek':
     case 'cbsnap':
-      return [mine(a.id)];
+      return [mineSel(a.id)];
+    // Die eigene Reihe steht in #me, nicht in #opps
     case 'cbspy':
-      return [opp(a.to, a.id)];
+      return [a.to === App.me ? mineSel(a.id) : opp(a.to, a.id)];
     case 'cbblind':
-      return [mine(a.id), ...(a.to ? [opp(a.to, a.oid)] : [])];
+      return [mineSel(a.id), ...(a.to ? [opp(a.to, a.oid)] : [])];
     case 'cbdraw':
       return [a.from === 'pile' ? '#center .cbpile' : '#center .cbdeck', `#me [data-act="cb${a.from}"]`];
     case 'cbdiscard':
@@ -91,6 +94,17 @@ function trySend(v: View, a: Action): void {
   showReject(no, a.type);
 }
 
+/**
+ * Eigene Karte, die gerade nicht wählbar ist: nur den Grund zeigen, nie einen Zug schicken. Die angetippte Karte
+ * wackelt. Gibt es keinen Grund, passiert nichts.
+ */
+function explainMine(v: View, id: number, a: Action): void {
+  const no = cbWhyNot(v, App.me, a);
+  if (!no) return;
+  noteTap(a.type, [mineSel(id)]);
+  showReject(no, a.type);
+}
+
 /** Eigene Karte angetippt. */
 export function cbTapMine(id: number): void {
   const v = App.view;
@@ -121,13 +135,13 @@ export function cbTapMine(id: number): void {
     case 'blind':
       App.cs.ids = cur.includes(id) ? [] : [id];
       break;
-    // Nicht wählbar: Die Karte nennt ihren Grund
+    // Nicht wählbar: Die Karte nennt ihren Grund, ein Zug geht dabei nie raus
     case 'draw':
     case 'wait':
-      trySend(v, { type: 'cbswap', ids: [id] });
+      explainMine(v, id, { type: 'cbswap', ids: [id] });
       return;
     case 'spy':
-      trySend(v, { type: 'cbspy', to: App.me, id });
+      explainMine(v, id, { type: 'cbspy', to: App.me, id });
       return;
     default:
       return;

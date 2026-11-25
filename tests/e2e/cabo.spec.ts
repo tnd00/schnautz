@@ -151,6 +151,7 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
   await host.click('[data-act=start]');
   await waitForPhase(guest, ['peek'], 20_000);
   let checked = 0;
+  let told = false;
   await playToEnd([host, guest], async (p, v, me) => {
     if (p !== guest || !v.cb || (v.phase !== 'play' && v.phase !== 'peek')) return;
     const C = v.cb;
@@ -162,7 +163,18 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
     expect(C.know).toBeUndefined();
     C.reveal?.items.forEach((x) => expect(typeof x.c).toBe('string'));
     if (checked++ % 10 === 0) expect(await fitFindings(guest, ['#me'])).toEqual([]);
+    // Einmal beim Gast: eigene Karte antippen, während der Gastgeber dran ist. Ohne KIs steht der Tisch dabei still,
+    // der Gastgeber zieht erst im nächsten Durchgang. Der Grund steht am Tisch und es geht kein Zug raus
+    if (told || v.phase !== 'play' || v.players[v.turn]?.id === me || !C.P[me]?.length) return;
+    const hv = await mustView(host);
+    if (hv.phase !== 'play' || hv.cb?.t !== C.t || hv.players[hv.turn]?.id === me) return;
+    await expect(guest.locator('#announce .ann')).toHaveCount(0, { timeout: 20_000 });
+    await guest.locator('#me .cbslot[data-act=cbm]').first().click();
+    await expect(guest.locator('#fly .nopelbl')).toContainText('Du bist gerade nicht dran.');
+    expect((await mustView(host)).cb?.t).toBe(C.t);
+    told = true;
   });
+  expect(told, 'Gast hat eine eigene Karte angetippt, während der Gastgeber dran war').toBe(true);
   await waitForPhase(guest, ['over'], 30_000);
   await expect(guest.locator('#overlay .result h2')).toContainText(/Cabo-König|Unentschieden/, { timeout: 30_000 });
   expect(errors.list).toEqual([]);
@@ -345,11 +357,32 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
   await expect(host.locator('#me [data-act=cbswap]')).toHaveClass(/shake/);
   expect((await mustView(host)).cb?.hold?.by).toBe(me);
   expect((await mustView(host)).cb?.t).toBe(t0);
+  // Spionieren: Eine eigene Karte nennt den Grund und wackelt selbst, nicht der ganze Platz. Es geht kein Zug raus
+  const t1 = await host.evaluate(() => {
+    const S = window.__schnautz!;
+    const st = S.H.st!;
+    st.cb!.hold = null;
+    st.cb!.t += 1;
+    st.cb!.power = { by: S.App.me, kind: 'spy', c: 'H9' };
+    st.cb!.pile.push('H9');
+    S.hostCommit();
+    return st.cb!.t;
+  });
+  await expect(host.locator('#status .main')).toContainText('Spionieren!');
+  await host.waitForTimeout(450);
+  const own = host.locator('#me .cbslot[data-act=cbm]').first();
+  await own.click();
+  await expect(host.locator('#fly .nopelbl').last()).toContainText('Wähle eine Karte von jemand anderem.');
+  await expect(own).toHaveClass(/shake/);
+  await expect(host.locator('#me')).not.toHaveClass(/shake/);
+  expect((await mustView(host)).cb?.power?.kind).toBe('spy');
+  expect((await mustView(host)).cb?.t).toBe(t1);
   // Fremder Zug: die eigene Karte nennt, dass jemand anderes dran ist
   await host.evaluate((me) => {
     const S = window.__schnautz!;
     const st = S.H.st!;
     st.cb!.hold = null;
+    st.cb!.power = null;
     st.turn = st.players.findIndex((p) => p.id !== me);
     st.cb!.t += 1;
     S.hostCommit();

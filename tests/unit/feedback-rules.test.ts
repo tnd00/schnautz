@@ -2,13 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { LogEntry } from '../../src/game/types';
 import { genitive, SEAT } from '../../src/content/texts/seat';
 import {
-  bandBox,
   holdsBatch,
   levelInBatch,
   movedEnough,
   newBatch,
   ownSeatNote,
-  slotOf,
+  SEAT_FRESH,
   toneOf,
 } from '../../src/ui/feedback-rules';
 import type { Cue } from '../../src/ui/levels';
@@ -48,10 +47,17 @@ describe('pro Zug höchstens ein Großes', () => {
 });
 
 describe('Ton je Stufe', () => {
-  it('klein ist still, außer bei Automatischem oder eigenem Klang', () => {
+  it('klein hat keinen Meldeton, außer bei Automatischem', () => {
     expect(toneOf(SMALL, 'small')).toEqual({ calm: false });
     expect(toneOf(AUTO, 'small')).toEqual({ calm: true });
-    expect(toneOf(SMALL, 'small', 'smack')).toEqual({ sfx: 'smack', calm: false });
+  });
+
+  it('der Klang des Ereignisses bleibt auch bei klein (Karte, Tipp, Schnappen, Blindtausch)', () => {
+    for (const s of ['card', 'pop', 'smack'] as const) {
+      expect(toneOf(SMALL, 'small', s)).toEqual({ sfx: s, calm: false });
+      // Er ersetzt den leisen Meldeton, auch bei Automatischem klingt nur einmal etwas
+      expect(toneOf(AUTO, 'small', s)).toEqual({ sfx: s, calm: false });
+    }
   });
 
   it('mittel klingt immer, der eigene Klang ersetzt den Meldeton', () => {
@@ -67,23 +73,8 @@ describe('Ton je Stufe', () => {
   });
 });
 
+// Wo Meldungen stehen, rechnet src/ui/band.ts (tests/unit/band.test.ts)
 describe('Lage der Meldungen', () => {
-  it('am eigenen Zug, in der Tauschrunde und ohne Spielfläche als Band', () => {
-    expect(slotOf({ swap: false, myMove: false, field: true })).toBe('field');
-    expect(slotOf({ swap: false, myMove: true, field: true })).toBe('band');
-    expect(slotOf({ swap: true, myMove: false, field: true })).toBe('band');
-    expect(slotOf({ swap: false, myMove: false, field: false })).toBe('band');
-  });
-
-  it('Band endet unten mit der Statuszeile und wächst nur bis knapp unter den Stapel', () => {
-    const status = { left: 10, top: 500, width: 340, height: 56 };
-    expect(bandBox(status, 450)).toEqual({ left: 10, top: 454, width: 340, height: 102 });
-    // Viel Platz: höchstens 150 hoch
-    expect(bandBox(status, 100).height).toBe(150);
-    // Kein Platz: nie niedriger als die Zeile selbst
-    expect(bandBox(status, 520)).toEqual(status);
-  });
-
   it('verschiebt erst ab mehr als ein paar Pixeln', () => {
     const a = { left: 100, top: 200, width: 300, height: 80 };
     expect(movedEnough(a, { ...a, top: 203 })).toBe(false);
@@ -116,6 +107,34 @@ describe('Kommen, Gehen, Zurück und Übernahme', () => {
     expect(ownSeatNote(l, 'me', -1)).toEqual({ n: 2, text: 'Du übernimmst Uschis Platz samt Karten.' });
     expect(ownSeatNote(l, 'me', 2)).toBeNull();
     expect(ownSeatNote(l, 'other', -1)).toBeNull();
+  });
+
+  it('meldet nur einen frischen Sitz-Eintrag, nicht noch einmal in einem neuen Tab', () => {
+    const take = { k: 'takeover', p: 'me', name: 'Tahna', from: 'Uschi' } as const;
+    const chat = (k: number) => Array.from({ length: k }, () => ({ k: 'chat', p: 'a', text: 'na' }) as const);
+    // Gleich danach: ein paar Einträge (KI-Züge, Chat) dürfen dazwischen liegen
+    expect(ownSeatNote(log({ k: 'shplay', p: 'a' }, take), 'me', -1)?.n).toBe(2);
+    expect(ownSeatNote(log(take, ...chat(SEAT_FRESH)), 'me', -1)?.text).toBe('Du übernimmst Uschis Platz samt Karten.');
+    expect(ownSeatNote(log(take, ...chat(SEAT_FRESH + 1)), 'me', -1)).toBeNull();
+    // Übernahme bei Nummer 5, danach 84 Einträge, wie im Verlauf einer Ansicht (90 Einträge)
+    const old = log(...chat(4), take, ...chat(84));
+    expect(old).toHaveLength(89);
+    expect(ownSeatNote(old, 'me', -1)).toBeNull();
+    // Ebenso die Rückkehr
+    expect(ownSeatNote(log({ k: 'back', p: 'me' }, ...chat(84)), 'me', -1)).toBeNull();
+    expect(ownSeatNote(log({ k: 'back', p: 'me' }), 'me', -1)?.text).toBe(SEAT.backSelf);
+  });
+
+  it('eine Übernahme in der Lobby heißt am Tisch nie „samt Karten“', () => {
+    // In der Lobby übernommen, dann beginnt die Partie: Ein neuer Tab am Tisch meldet nichts
+    const take = { k: 'takeover', p: 'me', name: 'Tahna', from: 'Uschi' } as const;
+    for (const k of ['game', 'shdeal', 'dkdeal', 'cbdeal', 'round', 'lobby', 'abort'] as const)
+      expect(ownSeatNote(log(take, { k } as Partial<LogEntry>), 'me', -1)).toBeNull();
+    const start = log(take, { k: 'game', g: 1, game: 'shithead' }, { k: 'shdeal' });
+    expect(ownSeatNote(start, 'me', -1)).toBeNull();
+    // Mitten in der Partie übernommen: kein neuer Anfang danach, die Meldung kommt
+    const mid = log({ k: 'game', g: 1, game: 'shithead' }, { k: 'shdeal' }, take);
+    expect(ownSeatNote(mid, 'me', -1)?.text).toBe('Du übernimmst Uschis Platz samt Karten.');
   });
 
   it('zählt nur der letzte Sitz-Eintrag: zurück ja, gegangen nein', () => {

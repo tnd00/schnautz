@@ -180,6 +180,40 @@ describe('Statuszeile Durak', () => {
     );
   });
 
+  it('acht Leute mit langen Namen: ab vier Wartenden nennt die Unterzeile zwei Namen und zählt den Rest', () => {
+    const rng = rngF(5);
+    const st = newState('h', 'Tina Langername1');
+    act(st, 'h', { type: 'game', game: 'durak' }, rng);
+    act(st, 'h', { type: 'rules', rules: { seats: 8 } }, rng);
+    for (let i = 1; i < 8; i++) addPlayer(st, `p${i}`, `Wolfgang-Amadeu${i}`);
+    // Drei KIs, damit „KI “ vor dem Namen mitzählt
+    for (const id of ['p2', 'p3', 'p4']) st.players.find((p) => p.id === id)!.bot = true;
+    expect(act(st, 'h', { type: 'start' }, rng)).toBeNull();
+    expect(st.players.every((p) => p.name.length === 16)).toBe(true);
+    const D = st.dk!;
+    const ids = st.players.map((p) => p.id);
+    D.P = Object.fromEntries(ids.map((id) => [id, ['C7', 'S8', 'DK']]));
+    Object.assign(D, { att: 'h', def: 'p1', table: [{ a: 'H7', by: 'h' }], take: true, done: [], limit: 6 });
+    // Wer aufnimmt, wartet auf sieben: zwei Namen und der Rest als Zahl
+    const take = statusFor(st, 'p1').text;
+    expect(take).toBe('Du nimmst auf. | Warte auf Tina Langername1, KI Wolfgang-Amadeu2 und 5 weitere.');
+    // Alles geschlagen, sechs dürfen noch nachlegen
+    Object.assign(D, { table: [{ a: 'H7', d: 'HA', by: 'h' }], take: false, done: ['h'] });
+    const beaten = statusFor(st, 'p1').text;
+    expect(beaten).toBe('Alles geschlagen. | Warte auf KI Wolfgang-Amadeu2, KI Wolfgang-Amadeu3 und 4 weitere.');
+    // Bei drei Wartenden stehen noch alle da, bei vier schon die Kurzform
+    D.done = ['h', 'p2', 'p3', 'p4'];
+    expect(statusFor(st, 'p1').text).toBe(
+      'Alles geschlagen. | Warte auf Wolfgang-Amadeu5, Wolfgang-Amadeu6 und Wolfgang-Amadeu7.',
+    );
+    D.done = ['h', 'p2', 'p3'];
+    expect(statusFor(st, 'p1').text).toBe(
+      'Alles geschlagen. | Warte auf KI Wolfgang-Amadeu4, Wolfgang-Amadeu5 und 2 weitere.',
+    );
+    // Zwei Zeilen zu rund 56 Zeichen hat die Unterzeile bei 360 px, beide Kurzformen bleiben darunter
+    for (const t of [take, beaten]) expect(t.split(' | ')[1].length).toBeLessThanOrEqual(2 * 56);
+  });
+
   it('Auswahl, die nicht geht: die Unterzeile nennt den Grund', () => {
     const { st, D } = table();
     D.table = [{ a: 'C7', by: 'h' }];
@@ -336,6 +370,18 @@ describe('Ergebnisblatt Durak', () => {
     expect(key.tone).toBe('lose');
     expect(s.rows[0].hat).toBe('👑');
     expect(s.rows[0].core).toBe('zuerst fertig');
+    // Kurzform für lange Namen: die Krone sagt „fertig“ schon, „fertig“ allein braucht keine
+    expect(s.rows[0].short).toBe('zuerst');
+    expect(s.rows[1].core).toBe('fertig');
+    expect(s.rows[1].short).toBeUndefined();
+    // Mit Zähler früherer Partien bleibt kurz nur der Zähler, Platz und Krone sagen den Rest
+    st.players.find((p) => p.id === 'h')!.dkc = 2;
+    st.players.find((p) => p.id === 'b')!.place = 1;
+    const t = dkSheet(viewFor(st, 'b'))!;
+    expect(t.rows[0].core).toBe('zuerst fertig · 2× Durak');
+    expect(strip(t.rows[0].short ?? '')).toBe('🤡 2');
+    expect(t.rows[1].core).toBe('gleichzeitig fertig');
+    expect(t.rows[1].short).toBe('gleichzeitig');
     // Krone und „zuerst fertig“ sagen es schon, die Einleitung bleibt frei
     expect(s.lead).toBe('');
   });

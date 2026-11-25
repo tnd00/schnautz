@@ -4,13 +4,21 @@
  * würde.
  *
  *   node tests/design/result.mjs [--games=shithead,durak,cabo,schnautz] [--states=over,overwin,overlose,round]
- *     [--seats=8] [--sizes=360x640,375x548,390x844] [--roles=host,guest] [--ready] [--hard] [--long] [--shots]
- *     [--out=DIR] [--port=5173] [--peer=9000] [--serve]
+ *     [--seats=8] [--sizes=360x640,375x548,390x844] [--roles=host,guest] [--ready|--guest-ready] [--hard] [--long]
+ *     [--shots] [--out=DIR] [--port=5173] [--peer=9000] [--serve]
  *
  * `--ready`: danach meldet sich der Gastgeber bereit, der Gast noch nicht. Gemessen wird der Gastgeber mit Wartetext
- * und „Nicht warten“, das ist die vollste Fußzeile. `--hard`: Härtefälle im Spielstand des Gastgebers nachstellen,
- * die der Zufall selten trifft (Shithead und Durak mit 12 Restkarten und drei Tipps, Cabo daneben mit 6 Karten
- * beim Rufer).
+ * und „Nicht warten“ (`host-ready`), das ist die vollste Fußzeile. Dazu zwei nachgestellte Lagen, bei denen nur die
+ * Ansicht der gemessenen Seite geändert wird: Fünf Leute fehlen noch (`host-crowd`, vier KIs gelten dafür als
+ * Menschen) und der Gast ist bereit, der Gastgeber nicht (`guest-fake`). `--guest-ready` statt `--ready`: echt
+ * gemeldet hat sich nur der Gast (`guest-ready`), zusammen geht es nicht, sonst beginnt die nächste Runde.
+ * Gekürzter Wartetext ist ein Befund, auch wenn er erst mit einer späteren Zahl des Countdowns kippen würde.
+ * `--hard`: Härtefälle im Spielstand des Gastgebers nachstellen, die der Zufall selten trifft (Shithead und Durak
+ * mit 12 Restkarten und drei Tipps, Cabo daneben mit 6 Karten beim Rufer). Mit `--long` heißt auch der Gastgeber
+ * 16 Zeichen lang.
+ *
+ * Schnautz und Cabo starten die nächste Runde nach 10 Sekunden. Was danach noch fehlt, steht als „nicht gemessen“
+ * in der Liste. Mit `--ready` deshalb je Größe ein Lauf (`--sizes=360x640`, dann `--sizes=375x548` und so weiter).
  */
 import {
   arg,
@@ -37,6 +45,9 @@ import {
   waitResult,
   watchErrors,
 } from './lib.mjs';
+
+/** Härtefall: auch der Gastgeber mit 16 Zeichen */
+const LONG_HOST = 'Tahna-Kristoffer';
 
 const games = arg('games', 'shithead,durak,cabo,schnautz').split(',');
 const states = arg('states', 'over').split(',');
@@ -83,6 +94,69 @@ async function hardCase(page, game) {
       ];
       what += ', Tipps mit eigenem';
     }
+    // Breiteste Kernzahlen: Zähler früherer Partien, Shithead auch beim Ersten mit Krone
+    if (g === 'shithead' && r.ranking?.length) {
+      r.ranking.forEach((id) => {
+        const p = st.players.find((x) => x.id === id);
+        if (p) p.shc = 2;
+      });
+      what += ', 2× Shithead an allen';
+    }
+    // Durak: Krone mit „zuerst fertig“, daneben ein geteilter Platz 1 („gleichzeitig fertig“), der Rest mit Zähler
+    if (g === 'durak' && r.ranking?.length > 2) {
+      r.ranking.forEach((id, i) => {
+        const p = st.players.find((x) => x.id === id);
+        if (!p) return;
+        if (i === 1) p.place = 1;
+        if (i >= 2) p.dkc = 2;
+      });
+      st.winner = r.ranking[0];
+      what += ', geteilter Platz 1, 2× Durak';
+    }
+    // Schnautz: jede Art Zeile einmal, mit dem breitesten Handwert (30,5) und dem Gast in der engsten Zeile
+    if (g === 'schnautz' && r.changes) {
+      const drei = (x) => ['H', 'S', 'C'].map((s) => s + x);
+      const guest = st.players.find((p) => !p.bot && p.id !== st.host);
+      const host = st.players.find((p) => p.id === st.host);
+      const bots = st.players.filter((p) => p.bot);
+      if (st.phase === 'end' && guest && bots.length >= 6) {
+        st.rules.lives = 6;
+        for (const p of st.players) {
+          r.hands[p.id] = drei(['K', 'D', 'B', '10', '9', '8', '7', 'A'][st.players.indexOf(p) % 8]);
+          r.vals[p.id] = { v: 20, kind: 'normal', suit: null };
+          p.out = false;
+          p.lives = 6;
+        }
+        const [k, l1, sw, out, best, knock] = bots;
+        r.changes = {
+          [k.id]: { n: 1, to: 'life' },
+          [l1.id]: { n: 1, to: 'life' },
+          [guest.id]: { n: 1, to: 'life' },
+          [sw.id]: { n: 1, to: 'swim' },
+          [out.id]: { n: 1, to: 'out' },
+        };
+        sw.lives = 0;
+        out.lives = 0;
+        r.losers = [k.id, l1.id, guest.id, sw.id, out.id];
+        r.vals[best.id] = { v: 30.5, kind: 'drei', suit: null };
+        r.reason = 'knock';
+        r.by = null;
+        r.knocker = knock.id;
+        what = `Rundenende mit 💔 🛟 🫧 👑, ${host?.name ?? 'Gastgeber'} mit 6 Leben, geklopft`;
+      }
+      if (st.phase === 'over' && guest) {
+        const down = [guest, ...bots].filter((p) => p.id !== st.winner).slice(0, 2);
+        r.changes = Object.fromEntries(down.map((p) => [p.id, { n: 1, to: 'out' }]));
+        down.forEach((p, i) => (r.hands[p.id] = drei(['K', 'D'][i])));
+        let round = 21;
+        for (const p of st.players) {
+          if (p.id === st.winner) continue;
+          p.out = true;
+          p.outRound = down.includes(p) ? 21 : --round;
+        }
+        what = 'Partieende, zuletzt untergegangen mit 30,5, Runden zweistellig';
+      }
+    }
     if (g === 'cabo' && st.phase === 'end') {
       const c = Object.keys(r.sums).find((id) => st.players.find((p) => p.id === id)?.bot);
       if (c) {
@@ -101,8 +175,121 @@ async function hardCase(page, game) {
   }, game);
 }
 
-/** Alle Größen auf einer Seite messen, solange die Phase noch stimmt. */
-async function measureAll(page, role, tag, phase) {
+/** Wartetext in der Knopfreihe: Text, Breite und ob er gekürzt ist, dazu ob die Knopfreihe umbricht. */
+async function waitInfo(page) {
+  return page.evaluate(() => {
+    // Wie `overflows` in src/ui/render/result.ts mit Bruchteilen: `scrollWidth` ist gerundet und gleicht
+    // `clientWidth` oft auch dann, wenn schon Auslassungspunkte stehen
+    const overBy = (e) => {
+      const r = document.createRange();
+      r.selectNodeContents(e);
+      return r.getBoundingClientRect().width - e.getBoundingClientRect().width;
+    };
+    const el = document.querySelector('#overlay .paper.result .foot.rbtns .waittxt');
+    if (!el) return null;
+    // Umbruch heißt: ein Kind beginnt unter dem ersten. Die Höhe der Reihe taugt nicht, sie hat oben Innenabstand
+    const tops = [...el.parentElement.children].map((c) => c.getBoundingClientRect());
+    // Der Countdown zählt weiter herunter: Mit welchen noch kommenden Zahlen liefe die sichtbare Fassung über?
+    const cd = [...el.children].find((f) => !f.hidden)?.querySelector('.nextcd');
+    const now = cd?.textContent ?? '';
+    const cdCut = [];
+    for (let k = Math.max(10, Number(now) || 0); cd && k >= 0; k--) {
+      cd.textContent = String(k);
+      if (overBy(el) > 0.01) cdCut.push(k);
+    }
+    if (cd) cd.textContent = now;
+    return {
+      // Sichtbare Fassung, die übrigen sind hidden (fitWait in src/ui/render/result.ts)
+      text: el.innerText,
+      forms: el.children.length,
+      cw: el.clientWidth,
+      sw: el.scrollWidth,
+      // Streng: schon ein Bruchteil zu viel zeigt Auslassungspunkte
+      cut: overBy(el) > 0.01,
+      wraps: tops.some((r) => r.top >= tops[0].bottom - 1),
+      cdCut,
+    };
+  });
+}
+
+/**
+ * Zeilen des Blatts: gekürzte Namen (mit Bruchteilen gemessen), knappste Luft neben einem Namen, welche Stufe fitRows
+ * gewählt hat (kurz, klein, darunter), Zeilen ohne sichtbare Kernzahl und sichtbare ⏳ gegen die, auf die gewartet wird.
+ */
+async function rowInfo(page) {
+  return page.evaluate(() => {
+    const overBy = (e) => {
+      const r = document.createRange();
+      r.selectNodeContents(e);
+      return r.getBoundingClientRect().width - e.getBoundingClientRect().width;
+    };
+    const s = window.__schnautz;
+    const v = s?.App.view;
+    const me = v?.players.find((p) => p.id === s.App.me);
+    const sheet = document.querySelector('#overlay .paper.result');
+    const rows = [...sheet.querySelectorAll('.row.rr')];
+    const nm = (row) => row.querySelector(':scope > .rnm');
+    const cutNames = rows
+      .filter((row) => overBy(nm(row)) > 0.01)
+      .map((row) => `${nm(row).innerText.trim()} (${overBy(nm(row)).toFixed(1)} px)`);
+    const nameRoom = Math.min(...rows.map((row) => Math.floor(-overBy(nm(row)))));
+    const isShort = (row) => row.querySelector(':scope > .rcore > .cf + .cf:not([hidden])') != null;
+    const fit = {
+      kurz: rows.filter(isShort).length,
+      klein: rows.filter((r) => r.classList.contains('snug')).length,
+      darunter: rows.filter((r) => r.classList.contains('under')).length,
+    };
+    // Ohne sichtbare Kernzahl, Deckel und Zeichen zählen mit, sie haben keinen Text
+    const empty = rows
+      .filter((row) => (row.querySelector(':scope > .rcore')?.getBoundingClientRect().width ?? 0) < 1)
+      .map((row) => nm(row).innerText.trim());
+    const marks = [...sheet.querySelectorAll('.rwait')].filter((w) => !w.hidden && w.getClientRects().length).length;
+    const waits = me?.ready
+      ? v.players.filter((p) => p.online && !p.ready && !p.bot && p.id !== me.id && (v.phase === 'over' || !p.out))
+          .length
+      : 0;
+    // Höhe aller Zeilen zusammen, zum Vergleich vor und nach dem Bereitmelden
+    const rowsH = Math.round(sheet.querySelector('.rows').getBoundingClientRect().height);
+    return { cutNames, nameRoom, fit, empty, marks, waits, rowsH };
+  });
+}
+
+/**
+ * Nur die Ansicht der gemessenen Seite ändern und neu zeichnen, wie sie der Gastgeber in dieser Lage schicken würde:
+ * `meReady` meldet mich bereit, `extra` KIs gelten als Menschen, die noch nicht bereit sind. Die nächste echte Ansicht
+ * überschreibt das wieder, deshalb vor jeder Größe neu. Gibt zurück, auf wie viele das Blatt dann wartet.
+ */
+async function fakeWait(page, { meReady = false, extra = 0 } = {}) {
+  return page.evaluate(
+    ([ready, more]) => {
+      const s = window.__schnautz;
+      const v = JSON.parse(JSON.stringify(s.App.view));
+      const me = v.players.find((p) => p.id === s.App.me);
+      if (!me) return -1;
+      if (ready) me.ready = true;
+      // Die Ansicht kann schon von der letzten Größe nachgestellt sein: nur so viele dazu, bis es `more` sind
+      let k = v.players.filter((p) => p.fake).length;
+      for (const p of v.players) {
+        if (p.id === me.id) continue;
+        if (!p.bot) p.ready = false;
+        else if (k < more && (v.phase === 'over' || !p.out)) {
+          p.bot = false;
+          p.online = true;
+          p.ready = false;
+          p.fake = true;
+          k++;
+        }
+      }
+      s.applyView(v);
+      return v.players.filter((p) => p.online && !p.ready && !p.bot && p.id !== me.id && (v.phase === 'over' || !p.out))
+        .length;
+    },
+    [meReady, extra],
+  );
+}
+
+/** Alle Größen auf einer Seite messen, solange die Phase noch stimmt. `prep` läuft vor jeder Messung. */
+async function measureAll(page, role, tag, phase, prep = null) {
   for (const size of sizes) {
     await page.setViewportSize(parseSize(size));
     await sleep(500);
@@ -112,19 +299,38 @@ async function measureAll(page, role, tag, phase) {
       rows.push({ ...meta, role, size, verdict: `nicht gemessen (Phase ${v?.phase})` });
       continue;
     }
+    const waits = prep ? await prep() : null;
+    if (prep) await sleep(150);
     const m = await sheetInfo(page);
     if (!m) {
       rows.push({ ...meta, role, size, verdict: 'kein Ergebnisblatt' });
       continue;
     }
+    const w = await waitInfo(page);
+    const ri = await rowInfo(page);
+    const { cutNames } = ri;
     const bad = [
       m.over > 1 && `scrollt ${m.over}px`,
       m.paperBottom > parseSize(size).height + 1 && `Blatt endet bei ${m.paperBottom}`,
       m.me === false && 'eigene Zeile verdeckt',
       m.loser === false && 'Verlierer verdeckt',
+      w?.cut && `Wartetext gekürzt (${w.sw}>${w.cw}) „${w.text}“`,
+      w?.cdCut.length && `Wartetext kippt bei ${w.cdCut.join(', ')} s`,
+      w?.wraps && 'Knopfreihe bricht um',
+      prep && !w && 'kein Wartetext',
+      cutNames.length && `Namen gekürzt: ${cutNames.join(' / ')}`,
+      ri.marks !== ri.waits && `⏳ an ${ri.marks} Zeilen, gewartet wird auf ${ri.waits}`,
     ].filter(Boolean);
-    rows.push({ ...meta, role, size, verdict: bad.join(', ') || 'ok', ...m });
-    console.log(`${tag} ${role.padEnd(10)} ${size.padEnd(8)} Zeilen ${m.rows} => ${bad.join(', ') || 'ok'}`);
+    rows.push({ ...meta, role, size, waits, wait: w, ...ri, verdict: bad.join(', ') || 'ok', ...m });
+    const wt = w ? ` „${w.text}“ ${w.sw}/${w.cw}` : '';
+    const fit = Object.entries(ri.fit)
+      .filter(([, n]) => n)
+      .map(([k, n]) => `${k} ${n}`)
+      .join(' ');
+    const extra = `${fit ? ` [${fit}]` : ''}${ri.empty.length ? ` leer: ${ri.empty.join(' / ')}` : ''}${ri.marks ? ` ⏳${ri.marks}` : ''}`;
+    console.log(
+      `${tag} ${role.padEnd(11)} ${size.padEnd(8)} Zeilen ${m.rows} h${ri.rowsH}${wt}${extra} => ${bad.join(', ') || 'ok'}`,
+    );
     await shot(page, `result-${meta.game}-${meta.state}${meta.hard ? '-hard' : ''}-${role}-${size}`);
   }
 }
@@ -145,7 +351,7 @@ try {
         const hctx = await context(browser, sizes[0]);
         ctxs.push(hctx);
         pages.host = watchErrors(await hctx.newPage(), 'host', errors);
-        const code = await hostTable(pages.host, 'Tahna');
+        const code = await hostTable(pages.host, flag('long') ? LONG_HOST : 'Tahna');
         await chooseGame(pages.host, game);
         await fillSeats(pages.host, seats);
         if (flag('long')) await longNames(pages.host);
@@ -172,11 +378,20 @@ try {
           if (!(await waitResult(page))) throw new Error(`kein Ergebnisblatt (${role})`);
           await measureAll(page, role, tag, phase);
         }
-        if (flag('ready') && pages.guest) {
+        if (flag('guest-ready') && pages.guest) {
+          // Echt: der Gast meldet sich bereit, der Gastgeber nicht
+          await pages.guest.click('#overlay [data-act=ready]');
+          await sleep(400);
+          await measureAll(pages.guest, 'guest-ready', tag, phase);
+        } else if (flag('ready') && pages.guest) {
           // Gastgeber bereit, der Gast noch nicht: Wartetext und „Nicht warten“ in der Fußzeile
           await pages.host.click('#overlay [data-act=ready]');
           await sleep(400);
           await measureAll(pages.host, 'host-ready', tag, phase);
+          // Nachgestellt: fünf fehlen noch, die Kurzform mit Zahl
+          await measureAll(pages.host, 'host-crowd', tag, phase, () => fakeWait(pages.host, { extra: 4 }));
+          // Nachgestellt: der Gast ist bereit, der Gastgeber noch nicht
+          await measureAll(pages.guest, 'guest-fake', tag, phase, () => fakeWait(pages.guest, { meReady: true }));
         }
       } catch (e) {
         console.log(`${game} ${state}: FEHLER ${e.message}`);

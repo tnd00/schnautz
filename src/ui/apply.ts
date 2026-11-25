@@ -107,7 +107,8 @@ export function applyView(v: View): void {
 
 /**
  * Eigene Übernahme oder Rückkehr: Die erste Ansicht spielt keine Effekte ab, deshalb hier einmal klein am Tisch.
- * Die Lognummer steht in sessionStorage, damit Neuladen nichts wiederholt.
+ * Die Lognummer steht in sessionStorage, damit Neuladen nichts wiederholt. Ein neuer Tab kennt sie nicht, dort
+ * hält ownSeatNote alte Einträge zurück. In der Lobby gibt es keine Meldung, gemerkt wird trotzdem.
  */
 function ownSeat(v: View): void {
   if (!App.code) return;

@@ -3,7 +3,8 @@
  * Oberfläche, hier stehen nur die Sätze drumherum. Mehrere können zugleich dran sein, deshalb setzt die Zeile
  * Teilsätze zusammen: „Tom verteidigt, Lena darf nachlegen.“
  */
-import { SH_STATUS } from './status';
+import { LOSER_MARK } from '../../game/games';
+import { SH_SHEET, SH_STATUS } from './status';
 
 export const DK_STATUS = {
   lead: 'Du greifst an.',
@@ -32,4 +33,22 @@ export const DK_STATUS = {
   passed: (def: string): string => `Du hast gepasst. Das gilt, bis ein neuer Wert liegt oder ${def} aufnimmt.`,
   doneSub: SH_STATUS.doneSub,
   overSub: SH_STATUS.overSub,
+} as const;
+
+/**
+ * Kernzahl in den Zeilen des Ergebnisblatts (dkSheet), dieselben Wörter wie bei Shithead. Passt ein langer Name
+ * daneben nicht ganz, nimmt das Blatt die Kurzform (fitRows in src/ui/render/result.ts).
+ */
+export const DK_SHEET = {
+  first: SH_SHEET.first,
+  firstShort: SH_SHEET.firstShort,
+  /** Platz 1 geteilt, ohne Krone */
+  tie: 'gleichzeitig fertig',
+  tieShort: 'gleichzeitig',
+  done: SH_SHEET.done,
+  left: SH_SHEET.left,
+  /** „2× Durak“ in früheren Partien */
+  count: (n: number): string => `${n}× Durak`,
+  /** Kurz wie am Tisch: „🤡 2“, mit Erklärung beim Darüberfahren */
+  countShort: (n: number): string => `<span title="So oft Durak gewesen">${LOSER_MARK.durak} ${n}</span>`,
 } as const;

@@ -113,7 +113,13 @@ export function takeSeat(st: State, seatId: string, name: string): void {
   // gerade gesehen hat, sieht der Mensch nicht, im Ansehen sieht er selbst zwei an
   if (st.phase === 'swap' || st.phase === 'peek') p.ready = false;
   if (st.cb) delete st.cb.reveal[p.id];
-  addLog(st, { k: 'takeover', p: p.id, name: p.name, from });
+  // In der Lobby gibt es noch keine Karten, der Verlauf sagt dann nicht „samt Karten“
+  addLog(
+    st,
+    st.phase === 'lobby'
+      ? { k: 'takeover', p: p.id, name: p.name, from, lobby: true }
+      : { k: 'takeover', p: p.id, name: p.name, from },
+  );
 }
 
 /** KI-Platz, den eine Person mit diesem Namen verlassen hat. */

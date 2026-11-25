@@ -11,6 +11,8 @@ import { cardHTML } from '../cards';
 import { $, esc, listJoin, num } from '../dom';
 import { holdOverlay } from '../feedback';
 import { aimAttrs } from './marks';
+import { AUTO_NEXT_MS } from '../../game/constants';
+import { nextIn, WAIT_GO, WAIT_MARK, waitFor, waitForms } from '../../content/texts/status';
 import { nameOf } from '../helpers';
 import { nextSecs } from '../nextround';
 import { canChallenge, mustAccept, rematchLine, rematchMark } from './rematch';
@@ -104,6 +106,12 @@ export interface SheetRow {
   hat?: string;
   /** Kernzahl oder Folge, HTML */
   core: string;
+  /**
+   * Kürzere Kernzahl, HTML, darf leer sein, wenn das Zeichen vor dem Namen es schon sagt. Passt ein Name neben
+   * `core` nicht ganz, nimmt das Blatt in allen Zeilen die Kurzform (fitRows). Nicht für die Schlüsselzeile, deren
+   * Kernzahl steht ohnehin unter dem Namen.
+   */
+  short?: string;
   /** Rechte Spalte, Handwert oder Gesamtpunkte */
   val?: string;
   /** Minikarten, gekappt auf 8 plus „+n“ */
@@ -138,7 +146,28 @@ export interface Sheet {
 
 const MAX_CARDS = 8;
 
-function sheetRowHTML(v: View, r: SheetRow, key: boolean, withCards = key): string {
+/**
+ * Auf wen das Blatt wartet: Menschen, die online und noch nicht bereit sind, nie ich selbst. Am Rundenende nur, wer
+ * noch im Spiel ist. Gilt für „Nicht warten“, den Wartetext und ⏳ an den Zeilen.
+ */
+export function waitsFor(v: View, p: Player): boolean {
+  return p.online && !p.ready && !p.bot && p.id !== App.me && (v.phase === 'over' || !p.out);
+}
+
+/**
+ * Zeilen mit ⏳: alle, auf die das Blatt wartet. Zu sehen ist es erst, wenn ich selbst bereit bin (`shown`), dann
+ * nennt die Knopfreihe oft nur noch die Zahl. Verborgen steht es trotzdem da, damit fitRows den Platz einplant und
+ * das Blatt beim Bereitmelden nicht umspringt.
+ */
+export function sheetWaits(v: View): { ids: string[]; shown: boolean } {
+  const me = v.players.find((p) => p.id === App.me);
+  return { ids: v.players.filter((p) => waitsFor(v, p)).map((p) => p.id), shown: !!me?.ready };
+}
+
+/** 0: kein ⏳, 1: verborgen, 2: zu sehen */
+type WaitMark = 0 | 1 | 2;
+
+function sheetRowHTML(v: View, r: SheetRow, key: boolean, withCards = key, wait: WaitMark = 0): string {
   const p = v.players.find((x) => x.id === r.id);
   const mine = r.id === App.me;
   const cls = ['row', 'rr', r.tone, key && 'key', mine && 'mine'].filter(Boolean).join(' ');
@@ -150,11 +179,20 @@ function sheetRowHTML(v: View, r: SheetRow, key: boolean, withCards = key): stri
           .map((c) => cardHTML(c))
           .join('')}${cards.length > MAX_CARDS ? `<span class="more">+${cards.length - MAX_CARDS}</span>` : ''}</span>`
       : '';
+  // ⏳ steht wie die Zeichen vor dem Namen, fitRows rechnet es immer mit ein
+  const mark = wait
+    ? `<span class="hat rwait" title="${WAIT_MARK}" aria-label="${WAIT_MARK}"${wait === 1 ? ' hidden' : ''}>⏳</span>`
+    : '';
+  // Lang und kurz, fitRows zeigt eine davon. Die Schlüsselzeile bricht um und braucht keine Kurzform
+  const core =
+    !key && r.short != null && r.short !== r.core
+      ? `<span class="cf">${r.core}</span><span class="cf" hidden>${r.short}</span>`
+      : r.core;
   return (
     `<div class="${cls}" data-pid="${esc(r.id)}"${aimAttrs(p, true)}>` +
     `<span class="rpl">${r.place != null ? `${num(r.place)}.` : ''}</span>` +
-    `<span class="rnm">${r.hat ? `<span class="hat">${r.hat}</span>` : ''}<b>${r.name}</b>${rematchMark(v, r.id)}</span>` +
-    `<span class="rcore">${r.core}</span>` +
+    `<span class="rnm">${r.hat ? `<span class="hat">${r.hat}</span>` : ''}${mark}<b>${r.name}</b>${rematchMark(v, r.id)}</span>` +
+    `<span class="rcore">${core}</span>` +
     (r.val != null ? `<span class="rval">${r.val}</span>` : '') +
     mini +
     '</div>'
@@ -176,10 +214,7 @@ function sheetBtns(v: View, me: Player | null, s: Sheet): string {
     '<button class="btn ghost" data-act="peek"><span class="blong">Tisch ansehen</span><span class="bshort">Tisch</span></button>';
   if (!me) return h;
   if (ready) {
-    const waiting = v.players.some(
-      (p) => p.online && !p.ready && !p.bot && p.id !== App.me && (v.phase === 'over' || !p.out),
-    );
-    if (host && waiting)
+    if (host && v.players.some((p) => waitsFor(v, p)))
       h +=
         '<button class="btn ghost" data-act="force"><span class="blong">Nicht warten</span><span class="bshort">Los</span></button>';
     return h;
@@ -198,18 +233,112 @@ function sheetBtns(v: View, me: Player | null, s: Sheet): string {
 
 /**
  * Wartetext nach dem Bereitmelden, sonst nichts. Er steht in der Knopfreihe an der Stelle des Knopfs, der mit dem
- * Bereitmelden wegfällt, einzeilig und notfalls gekürzt. So wird das Blatt dadurch nicht höher.
+ * Bereitmelden wegfällt, einzeilig. So wird das Blatt dadurch nicht höher. Neben drei Knöpfen bleiben am Handy nur
+ * rund 100 px, deshalb stehen alle Fassungen vom längsten zur kürzesten da und `fitWait` zeigt die erste, die ganz
+ * passt. Der Countdown zur nächsten Runde geht vor, reicht der Platz für nichts sonst, bleibt nur er. Wer fehlt,
+ * steht dann trotzdem da: ⏳ an der eigenen Zeile im Blatt.
  */
 function sheetWait(v: View, me: Player | null): string {
   if (!me?.ready) return '';
   const secs = v.phase === 'end' ? nextSecs() : 0;
-  const waiting = v.players
-    .filter((p) => p.online && !p.ready && !p.bot && p.id !== App.me && (v.phase === 'over' || !p.out))
-    .map((p) => p.name);
-  const txt = waiting.length ? `Warte auf ${listJoin(waiting)}…` : "Los geht's…";
-  // Der Countdown zuerst, gekürzt wird hinten bei den Namen
-  const cd = secs ? `Weiter in <b class="nextcd">${secs}</b> s · ` : '';
-  return `<span class="waittxt" title="${esc(txt)}">${cd}${esc(txt)}</span>`;
+  const waiting = v.players.filter((p) => waitsFor(v, p)).map((p) => p.name);
+  const cd = secs ? nextIn(`<b class="nextcd">${secs}</b>`) : '';
+  const forms = waitForms(waiting).map((t) => (cd ? `${cd} · ${esc(t)}` : esc(t)));
+  if (cd && waiting.length) forms.push(cd);
+  const title = waiting.length ? waitFor(listJoin(waiting)) : WAIT_GO;
+  return (
+    `<span class="waittxt" title="${esc(title)}">` +
+    forms.map((f, i) => `<span${i ? ' hidden' : ''}>${f}</span>`).join('') +
+    '</span>'
+  );
+}
+
+/**
+ * Ragt der Inhalt über das Element hinaus? Mit Bruchteilen gemessen: `scrollWidth` ist gerundet und gleicht
+ * `clientWidth` auch dann, wenn schon Auslassungspunkte stehen.
+ */
+function overflows(el: HTMLElement): boolean {
+  const r = document.createRange();
+  r.selectNodeContents(el);
+  return r.getBoundingClientRect().width > el.getBoundingClientRect().width + 0.01;
+}
+
+/** Zeigt von mehreren Fassungen die erste, bei der `ok` gilt, sonst die letzte. */
+function pickForm(forms: readonly HTMLElement[], ok: () => boolean): void {
+  forms.forEach((f, i) => (f.hidden = i > 0));
+  for (let i = 0; i < forms.length - 1 && !ok(); i++) {
+    forms[i].hidden = true;
+    forms[i + 1].hidden = false;
+  }
+}
+
+/**
+ * Zeigt im Wartetext die erste Fassung, die ohne Kürzen in die Knopfreihe passt (siehe sheetWait). Der Countdown
+ * zählt danach jede Sekunde herunter und Ziffern sind verschieden breit, deshalb muss die Fassung mit jeder Zahl
+ * passen, die noch kommen kann. Sonst kippt sie eine Sekunde später in die Auslassungspunkte. Geprüft wird bis zum
+ * Höchstwert, denn der Host kann die Restzeit auch nach oben nachstellen (syncNext).
+ */
+function fitWait(): void {
+  const box = document.querySelector<HTMLElement>('#overlay .waittxt');
+  if (!box) return;
+  const cds = [...box.querySelectorAll<HTMLElement>('.nextcd')];
+  const now = cds[0]?.textContent ?? '';
+  const max = Math.max(Math.ceil(AUTO_NEXT_MS / 1000), num(now));
+  const all = now ? Array.from({ length: max + 1 }, (_, k) => String(k)) : [''];
+  pickForm([...box.children] as HTMLElement[], () =>
+    all.every((n) => {
+      if (n) cds.forEach((c) => (c.textContent = n));
+      return !overflows(box);
+    }),
+  );
+  cds.forEach((c) => (c.textContent = now));
+}
+
+/**
+ * Namen im Blatt werden nie gekürzt. Passt einer neben seiner Kernzahl nicht ganz, nehmen erst alle Zeilen die
+ * Kurzform (ein Wortlaut im ganzen Blatt), dann wird der Name etwas kleiner (`snug`, result.css), zuletzt rückt die
+ * Kernzahl unter den Namen (`under`). ⏳ zählt dabei immer mit, auch solange es verborgen ist, so sieht das Blatt
+ * nach dem eigenen Bereitmelden aus wie davor.
+ */
+function fitRows(): void {
+  const sheet = document.querySelector<HTMLElement>('#overlay .paper.result');
+  if (!sheet) return;
+  const rows = [...sheet.querySelectorAll<HTMLElement>('.row.rr')];
+  const held = [...sheet.querySelectorAll<HTMLElement>('.rwait[hidden]')];
+  held.forEach((w) => (w.hidden = false));
+  const tight = (row: HTMLElement): boolean => {
+    const nm = row.querySelector<HTMLElement>(':scope > .rnm');
+    return !!nm && overflows(nm);
+  };
+  const form = (row: HTMLElement, i: number): void =>
+    row.querySelectorAll<HTMLElement>(':scope > .rcore > .cf').forEach((f, k) => (f.hidden = k !== i));
+  for (const row of rows) {
+    row.classList.remove('snug', 'under');
+    form(row, 0);
+  }
+  if (rows.some((r) => !r.classList.contains('key') && tight(r))) rows.forEach((r) => form(r, 1));
+  for (const row of rows) {
+    if (!tight(row)) continue;
+    row.classList.add('snug');
+    if (!tight(row) || row.classList.contains('key')) continue;
+    row.classList.replace('snug', 'under');
+    if (tight(row)) row.classList.add('snug');
+  }
+  held.forEach((w) => (w.hidden = true));
+}
+
+function fitSheet(): void {
+  fitRows();
+  fitWait();
+}
+
+let fitHooked = false;
+/** Neue Breite oder nachgeladene Schrift: die Fassungen neu wählen */
+function hookFitSheet(): void {
+  if (fitHooked) return;
+  fitHooked = true;
+  window.addEventListener('resize', fitSheet);
+  void document.fonts?.ready.then(fitSheet);
 }
 
 /**
@@ -221,6 +350,11 @@ export function renderSheet(v: View, s: Sheet): string {
   const key = s.key ? s.rows.find((r) => r.id === s.key) : undefined;
   const own = s.rows.find((r) => r.id === App.me && r.id !== s.key);
   const rest = s.rows.filter((r) => r !== key && r !== own);
+  const waits = sheetWaits(v);
+  const mark = (id: string): WaitMark => (waits.ids.includes(id) ? (waits.shown ? 2 : 1) : 0);
+  const row = (r: SheetRow, isKey: boolean, cards: boolean): string => sheetRowHTML(v, r, isKey, cards, mark(r.id));
+  // Ohne Plätze (Schnautz am Rundenende) fällt die leere Platzspalte weg, die Namen bekommen ihre Breite
+  const noPlace = s.rows.every((r) => r.place == null);
   const rline = rematchLine(v);
   const say = rline
     ? `<p class="taunt rv">${rline}</p>`
@@ -230,13 +364,13 @@ export function renderSheet(v: View, s: Sheet): string {
   return (
     `<div class="rhead"><span class="trophy">${s.icon}</span><h2>${s.title}</h2></div>` +
     (s.lead ? `<p class="lead">${s.lead}</p>` : '') +
-    '<div class="rows">' +
-    (key ? sheetRowHTML(v, key, true) : '') +
+    `<div class="rows${noPlace ? ' noplace' : ''}">` +
+    (key ? row(key, true, true) : '') +
     (s.keyNote ? `<p class="rnote">${s.keyNote}</p>` : '') +
     say +
     s.bets +
-    (own ? sheetRowHTML(v, own, false, !!s.rowCards) : '') +
-    rest.map((r) => sheetRowHTML(v, r, false, !!s.rowCards)).join('') +
+    (own ? row(own, false, !!s.rowCards) : '') +
+    rest.map((r) => row(r, false, !!s.rowCards)).join('') +
     (s.extra ?? '') +
     '</div>' +
     '<div class="rfoot">' +
@@ -260,4 +394,6 @@ export function renderResult(v: View, s: Sheet | null): void {
     return;
   }
   ov.innerHTML = `<div class="modal"><div class="paper sheet result rs${s.cls ? ` ${s.cls}` : ''}">${renderSheet(v, s)}</div></div>`;
+  hookFitSheet();
+  fitSheet();
 }

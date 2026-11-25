@@ -284,6 +284,76 @@ describe('Ergebnisblatt Schnautz', () => {
     expect(sb.icon).toBe('💔');
   });
 
+  it('Kurzformen für lange Namen: das Zeichen vor dem Namen sagt die Folge, die Leben stehen als Deckel mit Zahl', () => {
+    const rng = rngF(4);
+    const st = newState('h', 'H');
+    act(st, 'h', { type: 'game', game: 'schnautz' }, rng);
+    act(st, 'h', { type: 'rules', rules: { seats: 5 } }, rng);
+    for (const [id, name] of [
+      ['a', 'Anna'],
+      ['b', 'Bert'],
+      ['c', 'Cleo'],
+      ['d', 'Dora'],
+    ])
+      addPlayer(st, id, name);
+    act(st, 'h', { type: 'start' }, rng);
+    expect(act(st, st.players[st.dealer].id, { type: 'keep' })).toBeNull();
+    st.middle = [...MID];
+    st.phase = 'play';
+    st.players.forEach((p) => (p.lives = 2));
+    st.players.find((p) => p.id === 'c')!.lives = 0;
+    // Die drei Neuner verlieren, h hat 31
+    st.hands = {
+      h: ['HA', 'HK', 'HD'],
+      a: ['SA', 'D10', 'C8'],
+      b: ['H7', 'D8', 'C9'],
+      c: ['D7', 'H9', 'S8'],
+      d: ['S7', 'D9', 'H8'],
+    };
+    st.knocker = 'b';
+    finishRound(st, 'knock', 'b');
+    App.me = 'h';
+    const s = szSheet(viewFor(st, 'h'))!;
+    const row = (id: string) => s.rows.find((r) => r.id === id)!;
+    const short = (id: string) => strip(row(id).short ?? '');
+    // b hat geklopft und ein Leben verloren: kurz nur „geklopft“, 💔 sagt den Rest
+    expect(row('b').hat).toBe('💔');
+    expect(s.key).toBe('b');
+    // Die Schlüsselzeile bricht um und hat keine Kurzform
+    expect(row('b').short).toBeUndefined();
+    // c schwamm schon und ist jetzt raus, d verliert ein Leben
+    expect(row('c').hat).toBe('🫧');
+    expect(short('c')).toBe('raus');
+    expect(row('d').hat).toBe('💔');
+    expect(strip(row('d').core)).toBe('1 Leben weg');
+    expect(short('d')).toBe('');
+    // h hat die beste Hand: die Krone sagt es, a zeigt die Leben als Deckel mit Zahl
+    expect(row('h').hat).toBe('👑');
+    expect(short('h')).toBe('');
+    expect(row('a').short).toContain('class="coaster"');
+    expect(short('a')).toBe('2');
+    // Klopfen und Folge in derselben Zeile, kurz bleibt „geklopft“
+    st.phase = 'play';
+    st.result = null;
+    st.players.forEach((p) => {
+      p.lives = 2;
+      p.out = false;
+    });
+    st.hands = {
+      h: ['H7', 'D8', 'C9'],
+      a: ['SA', 'D10', 'C8'],
+      b: ['HA', 'HK', 'HD'],
+      c: ['D7', 'H9', 'S8'],
+      d: ['S7', 'D9', 'H8'],
+    };
+    st.knocker = 'b';
+    finishRound(st, 'knock', 'b');
+    const s2 = szSheet(viewFor(st, 'h'))!;
+    const b2 = s2.rows.find((r) => r.id === 'b')!;
+    expect(strip(b2.core)).toBe('hat geklopft · beste Hand');
+    expect(strip(b2.short ?? '')).toBe('geklopft');
+  });
+
   it('Gleichstand: kein Schlüssel, Hinweis statt Verlierer', () => {
     const st = play(table());
     st.hands.h = ['C7', 'S8', 'H9'];
@@ -318,6 +388,9 @@ describe('Ergebnisblatt Schnautz', () => {
       ['a', 3],
     ]);
     expect(s.rows.find((r) => r.id === 'b')!.tone).toBe('lose');
+    // Kurzformen: „Runde 1“ statt „raus in Runde 1“
+    expect(s.rows.find((r) => r.id === 'a')!.core).toBe('raus in Runde 1');
+    expect(s.rows.find((r) => r.id === 'a')!.short).toBe('Runde 1');
     App.me = 'h';
     const sh = szSheet(viewFor(st, 'h'))!;
     expect(strip(sh.title)).toBe('Du gewinnst!');

@@ -6,6 +6,7 @@ import { $opt, listJoin } from './dom';
 import { REMATCH_ANN_MS } from '../game/constants';
 import { beginBatch, chatBubble, emit, fixedLabel, noteBig, tauntLabel, toast } from './feedback';
 import { cueOf, type LevelCtx } from './levels';
+import { seatVia } from './band';
 import { SEAT } from '../content/texts/seat';
 import { myMoveNow, myTurn, nameOf, pById } from './helpers';
 import { betEffect, BETUI } from './render/bets';
@@ -144,21 +145,25 @@ function timeoutEffect(c: LevelCtx, e: Extract<LogEntry, { k: 'timeout' }>): voi
   });
 }
 
-/** Kommen, Gehen, Zurück und Übernahme am Tisch: klein in der Spielfläche, Automatisches mit leisem Ton. */
+/**
+ * Kommen, Gehen, Zurück und Übernahme am Tisch: klein in der Spielfläche, Automatisches mit leisem Ton. Bei offenem
+ * Ergebnisblatt (Rundenende, Partieende) als Toast wie in der Lobby, sonst stünden sie unter dem Blatt.
+ */
 function seatEffect(c: LevelCtx, e: LogEntry): void {
   const nm = () => nameOf(c.v, e.p, e.name);
+  const asToast = seatVia({ phase: c.v.phase, sheet: !!$opt('#overlay .modal') }) === 'toast';
   switch (e.k) {
     case 'takeover':
-      emit(cueOf(e, c), { text: SEAT.takeover(e.name ?? nm(), e.from) });
+      emit(cueOf(e, c), { text: SEAT.takeover(e.name ?? nm(), e.from), toast: asToast });
       return;
     case 'tobot':
-      emit(cueOf(e, c), { text: SEAT.tobot(nm()) });
+      emit(cueOf(e, c), { text: SEAT.tobot(nm()), toast: asToast });
       return;
     case 'back':
-      emit(cueOf(e, c), { text: SEAT.back(nm()) });
+      emit(cueOf(e, c), { text: SEAT.back(nm()), toast: asToast });
       return;
     case 'join':
-      emit(cueOf(e, c), { text: SEAT.join(nm()) });
+      emit(cueOf(e, c), { text: SEAT.join(nm()), toast: asToast });
       return;
     default:
       return;

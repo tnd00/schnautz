@@ -109,10 +109,11 @@ const hidden = (): LogLine => null;
 /** Jede Logart braucht einen Eintrag, sonst meldet der Compiler die fehlende Art. */
 export const LOG: { readonly [K in LogKind]: (t: P, e: Extract<LogEntry, { k: K }>) => LogLine } = {
   // Plätze und Tisch
-  join: (t, e) => [
-    'sys',
-    t.who(e.p, e.name) + (e.bot ? ' (KI) setzt sich an den Tisch.' : ' sitzt jetzt mit am Tisch.'),
-  ],
+  // Die KI heißt so wie im Eintrag und nie „Du“: Übernimmt später jemand den Platz, trägt er dessen ID und Namen
+  join: (t, e) =>
+    e.bot
+      ? ['sys', e.name ? t.wrap(e.name) + ' (KI) setzt sich an den Tisch.' : 'Eine KI setzt sich an den Tisch.']
+      : ['sys', t.who(e.p, e.name) + ' sitzt jetzt mit am Tisch.'],
   quit: (t, e) => [
     'big',
     t.who(e.p, e.name) +
@@ -121,7 +122,12 @@ export const LOG: { readonly [K in LogKind]: (t: P, e: Extract<LogEntry, { k: K 
   leave: (t, e) => ['sys', t.wrap(e.name || 'Jemand') + ' ist gegangen.'],
   takeover: (t, e) => [
     'big',
-    t.who(e.p, e.name) + t.vb(e.p, ' übernimmst', ' übernimmt') + ' den Platz von ' + t.wrap(e.from) + ' samt Karten.',
+    t.who(e.p, e.name) +
+      t.vb(e.p, ' übernimmst', ' übernimmt') +
+      ' den Platz von ' +
+      t.wrap(e.from) +
+      // In der Lobby gibt es noch keine Karten
+      (e.lobby ? '.' : ' samt Karten.'),
   ],
   tobot: (t, e) => [
     'big',

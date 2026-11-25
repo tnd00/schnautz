@@ -275,18 +275,39 @@
 .cbme .actions .bshort {
   display: none;
 }
-/* Ausgegraut wie .btn[disabled], bleibt aber antippbar und nennt dann den Grund */
-.cbme .actions .btn[aria-disabled='true'] {
-  opacity: 0.38;
-  cursor: not-allowed;
-  filter: saturate(0.4);
-  box-shadow: none;
-  animation: none;
-}
-
 /* Ergebnisblatt: Raster der Schlüsselzeile mit Punktzahl steht in result.css */
 .paper h2 .g {
   color: var(--brass);
+}
+/* Die Kernzahl bricht nie um, sonst wird die Schlüsselzeile mit vielen Strafkarten dreizeilig */
+#overlay .paper.result.rs.cbsheet .row.rr.key .rcore {
+  white-space: nowrap;
+}
+/* Ab fünf Karten liegen die Minikarten enger übereinander, die Ecke mit dem Wert bleibt sichtbar */
+#overlay .paper.result.rs.cbsheet .row.rr .rcards:has(> .card:nth-child(5)) > .card + .card {
+  margin-left: -9px;
+}
+/*
+ * Am Handy bliebe neben einem Urteil („Cabo daneben · +24“, „+19 · auf 50“) für lange Namen kein Platz. Die Zeile
+ * wird dann zweizeilig wie die Schlüsselzeile, oben Name und Stand, darunter das Urteil.
+ */
+@media (max-width: 520px) {
+  #overlay .paper.result.rs.cbsheet .row.rr:not(.key):has(.cbwhy) .rnm {
+    grid-column: 2 / 4;
+  }
+  #overlay .paper.result.rs.cbsheet .row.rr:not(.key):has(.cbwhy) .rval {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  #overlay .paper.result.rs.cbsheet .row.rr:not(.key):has(.cbwhy) .rcore {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    text-align: left;
+  }
+}
+/* Mehr als acht Karten (dann mit „+n“): noch enger, sonst schieben sie sich bei 360 px über die Kernzahl */
+#overlay .paper.result.rs.cbsheet .row.rr .rcards:has(> .card:nth-child(5)):has(> .more) > .card + .card {
+  margin-left: -13px;
 }
 
 /* Krönung statt Schande (src/ui/ceremony.ts): goldener Ring */

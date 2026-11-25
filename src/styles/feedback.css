@@ -434,20 +434,41 @@ body.logopen #fly .bubble {
   font-size: 13px;
 }
 /*
- * Band über der Statuszeile (am eigenen Zug und in der Tauschrunde): unten bündig mit der Zeile, wächst nach oben
- * nur so weit wie nötig. Ohne Zeichen, Titel und Unterzeile kompakt, damit Stapel und eigene Karten frei bleiben.
+ * Band zwischen Stapel und eigenem Platz (am eigenen Zug, in der Tauschrunde, ohne genug Spielfläche), Lage aus
+ * src/ui/band.ts. Die Ebene ist genau so groß wie die Meldung und reicht nie über den Stapel. Ohne Zeichen, Titel
+ * höchstens zwei Zeilen. Passt die Meldung nicht, fallen ganze Teile weg (d-tt, d-sub, d-t2), abgeschnitten wird
+ * nichts. Der Schatten ist kurz, damit er nicht auf Stapel und eigenen Platz fällt.
  */
 #announce.band {
   overflow: visible;
-  place-items: end center;
+  place-items: start center;
 }
 #announce.band .ann {
-  max-height: none;
+  max-height: 100%;
+  overflow: hidden;
   max-width: min(calc(100% - 8px), 520px);
   padding: 6px 16px 7px;
   min-width: min(80%, 260px);
   border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(60, 40, 10, 0.15),
+    0 6px 14px rgba(0, 0, 0, 0.35);
   animation: annBandIn 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+#announce.band .ann.gold {
+  box-shadow:
+    0 0 0 2px rgba(255, 236, 180, 0.8),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+}
+#announce.band .ann.red {
+  box-shadow:
+    0 0 0 2px rgba(179, 49, 42, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+}
+#announce.band .ann.brown {
+  box-shadow:
+    0 0 0 2px rgba(160, 104, 46, 0.8),
+    0 6px 14px rgba(0, 0, 0, 0.35);
 }
 #announce.band .ann.out {
   animation: annOut 0.2s ease-in forwards;
@@ -458,35 +479,93 @@ body.logopen #fly .bubble {
     transform: translateY(10px) scale(0.94);
   }
 }
+/* Wechselt die Lage, während die Meldung steht (Zugwechsel), springt sie nur, ohne sich neu einzublenden */
+#announce .ann.still:not(.out):not(.zer) {
+  animation: none;
+}
 #announce.band .ann-ic {
   display: none;
 }
-/* Titel in einer Zeile, Unterzeile höchstens zwei, damit das Band nie über den Stapel wächst */
 #announce.band .ann-t {
   font-size: clamp(17px, 4.4vw, 22px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#announce.band .ann-s {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.3;
+  line-height: 1.08;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
 }
-/* Im Band ist es eng: Sprüche kompakter, damit Hinweis und Spruch zusammen Platz haben */
-#fly .tauntlbl.mid.band {
-  font-size: 13px;
-  line-height: 1.2;
-  padding: 3px 12px;
-  border-radius: 12px;
+#announce.band .ann-s {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.3;
 }
 #announce.band .ann-s .tt {
   margin-top: 2px;
+}
+#announce.band .ann.d-tt .ann-s .tt,
+#announce.band .ann.d-sub .ann-s {
+  display: none;
+}
+#announce.band .ann.d-t2 .ann-t {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+/* Nur noch der Titel: knapper Innenabstand, damit er über einen Grund im Band passt */
+#announce.band .ann.d-sub {
+  padding-top: 4px;
+  padding-bottom: 5px;
+}
+/* Sprüche im Band kompakter, so breit wie der eigene Platz */
+#fly .tauntlbl.mid.band {
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 3px 12px 4px;
+  border-radius: 12px;
+  max-width: min(var(--bw, calc(100vw - 24px)), 440px);
+  /* Kurzer Schatten wie bei den kleinen Meldungen: Der eigene Platz liegt oft direkt darunter */
+  box-shadow:
+    0 0 0 2px rgba(179, 49, 42, 0.35),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+}
+/* Hinweis und Spruch als eine Meldung (comboLabel): oben wer was getan hat, darunter der Spruch */
+#fly .tauntlbl.combo .hint {
+  display: block;
+  font-weight: 800;
+  color: var(--ink);
+}
+#fly .tauntlbl.combo .tt {
+  display: block;
+  margin-top: 1px;
+  font-style: italic;
+  font-weight: 700;
+  color: #8e231d;
+}
+/* Kleine Meldungen: lange brechen um statt abgeschnitten zu werden (16 Zeichen lange Namen) */
+#fly .fieldlbl.mid,
+#fly .duellbl.mid {
+  white-space: normal;
+  width: max-content;
+  max-width: var(--bw, calc(100vw - 24px));
+  text-align: center;
+  text-overflow: clip;
+}
+/* Im Band kompakter, damit eine Zeile zwischen Statuszeile und eigenen Platz passt */
+#fly .fieldlbl.mid.band,
+#fly .nopelbl.mid.band,
+#fly .duellbl.mid.band {
+  font-size: 12.5px;
+  line-height: 15px;
+  padding: 2px 12px;
+  max-width: var(--bw, calc(100vw - 24px));
+  /* Kurzer Schatten: Im Band liegt der eigene Platz direkt darunter */
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+/* Lange Hinweise, die so gerade in eine Zeile passen (positionMessage setzt slim nur dann) */
+#fly .mid.band.slim {
+  font-size: 11px;
+  letter-spacing: -0.01em;
+  padding: 2px 10px;
 }
 /* Kurze Hinweise oben in der Spielfläche (floatLabel), nie über den Gegnern */
 .fieldlbl {
@@ -507,6 +586,15 @@ body.logopen #fly .bubble {
   border-radius: 999px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
   animation: fieldPop 1.8s ease-out forwards;
+}
+/* Verdrängter Hinweis (src/ui/band.ts, pillStack): kurz ausblenden statt zu verschwinden. Automatisches wartet */
+#fly .fieldlbl.out {
+  animation: lblOut 0.3s ease-in forwards;
+}
+@keyframes lblOut {
+  to {
+    opacity: 0;
+  }
 }
 @keyframes fieldPop {
   0% {

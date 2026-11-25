@@ -102,6 +102,42 @@
 #overlay .paper.result.rs .row.rr.mine {
   box-shadow: inset 3px 0 0 var(--brass-hi, #d6a24a);
 }
+/* Ohne Plätze (Schnautz am Rundenende) bleibt die Platzspalte leer und schmal, die Namen bekommen ihre Breite */
+#overlay .paper.result.rs .rows.noplace .row.rr {
+  grid-template-columns: 0 minmax(0, 1fr) auto auto;
+  padding-left: 2px;
+}
+/* Leben kurz wie in der Punkteleiste: ein Deckel und die Zahl */
+#overlay .paper.result.rs .row.rr .lives.lc {
+  gap: 2px;
+  font-weight: 750;
+}
+
+/*
+ * Namen werden nie gekürzt (fitRows in src/ui/render/result.ts). Reicht die Kurzform der Kernzahl nicht, wird der
+ * Name etwas kleiner, höchstens auf 86 %. Reicht auch das nicht, rückt die Kernzahl unter den Namen.
+ */
+#overlay .paper.result.rs .row.rr.snug .rnm {
+  font-size: 12px;
+}
+#overlay .paper.result.rs .row.rr.key.snug .rnm {
+  font-size: 14px;
+}
+#overlay .paper.result.rs .row.rr.under .rnm {
+  grid-column: 2 / -1;
+}
+#overlay .paper.result.rs .row.rr.under:has(.rval) .rnm {
+  grid-column: 2 / 4;
+}
+#overlay .paper.result.rs .row.rr.under .rval {
+  grid-column: 4;
+  grid-row: 1;
+}
+#overlay .paper.result.rs .row.rr.under .rcore {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  text-align: left;
+}
 
 /* Schlüsselzeile: etwas größer, die Karten in einer zweiten Reihe */
 #overlay .paper.result.rs .row.rr.key {

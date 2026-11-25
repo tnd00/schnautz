@@ -727,15 +727,27 @@ exports[`Verlauf aus dem Textkatalog > rendert jede Logart wortgleich zur Fassun
   ],
   "join {"k":"join","p":"a","bot":true} aus Sicht von a (shithead)": [
     "sys",
-    "<b>Du</b> (KI) setzt sich an den Tisch.",
+    "Eine KI setzt sich an den Tisch.",
   ],
   "join {"k":"join","p":"a","bot":true} aus Sicht von b (shithead)": [
     "sys",
-    "<b>Lena</b> (KI) setzt sich an den Tisch.",
+    "Eine KI setzt sich an den Tisch.",
   ],
   "join {"k":"join","p":"a","bot":true} aus Sicht von o (shithead)": [
     "sys",
-    "<b>Lena</b> (KI) setzt sich an den Tisch.",
+    "Eine KI setzt sich an den Tisch.",
+  ],
+  "join {"k":"join","p":"a","name":"Igor & Co","bot":true} aus Sicht von a (shithead)": [
+    "sys",
+    "<b>Igor &amp; Co</b> (KI) setzt sich an den Tisch.",
+  ],
+  "join {"k":"join","p":"a","name":"Igor & Co","bot":true} aus Sicht von b (shithead)": [
+    "sys",
+    "<b>Igor &amp; Co</b> (KI) setzt sich an den Tisch.",
+  ],
+  "join {"k":"join","p":"a","name":"Igor & Co","bot":true} aus Sicht von o (shithead)": [
+    "sys",
+    "<b>Igor &amp; Co</b> (KI) setzt sich an den Tisch.",
   ],
   "join {"k":"join","p":"a"} aus Sicht von a (shithead)": [
     "sys",
@@ -1654,6 +1666,18 @@ exports[`Verlauf aus dem Textkatalog > rendert jede Logart wortgleich zur Fassun
   "take {"k":"take","p":"a"} aus Sicht von o (shithead)": [
     "",
     "<b>Lena</b> nimmt blind das zweite Blatt.",
+  ],
+  "takeover {"k":"takeover","p":"a","from":"KI Igor & Co","lobby":true} aus Sicht von a (shithead)": [
+    "big",
+    "<b>Du</b> übernimmst den Platz von <b>KI Igor &amp; Co</b>.",
+  ],
+  "takeover {"k":"takeover","p":"a","from":"KI Igor & Co","lobby":true} aus Sicht von b (shithead)": [
+    "big",
+    "<b>Lena</b> übernimmt den Platz von <b>KI Igor &amp; Co</b>.",
+  ],
+  "takeover {"k":"takeover","p":"a","from":"KI Igor & Co","lobby":true} aus Sicht von o (shithead)": [
+    "big",
+    "<b>Lena</b> übernimmt den Platz von <b>KI Igor &amp; Co</b>.",
   ],
   "takeover {"k":"takeover","p":"a","from":"KI Igor & Co"} aus Sicht von a (shithead)": [
     "big",

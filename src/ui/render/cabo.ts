@@ -442,19 +442,36 @@ export function caboResult(v: View): CaboResult | null {
 
 /**
  * Kernzahl jeder Zeile, kurz, damit lange Namen stehen bleiben. Der Stand steht rechts. Die Summe nur, wenn sie von
- * den Punkten abweicht (Rufer, Kamikaze, Strafe). Am Partieende steht das Urteil der letzten Runde in der Zeile,
- * denn der Kopf nennt dann nur den König.
+ * den Punkten abweicht (Rufer, Kamikaze, Strafe). Bei Kamikaze zählt die Summe der anderen nicht, ihre 50 erklärt
+ * schon der Satz unter dem Titel. Am Partieende steht das Urteil der letzten Runde in der Zeile, denn der Kopf nennt
+ * dann nur den König. Urteil und Rückfall auf 50 stecken in `.cbwhy`, damit sie am Handy unter den Namen rücken
+ * (src/styles/cabo.css).
  */
 function rowNote(r: CaboResult, id: string, over: boolean): string {
   const sum = num(r.sums[id]);
   const score = num(r.scores[id]);
   const reset = r.resets.includes(id) ? ` · auf ${CB_RESET_TO}` : '';
   if (over) {
-    if (reset) return `genau 100 · auf ${CB_RESET_TO}`;
-    const why = r.kami === id ? 'Kamikaze · ' : r.caller === id && r.ok === false ? 'Cabo daneben · ' : '';
-    return `${why}+${score}`;
+    if (reset) return `<span class="cbwhy">genau 100 · auf ${CB_RESET_TO}</span>`;
+    const why = r.kami === id ? 'Kamikaze' : r.caller === id && r.ok === false ? 'Cabo daneben' : '';
+    return why ? `<span class="cbwhy">${why} · +${score}</span>` : `+${score}`;
   }
-  return `${score === sum ? '' : `Summe ${sum} · `}+${score}${reset}`;
+  const withSum = score !== sum && !(r.kami && r.kami !== id);
+  const note = `${withSum ? `Summe ${sum} · ` : ''}+${score}${reset}`;
+  // Wer auf 50 zurückfällt, bekommt am Handy ebenfalls eine zweite Zeile
+  return reset ? `<span class="cbwhy">${note}</span>` : note;
+}
+
+/**
+ * Kurzform der Kernzahl am Rundenende ohne Summe, wenn ein langer Name sonst nicht ganz passt (fitRows in
+ * src/ui/render/result.ts). Warum die Punkte von der Summe abweichen, sagt der Satz unter dem Titel.
+ */
+function rowShort(r: CaboResult, id: string, over: boolean): string | undefined {
+  const sum = num(r.sums[id]);
+  const score = num(r.scores[id]);
+  if (over || score === sum || (r.kami && r.kami !== id)) return undefined;
+  const reset = r.resets.includes(id) ? ` · auf ${CB_RESET_TO}` : '';
+  return reset ? `<span class="cbwhy">+${score}${reset}</span>` : `+${score}`;
 }
 
 /** Spruch passend zum Ende der Runde oder der Partie, aus meiner Sicht. */
@@ -529,6 +546,7 @@ export function cbSheet(v: View): Sheet | null {
       name: nm(id),
       hat: win ? '👑' : r.kami === id ? '💥' : r.caller === id ? '📣' : undefined,
       core: rowNote(r, id, over),
+      short: rowShort(r, id, over),
       val: String(num(r.totals[id])),
       // Am Rundenende zählen die Karten von Rufer oder Kamikaze, am Partieende nur noch die Punkte
       cards: over ? undefined : (r.hands[id] ?? []),

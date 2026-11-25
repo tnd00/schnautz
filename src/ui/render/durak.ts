@@ -21,7 +21,7 @@ import { LOSER_MARK, unreachable } from '../../game/games';
 import { type Reject, rj } from '../../game/reject';
 import { ctxOfView, rejectText } from '../../content/texts';
 import { OFFLINE_WAIT, offline, playFor, STATUS } from '../../content/texts/status';
-import { DK_STATUS } from '../../content/texts/status-dk';
+import { DK_SHEET, DK_STATUS } from '../../content/texts/status-dk';
 import type { Card, DkView, DurakResult, Player, Suit, View } from '../../game/types';
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
@@ -486,19 +486,18 @@ export function dkSheet(v: View): Sheet | null {
     // Wer im selben Angriff fertig wurde, teilt sich den Platz. Die Krone gibt es nur für einen allein vorn
     const place = num(p?.place) || i + 1;
     const top = first === id;
-    const what = isL
-      ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
-      : top
-        ? 'zuerst fertig'
-        : place === 1
-          ? 'gleichzeitig fertig'
-          : 'fertig';
+    const what = isL ? DK_SHEET.left(left.length) : top ? DK_SHEET.first : place === 1 ? DK_SHEET.tie : DK_SHEET.done;
+    const n = num(p?.dkc);
+    const count = n ? DK_SHEET.count(n) : '';
+    // Kurzform für lange Namen am Handy: Platz und Krone sagen „fertig“ und „zuerst“ schon, der Zähler wie am Tisch
+    const short = n ? DK_SHEET.countShort(n) : top ? DK_SHEET.firstShort : place === 1 ? DK_SHEET.tieShort : undefined;
     return {
       id,
       place,
       name: nm(id),
       hat: isL ? LOSER_MARK.durak : top ? '👑' : undefined,
-      core: `${what}${p?.dkc ? ` · ${num(p.dkc)}× Durak` : ''}`,
+      core: count ? `${what} · ${count}` : what,
+      short,
       cards: isL ? left : undefined,
       tone: isL ? 'lose' : top ? 'win' : undefined,
     };

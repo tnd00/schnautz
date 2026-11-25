@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { GAMES } from '../../src/game/games';
 import type { GameKind, LogEntry, LogInput, LogKind, Phase, View } from '../../src/game/types';
-import { cueOf, levelOf, SAY, type Cue, type LevelCtx } from '../../src/ui/levels';
+import { DK_MAX_ATTACK } from '../../src/game/constants';
+import { levelInBatch, newBatch } from '../../src/ui/feedback-rules';
+import { burnCue, cueOf, levelOf, SAY, type Cue, type Level, type LevelCtx } from '../../src/ui/levels';
 
 const ME = 'me';
 
@@ -30,6 +32,15 @@ function ctx(game: GameKind, fresh: LogEntry[] = [], o: { prev?: Partial<View>; 
 }
 
 const cue = (e: LogEntry, c: LevelCtx): Cue | null => cueOf(e, c);
+
+/** Ein Schub in Logreihenfolge wie in emit: Stufe je Eintrag nach „höchstens ein Großes“. */
+function batch(c: LevelCtx): (Level | null)[] {
+  const b = newBatch(c.fresh);
+  return c.fresh.map((e) => {
+    const x = cueOf(e, c);
+    return x ? levelInBatch(x, b) : null;
+  });
+}
 
 /** Jede Logart braucht ein Beispiel, sonst kompiliert der Test nicht. Das hält die Tabelle vollständig. */
 const SAMPLES: { [K in LogKind]: Omit<Extract<LogEntry, { k: K }>, 'n'> } = {
@@ -167,12 +178,22 @@ describe('Rückmeldestufen (levels.ts)', () => {
     expect(cue(take, ctx('durak', [take]))?.level).toBe('small');
   });
 
-  it('macht Bito nach vollem Angriff groß', () => {
+  it('macht Bito nur nach vollem Tisch mit sechs Angriffen groß', () => {
     const dk = (limit: number) => ({ limit }) as View['dk'];
     const half = L({ k: 'dkbito', p: 'a', cnt: 4 });
-    const full = L({ k: 'dkbito', p: 'a', cnt: 12 });
+    const full = L({ k: 'dkbito', p: 'a', cnt: 2 * DK_MAX_ATTACK });
     expect(cue(half, ctx('durak', [half], { prev: { dk: dk(6) } }))?.level).toBe('mid');
     expect(cue(full, ctx('durak', [full], { prev: { dk: dk(6) } }))?.level).toBe('big');
+    // Kleines Limit (Verteidiger mit ein oder zwei Handkarten): alles abgewehrt, aber kein voller Tisch
+    const one = L({ k: 'dkbito', p: 'a', cnt: 2 });
+    const two = L({ k: 'dkbito', p: 'a', cnt: 4 });
+    expect(cue(one, ctx('durak', [one], { prev: { dk: dk(1) } }))).toEqual({ level: 'mid' });
+    expect(cue(two, ctx('durak', [two], { prev: { dk: dk(2) } }))).toEqual({ level: 'mid' });
+    const five = L({ k: 'dkbito', p: 'a', cnt: 10 });
+    expect(cue(five, ctx('durak', [five], { prev: { dk: dk(5) } }))?.level).toBe('mid');
+    // Der eigene Spruch hängt weiter an SAY.bitoTaunt Karten, nicht am vollen Tisch
+    const mineTwo = L({ k: 'dkbito', p: ME, cnt: 6 });
+    expect(cue(mineTwo, ctx('durak', [mineTwo], { prev: { dk: dk(3) } }))).toEqual({ level: 'mid', taunt: true });
     // Endet die Partie im selben Schub, kommt kein neues Großes vor die Enthüllung
     const end = L({ k: 'dkend', p: 'b' });
     expect(cue(full, ctx('durak', [full, end], { prev: { dk: dk(6) } }))?.level).toBe('mid');
@@ -191,6 +212,94 @@ describe('Rückmeldestufen (levels.ts)', () => {
     const out = L({ k: 'dkout', p: ME, place: 1 });
     const same = L({ k: 'dkout', p: 'a', place: 1 });
     expect(cue(out, ctx('durak', [out, same]))).toEqual({ level: 'big' });
+  });
+
+  describe('Fertig und Platz 1 schlagen Bito und Verbrennen im selben Schub', () => {
+    const dk = { limit: DK_MAX_ATTACK } as View['dk'];
+    const sh = (burned: number) => ({ burned }) as View['sh'];
+
+    it('Durak: Bito wird mittel ohne Spruch, das eigene Fertig bleibt groß', () => {
+      const bito = L({ k: 'dkbito', p: ME, cnt: 2 * DK_MAX_ATTACK });
+      // Allein ist dieses Bito groß mit Spruch, der Test prüft also wirklich den Vorrang
+      expect(cue(bito, ctx('durak', [bito], { prev: { dk } }))).toEqual({ level: 'big', taunt: true });
+      const out = L({ k: 'dkout', p: ME, place: 1 });
+      const c = ctx('durak', [bito, out], { prev: { dk } });
+      expect(cue(bito, c)).toEqual({ level: 'mid' });
+      expect(batch(c)).toEqual(['mid', 'big']);
+      // Fertig auf einem späteren Platz ist für mich ebenso groß
+      const out3 = L({ k: 'dkout', p: ME, place: 3 });
+      expect(batch(ctx('durak', [bito, out3], { prev: { dk } }))).toEqual(['mid', 'big']);
+    });
+
+    it('Durak: Platz 1 von anderen schlägt das Bito, ein späterer Platz anderer nicht', () => {
+      const bito = L({ k: 'dkbito', p: 'a', cnt: 2 * DK_MAX_ATTACK });
+      const first = L({ k: 'dkout', p: 'a', place: 1 });
+      expect(batch(ctx('durak', [bito, first], { prev: { dk } }))).toEqual(['mid', 'big']);
+      const second = L({ k: 'dkout', p: 'a', place: 2 });
+      expect(batch(ctx('durak', [bito, second], { prev: { dk } }))).toEqual(['big', 'mid']);
+    });
+
+    it('Shithead: Bombe wird mittel, das eigene Fertig oder Platz 1 bleibt groß', () => {
+      const bomb = L({ k: 'shburn', p: ME, four: true, cut: false });
+      expect(cue(bomb, ctx('shithead', [bomb]))?.level).toBe('big');
+      const done = L({ k: 'shdone', p: ME, place: 1 });
+      expect(batch(ctx('shithead', [bomb, done]))).toEqual(['mid', 'big']);
+      // Bombe außer der Reihe von anderen, ich werde fertig
+      const cut = L({ k: 'shburn', p: 'a', four: true, cut: true });
+      const mine3 = L({ k: 'shdone', p: ME, place: 3 });
+      expect(batch(ctx('shithead', [cut, mine3]))).toEqual(['mid', 'big']);
+      // Platz 1 von anderen schlägt meine Bombe, ein späterer Platz anderer nicht
+      const first = L({ k: 'shdone', p: 'a', place: 1 });
+      expect(batch(ctx('shithead', [bomb, first]))).toEqual(['mid', 'big']);
+      const second = L({ k: 'shdone', p: 'a', place: 2 });
+      expect(batch(ctx('shithead', [bomb, second]))).toEqual(['big', 'mid']);
+    });
+
+    it('Shithead: Verbrennen mit 12 Karten wird mittel, das Fertig bleibt groß', () => {
+      const burn = L({ k: 'shburn', p: ME, four: false, cut: false });
+      const o = { prev: { sh: sh(0) }, v: { sh: sh(12) } };
+      expect(cue(burn, ctx('shithead', [burn], o))?.level).toBe('big');
+      const done = L({ k: 'shdone', p: ME, place: 2 });
+      expect(batch(ctx('shithead', [burn, done], o))).toEqual(['mid', 'big']);
+    });
+
+    it('Steht das Partieende im Schub, ist Fertig ein Takt und nichts wird gekürzt', () => {
+      const bomb = L({ k: 'shburn', p: ME, four: true, cut: false });
+      const done = L({ k: 'shdone', p: ME, place: 1 });
+      const end = L({ k: 'shend', p: 'b' });
+      expect(batch(ctx('shithead', [bomb, done, end]))).toEqual(['big', 'big', null]);
+      expect(cue(done, ctx('shithead', [bomb, done, end]))).toEqual({ level: 'big', beat: true });
+      // Durak: mit dkend im Schub ist das Bito ohnehin mittel, das Fertig ein Takt
+      const bito = L({ k: 'dkbito', p: ME, cnt: 2 * DK_MAX_ATTACK });
+      const out = L({ k: 'dkout', p: ME, place: 2 });
+      const dkEnd = L({ k: 'dkend', p: 'b' });
+      expect(batch(ctx('durak', [bito, out, dkEnd], { prev: { dk } }))).toEqual(['mid', 'big', null]);
+    });
+
+    it('Ablauf (sequence.ts): Stufe nach den Karten des Schritts, Vorrang über den ganzen Schub', () => {
+      type Burn = Extract<LogEntry, { k: 'shburn' }>;
+      const bomb = L({ k: 'shburn', p: ME, four: true, cut: false }) as Burn;
+      const burn = L({ k: 'shburn', p: ME, four: false, cut: false }) as Burn;
+      const done = L({ k: 'shdone', p: ME, place: 1 });
+      // Der Ablauf kennt nur seinen Stand vor und nach dem Schritt, die Ansicht steht schon am Ende des Schubs
+      const alone = ctx('shithead', [burn]);
+      expect(burnCue(burn, 12, alone).level).toBe('big');
+      expect(burnCue(burn, SAY.burnBig - 1, alone).level).toBe('mid');
+      expect(burnCue(burn, 4, alone).level).toBe('mid');
+      expect(burnCue(bomb, 4, ctx('shithead', [bomb])).level).toBe('big');
+      for (const [e, n] of [
+        [bomb, 4],
+        [burn, 12],
+      ] as const) {
+        const full = ctx('shithead', [e, done], { prev: { sh: sh(0) }, v: { sh: sh(n) } });
+        // apply.ts beginnt den Schub vor dem Ablauf, runStep meldet das Verbrennen
+        const b = newBatch(full.fresh);
+        expect(levelInBatch(burnCue(e, n, { ...full, prev: full.v }), b)).toBe('mid');
+        // effects(prev, v, true) zählt ein großes Verbrennen des Ablaufs nur mit, wenn cueOf es groß nennt
+        if (cueOf(e, full)?.level === 'big') b.big = true;
+        expect(levelInBatch(cueOf(done, full) as Cue, b)).toBe('big');
+      }
+    });
   });
 
   it('zeigt das Partieende nur beim Wechsel nach „over“', () => {
@@ -222,7 +331,6 @@ describe('Rückmeldestufen (levels.ts)', () => {
 
   it('hält die Schwellen an einer Stelle', () => {
     expect(SAY).toEqual({
-      pickupLabel: 5,
       pickupTaunt: 6,
       dkTakeEvery: 3,
       cbSpyEvery: 2,

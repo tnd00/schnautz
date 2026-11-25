@@ -10,7 +10,7 @@ import { layoutOpps } from '../carousel';
 import { aimAttrs, marksHTML, reignHTML } from './marks';
 import { markClocks } from '../clock';
 import { markTosses } from '../toss';
-import { $, esc, hashStr, isMobile, listJoin, num } from '../dom';
+import { $, esc, hashStr, isMobile, num } from '../dom';
 import { myTurn, nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb } from '../helpers';
 import { fitHand } from '../shithead/hand';
 import { SEQ } from '../shithead/sequence';
@@ -18,7 +18,7 @@ import { winLeft, winSecs } from '../shithead/window';
 import { taunt } from '../taunts';
 import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
 import { betResultHTML, botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
-import { STATUS, SH_STATUS, OFFLINE_WAIT, offline, playFor } from '../../content/texts/status';
+import { STATUS, SH_SHEET, SH_STATUS, OFFLINE_WAIT, offline, playFor, waitWho } from '../../content/texts/status';
 import { ceremonyOn } from '../ceremony';
 import { endMain, renderStatus, turnMain, waitSub, type Status } from '../status';
 
@@ -313,7 +313,7 @@ function swapHTML(v: View, me: Player, mine: OwnCards): string {
   } else {
     const wn = v.players.filter((p) => !p.ready && !p.out).map((p) => p.name);
     head = wn.length
-      ? `<b>Bereit!</b><span>Warte auf ${esc(listJoin(wn))}${THINKING}</span>`
+      ? `<b>Bereit!</b><span>Warte auf ${waitWho(wn.map(esc))}${THINKING}</span>`
       : '<b>Bereit!</b><span>Gleich geht es los.</span>';
     foot =
       wn.length && App.role === 'host'
@@ -507,17 +507,16 @@ export function shSheet(v: View): Sheet | null {
       isL && P
         ? [...(Array.isArray(P.hand) ? P.hand : []), ...(P.up ?? []), ...(Array.isArray(P.down) ? P.down : [])]
         : [];
-    const what = isL
-      ? `${left.length} ${left.length === 1 ? 'Karte übrig' : 'Karten übrig'}`
-      : i === 0
-        ? 'zuerst fertig'
-        : 'fertig';
+    const what = isL ? SH_SHEET.left(left.length) : i === 0 ? SH_SHEET.first : SH_SHEET.done;
+    const n = num(p?.shc);
     return {
       id,
       place: i + 1,
       name: nm(id),
       hat: isL ? LOSER_MARK.shithead : i === 0 ? '👑' : undefined,
-      core: `${what}${p?.shc ? ` · ${num(p.shc)}× Shithead` : ''}`,
+      core: n ? `${what} · ${SH_SHEET.count(n)}` : what,
+      // Kurzform für lange Namen am Handy: Platz und Krone sagen „fertig“ und „zuerst“ schon, der Zähler wie am Tisch
+      short: n ? SH_SHEET.countShort(n) : i === 0 ? SH_SHEET.firstShort : undefined,
       cards: isL ? left : undefined,
       tone: isL ? 'lose' : i === 0 ? 'win' : undefined,
     };

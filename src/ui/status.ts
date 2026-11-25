@@ -6,9 +6,9 @@
  */
 import { unreachable } from '../game/games';
 import type { View } from '../game/types';
-import { STATUS, turnOf, waitFor } from '../content/texts/status';
+import { STATUS, turnOf, waitLine } from '../content/texts/status';
 import { App } from './app';
-import { $, esc, listJoin } from './dom';
+import { $, esc } from './dom';
 import { nameOf, pById } from './helpers';
 import { cbStatus } from './render/cabo';
 import { dkStatus } from './render/durak';
@@ -38,10 +38,12 @@ export function whoHTML(v: View, id: string | null | undefined): string {
 export const turnMain = (v: View, id: string | null): string =>
   id === App.me ? STATUS.myTurn : turnOf(whoHTML(v, id));
 
-/** „Warte auf Tom und KI Igor.“, leer ohne jemanden */
+/**
+ * „Warte auf Tom und KI Igor.“, ab vier Namen „Warte auf Lena, Tom und 5 weitere.“, leer ohne jemanden. Die Kurzform
+ * hält die Unterzeile auch mit acht Leuten und langen Namen in ihren zwei Zeilen.
+ */
 export function waitSub(v: View, ids: readonly string[]): string {
-  const names = ids.filter((id) => id !== App.me).map((id) => whoHTML(v, id));
-  return names.length ? waitFor(listJoin(names)) : '';
+  return waitLine(ids.filter((id) => id !== App.me).map((id) => whoHTML(v, id)));
 }
 
 /** Hauptzeile am Ende: „Aufdecken …“, solange eine Zeremonie läuft, sonst Runde oder Partie vorbei. */

@@ -386,8 +386,8 @@ export type LogEntry = LogBase &
     | { k: 'join'; bot?: boolean }
     | { k: 'leave' }
     | { k: 'quit' }
-    /** Ein Mensch übernimmt einen KI-Platz, `from` ist der alte Name */
-    | { k: 'takeover'; from: string }
+    /** Ein Mensch übernimmt einen KI-Platz, `from` ist der alte Name. `lobby`: in der Lobby, also ohne Karten */
+    | { k: 'takeover'; from: string; lobby?: true }
     /** Jemand geht mitten in der Partie, die KI spielt unter dem Namen weiter */
     | { k: 'tobot' }
     /** Wer gegangen war, übernimmt den eigenen Platz wieder von der KI */

@@ -116,7 +116,11 @@
   max-width: min(calc(100vw - 24px), 420px);
   text-align: center;
 }
-/* Band über der Statuszeile, solange ich am Zug bin */
-#fly .mid.band {
-  z-index: 48;
+/*
+ * Grund und Hinweise liegen über den großen Meldungen (#announce 58), damit ein Grund auch während einer Ansage zu
+ * lesen ist, aber unter Menü und Fenstern (ab 60). Die Lage im Band rechnet src/ui/band.ts.
+ */
+#fly .nopelbl.mid,
+#fly .fieldlbl.mid {
+  z-index: 59;
 }

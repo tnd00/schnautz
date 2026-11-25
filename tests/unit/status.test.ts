@@ -11,9 +11,11 @@ import { addPlayer, newState } from '../../src/game/state';
 import type { State, View } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
-import { shPileInfo } from '../../src/ui/render/shithead';
+import { renderSheet, sheetWaits, waitsFor } from '../../src/ui/render/result';
+import { shPileInfo, shSheet } from '../../src/ui/render/shithead';
 import { shDimWhy } from '../../src/ui/shithead/input';
 import { statusOf, type Status } from '../../src/ui/status';
+import { waitForms, waitLine } from '../../src/content/texts/status';
 import { codeOf, msgOf, playOut, rngF } from './helpers';
 
 /** Shithead zu dritt: h (Gastgeber), a und b. Tauschrunde, bis alle bereit sind. */
@@ -78,6 +80,102 @@ describe('Statuszeile Shithead', () => {
     st.players.find((p) => p.id === 'b')!.bot = true;
     const wait = statusFor(st, 'h');
     expect(wait.text).toBe('Tauschrunde | Warte auf Anna und KI Bert.');
+  });
+
+  it('Wartezeile: bis drei Namen alle, ab vier die ersten zwei und der Rest als Zahl', () => {
+    expect(waitLine([])).toBe('');
+    expect(waitLine(['Lena'])).toBe('Warte auf Lena.');
+    expect(waitLine(['Lena', 'Tom'])).toBe('Warte auf Lena und Tom.');
+    expect(waitLine(['Lena', 'Tom', 'Mia'])).toBe('Warte auf Lena, Tom und Mia.');
+    expect(waitLine(['Lena', 'Tom', 'Mia', 'Igor'])).toBe('Warte auf Lena, Tom und 2 weitere.');
+    expect(waitLine(['Lena', 'Tom', 'a', 'b', 'c', 'd', 'e'])).toBe('Warte auf Lena, Tom und 5 weitere.');
+  });
+
+  it('Wartetext im Ergebnisblatt: Fassungen vom längsten zum kürzesten, zuletzt nur die Zahl', () => {
+    expect(waitForms([])).toEqual(["Los geht's…"]);
+    expect(waitForms(['Lena'])).toEqual(['Warte auf Lena.', 'Noch 1 fehlt.']);
+    expect(waitForms(['Lena', 'Tom'])).toEqual(['Warte auf Lena und Tom.', 'Noch 2 fehlen.']);
+    expect(waitForms(['Lena', 'Tom', 'Mia'])).toEqual([
+      'Warte auf Lena, Tom und Mia.',
+      'Warte auf Lena und 2 weitere.',
+      'Noch 3 fehlen.',
+    ]);
+    const long = ['Bartholomäus-Kim', 'Wolfgang-Amadeu0', 'Wolfgang-Amadeu1', 'Wolfgang-Amadeu2', 'Wolfgang-Amadeu3'];
+    const forms = waitForms(long);
+    expect(forms).toEqual([
+      'Warte auf Bartholomäus-Kim, Wolfgang-Amadeu0 und 3 weitere.',
+      'Warte auf Bartholomäus-Kim und 4 weitere.',
+      'Noch 5 fehlen.',
+    ]);
+    // Jede Fassung ist kürzer als die vorige, die letzte passt neben drei Knöpfe (103 px bei 360 px, rund 14 Zeichen)
+    for (let i = 1; i < forms.length; i++) expect(forms[i].length).toBeLessThan(forms[i - 1].length);
+    expect(forms[forms.length - 1].length).toBeLessThanOrEqual(14);
+  });
+
+  it('Ergebnisblatt: ⏳ an allen, auf die gewartet wird, zu sehen erst nach dem eigenen Bereitmelden', () => {
+    const rng = rngF(11);
+    const st = newState('h', 'H');
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'rules', rules: { seats: 5 } }, rng);
+    for (const [id, name] of [
+      ['a', 'Anna'],
+      ['b', 'Bert'],
+      ['c', 'Cleo'],
+      ['d', 'Dora'],
+    ])
+      addPlayer(st, id, name);
+    act(st, 'h', { type: 'start' }, rng);
+    playOut(st, rng);
+    expect(st.phase).toBe('over');
+    const P = (id: string) => st.players.find((p) => p.id === id)!;
+    st.players.forEach((p) => (p.ready = false));
+    // Anna fehlt noch, Bert ist offline, Cleo ist eine KI, Dora ist bereit
+    P('b').online = false;
+    P('c').bot = true;
+    P('d').ready = true;
+    App.me = 'h';
+    const before = viewFor(st, 'h');
+    expect(sheetWaits(before)).toEqual({ ids: ['a'], shown: false });
+    // Pro Zeile: hat sie ⏳, und ist es verborgen?
+    const marks = (html: string) =>
+      Object.fromEntries(
+        html
+          .split('data-pid="')
+          .slice(1)
+          .map((c) => [
+            c.slice(0, c.indexOf('"')),
+            /class="hat rwait"[^>]*hidden/.test(c) ? 'verborgen' : /rwait/.test(c) ? 'zu sehen' : '',
+          ]),
+      );
+    expect(marks(renderSheet(before, shSheet(before)!))).toEqual({ h: '', a: 'verborgen', b: '', c: '', d: '' });
+    // Nach dem eigenen Bereitmelden zu sehen, an derselben Zeile
+    P('h').ready = true;
+    const after = viewFor(st, 'h');
+    expect(sheetWaits(after)).toEqual({ ids: ['a'], shown: true });
+    expect(marks(renderSheet(after, shSheet(after)!))).toEqual({ h: '', a: 'zu sehen', b: '', c: '', d: '' });
+    // Am Rundenende zählt nur, wer noch im Spiel ist, am Partieende alle. Nie ich selbst
+    const anna = after.players.find((p) => p.id === 'a')!;
+    expect(waitsFor({ ...after, phase: 'end' }, { ...anna, out: true })).toBe(false);
+    expect(waitsFor({ ...after, phase: 'over' }, { ...anna, out: true })).toBe(true);
+    expect(
+      waitsFor(
+        after,
+        after.players.find((p) => p.id === 'h')!,
+      ),
+    ).toBe(false);
+  });
+
+  it('Tauschrunde zu acht mit langen Namen: die Unterzeile bleibt kurz', () => {
+    const rng = rngF(3);
+    const st = newState('h', 'Tina Langername1');
+    act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+    act(st, 'h', { type: 'rules', rules: { seats: 8 } }, rng);
+    for (let i = 1; i < 8; i++) addPlayer(st, `p${i}`, `Wolfgang-Amadeu${i}`);
+    st.players.find((p) => p.id === 'p1')!.bot = true;
+    act(st, 'h', { type: 'start' }, rng);
+    act(st, 'h', { type: 'shready' });
+    const wait = statusFor(st, 'h');
+    expect(wait.text).toBe('Tauschrunde | Warte auf KI Wolfgang-Amadeu1, Wolfgang-Amadeu2 und 5 weitere.');
   });
 
   it('eigener Zug: Du bist dran mit Hinweis, was zu tun ist', () => {

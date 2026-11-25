@@ -63,6 +63,12 @@ async function resize(page: Page, s: string): Promise<void> {
 }
 
 async function check(page: Page, where: string, keys: string[]): Promise<void> {
+  // Unter Last braucht das Einpassen nach dem Größenwechsel manchmal länger als 350 ms (Seite noch in der alten Höhe)
+  try {
+    await expect.poll(() => fitFindings(page, keys), { timeout: 3000 }).toEqual([]);
+  } catch {
+    // Bleibt der Befund, meldet ihn die weiche Prüfung darunter mit Ort
+  }
   expect.soft(await fitFindings(page, keys), where).toEqual([]);
 }
 

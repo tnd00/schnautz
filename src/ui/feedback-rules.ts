@@ -52,8 +52,10 @@ export interface Tone<S extends string = string> {
 }
 
 /**
- * Klein ist still, außer das Ereignis hat einen eigenen Klang oder geschah automatisch (`cue.sound`).
- * Mittel klingt immer, mit eigenem Klang oder leise. Groß spielt den Meldeton in `announce` selbst.
+ * Der Klang des Ereignisses (Karte, Tipp, Schnappen, Blindtausch) gehört zum Ereignis, nicht zur Meldung. Er
+ * spielt auf jeder Stufe, auch bei klein, und ersetzt dann den leisen Meldeton. Ohne eigenen Klang entscheidet
+ * die Stufe: Klein hat keinen Meldeton, außer es geschah automatisch (`cue.sound`). Mittel spielt den leisen
+ * Meldeton. Groß spielt den Meldeton in `announce` selbst.
  */
 export function toneOf<S extends string>(cue: Cue, level: Level, sfx?: S): Tone<S> {
   switch (level) {
@@ -66,31 +68,11 @@ export function toneOf<S extends string>(cue: Cue, level: Level, sfx?: S): Tone<
   }
 }
 
-/** Wo eine Meldung steht: in der Spielfläche oder als Band über der Statuszeile. */
-export type Slot = 'band' | 'field';
-
-/**
- * Bin ich am Zug oder in der Tauschrunde, bleiben eigene Karten, Gegner, Trumpfzeile und Stapel frei, dann steht
- * alles als Band über der Statuszeile. Ohne freie Spielfläche ebenso, statt oben über den Gegnern.
- */
-export const slotOf = (o: { swap: boolean; myMove: boolean; field: boolean }): Slot =>
-  o.swap || o.myMove || !o.field ? 'band' : 'field';
-
 export interface Box {
   left: number;
   top: number;
   width: number;
   height: number;
-}
-
-/**
- * Rechteck einer großen Meldung im Band: unten bündig mit der Statuszeile, nach oben bis knapp unter den Stapel,
- * höchstens `maxH` hoch und nie niedriger als die Statuszeile selbst.
- */
-export function bandBox(status: Box, floor: number, maxH = 150): Box {
-  const bottom = status.top + status.height;
-  const top = Math.min(status.top, Math.max(floor + 4, bottom - maxH));
-  return { left: status.left, width: status.width, top, height: bottom - top };
 }
 
 /** Nach dem Zeichnen nur verschieben, wenn sich die Lage um mehr als ein paar Pixel ändert (kein Flackern). */
@@ -102,13 +84,31 @@ type SeatEntry = Extract<LogEntry, { k: 'takeover' | 'back' | 'tobot' }>;
 const isSeat = (e: LogEntry): e is SeatEntry => e.k === 'takeover' || e.k === 'back' || e.k === 'tobot';
 
 /**
+ * So viele Einträge dürfen nach dem eigenen Sitz-Eintrag stehen, damit er noch als frisch gilt. Der Gastgeber
+ * schickt die erste Ansicht gleich nach der Übernahme, dazwischen liegen höchstens ein paar Einträge.
+ */
+export const SEAT_FRESH = 6;
+
+/**
+ * Neuer Anfang (Partie, Runde, Lobby, Abbruch), wie ihn src/game loggt. Was davor geschah, gehört zu einer
+ * früheren Partie oder zur Lobby: Eine Übernahme in der Lobby kam ohne Karten und heißt am Tisch nie „samt Karten“.
+ */
+const RESTART: ReadonlySet<string> = new Set(['game', 'lobby', 'abort', 'round', 'shdeal', 'dkdeal', 'cbdeal']);
+
+/**
  * Eigene Übernahme oder Rückkehr nach der ersten Ansicht (dort laufen keine Effekte). Zählt nur der letzte
- * Sitz-Eintrag für mich, `seen` ist die gemerkte Lognummer aus sessionStorage, damit Neuladen nichts wiederholt.
+ * Sitz-Eintrag für mich und nur, solange er frisch ist: höchstens `SEAT_FRESH` Einträge danach und kein neuer
+ * Anfang dazwischen. Sonst käme die Meldung in einem neuen Tab oder Browser noch einmal, solange der alte Eintrag
+ * im Verlauf der Ansicht steht. `seen` ist die gemerkte Lognummer aus sessionStorage, damit Neuladen nichts
+ * wiederholt.
  */
 export function ownSeatNote(log: readonly LogEntry[], me: string, seen: number): { n: number; text: string } | null {
   let last: SeatEntry | null = null;
   for (const e of log) if (isSeat(e) && e.p === me && (!last || e.n > last.n)) last = e;
   if (!last || last.n === seen) return null;
+  const at = last.n;
+  const after = log.filter((e) => e.n > at);
+  if (after.length > SEAT_FRESH || after.some((e) => RESTART.has(e.k))) return null;
   if (last.k === 'takeover') return { n: last.n, text: SEAT.takeoverSelf(last.from) };
   if (last.k === 'back') return { n: last.n, text: SEAT.backSelf };
   return null;
