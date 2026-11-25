@@ -4,18 +4,17 @@
  * fällt. Bei Cabo ist es eine Krönung: goldener Ring um den neuen Cabo-König, die Krone fällt, Fanfare. Reine
  * Darstellung, jeder Browser spielt sie selbst aus dem Logeintrag shend, dkend oder cbend. Antippen beendet sie.
  */
-import { LOSER_NAME, unreachable } from '../game/games';
 import type { GameKind, LogEntry, View } from '../game/types';
 import { confetti, dropOn } from './animations';
 import { App } from './app';
 import { focusOpp, CAR_GLIDE_MS } from './carousel';
 import { $opt, esc, num, reduceMotion, type Timer } from './dom';
 import { announce, dropAnnouncements, holdForAnnouncements, holdOverlay, panelFor, skipHint } from './feedback';
-import { nameOf, pById } from './helpers';
+import { nameOf } from './helpers';
 import { render } from './render/index';
 import { renderLog } from './render/log';
 import { SEQ } from './shithead/sequence';
-import { ZER_REVEAL_MS } from './shithead/ceremony-plan';
+import { planOf, type Stage, ZER_REVEAL_MS } from './ceremony-plan';
 import { sfx } from './sound';
 import { taunt } from './taunts';
 
@@ -40,68 +39,6 @@ export const ZER = {
   raf: 0,
   t: null as Timer | null,
 };
-
-const BROWN = ['#9c6b3a', '#b07a42', '#c08a50', '#d9a96b', '#e8c9a0'];
-/** Narrenfarben für den Durak */
-const JESTER = ['#e0362b', '#f3cd7d', '#2e8b57', '#4a6fd1', '#f6efdf', '#b3312a'];
-/** Gold für den Cabo-König */
-const GOLD = ['#f3cd7d', '#e8b64c', '#fff1c7', '#c9962e', '#f6efdf'];
-
-interface Look {
-  colors: string[];
-  tone: 'brown' | 'red' | 'gold';
-  /** Was auf den Platz fällt */
-  mark: string;
-  /** Titel in der Meldung */
-  what: string;
-  /** Krönung statt Schande: Fanfare statt Posaune, der Ring leuchtet golden */
-  crown: boolean;
-  self: string;
-  other: string;
-  count: (v: View, pid: string) => number;
-}
-
-/** Wie die Zeremonie in diesem Spiel aussieht und klingt. */
-function lookOf(game: GameKind): Look {
-  switch (game) {
-    case 'cabo':
-      return {
-        colors: GOLD,
-        tone: 'gold',
-        mark: '👑',
-        what: 'Cabo-König',
-        crown: true,
-        self: 'cbKingSelf',
-        other: 'cbKingOther',
-        count: (v, id) => num(pById(v, id)?.stats?.cabo?.wins),
-      };
-    case 'durak':
-      return {
-        colors: JESTER,
-        tone: 'red',
-        mark: '🤡',
-        what: LOSER_NAME.durak,
-        crown: false,
-        self: 'dkLoserSelf',
-        other: 'dkLoserOther',
-        count: (v, id) => num(pById(v, id)?.dkc),
-      };
-    case 'shithead':
-    case 'schnautz':
-      return {
-        colors: BROWN,
-        tone: 'brown',
-        mark: '💩',
-        what: LOSER_NAME.shithead,
-        crown: false,
-        self: 'shLoserSelf',
-        other: 'shLoserOther',
-        count: (v, id) => num(pById(v, id)?.shc),
-      };
-    default:
-      return unreachable(game);
-  }
-}
 
 /** Wer zuerst fertig war, bei Shithead und Durak. */
 const firstOf = (v: View): string | undefined => (v.sh?.finished ?? v.dk?.finished)?.[0];
@@ -182,6 +119,8 @@ function track(): void {
 function reveal(v: View, pid: string, gen: number): void {
   const cur = App.view;
   if (gen !== ZER.gen || !cur || cur.game !== v.game || cur.phase !== 'over' || cur.games !== v.games) return;
+  const look = planOf(v.game);
+  if (look.kind === 'none') return;
   releaseLog();
   unhide();
   if (document.hidden) return;
@@ -193,13 +132,13 @@ function reveal(v: View, pid: string, gen: number): void {
   z.hidden = false;
   z.classList.remove('slow');
   void z.offsetWidth;
-  const look = lookOf(v.game);
-  z.classList.toggle('crown', look.crown);
+  const crown = look.kind === 'crown';
+  z.classList.toggle('crown', crown);
   $opt<HTMLElement>('#zer .zer-ring')?.style.setProperty('--zmark', `'${look.mark}'`);
   z.classList.add('reveal');
   track();
-  ZER.stop = look.crown ? sfx('crown') : sfx('trombone');
-  if (look.crown) setTimeout(() => gen === ZER.gen && ZER.on && sfx('win'), 650);
+  ZER.stop = sfx(look.sfx);
+  if (crown) setTimeout(() => gen === ZER.gen && ZER.on && sfx('win'), 650);
   const calm = reduceMotion();
   const ring = $opt('#zer .zer-ring');
   setTimeout(
@@ -213,15 +152,15 @@ function reveal(v: View, pid: string, gen: number): void {
     moved ? CAR_GLIDE_MS + 300 : 500,
   );
   if (!calm) {
-    const loser = pid === App.me && !look.crown;
-    const first = firstOf(v) === App.me || (look.crown && pid === App.me);
+    const loser = pid === App.me && !crown;
+    const first = firstOf(v) === App.me || (crown && pid === App.me);
     setTimeout(() => {
       if (gen !== ZER.gen || !ZER.on) return;
       confetti({
-        colors: first ? [...look.colors, '#f3cd7d', '#f3cd7d'] : look.colors,
+        colors: first ? [...look.colors, '#f3cd7d', '#f3cd7d'] : [...look.colors],
         n: 80,
         dur: [3200, 1400],
-        extra: [{ ch: look.mark, n: loser || (look.crown && pid === App.me) ? 12 : 4 }],
+        extra: [{ ch: look.mark, n: loser || (crown && pid === App.me) ? 12 : 4 }],
         cls: 'zerc',
       });
     }, 500);
@@ -279,15 +218,15 @@ export function ceremonyGuard(v: View): void {
 }
 
 /** Meldung für den Verlierer, mit Spruch, Zähler und Ergebnis des eigenen Tipps. */
-function message(v: View, e: EndEntry): { title: string; sub: string } {
+function message(v: View, e: EndEntry, look: Stage): { title: string; sub: string } {
   const pid = e.p ?? '';
   const mine = pid === App.me;
   const name = nameOf(v, pid, e.name);
-  const look = lookOf(v.game);
   const what = look.what;
+  const crown = look.kind === 'crown';
   // Verteidigt der Cabo-König die Krone, gibt es dafür einen eigenen Spruch
-  const stays = e.k === 'cbend' && !!e.again && !mine;
-  const t = mine ? taunt(look.self, null, e.n) : taunt(stays ? 'cbKingStays' : look.other, { name }, e.n);
+  const stays = e.k === 'cbend' && !!e.again && !mine ? look.taunts.stays : undefined;
+  const t = mine ? taunt(look.taunts.self, null, e.n) : taunt(stays ?? look.taunts.other, { name }, e.n);
   const cnt = look.count(v, pid);
   let sub = `<span class="tt">${esc(t)}</span>`;
   if (cnt >= 2) sub += `<span class="zer-n">Zum ${cnt}. Mal ${what} an diesem Tisch.</span>`;
@@ -296,11 +235,11 @@ function message(v: View, e: EndEntry): { title: string; sub: string } {
   if (hit) sub += `<span class="tt bt">🔮 Richtig getippt! +${num(hit.q)} ${hit.q === 1 ? 'Punkt' : 'Punkte'}.</span>`;
   else if (bet && typeof bet.on === 'string') sub += '<span class="tt bt">🔮 Tipp daneben.</span>';
   sub += `<span class="zer-hint">${skipHint()}</span>`;
-  const cls = look.crown ? 'g' : 'r';
+  const cls = crown ? 'g' : 'r';
   return {
     title: mine
-      ? `Du bist ${look.crown ? '' : 'der '}<span class="${cls}">${what}!</span>`
-      : `${esc(name)} ist ${look.crown ? '' : 'der '}<span class="${cls}">${what}!</span>`,
+      ? `Du bist ${crown ? '' : 'der '}<span class="${cls}">${what}!</span>`
+      : `${esc(name)} ist ${crown ? '' : 'der '}<span class="${cls}">${what}!</span>`,
     sub,
   };
 }
@@ -309,6 +248,12 @@ function message(v: View, e: EndEntry): { title: string; sub: string } {
 export function shitheadCeremony(v: View, e: EndEntry): void {
   const pid = e.p;
   if (!pid) return;
+  const look = planOf(v.game);
+  // Ohne Zeremonie in diesem Spiel (Schnautz) oder mit einem Eintrag aus einem anderen Spiel gibt es keine Show
+  if (look.kind === 'none' || e.k !== look.endKind) {
+    unhide();
+    return;
+  }
   // Steht schon eine Ansicht aus einer anderen Partie an, lohnt sich nichts mehr
   const nx = SEQ.next;
   if (nx && !(nx.game === v.game && nx.phase === 'over' && nx.games === v.games)) {
@@ -320,10 +265,10 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
   const gen = ++ZER.gen;
   ZER.logN = e.n;
   renderLog(v);
-  const m = message(v, e);
+  const m = message(v, e, look);
   announce({
-    icon: lookOf(v.game).mark,
-    tone: lookOf(v.game).tone,
+    icon: look.mark,
+    tone: look.tone,
     cls: 'zer',
     title: m.title,
     sub: m.sub,
@@ -341,9 +286,11 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
 export function replayCeremony(): boolean {
   const v = App.view;
   if (!v || v.phase !== 'over' || ZER.on) return false;
+  const look = planOf(v.game);
+  if (look.kind === 'none') return false;
   for (let i = v.log.length - 1; i >= 0; i--) {
     const e = v.log[i];
-    if (!isEnd(e) || !e.p) continue;
+    if (!isEnd(e) || e.k !== look.endKind || !e.p) continue;
     shitheadCeremony(v, e);
     return true;
   }

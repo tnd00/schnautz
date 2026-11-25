@@ -1,0 +1,95 @@
+{
+  "screen": {
+    "scLoseSelf": [
+      "Ein Leben weniger. Das hat dir eh nicht gestanden.",
+      "Autsch. Da geht es hin, dein schönes Leben.",
+      "Ein Leben abgeben bitte. Quittung gibt es keine.",
+      "Das war die schwächste Hand am Tisch. Leider deine.",
+      "Leben futsch. Wird langsam luftig bei dir 💨",
+      "Nicht weinen, es ist nur ein Leben. Ein kleines.",
+      "Deine Karten hatten heute wohl was Besseres vor.",
+      "Einmal Leben zum Mitnehmen, nur halt nicht für dich."
+    ],
+    "scLoseOther": [
+      "{name} gibt ein Leben ab. Danke für die Spende 🙏",
+      "Ein Leben weniger für {name}. Wir trauern kurz. Fertig.",
+      "{name} hatte die schwächste Hand. Kommt vor. Hier öfter.",
+      "Da schrumpft das Polster von {name}. Wie schade aber auch.",
+      "{name} zahlt die Runde mit einem Leben.",
+      "Ausgerechnet {name}? Na gut, das Leben nehmen wir gern.",
+      "{name} verliert ein Leben. Die Fassung hoffentlich nicht.",
+      "Leben adé, {name}. Das kommt nicht wieder 👋"
+    ],
+    "scSwimSelf": [
+      "Du schwimmst. Schwimmflügel nicht vergessen 🛟",
+      "Alle Leben weg. Ab jetzt wird gepaddelt.",
+      "Willkommen im tiefen Wasser. Ist frisch, oder?",
+      "Noch ein Patzer, dann gehst du unter. Kein Druck.",
+      "Du schwimmst jetzt. Seepferdchen hast du hoffentlich.",
+      "Letzte Chance. Das Wasser steht dir bis zum Hals 🌊",
+      "Leben hast du keine mehr, dafür nasse Füße.",
+      "Bitte ruhig weiteratmen. Verlieren ist ab jetzt verboten."
+    ],
+    "scSwimOther": [
+      "{name} schwimmt! Wirft wer einen Rettungsring? Nein? Gut.",
+      "{name} paddelt jetzt um alles 🛟",
+      "Kein Leben mehr bei {name}. Ab jetzt wird es nass.",
+      "{name} ist im tiefen Becken angekommen.",
+      "Noch ein Fehler, dann geht {name} baden 🌊",
+      "{name} schwimmt. Bitte nicht füttern.",
+      "Der Bademeister schaut schon streng zu {name} rüber.",
+      "{name} hält sich gerade so über Wasser. Mal sehen wie lange."
+    ],
+    "scOutSelf": [
+      "Blub. Das war es für dich.",
+      "Du bist raus. Zuschauen ist auch schön, sagt man.",
+      "Untergegangen. Dein Handtuch liegt am Beckenrand 🏖️",
+      "Feierabend für dich. Die anderen spielen noch um was.",
+      "Raus bist du. Hol schon mal Snacks für die Gewinner.",
+      "Das Wasser war wohl doch zu tief.",
+      "Ab auf die Tribüne. Von dort redet es sich leichter.",
+      "Ausgeschieden. Nächstes Mal mit Karten, die was können."
+    ],
+    "scOutOther": [
+      "{name} ist raus. Blub blub 🫧",
+      "Tschüss {name}, war schön mit dir. Kurz, aber schön.",
+      "{name} ist untergegangen. Schweigeminute? Nö.",
+      "Wieder ein Platz frei. {name} darf jetzt zuschauen.",
+      "{name} hat es hinter sich. Handtuch bitte!",
+      "Das war es für {name}. Die Tribüne ist da drüben 👉",
+      "{name} verabschiedet sich. Nicht ganz freiwillig.",
+      "{name} ist raus. Getränke holen wäre jetzt nett."
+    ],
+    "gameWinSelf": [
+      "Gewonnen! War das überhaupt jemals spannend? 🏆",
+      "Sieg auf ganzer Linie. Autogramme gibt es später.",
+      "Du hast alle versenkt. Bleib ruhig kurz unerträglich.",
+      "Partie gewonnen. Der Tisch gehört dir.",
+      "So sieht Gewinnen aus. Die anderen wissen es jetzt auch.",
+      "Alle Leben, aller Ruhm, alles deins 😎",
+      "Bitte nur ganz dezent angeben. Oder halt nicht.",
+      "Das war eine Lehrstunde. Gern geschehen."
+    ],
+    "gameLoseSelf": [
+      "{name} hat gewonnen. Du darfst jetzt höflich klatschen 👏",
+      "Sieg für {name}. Für dich bleibt die Erfahrung.",
+      "{name} gewinnt die Partie. Das hörst du noch lange.",
+      "Heute war {name} besser. Morgen vielleicht auch, wer weiß.",
+      "{name} holt den Sieg. Du holst erst mal tief Luft.",
+      "Gratulier {name} schön. Zähneknirschen ist erlaubt.",
+      "{name} hat alle überlebt. Dich leider auch.",
+      "Der Pokal geht an {name}. Du bekommst eine Revanche 🙃"
+    ]
+  },
+  "bot": {
+    "mockLoseLife": [
+      "Ups, da war es ein Leben weniger 💔",
+      "Dein Leben nehm ich gern in Verwahrung.",
+      "Mit der Hand wolltest du gewinnen? Mutig.",
+      "Nicht traurig sein, es war nur ein Leben. Ein wertvolles Leben.",
+      "Ich zähl mal kurz deine Leben. Oh. Das ging schnell.",
+      "Soll ich dir schon mal die Schwimmflügel aufpusten?",
+      "Das war knapp daneben. Na gut, es war weit daneben."
+    ]
+  }
+}

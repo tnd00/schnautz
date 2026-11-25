@@ -6,7 +6,7 @@ import { shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
 import { addBot, addPlayer, newState } from '../../src/game/state';
 import type { Action, Card, ShRules, ShState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { playOut, rngF, shCardsOk } from './helpers';
+import { msgOf, playOut, rngF, shCardsOk } from './helpers';
 
 const rank = (c: Card) => c.slice(1);
 
@@ -121,7 +121,7 @@ describe('Shithead: 4er reinwerfen und Bombe', () => {
     assert.ok(S.win, 'Fenster offen');
     expect(S.win.lock).toBe(true);
     expect(S.pile).toEqual([]);
-    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [0] }, rng)).toMatch(/warten/);
+    expect(msgOf(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [0] }, rng))).toMatch(/warten/);
     // Auch wer dran ist, dürfte reinwerfen, muss aber nicht
     expect(shCanThrow(st, 'p1')).toEqual({ src: 'hand', idx: [0, 1] });
     expect(shCanThrow(st, 'h')).toEqual({ src: 'hand', idx: [0] });
@@ -132,7 +132,7 @@ describe('Shithead: 4er reinwerfen und Bombe', () => {
     expect(S.win.by).toEqual(['h']);
     expect(st.players[st.turn].id).toBe('p1');
     expect(S.P.h.hand.some((c) => rank(c) === '4')).toBe(false);
-    expect(act(st, 'h', { type: 'shthrow' }, rng)).toMatch(/keine 4/);
+    expect(msgOf(act(st, 'h', { type: 'shthrow' }, rng))).toMatch(/keine 4/);
 
     // Nur der Gastgeber hebt die Sperre auf und nur für dieses Fenster
     const id = S.win.id;
@@ -149,7 +149,7 @@ describe('Shithead: 4er reinwerfen und Bombe', () => {
     expect(S.win).toBeNull();
     expect(S.pile).toEqual(['C4', 'D4', 'S4']);
     expect(st.players[st.turn].id).toBe('h');
-    expect(act(st, 'h', { type: 'shthrow' }, rng)).toMatch(/Zu spät/);
+    expect(msgOf(act(st, 'h', { type: 'shthrow' }, rng))).toMatch(/Zu spät/);
   });
 
   it('lässt auch die Person am Zug reinwerfen, danach spielt sie normal', () => {
@@ -166,7 +166,7 @@ describe('Shithead: 4er reinwerfen und Bombe', () => {
     expect(S.win.by).toEqual(['p1']);
     // Die Sperre gilt weiter, gespielt wird erst danach
     const nine = () => S.P.p1.hand.indexOf('H9');
-    expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [nine()] }, rng)).toMatch(/warten/);
+    expect(msgOf(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [nine()] }, rng))).toMatch(/warten/);
     act(st, 'h', { type: 'shunlock', id: S.win.id }, rng);
     expect(act(st, 'p1', { type: 'shplay', from: 'hand', idx: [nine()] }, rng)).toBeNull();
     expect(S.pile).toEqual(['C4', 'H9']);
@@ -419,8 +419,8 @@ describe('Shithead: verdeckte Karten', () => {
     S.P.h.hand = [];
     S.P.h.up = [];
     S.P.h.down = ['HK', 'DK'];
-    expect(act(st, 'h', { type: 'shplay', from: 'hand', idx: [0, 1] })).toBe('Wähle zuerst eine Karte.');
-    expect(act(st, 'h', { type: 'shplay', from: 'up', idx: [0, 1] })).toBe('Wähle zuerst eine Karte.');
+    expect(msgOf(act(st, 'h', { type: 'shplay', from: 'hand', idx: [0, 1] }))).toBe('Wähle zuerst eine Karte.');
+    expect(msgOf(act(st, 'h', { type: 'shplay', from: 'up', idx: [0, 1] }))).toBe('Wähle zuerst eine Karte.');
     expect(act(st, 'h', { type: 'shblind', i: 0 })).toBeNull();
     expect(S.P.h.down).toHaveLength(1);
     expect(st.log.at(-1)).toMatchObject({ k: 'shplay', src: 'down', cards: ['HK'] });

@@ -7,7 +7,7 @@ import { shCanBomb } from '../../src/game/shithead';
 import { addPlayer, newState, seatLimit } from '../../src/game/state';
 import type { Card, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF, shCardsOk } from './helpers';
+import { msgOf, rngF, shCardsOk } from './helpers';
 
 function table(n: number, game: 'schnautz' | 'shithead', seed: number, rules: object = {}): State {
   const rng = rngF(seed);
@@ -43,10 +43,10 @@ describe('Mehr Leute und zweites Deck', () => {
 
     // Ein neunter Mensch findet keinen Platz mehr
     const full = table(8, 'shithead', 2);
-    expect(addPlayer(full, 'p9', 'P9')).toBe('Der Tisch ist voll.');
+    expect(msgOf(addPlayer(full, 'p9', 'P9'))).toBe('Der Tisch ist voll.');
     // Ein alter Shithead-Tisch aus 2.5 mit neun Menschen kann nicht zu Schnautz wechseln
     full.players.push({ ...structuredClone(full.players[1]), id: 'p9', name: 'P9' });
-    expect(act(full, 'h', { type: 'game', game: 'schnautz' }, rngF(2))).toMatch(/höchstens 8/);
+    expect(msgOf(act(full, 'h', { type: 'game', game: 'schnautz' }, rngF(2)))).toMatch(/höchstens 8/);
     expect(full.game).toBe('shithead');
   });
 

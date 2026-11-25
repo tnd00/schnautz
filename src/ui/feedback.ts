@@ -2,7 +2,8 @@
 import { App } from './app';
 import { $, $opt, esc, type Timer } from './dom';
 import { render } from './render/index';
-import { sfxCalm } from './sound';
+import type { Cue } from './levels';
+import { sfx, sfxCalm, type SoundName } from './sound';
 
 const ms = (x: number | undefined, d: number) => x || d;
 
@@ -375,4 +376,61 @@ export function boomFx(ch: string, el: Element | null): void {
   f.style.top = `${r.top + r.height / 2}px`;
   $('#fly').appendChild(f);
   setTimeout(() => f.remove(), 1100);
+}
+
+/** Eine Rückmeldung für `emit`. Texte für andere ohne Namen („nimmt 7 Karten“), der Name kommt davor wie heute. */
+export interface Msg {
+  pid?: string;
+  text: string;
+  /** Form für einen selbst („nimmst 7 Karten“) */
+  mine?: string;
+  /** Nur groß */
+  icon?: string;
+  tone?: Announcement['tone'];
+  /** Nur groß, HTML und bereits maskiert. Ohne Titel steht `text` da */
+  title?: string;
+  sub?: string;
+  ms?: number;
+  /** Spruch dazu, wenn die Stufe einen vorsieht */
+  taunt?: string;
+  sfx?: SoundName;
+  /** Wo die kleine Meldung sitzt, Standard Kappe der Mitte */
+  at?: 'cap' | 'pile';
+}
+
+/** Merkt sich, ob in diesem Schub schon ein großer Moment lief. */
+const BATCH = { big: false };
+
+/** Neuer Schub von Logeinträgen (effects ruft das vorne auf): Der große Moment ist wieder frei. */
+export function beginBatch(): void {
+  BATCH.big = false;
+}
+
+/**
+ * Zeigt eine Rückmeldung in ihrer Stufe. Dünne Hülle um die heutigen Bausteine: groß ist `announce`, mittel und
+ * klein sind `floatLabel` (mittel mit Klang und Spruch). Ein zweites großes Ereignis im selben Schub, das kein Takt
+ * ist, fällt auf mittel zurück. Noch ohne Aufrufer, die Stufen setzt der Umbau der Rückmeldungen ein.
+ */
+export function emit(cue: Cue, m: Msg): void {
+  let level = cue.level;
+  if (level === 'big' && !cue.beat) {
+    if (BATCH.big) level = 'mid';
+    else BATCH.big = true;
+  }
+  if (level === 'big') {
+    announce({ icon: m.icon, tone: m.tone, title: m.title ?? esc(m.text), sub: m.sub, ms: m.ms });
+    if (m.sfx) sfx(m.sfx);
+    return;
+  }
+  floatLabel(m.pid, m.text, m.mine);
+  if (level === 'mid' && m.sfx) sfx(m.sfx);
+  if (level === 'mid' && cue.taunt && m.taunt) tauntLabel(m.taunt);
+}
+
+/**
+ * Laufende Ansagen und Hinweise nach dem Zeichnen neu an die Spielfläche setzen, so wie `markClocks` die Uhren
+ * nachzieht. Läuft am Ende von `render()`. Vorerst ohne Wirkung, damit sich nichts sichtbar ändert.
+ */
+export function realignFeedback(): void {
+  // Absichtlich leer, die Neuausrichtung kommt mit dem Umbau der Rückmeldungen
 }

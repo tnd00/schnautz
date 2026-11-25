@@ -10,7 +10,7 @@ import { act } from '../../src/game/actions';
 import { addPlayer, newState } from '../../src/game/state';
 import type { GameKind, Rng } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF } from '../unit/helpers';
+import { msgOf, rngF } from '../unit/helpers';
 
 const N = Number(process.env.SIM_GAMES ?? 600);
 
@@ -28,7 +28,7 @@ function partie(levels: BotLevel[], seed: number, game: GameKind): number | null
       const a = botDecide(viewFor(st, id), rng, levels[i]);
       if (!a) continue;
       const err = act(st, id, a, rng);
-      if (err && a.type !== 'ready') throw new Error(`KI-Zug ungültig: ${JSON.stringify(a)} (${err})`);
+      if (err && a.type !== 'ready') throw new Error(`KI-Zug ungültig: ${JSON.stringify(a)} (${msgOf(err)})`);
       if (!err) moved = true;
       if (a.type !== 'ready') break;
     }

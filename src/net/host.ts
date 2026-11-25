@@ -26,7 +26,17 @@ import { LS } from '../ui/storage';
 import { noteGuestVersion, showBackHint } from '../ui/update';
 import { APP_VERSION } from '../content/version';
 import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
-import { asMessage, asSavedHost, type GuestMessage, type HostMessage, type SavedHost } from './protocol';
+import {
+  asMessage,
+  asSavedHost,
+  type GuestMessage,
+  type HostMessage,
+  type SavedHost,
+  rejectAct,
+  wireReject,
+} from './protocol';
+import { ctxOfState, rejectLog } from '../content/texts';
+import { type Reject, rj } from '../game/reject';
 import { allowBurst, newRateBook, rateSound } from './rate';
 import { FAST } from './pace';
 import { keepSignal, safeClose, safeDestroy } from './signal';
@@ -161,7 +171,7 @@ function startVsBots(st: State, game: GameKind): void {
   for (const a of steps) {
     const e = act(st, App.me, a);
     if (e) {
-      dlog('game', `Gegen die KI: ${a.type} abgelehnt, ${e}`);
+      dlog('game', `Gegen die KI: ${a.type} abgelehnt, ${rejectLog(e, ctxOfState(st, App.me))}`);
       return;
     }
   }
@@ -309,8 +319,13 @@ function hostSend(conn: DataConnection, m: HostMessage): void {
   }
 }
 
-function rejectConn(conn: DataConnection, msg: string): void {
-  hostSend(conn, { t: 'reject', msg });
+/** Ablehnung für den Draht: Code und Argumente, dazu `msg` aus Sicht des Gastes `pid` für Gäste von 2.6. */
+function wire(r: Reject | string, st: State, pid: string): ReturnType<typeof wireReject> {
+  return wireReject(r, ctxOfState(st, pid));
+}
+
+function rejectConn(conn: DataConnection, st: State, pid: string, r: Reject | string): void {
+  hostSend(conn, { t: 'reject', ...wire(r, st, pid) });
   safeClose(conn, 600);
 }
 
@@ -327,7 +342,7 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
   const v = typeof m.v === 'string' ? m.v.slice(0, 20) : undefined;
   if (!canShow(st.game, v)) {
     dlog('net', `${name} abgewiesen, Version ${v ?? 'unbekannt'} kennt ${GAME_NAME[st.game]} nicht`);
-    rejectConn(conn, `An diesem Tisch läuft ${GAME_NAME[st.game]}. Lade die Seite neu, dann kannst du mitspielen.`);
+    rejectConn(conn, st, pid, rj('net.oldPage', { g: st.game }));
     return;
   }
   // Eigene Gast-ID oder ein Platz, den dieser Gast mit seinem Schlüssel schon hatte
@@ -346,14 +361,14 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
     takeover = true;
   }
   if (p && H.keys[pid] && H.keys[pid] !== key && !takeover) {
-    rejectConn(conn, 'Dieser Platz ist schon besetzt.');
+    rejectConn(conn, st, pid, rj('seat.taken'));
     return;
   }
   if (!p) {
     // Auch der Platz, auf dem dieselbe Person gerade offline sitzt (neuer Tab oder Browser, gleicher Name)
     const r = seatGuest(st, pid, name);
     if ('err' in r) {
-      rejectConn(conn, r.err);
+      rejectConn(conn, st, pid, r.err);
       return;
     }
     if (r.id !== pid) {
@@ -421,8 +436,13 @@ function hostMsg(conn: DataConnection, raw: unknown): void {
       if (!g) return;
       const e = act(st, id, g);
       if (e) {
-        dlog('game', `${st.players[pIdx(st, id)]?.name ?? id}: ${g.type} abgelehnt, ${e}`);
-        hostSend(conn, { t: 'err', msg: e });
+        dlog(
+          'game',
+          `${st.players[pIdx(st, id)]?.name ?? id}: ${g.type} abgelehnt, ${rejectLog(e, ctxOfState(st, id))}`,
+        );
+        // Typ des Zugs nur, wenn er wie ein Aktionsname aussieht, damit nichts Fremdes zurückgeht
+        const k = rejectAct({ act: g.type });
+        hostSend(conn, k ? { t: 'err', ...wire(e, st, id), act: k } : { t: 'err', ...wire(e, st, id) });
       } else hostCommit();
       return;
     }

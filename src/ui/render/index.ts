@@ -13,6 +13,7 @@ import { clearSwapGrid, renderSh, renderShOverlay } from './shithead';
 import { renderTurnNote } from './turnnote';
 import { markTosses } from '../toss';
 import { fitDesktop } from '../fit';
+import { realignFeedback } from '../feedback';
 import { GAME_NAME, unreachable } from '../../game/games';
 import type { View } from '../../game/types';
 import { renderDk, renderDkOverlay } from './durak';
@@ -82,4 +83,6 @@ export function render(): void {
   // Würfe kleben an Kacheln und Ergebniszeilen, nach dem Zeichnen wieder anhängen
   markTosses();
   fitDesktop();
+  // Meldungen und Hinweise folgen dem neuen Bild, so wie die Uhren an den Plätzen
+  realignFeedback();
 }

@@ -8,6 +8,7 @@ import { BOT_LINES } from '../bots/lines';
 import { botDecide } from '../bots/index';
 import { EMOTES, SOUNDS, TOSS_ICON, TOSS_ITEMS } from '../game/constants';
 import { APP_VERSION } from '../content/version';
+import { ctxOfState, rejectLog, rejectText } from '../content/texts';
 import { act } from '../game/actions';
 import { rematchOpen } from '../game/rematch';
 import { addLog } from '../game/state';
@@ -443,7 +444,7 @@ function land(r: Spooled): void {
     if (H.st !== st || App.role !== 'host') return;
     const e = act(st, last.pid, last.a);
     if (e) {
-      dlog('dev', `Letzter Zug abgelehnt, ${e}`);
+      dlog('dev', `Letzter Zug abgelehnt, ${rejectLog(e, ctxOfState(st, last.pid))}`);
       toast('Der letzte Zug ging nicht mehr, es geht normal weiter.');
     }
     hostCommit();
@@ -494,8 +495,10 @@ function hostDo(pid: string, a: Action): void {
   if (!st) return;
   const e = act(st, pid, a);
   if (e) {
-    dlog('dev', `${a.type} abgelehnt, ${e}`);
-    toast(e);
+    // Aus Sicht des Platzes, der den Zug macht, wie die alten Texte
+    const ctx = ctxOfState(st, pid);
+    dlog('dev', `${a.type} abgelehnt, ${rejectLog(e, ctx)}`);
+    toast(rejectText(e, ctx));
   } else hostCommit();
 }
 

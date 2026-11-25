@@ -21,7 +21,7 @@ import { botDecide } from '../bots/index';
 import { BOT_LINES } from '../bots/lines';
 import { botTossReply } from '../bots/toss';
 import { botBet } from '../bots/bets';
-import { zerRevealDelay } from '../ui/shithead/ceremony-plan';
+import { revealDelayOf } from '../ui/ceremony-plan';
 import { onlyBotsPlaying, szResult } from '../game/games';
 import { animFloor, fastDelay, fastOk, ffwdInLog, type PaceIn } from './pace';
 
@@ -512,9 +512,7 @@ export function botChatter(): void {
     return bs.length ? bs[Math.floor(Math.random() * bs.length)] : null;
   };
   // Am Partieende reagiert die KI erst, wenn die Zeremonie den Shithead, Durak oder Cabo-König enthüllt hat
-  const endWait = fresh.some((e) => e.k === 'shend' || e.k === 'dkend' || e.k === 'cbend')
-    ? zerRevealDelay(fresh, seqMsOf(fresh))
-    : 0;
+  const endWait = revealDelayOf(st.game, fresh, seqMsOf(fresh));
   // Durak: Letzter Angriff, Rausgehen und Ende kommen zusammen. Dann gehört die Bühne dem Ende,
   // Sprüche wie "Wer bleibt übrig?" passen nicht mehr, auch nicht bei Unentschieden
   const dkOver = fresh.some((e) => e.k === 'dkend');

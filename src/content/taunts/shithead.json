@@ -1,0 +1,170 @@
+{
+  "screen": {
+    "shLoserSelf": [
+      "Glückwunsch, der Titel gehört dir. Trag ihn mit Würde 💩",
+      "Einer muss es ja sein. Heute bist es halt du.",
+      "Shithead steht dir erstaunlich gut.",
+      "Die Karten waren schuld. Ganz sicher. Bestimmt.",
+      "Letzter Platz ist auch fast ein Platz auf dem Treppchen.",
+      "Du darfst jetzt mischen. Ehrenamt verpflichtet 💩",
+      "Kopf hoch. Die nächste Partie kann nur besser werden.",
+      "Revanche? Du hast sie dringend nötig."
+    ],
+    "shLoserOther": [
+      "{name} ist Shithead. Bitte alle einmal mitfühlend nicken.",
+      "Applaus für {name}, frisch gekürt zum Shithead 💩",
+      "{name} hat sich den Titel redlich erarbeitet.",
+      "Irgendwer musste es werden. Danke, {name}!",
+      "{name} mischt die nächste Runde. So will es das Gesetz.",
+      "Shithead des Abends ist {name}. Wer hätte es geahnt?",
+      "{name} sitzt noch auf Karten. Wir anderen sitzen bequem.",
+      "Sei lieb zu {name}. Oder auch nicht 😇"
+    ],
+    "shWinSelf": [
+      "Zuerst fertig. Die anderen dürfen noch ein bisschen üben.",
+      "Hände leer, Gewissen rein. Viel Spaß noch da unten 😎",
+      "Du bist durch. Lehn dich zurück, die Show beginnt.",
+      "So macht man das. Hat jemand mitgeschrieben?",
+      "Fertig! Jetzt schaust du in Ruhe zu, wie es eng wird.",
+      "Platz eins. Der Rest kämpft nur noch gegen die Schande.",
+      "Das ging schnell. Fast schon unhöflich schnell.",
+      "Du hast frei, die anderen haben Karten 🍿"
+    ],
+    "pickupOther": [
+      "{name} sammelt {n} Karten ein. Fleißig, fleißig 📚",
+      "{n} Karten für {name}. Die Hand wird langsam zum Fächer.",
+      "{name} nimmt den Stapel. {n} Karten Zuwachs, Glückwunsch!",
+      "Danke fürs Aufräumen, {name}! Waren ja nur {n} Karten.",
+      "{name} hat jetzt {n} neue Freunde auf der Hand.",
+      "Da wandern {n} Karten zu {name}. Wir winken hinterher 👋",
+      "{name} braucht bald eine dritte Hand für die {n} Karten.",
+      "{n} auf einen Schlag. {name} sorgt für schlechte Zeiten vor."
+    ],
+    "pickupSelf": [
+      "{n} Karten für dich. Lass es dir schmecken.",
+      "Der Stapel gehört dir. Alle {n} Karten, viel Freude damit.",
+      "Du nimmst {n} Karten auf. Kannst du die noch halten?",
+      "Glückwunsch zu {n} neuen Karten. Hat ja keiner bestellt.",
+      "Einmal alles bitte. Macht {n} Karten 🧾",
+      "{n} Karten mehr. Dein Ziel rückt in weite Ferne.",
+      "Das sind {n} gute Gründe, nächstes Mal besser zu legen.",
+      "Aufsammeln bitte! {n} Karten warten auf dich 📚"
+    ],
+    "blindFailOther": [
+      "{name} zockt blind. Daneben, aber schön war es trotzdem.",
+      "Blind gezogen, blind verloren. Danke {name}!",
+      "Das Glück hat {name} gerade kurz verlassen 🍀",
+      "{name} deckt auf. Passt natürlich nicht.",
+      "Mut hatte {name}. Die passende Karte leider nicht.",
+      "{name} hat auf Glück gesetzt. Das Glück hatte frei.",
+      "Blinder Griff ins Leere von {name}. Der Stapel wartet 🙈",
+      "Fast, {name}. Also nicht wirklich, aber nett versucht."
+    ],
+    "blindFailSelf": [
+      "Passt nicht. Wer hätte das ahnen können? 🙈",
+      "Blind gezockt, prompt bestraft.",
+      "Das Glück lässt freundlich grüßen. Aus der Ferne.",
+      "Falsche Karte. Der Stapel freut sich schon auf dich.",
+      "Daneben. Nächstes Mal fester die Daumen drücken.",
+      "Deine Karte wollte einfach nicht mitspielen.",
+      "Ein Schuss ins Dunkle. Getroffen hast du nichts.",
+      "Autsch. Die lag aber auch gemein da."
+    ],
+    "bombSelf": [
+      "Bumm! Vier Gleiche, Stapel weg. Sauber reingegrätscht 💣",
+      "Dazwischengefunkt, alles abgefackelt. Herrlich.",
+      "Außer der Reihe, trotzdem voll ins Schwarze 🔥",
+      "Der Stapel brennt. Die anderen gucken nur noch.",
+      "Niemand hat dich gefragt. Genau deshalb war es so schön.",
+      "Vier voll, Stapel Asche. Das saß.",
+      "Eingeworfen, abgeräumt, breit gegrinst 😏",
+      "Das nennt man Timing. Die anderen nennen es anders."
+    ],
+    "bombOther": [
+      "{name} funkt dazwischen. Vier Gleiche, Stapel weg 💣",
+      "Bumm! {name} hat einfach eingeworfen. Frechheit.",
+      "{name} war gar nicht dran. Abgeräumt wird trotzdem.",
+      "Der Stapel brennt. Bedank dich bei {name} 🔥",
+      "{name} drängelt sich vor. Jetzt steht alles in Flammen.",
+      "Bombe von {name}. Dein schöner Plan ist jetzt Asche.",
+      "Da war {name} schneller als du. Völlig erlaubt, trotzdem gemein.",
+      "{name} macht die Vier voll. Warst du mitten im Zug? Schade."
+    ],
+    "fourSelf": [
+      "Vier Gleiche, Stapel weg. Sauber 💣",
+      "Vollgemacht und abgefackelt. So geht das.",
+      "Der Stapel hatte gegen dich keine Chance.",
+      "Vier auf einen Streich. Die anderen schauen nur zu.",
+      "Bumm! Der Stapel ist Geschichte.",
+      "Stapel Asche, Hand leichter. So soll das sein 😏",
+      "Vier Gleiche. Das war kein Glück, das war Planung. Oder doch Glück.",
+      "Einmal alles abfackeln, bitte. Gern geschehen 🔥"
+    ],
+    "fourOther": [
+      "{name} räumt den Stapel ab. Einfach so.",
+      "Vier Gleiche von {name}. Das war bestimmt Absicht.",
+      "Der Stapel ist weg. {name} grinst schon.",
+      "{name} macht kurzen Prozess mit dem Stapel 💣",
+      "Bumm! {name} hat aufgeräumt. Danke für nichts.",
+      "{name} legt die Vierte drauf. Tschüss, Stapel 👋",
+      "Asche statt Stapel. Bedank dich bei {name} 🔥",
+      "{name} fackelt alles ab. Da war wohl jemand vorbereitet."
+    ]
+  },
+  "bot": {
+    "mockPickup": [
+      "Na, sammelst du jetzt Karten? Schönes Hobby 📚",
+      "Brauchst du eine Tüte für den Stapel?",
+      "Ui, das ist aber eine stattliche Hand geworden.",
+      "Danke fürs Aufräumen, der Tisch sah echt wild aus.",
+      "Mit so vielen Karten machst du bald ein eigenes Spiel auf.",
+      "Lass dir Zeit beim Sortieren, wir warten gern 😌",
+      "Ich würde ja helfen, aber meine Hand ist fast leer."
+    ],
+    "mockShithead": [
+      "Shithead steht dir. Solltest du öfter tragen 💩",
+      "Ich sag nichts. Ich grinse nur ganz leise.",
+      "Jemand muss den Titel tragen. Schön, dass du dich opferst.",
+      "Gegen eine KI verloren. Das erzählst du besser keinem.",
+      "Du mischst, ich lehn mich zurück.",
+      "War knapp! Also für mich nicht, aber für dich bestimmt.",
+      "Kopf hoch, nächste Runde klappt vielleicht der vorletzte Platz."
+    ],
+    "mockBlindFail": [
+      "Blind gezockt, blind verloren. Klassiker 🙈",
+      "Ich hab es kommen sehen. Gesagt hab ich natürlich nichts.",
+      "Dein Glück macht wohl gerade Pause.",
+      "Schöne Karte! Nur leider die falsche.",
+      "Das war mutig. Erfolglos, aber mutig.",
+      "Augen zu, einfach durch? Hat diesmal nicht geklappt.",
+      "Der Stapel hat schon nach dir gerufen 📣"
+    ],
+    "bomb": [
+      "Bumm! Vier Gleiche, Stapel weg 💣",
+      "Vier Gleiche. Musste einfach sein, sorry.",
+      "Stapel ist weg. Ich hab mal kurz aufgeräumt.",
+      "Ihr wart mir zu langsam, da hab ich abgeräumt 🔥",
+      "Hoppla, ist mir so aus der Hand gerutscht.",
+      "Der Stapel hat mich angeschaut. Ich musste ihn anzünden.",
+      "Bomben werfen kann ich am besten."
+    ],
+    "throw4": [
+      "Meine 4 ist drin. Wo bleibt ihr?",
+      "Zack, 4 liegt! ⚡",
+      "Meine 4 liegt schon. Schlaft ihr noch?",
+      "4 rein, weg damit.",
+      "Schnelle Finger, kleine Karte. Die 4 ist raus 😎",
+      "Ich fang mal an. Bitte sehr, eine 4.",
+      "Die 4 brauch ich nicht, die könnt ihr haben."
+    ],
+    "slow4": [
+      "Zu langsam! Die 4 bleibt schön bei dir 🐌",
+      "Da war wohl jemand noch mit Kartenhalten beschäftigt.",
+      "Verschlafen? Die 4 darfst du jetzt behalten.",
+      "Tja, wer zu spät wirft, den bestraft der Stapel.",
+      "Ich hab extra gewartet. Stimmt nicht, klingt aber nett.",
+      "Die 4 klebt wohl an deinen Fingern 😄",
+      "Nächstes Mal einfach schneller sein. Ganz simpler Trick."
+    ]
+  }
+}

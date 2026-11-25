@@ -16,7 +16,7 @@ import { renderSh, renderShCenter } from '../render/shithead';
 import { sfx } from '../sound';
 import { taunt } from '../taunts';
 import { zerSlow } from '../ceremony';
-import { decisivePlay, SEQ_CARD_GAP_MS, slowExtraMs, ZER_SLOW_FLIGHT_MS } from './ceremony-plan';
+import { decisivePlay, SEQ_CARD_GAP_MS, slowExtraMs, ZER_SLOW_FLIGHT_MS } from '../ceremony-plan';
 
 type Entry<K extends LogEntry['k']> = Extract<LogEntry, { k: K }>;
 type PlayEntry = Entry<'shplay'> | Entry<'shthrow'> | Entry<'shbomb'>;

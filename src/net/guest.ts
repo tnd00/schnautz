@@ -11,7 +11,17 @@ import { LS, SS } from '../ui/storage';
 import { noteHostVersion } from '../ui/update';
 import { APP_VERSION } from '../content/version';
 import { genId, PREFIX, peerOptions } from './ids';
-import { asMessage, asSavedGuest, isView, type GuestMessage, type HostMessage, type SavedGuest } from './protocol';
+import {
+  asMessage,
+  asSavedGuest,
+  isView,
+  readReject,
+  type GuestMessage,
+  type HostMessage,
+  type SavedGuest,
+} from './protocol';
+import { ctxOfView } from '../content/texts';
+import type { RejectCode } from '../game/reject';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 import { dlog } from '../ui/devlog';
 
@@ -452,15 +462,20 @@ function guestMsg(raw: unknown): void {
       applyView(m.s);
       return;
     }
-    case 'reject':
-      dlog('net', `Abgewiesen: ${m.msg ?? ''}`);
-      guestFail(m.msg || 'Beitreten hat nicht geklappt.', !keepsInvite(m.msg));
+    case 'reject': {
+      // Mit Code rendert der Gast selbst, sonst zeigt er den Text vom Gastgeber (auch von 2.6)
+      const r = readReject(m, ctxOfView(App.view), 'Beitreten hat nicht geklappt.');
+      dlog('net', `Abgewiesen: ${r.text}${r.code ? ` [${r.code}]` : ''}`);
+      guestFail(r.text, !keepsInvite(typeof m.msg === 'string' ? m.msg : undefined, r.code));
       return;
-    case 'err':
-      dlog('game', `Gastgeber lehnt ab: ${m.msg}`);
-      toast(m.msg);
+    }
+    case 'err': {
+      const r = readReject(m, ctxOfView(App.view), 'Das geht gerade nicht.');
+      dlog('game', `Gastgeber lehnt ab: ${r.text}${r.code ? ` [${r.code}]` : ''}`);
+      toast(r.text);
       App.busy = false;
       return;
+    }
     case 'closed':
       dlog('net', 'Tisch aufgelöst');
       LS.del('guest');
@@ -495,11 +510,16 @@ export function guestLeave(): void {
   guestStop();
 }
 
+/** Codes, nach denen die Einladung bleibt. */
+const KEEP_INVITE: ReadonlySet<RejectCode> = new Set<RejectCode>(['seat.full', 'seat.fullPlaying', 'net.oldPage']);
+
 /**
  * Abweisungen, nach denen die Einladung bleibt: Der Tisch ist voll (später klappt es vielleicht) oder die Seite soll
- * neu laden (dann braucht es den Code im Link). Die Texte kommen aus src/game/state.ts, seats.ts und hostHello.
+ * neu laden (dann braucht es den Code im Link). Mit Code entscheidet der Code. Ohne Code (Gastgeber von 2.6) der
+ * Text, die drei Wortteile sind deshalb in src/content/texts/reject.ts eingefroren.
  */
-export function keepsInvite(msg: string | undefined): boolean {
+export function keepsInvite(msg: string | undefined, code?: RejectCode | null): boolean {
+  if (code) return KEEP_INVITE.has(code);
   return !!msg && /voll|alle Plätze sind besetzt|Lade die Seite neu/.test(msg);
 }
 

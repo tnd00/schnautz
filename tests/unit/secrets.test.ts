@@ -16,7 +16,10 @@ import { addBot, newState } from '../../src/game/state';
 import type { Card, GameKind, Phase, Rng, State, View } from '../../src/game/types';
 import { fitView, viewFor } from '../../src/game/view';
 import { genId } from '../../src/net/ids';
-import { rngF } from './helpers';
+import { REJECT_SAMPLES, rngF } from './helpers';
+import { REJECT_CODES, rj } from '../../src/game/reject';
+import { ctxOfState, rejectText } from '../../src/content/texts';
+import { wireReject } from '../../src/net/protocol';
 
 /** Wie der Gastgeber Schlüssel vergibt (src/net/guest.ts). Sie liegen nur in H.keys, nie im Spielstand. */
 const KEY_SHAPE = /(^|[^a-z0-9])k-[0-9a-f]{12}(?![0-9a-f])/;
@@ -313,5 +316,37 @@ describe('Geheimnis der Karten', () => {
     // Ohne Leck bleibt alles still
     expect(fieldFindings(v, st, g1.id, true)).toEqual([]);
     expect(keyFindings(v, Object.values(keys), 'v')).toEqual([]);
+  });
+});
+
+describe('Ablehnungen verraten nichts', () => {
+  /** Ein Kartencode wie H7, S10 oder CA, auch mit Deck-Nummer */
+  const CARD = /\b[CSHD](?:[2-9]|10|[BDKA])(?::2)?\b/;
+
+  it('kein Code rendert eine Karte, einen Schlüssel oder eine Platz-ID, egal wer liest', () => {
+    const rng = rngF(4);
+    const { st, keys } = table('durak', 4, rng);
+    const [g1, g2] = GUESTS;
+    const hits: string[] = [];
+    for (const e of REJECT_CODES) {
+      // Platz-Argumente zeigen auf einen echten Gast, damit Namen wirklich aufgelöst werden
+      const a = Object.fromEntries(
+        Object.entries(REJECT_SAMPLES[e] ?? {}).map(([k, v]) => [k, k === 'p' || k === 'on' ? g2.id : v]),
+      );
+      const r = rj(e, Object.keys(a).length ? a : undefined);
+      for (const me of ['h', g1.id, g2.id]) {
+        const w = wireReject(r, ctxOfState(st, me));
+        const text = rejectText(r, ctxOfState(st, me));
+        if (CARD.test(text)) hits.push(`${e} zeigt eine Karte: „${text}“`);
+        if (text.includes(g2.id)) hits.push(`${e} zeigt eine Platz-ID: „${text}“`);
+        hits.push(...keyFindings(w, Object.values(keys), e));
+      }
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it('Cabo-Codes tragen keine Karten, auch nicht die eigenen', () => {
+    for (const e of REJECT_CODES.filter((c) => c.startsWith('cb.')))
+      for (const v of Object.values(REJECT_SAMPLES[e] ?? {})) expect(String(v)).not.toMatch(CARD);
   });
 });

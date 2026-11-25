@@ -2,7 +2,7 @@
 import { rankOf } from '../../game/cards';
 import { DEFAULT_RULES, SH_WIN_MS } from '../../game/constants';
 import { shCanBomb, shCanPlay, shCanThrow, shTop, shTopRun } from '../../game/shithead';
-import type { Card, Player, Rank, ShBetResult, ShitheadResult, ShPlayerView, ShView, View } from '../../game/types';
+import type { Card, Player, Rank, ShitheadResult, ShPlayerView, ShView, View } from '../../game/types';
 import { LOSER_MARK } from '../../game/games';
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
@@ -19,7 +19,7 @@ import { winLeft, winSecs } from '../shithead/window';
 import { taunt } from '../taunts';
 import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
 import { rematchLine, rematchMark } from './rematch';
-import { botsOnlyHTML, overlayFoot, peekHTML } from './schnautz';
+import { betResultHTML, botsOnlyHTML, overlayFoot, peekHTML } from './result';
 
 type Source = 'hand' | 'up' | 'down';
 type OwnCards = { hand: Card[]; up: Card[]; down: Card[] | number };
@@ -539,27 +539,4 @@ export function renderShOverlay(v: View): void {
     `<h2>${title}</h2><p class="lead">${lead}</p>` +
     (rline ? `<p class="taunt rv">${rline}</p>` : tt ? `<p class="taunt${good ? ' good' : ''}">${esc(tt)}</p>` : '') +
     `<div class="rows">${rows}</div>${betResultHTML(v, r.bets, r.shithead, 'Shithead')}${overlayFoot(v, me)}</div></div>`;
-}
-
-/** Eine Zeile unter den Plätzen: Wer hat richtig getippt? Für Shithead und Durak. */
-export function betResultHTML(v: View, raw: ShBetResult[] | undefined, loser: string | null, what: string): string {
-  const bets = Array.isArray(raw) ? raw : [];
-  if (!bets.length) return '';
-  if (!loser) return `<p class="betres">🔮 Ohne ${what} zählt kein Tipp.</p>`;
-  const r = { bets, names: v.result && 'names' in v.result ? v.result.names : {} };
-  const mine = bets.find((b) => b.p === App.me);
-  const others = bets.filter((b) => b.ok && b.p !== App.me);
-  const names = r.names ?? {};
-  const list = others.map((b) => `${esc(nameOf(v, b.p, names[b.p]))} (+${num(b.q)})`);
-  let text = '';
-  if (mine)
-    text = mine.ok
-      ? `Richtig getippt! +${num(mine.q)} ${mine.q === 1 ? 'Punkt' : 'Punkte'}.`
-      : 'Dein Tipp lag daneben.';
-  if (list.length)
-    text +=
-      `${text ? ' ' : ''}${listJoin(list)} ${list.length > 1 ? 'haben' : 'hat'}` +
-      ` ${mine?.ok ? 'auch ' : ''}richtig getippt.`;
-  else if (!mine) text = 'Niemand hat richtig getippt.';
-  return `<p class="betres">🔮 ${text}</p>`;
 }

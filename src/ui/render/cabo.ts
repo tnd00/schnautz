@@ -18,7 +18,7 @@ import { taunt } from '../taunts';
 import { markTosses } from '../toss';
 import { aimAttrs, marksHTML, reignHTML } from './marks';
 import { rematchLine, rematchMark } from './rematch';
-import { botsOnlyHTML, overlayFoot, peekHTML } from './schnautz';
+import { botsOnlyHTML, overlayFoot, peekHTML } from './result';
 
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 

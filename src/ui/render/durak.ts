@@ -7,6 +7,8 @@ import { dkBeats, suitOf } from '../../game/cards';
 import { SUIT_SYM } from '../../game/constants';
 import { dkAttackError, dkCount, dkLive, dkOpen, dkRoom, dkTransferError, dkTrump, dkWaiting } from '../../game/durak';
 import { LOSER_MARK } from '../../game/games';
+import { type Reject, rj } from '../../game/reject';
+import { ctxOfView, rejectText } from '../../content/texts';
 import type { Card, DkView, DurakResult, Player, Suit, View } from '../../game/types';
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
@@ -21,8 +23,7 @@ import { markTosses } from '../toss';
 import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
 import { aimAttrs, dkcHTML, marksHTML, reignHTML } from './marks';
 import { rematchLine, rematchMark } from './rematch';
-import { botsOnlyHTML, overlayFoot, peekHTML } from './schnautz';
-import { betResultHTML } from './shithead';
+import { betResultHTML, botsOnlyHTML, overlayFoot, peekHTML } from './result';
 
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 const SUIT_NAME: Record<Suit, string> = { C: 'Kreuz', S: 'Pik', H: 'Herz', D: 'Karo' };
@@ -248,7 +249,7 @@ function statusHTML(v: View, D: DkView, me: Player | null): string {
     }
     // Eine Auswahl, die so nicht geht: sagen warum
     const why = selectionError(v, role);
-    if (why) sub = esc(why);
+    if (why) sub = esc(rejectText(why, ctxOfView(v)));
   } else if (v.phase === 'over') main = 'Partie vorbei.';
   // Wer gerade aufhält und offline ist
   const waiting = dkWaiting(v);
@@ -274,14 +275,14 @@ export function dkBeatPair(v: View): number | null {
 }
 
 /** Warum die aktuelle Auswahl so nicht geht, oder null. */
-function selectionError(v: View, role: DkRole): string | null {
+function selectionError(v: View, role: DkRole): Reject | string | null {
   const sel = dkSelected(v);
   if (!sel.cards.length) return null;
   if (role === 'lead' || role === 'throw') return dkAttackError(v, App.me, sel.cards);
   if (role !== 'defend') return null;
   if (sel.cards.length > 1) return dkTransferError(v, App.me, sel.cards);
   if (dkTargets(v, sel.cards[0]).length || !dkTransferError(v, App.me, sel.cards)) return null;
-  return 'Diese Karte schlägt keinen offenen Angriff.';
+  return rj('dk.noTarget');
 }
 
 /**

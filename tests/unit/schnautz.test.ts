@@ -6,7 +6,7 @@ import { finishRound, handValue, startRound } from '../../src/game/schnautz';
 import { activeList, addPlayer, newState } from '../../src/game/state';
 import type { Action, Card, Rules, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF, schnautzResult } from './helpers';
+import { msgOf, rngF, schnautzResult } from './helpers';
 
 function cardsOk(st: State): void {
   if (!['choose', 'play'].includes(st.phase)) return;
@@ -83,7 +83,7 @@ describe('Schnautz', () => {
           const before = st.n;
           const err = act(st, pid, a, rng);
           if (err) {
-            assert.equal(a.type, 'knock', `unerwarteter Fehler ${err}`);
+            assert.equal(a.type, 'knock', `unerwarteter Fehler ${msgOf(err)}`);
             assert.equal(act(st, pid, { type: 'pass' }, rng), null);
           }
           if (st.log.some((e) => e.n > before && e.k === 'renew')) stats.renews++;

@@ -11,7 +11,7 @@ import { addPlayer, newState } from '../../src/game/state';
 import { seatGuest, takeSeat } from '../../src/game/seats';
 import type { Action, Card, DkState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF } from './helpers';
+import { msgOf, rngF } from './helpers';
 
 /** Durak-Tisch mit `n` Leuten, gestartet. */
 function table(n: number, seed: number, transfer = false): { st: State; D: DkState; rng: () => number } {
@@ -137,16 +137,16 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
 
   it('erlaubt Angriff nur dem Angreifer mit gleichen Werten und Nachlegen nur mit Werten vom Tisch', () => {
     const { st, D } = fixed();
-    expect(act(st, 'p2', { type: 'dkattack', idx: [0] })).toBe('Zuerst greift jemand anderes an.');
-    expect(act(st, 'p1', { type: 'dkattack', idx: [0] })).toBe('Du verteidigst gerade.');
-    expect(act(st, 'h', { type: 'dkattack', idx: [0, 2] })).toBe('Angreifen geht nur mit gleichen Werten.');
+    expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [0] }))).toBe('Zuerst greift jemand anderes an.');
+    expect(msgOf(act(st, 'p1', { type: 'dkattack', idx: [0] }))).toBe('Du verteidigst gerade.');
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0, 2] }))).toMatch(/geht nur mit gleiche(?:n Werten|m Wert)\./);
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1] })).toBeNull();
     expect(D.table.map((p) => p.a)).toEqual(['C7', 'S7']);
-    expect(act(st, 'p2', { type: 'dkattack', idx: [1] })).toMatch(/schon auf dem Tisch/);
+    expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [1] }))).toMatch(/schon auf dem Tisch/);
     expect(act(st, 'p2', { type: 'dkattack', idx: [0] })).toBeNull();
     expect(dkWaiting(st)).toEqual(['p1']);
     expect(clockTurn(st).ids).toEqual(['p1']);
-    expect(act(st, 'h', { type: 'dkpass' })).toBe('Erst muss alles geschlagen sein.');
+    expect(msgOf(act(st, 'h', { type: 'dkpass' }))).toBe('Erst muss alles geschlagen sein.');
   });
 
   it('schlägt höher in derselben Farbe oder mit Trumpf, Trumpf nur mit höherem Trumpf', () => {
@@ -158,7 +158,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(dkBeats('HA', 'H9', 'H')).toBe(true);
     const { st, D } = fixed();
     act(st, 'h', { type: 'dkattack', idx: [0] });
-    expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 1 })).toBe('Die Karte schlägt das nicht.');
+    expect(msgOf(act(st, 'p1', { type: 'dkdefend', a: 0, i: 1 }))).toBe('Die Karte schlägt das nicht.');
     expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0 })).toBeNull();
     expect(D.table[0]).toMatchObject({ a: 'C7', d: 'C8' });
     // Jetzt darf die 8 nachgelegt werden, aber nicht vom Verteidiger
@@ -184,7 +184,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(D.take).toBe(true);
     expect(dkWaiting(st).sort()).toEqual(['h', 'p2']);
     expect(act(st, 'p2', { type: 'dkattack', idx: [0] })).toBeNull();
-    expect(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0 })).toBe('Du nimmst schon auf.');
+    expect(msgOf(act(st, 'p1', { type: 'dkdefend', a: 0, i: 0 }))).toBe('Du nimmst schon auf.');
     act(st, 'h', { type: 'dkpass' });
     act(st, 'p2', { type: 'dkpass' });
     expect(D.P.p1).toEqual(expect.arrayContaining(['C7', 'D7']));
@@ -207,7 +207,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(D.done).toEqual(['h']);
     expect(dkWaiting(st)).toEqual(['p2']);
     // h hat die Pik 7 und die 7 liegt, nachlegen darf h trotzdem nicht
-    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBe(PASSED);
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] }))).toBe(PASSED);
     expect(act(st, 'p2', { type: 'dkpass' })).toBeNull();
     // Bito, ohne dass h ein zweites Mal passen muss
     expect(st.log.some((e) => e.k === 'dkbito' && e.p === 'p1' && e.cnt === 4)).toBe(true);
@@ -232,7 +232,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     act(st, 'p1', { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' });
     act(st, 'h', { type: 'dkpass' });
     // Dieselbe Zahl noch einmal hebt das Passen nicht auf
-    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBe(PASSED);
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] }))).toBe(PASSED);
     expect(D.table).toHaveLength(1);
     // Wer nicht gepasst hat, darf weiter nachlegen, das Passen der anderen bleibt stehen
     expect(act(st, 'p2', { type: 'dkattack', idx: [], cards: ['D7'] })).toBeNull();
@@ -244,7 +244,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['S7'] })).toBeNull();
     // Wer jetzt passt, ist für diesen Angriff fertig
     expect(act(st, 'h', { type: 'dkpass' })).toBeNull();
-    expect(act(st, 'h', { type: 'dkattack', idx: [], cards: ['H7'] })).toBe(PASSED_TAKE);
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [], cards: ['H7'] }))).toBe(PASSED_TAKE);
     expect(dkWaiting(st)).toEqual(['p2']);
     expect(act(st, 'p2', { type: 'dkpass' })).toBeNull();
     expect(st.log.some((e) => e.k === 'dkpickup' && e.p === 'p1' && e.cnt === 4)).toBe(true);
@@ -258,9 +258,9 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     D.limit = 2;
     D.P.h = ['C7', 'S7', 'D7', 'H7', 'SK', 'DB'];
     D.discard += 4;
-    expect(act(st, 'h', { type: 'dkattack', idx: [0, 1, 2] })).toMatch(/nur noch 2 Karten/);
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0, 1, 2] }))).toMatch(/nur noch 2 Karten/);
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1] })).toBeNull();
-    expect(act(st, 'p2', { type: 'dkattack', idx: [0] })).toBe('In diesen Angriff passt nichts mehr.');
+    expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [0] }))).toBe('In diesen Angriff passt nichts mehr.');
   });
 });
 
@@ -275,21 +275,23 @@ describe('Durak: Weiterschieben', () => {
     D.def = 'p1';
     D.limit = 6;
     act(st, 'h', { type: 'dkattack', idx: [0] });
-    expect(act(st, 'p1', { type: 'dktransfer', idx: [2] })).toBe('Weiterschieben geht nur mit dem gleichen Wert.');
+    expect(msgOf(act(st, 'p1', { type: 'dktransfer', idx: [2] }))).toBe(
+      'Weiterschieben geht nur mit dem gleichen Wert.',
+    );
     expect(act(st, 'p1', { type: 'dktransfer', idx: [0, 1] })).toBeNull();
     expect(D.def).toBe('p2');
     expect(D.att).toBe('h');
     expect(D.table.map((p) => p.a)).toEqual(['C7', 'D7', 'S7']);
     expect(st.log.at(-1)).toMatchObject({ k: 'dktransfer', p: 'p1', to: 'p2' });
     // p2 hat nur noch 6 Karten, mit einer weiteren 7 wären es 4 Angriffskarten: geht, aber p2 hat keine 7
-    expect(act(st, 'p2', { type: 'dkdefend', a: 0, i: 4 })).toBe('Die Karte schlägt das nicht.');
+    expect(msgOf(act(st, 'p2', { type: 'dkdefend', a: 0, i: 4 }))).toBe('Die Karte schlägt das nicht.');
     const off = table(3, 22, false);
     off.D.att = 'h';
     off.D.def = 'p1';
     off.D.P.h = ['C7', ...off.D.P.h.slice(1)];
     off.D.P.p1 = ['D7', ...off.D.P.p1.slice(1)];
     act(off.st, 'h', { type: 'dkattack', idx: [0] });
-    expect(act(off.st, 'p1', { type: 'dktransfer', idx: [0] })).toBe('Weiterschieben ist an diesem Tisch aus.');
+    expect(msgOf(act(off.st, 'p1', { type: 'dktransfer', idx: [0] }))).toBe('Weiterschieben ist an diesem Tisch aus.');
   });
 
   it('nicht, wenn der Nächste zu wenige Karten hat', () => {
@@ -303,7 +305,7 @@ describe('Durak: Weiterschieben', () => {
     D.def = 'p1';
     D.limit = 3;
     act(st, 'h', { type: 'dkattack', idx: [0, 1] });
-    expect(act(st, 'p1', { type: 'dktransfer', idx: [0] })).toBe('Der Nächste hat dafür zu wenige Karten.');
+    expect(msgOf(act(st, 'p1', { type: 'dktransfer', idx: [0] }))).toBe('Der Nächste hat dafür zu wenige Karten.');
   });
 });
 
@@ -599,8 +601,8 @@ describe('Durak: Karten statt Indizes', () => {
     expect(act(st, 'p1', { type: 'dkdefend', a: 1, i: 1, ac: 'C7', c: 'C10' })).toBeNull();
     expect(D.table.map((p) => p.d)).toEqual(['S9', 'C10']);
     expect(D.P.p1).toContain('HA');
-    expect(act(st, 'h', { type: 'dkattack', idx: [0], cards: ['S7'] })).toBe(
-      'Die Karte hast du nicht mehr auf der Hand.',
+    expect(msgOf(act(st, 'h', { type: 'dkattack', idx: [0], cards: ['S7'] }))).toMatch(
+      /^Die Karte (?:hast du nicht mehr auf der Hand|ist nicht mehr da)\.$/,
     );
   });
 });

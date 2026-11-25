@@ -4,6 +4,7 @@
  * Der Gastgeber hält den vollständigen `State`. Alle Mitspieler (und die KI) sehen nur eine
  * gefilterte `View`, in der fremde Handkarten und verdeckte Karten durch Anzahlen ersetzt sind.
  */
+import type { Reject } from './reject';
 
 export type Suit = 'C' | 'S' | 'H' | 'D';
 /** Karte als Kürzel aus Farbe und Wert, zum Beispiel `H10` oder `SA`. */
@@ -606,5 +607,8 @@ export type Action =
 
 export type ActionType = Action['type'];
 
-/** Ergebnis einer Aktion: `null` bei Erfolg, sonst eine Fehlermeldung für die Person. */
-export type ActResult = string | null;
+/**
+ * Ergebnis einer Aktion: `null` bei Erfolg, sonst der Grund als Code (src/game/reject.ts). Im Umbau (Stufe 2.7)
+ * liefern noch nicht umgestellte Stellen einen Text, danach fällt `string` weg.
+ */
+export type ActResult = Reject | string | null;

@@ -12,7 +12,12 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import botlines from '../../src/content/botlines.json' with { type: 'json' };
 import { CHANGELOG } from '../../src/content/changelog';
-import tauntsJson from '../../src/content/taunts.json' with { type: 'json' };
+import tauntsCommon from '../../src/content/taunts/common.json' with { type: 'json' };
+import tauntsShithead from '../../src/content/taunts/shithead.json' with { type: 'json' };
+import tauntsDurak from '../../src/content/taunts/durak.json' with { type: 'json' };
+import tauntsCabo from '../../src/content/taunts/cabo.json' with { type: 'json' };
+import tauntsSchnautz from '../../src/content/taunts/schnautz.json' with { type: 'json' };
+import { TAUNTS as tauntsJson } from '../../src/content/taunts';
 import { cmpVersion } from '../../src/content/version';
 import type { GameKind, LogEntry, LogKind, View } from '../../src/game/types';
 import { App } from '../../src/ui/app';
@@ -21,6 +26,16 @@ import { burnAnn } from '../../src/ui/shithead/sequence';
 import { taunt } from '../../src/ui/taunts';
 
 const ROOT = path.resolve(__dirname, '../..');
+
+type Pots = Readonly<Record<string, readonly string[]>>;
+/** Spruchtöpfe je Besitzer, src/content/taunts.ts führt sie zusammen */
+const TAUNT_FILES: readonly (readonly [string, { screen: Pots; bot: Pots }])[] = [
+  ['common', tauntsCommon],
+  ['shithead', tauntsShithead],
+  ['durak', tauntsDurak],
+  ['cabo', tauntsCabo],
+  ['schnautz', tauntsSchnautz],
+];
 
 /** Regeln aus CLAUDE.md und dem Glossar, sie gelten für jeden sichtbaren Text */
 const RULES: readonly (readonly [string, RegExp])[] = [
@@ -477,8 +492,10 @@ function jsonUnits(): Unit[] {
     for (const lines of Object.values(pots))
       for (const s of lines) out.push(...unitsOf(jsonLine(file, src, s), s.replace(/\{\w+\}/g, 'X')));
   };
-  add('src/content/taunts.json', tauntsJson.screen);
-  add('src/content/taunts.json', tauntsJson.bot);
+  for (const [g, pots] of TAUNT_FILES) {
+    add(`src/content/taunts/${g}.json`, pots.screen);
+    add(`src/content/taunts/${g}.json`, pots.bot);
+  }
   add('src/content/botlines.json', botlines.lines);
   return out;
 }
@@ -548,12 +565,26 @@ const POT_GAME: readonly (readonly [GameKind, RegExp])[] = [
 const potGame = (key: string): GameKind | null => POT_GAME.find(([, re]) => re.test(key))?.[0] ?? null;
 
 const POTS: readonly { src: string; key: string; lines: readonly string[] }[] = [
-  ...Object.entries(tauntsJson.screen).map(([key, lines]) => ({ src: 'taunts.json screen', key, lines })),
-  ...Object.entries(tauntsJson.bot).map(([key, lines]) => ({ src: 'taunts.json bot', key, lines })),
+  ...Object.entries(tauntsJson.screen).map(([key, lines]) => ({ src: 'taunts screen', key, lines })),
+  ...Object.entries(tauntsJson.bot).map(([key, lines]) => ({ src: 'taunts bot', key, lines })),
   ...Object.entries(botlines.lines).map(([key, lines]) => ({ src: 'botlines.json lines', key, lines })),
 ];
 
 describe('Teil C: Spruchtöpfe', () => {
+  it('führt jeden Topf genau einmal aus den Dateien je Besitzer zusammen', () => {
+    const hits: string[] = [];
+    for (const sec of ['screen', 'bot'] as const) {
+      const seen = new Map<string, string>();
+      for (const [g, pots] of TAUNT_FILES)
+        for (const key of Object.keys(pots[sec])) {
+          if (seen.has(key)) hits.push(`${sec} ${key} in ${seen.get(key)} und ${g}`);
+          seen.set(key, g);
+        }
+      expect([...seen.keys()].sort()).toEqual(Object.keys(tauntsJson[sec]).sort());
+    }
+    expect(hits).toEqual([]);
+  });
+
   it('nennt in gemeinsamen Töpfen kein Spiel und keinen Titel', () => {
     const hits = POTS.filter((p) => !potGame(p.key)).flatMap((p) =>
       p.lines.filter((s) => /Shithead|Durak|Cabo|Schnautz/.test(s)).map((s) => `${p.src} ${p.key}: „${s}“`),

@@ -10,7 +10,7 @@ import { reignOf } from '../../src/game/games';
 import { addPlayer, newState } from '../../src/game/state';
 import type { Action, CaboResult, Card, CbState, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF } from './helpers';
+import { msgOf, rngF } from './helpers';
 
 /** Cabo-Tisch mit `n` Leuten, gestartet (Ansehen läuft). */
 function table(n: number, seed: number, rules: { snap?: boolean; target?: number } = {}): { st: State; C: CbState } {
@@ -71,8 +71,8 @@ describe('Cabo: Runde', () => {
       cardsOk(st);
     }
     const { st, C } = table(3, 3);
-    expect(act(st, 'h', { type: 'cblook', ids: [C.P.h[0].id] })).toBe('Wähle zwei deiner Karten.');
-    expect(act(st, 'h', { type: 'cblook', ids: [C.P.h[0].id, C.P.p1[0].id] })).toBe('Wähle zwei deiner Karten.');
+    expect(msgOf(act(st, 'h', { type: 'cblook', ids: [C.P.h[0].id] }))).toBe('Wähle zwei deiner Karten.');
+    expect(msgOf(act(st, 'h', { type: 'cblook', ids: [C.P.h[0].id, C.P.p1[0].id] }))).toBe('Wähle zwei deiner Karten.');
     expect(act(st, 'h', { type: 'cblook', ids: [C.P.h[1].id, C.P.h[3].id] })).toBeNull();
     // Die Einblendung bekommt nur, wer hingeschaut hat, Wissen nur die KI
     const vh = viewFor(st, 'h');
@@ -105,7 +105,7 @@ describe('Cabo: Runde', () => {
     const b = cur(st);
     const pileTop = C.pile.at(-1)!;
     expect(act(st, b, { type: 'cbdraw', from: 'pile' })).toBeNull();
-    expect(act(st, b, { type: 'cbdiscard' })).toBe('Eine Karte von der Ablage musst du tauschen.');
+    expect(msgOf(act(st, b, { type: 'cbdiscard' }))).toBe('Eine Karte von der Ablage musst du tauschen.');
     act(st, b, { type: 'cbswap', ids: [C.P[b][0].id] });
     expect(C.P[b][0]).toMatchObject({ c: pileTop, up: true });
     expect(viewFor(st, a).cb?.P[b][0].c).toBe(pileTop);
@@ -158,7 +158,7 @@ describe('Cabo: Runde', () => {
     act(st, cur(st), { type: 'cbdraw', from: 'deck' });
     expect(act(st, a, { type: 'cbdiscard' })).toBeNull();
     expect(C.power?.kind).toBe('peek');
-    expect(act(st, a, { type: 'cbspy', to: b, id: C.P[b][0].id })).toMatch(/9 oder 10/);
+    expect(msgOf(act(st, a, { type: 'cbspy', to: b, id: C.P[b][0].id }))).toMatch(/9 oder 10/);
     expect(act(st, a, { type: 'cbpeek', id: C.P[a][3].id })).toBeNull();
     expect(viewFor(st, a).cb?.reveal?.items[0]).toMatchObject({ owner: a, slot: C.P[a][3].id });
     // b weiß, was auf seinem Platz 0 liegt, a tauscht blind dagegen: b weiß dann, was jetzt bei a liegt
@@ -287,7 +287,7 @@ describe('Cabo: Runde', () => {
     cardsOk(st);
     const off = table(2, 18);
     lookAll(off.st);
-    expect(act(off.st, 'h', { type: 'cbsnap', id: off.C.P.h[0].id })).toBe('Schnappen ist an diesem Tisch aus.');
+    expect(msgOf(act(off.st, 'h', { type: 'cbsnap', id: off.C.P.h[0].id }))).toBe('Schnappen ist an diesem Tisch aus.');
   });
 });
 
@@ -297,7 +297,7 @@ describe('Cabo: Grenzfälle', () => {
     lookAll(st);
     const a = cur(st);
     C.P[a] = [];
-    expect(act(st, a, { type: 'cbdraw', from: 'pile' })).toMatch(/Ablage nicht/);
+    expect(msgOf(act(st, a, { type: 'cbdraw', from: 'pile' }))).toMatch(/Ablage nicht/);
     expect(act(st, a, { type: 'cbdraw', from: 'deck' })).toBeNull();
     expect(act(st, a, { type: 'cbswap', ids: [1] })).not.toBeNull();
     // Der Ersatzzug legt ab und überspringt eine Fähigkeit
@@ -311,7 +311,7 @@ describe('Cabo: Grenzfälle', () => {
     lookAll(st);
     const a = cur(st);
     act(st, a, { type: 'cbdraw', from: 'pile' });
-    expect(act(st, a, { type: 'cbsnap', id: C.P[a][0].id })).toBe('Spiel erst deinen Zug zu Ende.');
+    expect(msgOf(act(st, a, { type: 'cbsnap', id: C.P[a][0].id }))).toBe('Spiel erst deinen Zug zu Ende.');
     expect(act(st, a, { type: 'cbswap', ids: [C.P[a][0].id] })).toBeNull();
   });
 
@@ -358,9 +358,11 @@ describe('Cabo: Grenzfälle', () => {
     C.power = { by: a, kind: 'spy', c: 'S9' };
     const id = C.P[a][0].id;
     for (const to of ['constructor', '__proto__', 'toString', [a], a] as unknown[])
-      expect(act(st, a, { type: 'cbspy', to, id } as unknown as Action)).toBe('Wähle eine Karte von jemand anderem.');
+      expect(msgOf(act(st, a, { type: 'cbspy', to, id } as unknown as Action))).toBe(
+        'Wähle eine Karte von jemand anderem.',
+      );
     C.power = { by: a, kind: 'swap', c: 'SB' };
-    expect(act(st, a, { type: 'cbblind', id, to: [a], oid: C.P[a][1].id } as unknown as Action)).toBe(
+    expect(msgOf(act(st, a, { type: 'cbblind', id, to: [a], oid: C.P[a][1].id } as unknown as Action))).toBe(
       'Wähle eine Karte von jemand anderem.',
     );
   });

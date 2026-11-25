@@ -4,7 +4,7 @@ import { seatGuest } from '../../src/game/seats';
 import { beginGame } from '../../src/game/flow';
 import { newState, pIdx } from '../../src/game/state';
 import type { State } from '../../src/game/types';
-import { rngF } from './helpers';
+import { msgOf, rngF } from './helpers';
 
 const ids = (st: State) => st.players.map((p) => p.id);
 
@@ -53,7 +53,7 @@ describe('Lobby: Plätze entfernen', () => {
 
   it('erlaubt das nur dem Gastgeber und nie mitten in der Partie', () => {
     const st = table();
-    expect(act(st, 'p-uschi', { type: 'rmbot', id: 'p-lena' }, rngF(5))).toBe('Nur der Gastgeber kann das.');
+    expect(msgOf(act(st, 'p-uschi', { type: 'rmbot', id: 'p-lena' }, rngF(5)))).toBe('Nur der Gastgeber kann das.');
     expect(ids(st)).toContain('p-lena');
 
     // Wer beim Start offline ist, spielt nicht mit. Lena geht deshalb erst mitten in der Partie
@@ -61,7 +61,7 @@ describe('Lobby: Plätze entfernen', () => {
     expect(beginGame(st, rngF(5))).toBeNull();
     expect(st.phase).not.toBe('lobby');
     st.players[pIdx(st, 'p-lena')].online = false;
-    expect(act(st, 'h', { type: 'rmbot', id: 'p-lena' }, rngF(5))).toBe('KIs lassen sich nur in der Lobby entfernen.');
+    expect(msgOf(act(st, 'h', { type: 'rmbot', id: 'p-lena' }, rngF(5)))).toMatch(/nur in der Lobby/);
     expect(ids(st)).toContain('p-lena');
   });
 

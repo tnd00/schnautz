@@ -10,11 +10,11 @@ import { GAMES, reignOf, resetRulesFor, setReign } from '../../src/game/games';
 import { DEFAULT_RULES } from '../../src/game/constants';
 import type { Card, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF, shCardsOk } from './helpers';
+import { msgOf, rngF, seatErr, shCardsOk } from './helpers';
 
 const bots = (st: State) => st.players.filter((p) => p.bot);
 const seatId = (r: ReturnType<typeof seatGuest>): string => {
-  assert.ok('id' in r, 'err' in r ? r.err : '');
+  assert.ok('id' in r, seatErr(r) ?? '');
   return r.id;
 };
 
@@ -86,7 +86,7 @@ describe('Plätze am Tisch', () => {
     const alone = newState('h', 'Host');
     act(alone, 'h', { type: 'rules', rules: { seats: 2 } }, rng);
     expect(startPlan(alone)).toMatchObject({ n: 1, add: 0 });
-    expect(act(alone, 'h', { type: 'start' }, rng)).toBe('Ihr braucht mindestens zwei Leute am Tisch.');
+    expect(msgOf(act(alone, 'h', { type: 'start' }, rng))).toBe('Ihr braucht mindestens zwei Leute am Tisch.');
     expect(alone.phase).toBe('lobby');
     expect(alone.players).toHaveLength(1);
 
@@ -105,7 +105,7 @@ describe('Plätze am Tisch', () => {
     seatGuest(st, 'p-tom', 'Tom');
     st.players[pIdx(st, 'p-lena')].online = false;
     // Der Tisch ist voll, aber Lena spielt nicht mit
-    expect(seatGuest(st, 'p-zu', 'Zu viel')).toEqual({ err: 'Der Tisch ist voll.' });
+    expect(seatErr(seatGuest(st, 'p-zu', 'Zu viel'))).toBe('Der Tisch ist voll.');
     expect(startPlan(st)).toEqual({ seated: 2, bots: 0, add: 1, n: 3, empty: 0 });
     expect(act(st, 'h', { type: 'start' }, rng)).toBeNull();
     expect(st.players).toHaveLength(3);
@@ -157,7 +157,7 @@ describe('Plätze am Tisch', () => {
     expect(st.players).toHaveLength(1);
     expect(seatId(seatGuest(st, 'p-1', 'Eins'))).toBe('p-1');
     expect(seatId(seatGuest(st, 'p-2', 'Zwei'))).toBe('p-2');
-    expect(seatGuest(st, 'p-3', 'Drei')).toEqual({ err: 'Der Tisch ist voll.' });
+    expect(seatErr(seatGuest(st, 'p-3', 'Drei'))).toBe('Der Tisch ist voll.');
   });
 
   it('nimmt beim Übernehmen den KI-Platz mit dem eigenen Namen', () => {
@@ -303,7 +303,7 @@ describe('Rückkehr an den eigenen Platz', () => {
     const st = newState('h', 'Host');
     act(st, 'h', { type: 'rules', rules: { seats: 2 } }, rng);
     seatId(seatGuest(st, 'p-lena', 'Lena'));
-    expect(seatGuest(st, 'p-tom', 'Tom')).toEqual({ err: 'Der Tisch ist voll.' });
+    expect(seatErr(seatGuest(st, 'p-tom', 'Tom'))).toBe('Der Tisch ist voll.');
     st.players[pIdx(st, 'p-lena')].online = false;
     expect(seatId(seatGuest(st, 'p-neu', 'Lena'))).toBe('p-lena');
   });
@@ -410,13 +410,13 @@ describe('Neue Partie, wenn nur noch KIs spielen', () => {
     act(st, 'h', { type: 'game', game: 'shithead' }, rng);
     act(st, 'h', { type: 'start' }, rng);
     const games = st.games;
-    expect(act(st, 'p1', { type: 'restart' }, rng)).toBe('Nur der Gastgeber startet eine neue Partie.');
+    expect(msgOf(act(st, 'p1', { type: 'restart' }, rng))).toMatch(/^Nur der Gastgeber/);
     expect(act(st, 'h', { type: 'restart' }, rng)).toBeNull();
     expect(st.phase).toBe('swap');
     expect(st.games).toBe(games + 1);
     expect(st.players).toHaveLength(4);
     act(st, 'h', { type: 'tolobby' }, rng);
-    expect(act(st, 'h', { type: 'restart' }, rng)).toBe('Die Partie hat noch gar nicht angefangen.');
+    expect(msgOf(act(st, 'h', { type: 'restart' }, rng))).toBe('Die Partie hat noch gar nicht angefangen.');
   });
 });
 
@@ -443,7 +443,7 @@ describe('Kronen je Spiel', () => {
     act(st, 'h', { type: 'game', game: 'shithead' }, rng);
     act(st, 'h', { type: 'rules', rules: { fill: true, seats: 8 } }, rng);
     for (let i = 0; i < 7; i++) act(st, 'h', { type: 'addbot' }, rng);
-    expect(addPlayer(st, 'g', 'Gast')).toBe('Der Tisch ist voll.');
+    expect(msgOf(addPlayer(st, 'g', 'Gast'))).toBe('Der Tisch ist voll.');
     // So sah ein gespeicherter Tisch aus 2.5 aus: zehn Plätze, zwei mehr als heute erlaubt
     const extra = bots(st)
       .slice(0, 2)
@@ -470,7 +470,7 @@ describe('Kronen je Spiel', () => {
     act(st, 'h', { type: 'rules', rules: { seats: 8 } }, rng);
     for (let i = 1; i < 8; i++) expect(addPlayer(st, `g${i}`, `Gast ${i}`)).toBeNull();
     st.players.push({ ...structuredClone(st.players[1]), id: 'g9', name: 'Gast 9' });
-    expect(act(st, 'h', { type: 'start' }, rng)).toMatch(/höchstens|Mehr als 8/);
+    expect(msgOf(act(st, 'h', { type: 'start' }, rng))).toMatch(/höchstens|Mehr als 8/);
     expect(st.phase).toBe('lobby');
   });
 

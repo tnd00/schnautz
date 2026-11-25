@@ -10,7 +10,7 @@ import { act } from '../../src/game/actions';
 import { addPlayer, newState } from '../../src/game/state';
 import type { Rng, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF } from '../unit/helpers';
+import { msgOf, rngF } from '../unit/helpers';
 
 const N = Number(process.env.SIM_GAMES ?? 60);
 
@@ -57,7 +57,7 @@ function partie(levels: BotLevel[], seed: number, s: Stats): void {
       if (!a || a.type === 'ready') continue;
       const before = st.phase;
       const err = act(st, id, a, rng);
-      if (err) throw new Error(`KI-Zug ungültig: ${JSON.stringify(a)} (${err})`);
+      if (err) throw new Error(`KI-Zug ungültig: ${JSON.stringify(a)} (${msgOf(err)})`);
       // Runde vorbei: direkt am Ergebnis zählen, der Verlauf wird gekürzt
       if (before === 'play' && st.phase !== 'play' && st.result?.reason === 'cabo') {
         s.rounds++;

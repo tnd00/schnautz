@@ -1,0 +1,15 @@
+{
+  "screen": {
+    "betOnMe": [
+      "{name} tippt auf dich als {what}. Zeig, dass das Quatsch ist!",
+      "{name} hält dich für den {what}. Frechheit.",
+      "{name} setzt auf dich. Als Verlierer. Autsch.",
+      "Die Kristallkugel von {name} sieht dich ganz hinten 🔮",
+      "{name} wettet gegen dich. Das schreit nach Rache.",
+      "{name} glaubt nicht an dich. Noch nicht.",
+      "Laut {name} bist du heute der {what}. Wirklich?",
+      "{name} hat dich getippt. Mach daraus eine Pleite für {name}."
+    ]
+  },
+  "bot": {}
+}

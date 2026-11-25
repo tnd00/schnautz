@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { seatGuest } from '../../src/game/seats';
 import { addPlayer, newState } from '../../src/game/state';
+import { isReject } from '../../src/game/reject';
+import { msgOf } from './helpers';
 import {
   EXPIRE_WAIT_MS,
   JOIN_GIVEUP_MS,
@@ -153,6 +155,6 @@ describe('Einladung nach einer Abweisung (auch für Gäste mit 2.6)', () => {
     const st = newState('h', 'Gastgeber');
     for (let i = 0; i < 20 && !addPlayer(st, `p${i}`, `Gast ${i}`); i++);
     const r = seatGuest(st, 'neu', 'Neu');
-    expect('err' in r && keepsInvite(r.err)).toBe(true);
+    expect('err' in r && keepsInvite(msgOf(r.err), isReject(r.err) ? r.err.e : null)).toBe(true);
   });
 });

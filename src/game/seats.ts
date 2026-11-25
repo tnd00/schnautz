@@ -2,10 +2,11 @@
 import { MIN_SEATS } from './constants';
 import { addBot, addLog, addPlayer, MAX_SEATS_ALL, pIdx, seatLimit, uniqueName } from './state';
 import type { ActResult, GameKind, Player, Rng, Rules, State } from './types';
+import type { Reject } from './reject';
 import { forgetRematch } from './rematch';
 import { betPart } from './bets';
 
-export type SeatResult = { id: string } | { err: string };
+export type SeatResult = { id: string } | { err: Reject | string };
 
 /**
  * Lobby: Platzzahl in gültige Grenzen bringen und überzählige KIs abräumen. Freie Plätze bleiben in der Lobby frei,

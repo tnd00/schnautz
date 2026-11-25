@@ -5,7 +5,7 @@ import { clockTurn } from '../../src/game/clock';
 import { addPlayer, newState, statsOf } from '../../src/game/state';
 import type { State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { playOut, rngF } from './helpers';
+import { msgOf, playOut, rngF } from './helpers';
 
 /** Shithead zu fünft, gespielt bis der Erste fertig ist. */
 function firstDone(seed: number): State {
@@ -27,9 +27,9 @@ describe('Tipps bei Shithead', () => {
     const other = st.players.find((p) => p.id !== done)!.id;
     expect(shCanBet(st, done)).toBe(true);
     expect(shCanBet(st, other)).toBe(false);
-    expect(act(st, other, { type: 'shbet', on: done })).toBe('Tippen kannst du, sobald du fertig bist.');
-    expect(act(st, done, { type: 'shbet', on: 'weg' })).toBe('Diese Person sitzt nicht am Tisch.');
-    expect(act(st, done, { type: 'shbet', on: done })).toMatch(/schon fertig/);
+    expect(msgOf(act(st, other, { type: 'shbet', on: done }))).toBe('Tippen kannst du, sobald du fertig bist.');
+    expect(msgOf(act(st, done, { type: 'shbet', on: 'weg' }))).toMatch(/Person sitzt nicht (?:mehr )?am Tisch/);
+    expect(msgOf(act(st, done, { type: 'shbet', on: done }))).toMatch(/schon fertig/);
     const q = shBetQuote(st);
     expect(q).toBe(Math.max(1, shBetCandidates(st).length - 1));
     expect(q).toBeGreaterThanOrEqual(1);
@@ -38,7 +38,7 @@ describe('Tipps bei Shithead', () => {
     expect({ turn: st.turn, last: st.last, key: clockTurn(st).key, win: st.sh!.win }).toEqual(before);
     expect(st.sh!.bets![done]).toMatchObject({ on: other, q });
     expect(st.log.at(-1)).toMatchObject({ k: 'shbet', p: done, on: other, q });
-    expect(act(st, done, { type: 'shbet', on: other })).toBe('Du hast schon getippt.');
+    expect(msgOf(act(st, done, { type: 'shbet', on: other }))).toBe('Du hast schon getippt.');
     // Öffentlich für alle
     expect(viewFor(st, other).sh!.bets![done].on).toBe(other);
     expect(shBetsOn(st, other)).toHaveLength(1);

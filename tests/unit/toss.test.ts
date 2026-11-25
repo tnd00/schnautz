@@ -5,7 +5,7 @@ import { clockTurn } from '../../src/game/clock';
 import { addBot, addPlayer, cosmeticOnly, newState } from '../../src/game/state';
 import type { LogEntry, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF } from './helpers';
+import { msgOf, rngF } from './helpers';
 
 /** Schnautz mit Host, Paul und einer KI, Zeitlimit an, mitten in der Partie. */
 function table(game: 'schnautz' | 'shithead' = 'schnautz'): { st: State; bot: string } {
@@ -41,7 +41,9 @@ describe('Wurfgeschosse', () => {
     expect(act(st, 'p1', { type: 'toss', item: 'egg', to: 'p1' })).toBeNull();
     expect(act(st, bot, { type: 'toss', item: 'egg', to: 'h' })).toBeNull();
     expect(st.log.length).toBe(n);
-    expect(act(st, 'p1', { type: 'toss', item: 'egg', to: 'weg' })).toBe('Die Person sitzt nicht mehr am Tisch.');
+    expect(msgOf(act(st, 'p1', { type: 'toss', item: 'egg', to: 'weg' }))).toBe(
+      'Die Person sitzt nicht mehr am Tisch.',
+    );
     expect(act(st, bot, { type: 'toss', item: 'crown', to: 'h', bot: true })).toBeNull();
     expect(st.log.at(-1)).toMatchObject({ k: 'toss', p: bot, item: 'crown' });
     for (const item of ['heart', 'bunny'] as const) {

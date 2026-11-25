@@ -7,6 +7,7 @@ import { sendToHost } from './guest';
 import { gateAct, H, hostCommit, outdatedFor } from './host';
 import { dlog } from '../ui/devlog';
 import { GAME_NAME, isGame } from '../game/games';
+import { ctxOfState, rejectLog, rejectText } from '../content/texts';
 
 /** Eigene Aktion ausführen: Der Gastgeber rechnet selbst, Gäste schicken sie an den Gastgeber. */
 /** Host: Ein Spiel wählen oder starten, das ein verbundener Gast noch nicht anzeigen kann? */
@@ -35,8 +36,9 @@ export function doAct(a: Action): void {
     if (!g) return;
     const e = act(H.st, App.me, g);
     if (e) {
-      dlog('game', `${a.type} abgelehnt, ${e}`);
-      toast(e);
+      const ctx = ctxOfState(H.st, App.me);
+      dlog('game', `${a.type} abgelehnt, ${rejectLog(e, ctx)}`);
+      toast(rejectText(e, ctx));
       App.busy = false;
     } else hostCommit();
   } else if (App.role === 'guest') {
