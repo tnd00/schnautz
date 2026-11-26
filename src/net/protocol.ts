@@ -86,6 +86,65 @@ export function asSavedGuest(x: unknown): SavedGuest | null {
   return ['code', 'pid', 'key', 'name'].every((k) => typeof x[k] === 'string') ? (x as unknown as SavedGuest) : null;
 }
 
+/**
+ * Vorlieben pro Gerät (Plan 2.8 Abschnitt 8, gefuehl.md 3.7). Sie gehen nie ins Netz, nicht in die View und nicht in
+ * den Gastgeber-Speicher. Lesen und Schreiben steht in src/ui/prefs.ts.
+ */
+export interface Prefs {
+  /** Tisch im Sticker-Look oder im Legacy-Design */
+  look: 'sticker' | 'legacy';
+  /** wirkt nur unter Sticker, der Schalter steht in 2.8 nur im Dev-Menü */
+  theme: 'light' | 'dark';
+  /** Ruhig: auto folgt prefers-reduced-motion */
+  calm: 'auto' | 'on' | 'off';
+  /** Karten ziehen */
+  drag: boolean;
+  /** Vibration, nur angezeigt, wenn navigator.vibrate existiert */
+  haptic: boolean;
+  /** Lautstärke von 0 bis 1 */
+  volume: number;
+  /** Ton, wenn ich dran bin. away: nur bei verdecktem Tab oder nach kurzer Ruhe */
+  turnTone: 'always' | 'away' | 'off';
+}
+
+/**
+ * Standard je Vorliebe. Der Look ist bis Runde 6 Legacy, danach Sticker. DEFAULT_LOOK in src/ui/look.ts liest den Wert
+ * von hier, damit es nur eine Stelle gibt.
+ */
+export const PREFS_DEFAULT: Readonly<Prefs> = {
+  look: 'legacy',
+  theme: 'light',
+  calm: 'auto',
+  drag: true,
+  haptic: true,
+  volume: 1,
+  turnTone: 'away',
+};
+
+/** Genau einer der erlaubten Werte, sonst der Standard */
+const oneOf = <T extends string>(v: unknown, ok: readonly T[], d: T): T =>
+  typeof v === 'string' && (ok as readonly string[]).includes(v) ? (v as T) : d;
+const boolOr = (v: unknown, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
+
+/**
+ * Vorlieben aus dem Speicher, Feld für Feld geprüft: Was fehlt oder nicht passt, nimmt den Standard, alles andere
+ * fällt weg. So setzt ein kaputtes Feld nicht alle Vorlieben zurück.
+ */
+export function asPrefs(x: unknown): Prefs {
+  const o: Record<string, unknown> = isObj(x) && !Array.isArray(x) ? x : {};
+  const d = PREFS_DEFAULT;
+  const vol = o.volume;
+  return {
+    look: oneOf(o.look, ['sticker', 'legacy'], d.look),
+    theme: oneOf(o.theme, ['light', 'dark'], d.theme),
+    calm: oneOf(o.calm, ['auto', 'on', 'off'], d.calm),
+    drag: boolOr(o.drag, d.drag),
+    haptic: boolOr(o.haptic, d.haptic),
+    volume: typeof vol === 'number' && Number.isFinite(vol) ? Math.min(1, Math.max(0, vol)) : d.volume,
+    turnTone: oneOf(o.turnTone, ['always', 'away', 'off'], d.turnTone),
+  };
+}
+
 const REJECT_MAX_ARGS = 4;
 /** Platz-IDs vom Draht: kurz und ohne die Form eines Platzschlüssels (`k-` plus 12 Hex, src/net/ids.ts) */
 const REJECT_ID = /^[\w-]{1,40}$/;

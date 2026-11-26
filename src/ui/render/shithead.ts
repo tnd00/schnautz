@@ -21,6 +21,7 @@ import { betResultHTML, botsOnlyHTML, renderResult, type Sheet, type SheetRow } 
 import { STATUS, SH_SHEET, SH_STATUS, OFFLINE_WAIT, offline, playFor, waitWho } from '../../content/texts/status';
 import { ceremonyOn } from '../ceremony';
 import { endMain, renderStatus, turnMain, waitSub, type Status } from '../status';
+import type { OldTable } from '../table/spec';
 
 type Source = 'hand' | 'up' | 'down';
 type OwnCards = { hand: Card[]; up: Card[]; down: Card[] | number };
@@ -537,3 +538,5 @@ export function shSheet(v: View): Sheet | null {
 export function renderShOverlay(v: View): void {
   renderResult(v, shSheet(v));
 }
+
+export const shSpec: OldTable = { badge: false, old: { draw: renderSh, overlay: renderShOverlay } };

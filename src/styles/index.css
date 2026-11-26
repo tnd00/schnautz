@@ -1,5 +1,6 @@
 /* Reihenfolge ist wichtig: spätere Dateien überschreiben frühere. */
 @import './base.css';
+@import './table/tokens.css';
 @import './sticker.css';
 @import './start.css';
 @import './cards.css';

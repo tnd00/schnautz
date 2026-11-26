@@ -1,0 +1,6 @@
+/*
+ * Nachgeladenes Stück für das dunkle Thema des Sticker-Looks. src/ui/look.ts lädt es per import(), sobald
+ * data-theme='dark' unter data-look='sticker' gilt. Bleibt in 2.8 ein eigenes Stück, auch nach dem Umschaltschritt.
+ * Später kommt die dunkle Fassung des Kartensets Vinyl dazu. Keine Maße (tests/unit/look-css.test.ts).
+ */
+@import '../table/tokens-dark.css';

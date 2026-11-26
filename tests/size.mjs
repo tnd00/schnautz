@@ -7,9 +7,14 @@
  *
  * Ohne Ordner gilt dist. Mit --clean wird der Ordner danach gelöscht (für npm run size, das in dist-size baut).
  * Die Grenzen stehen unten, angehoben werden sie nur mit gutem Grund (etwa wenn ein Teil nachgeladen wird).
+ *
+ * Dazu meldet es ohne Grenze die nachgeladenen CSS-Stücke (bis Runde 6 von 2.8 nur zur Info): jedes weitere
+ * Stylesheet im Build und jeden Einstieg aus src/styles/looks, der noch in keinem Stück des Builds steckt
+ * (dann mit lightningcss gebündelt und verkleinert, wie Vite es täte).
  */
-import { existsSync, readFileSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { basename, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 /** Grenzen in kB (1000 Bytes) nach gzip */
@@ -21,8 +26,45 @@ const flagged = args.indexOf('--dist');
 const dir = resolve(flagged >= 0 ? args[flagged + 1] : (args.find((a) => !a.startsWith('--')) ?? 'dist'));
 
 const kB = (n) => (n / 1000).toFixed(1).replace('.', ',');
+const LOOKS = fileURLToPath(new URL('../src/styles/looks/', import.meta.url));
 
-function check() {
+/** Alle Dateien mit Endung ext unter d, rekursiv */
+function filesIn(d, ext) {
+  return readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? filesIn(join(d, e.name), ext) : e.name.endsWith(ext) ? [join(d, e.name)] : [],
+  );
+}
+
+/** Meldet nachgeladene CSS-Stücke ohne Grenze. main ist der Pfad des Haupt-Stylesheets */
+async function lazyCss(main) {
+  const built = filesIn(dir, '.css').filter((f) => f !== main);
+  for (const f of built) {
+    const raw = readFileSync(f);
+    const gz = gzipSync(raw, { level: 9 }).byteLength;
+    console.log(`info  nachgeladen ${relative(dir, f)}: ${kB(raw.byteLength)} kB roh, ${kB(gz)} kB gzip, ohne Grenze`);
+  }
+  if (!existsSync(LOOKS)) return;
+  const names = built.map((f) => basename(f));
+  const open = filesIn(LOOKS, '.css').filter((f) => !names.some((n) => n.startsWith(`${basename(f, '.css')}-`)));
+  if (!open.length) return;
+  let bundle;
+  try {
+    ({ bundle } = await import('lightningcss'));
+  } catch {
+    console.log('info  lightningcss fehlt, Einstiege aus src/styles/looks nicht gemessen');
+    return;
+  }
+  for (const f of open) {
+    const { code } = bundle({ filename: f, minify: true });
+    const gz = gzipSync(code, { level: 9 }).byteLength;
+    console.log(
+      `info  Einstieg looks/${basename(f)} (noch nicht im Build): ${kB(code.byteLength)} kB roh, ${kB(gz)} kB gzip, ` +
+        'ohne Grenze',
+    );
+  }
+}
+
+async function check() {
   const htmlFile = join(dir, 'index.html');
   if (!existsSync(htmlFile)) {
     console.error(`Kein Build in ${dir} (index.html fehlt). Erst bauen, etwa mit npx vite build.`);
@@ -41,6 +83,7 @@ function check() {
     { kind: 'css', what: 'Stylesheet', src: style && attr(style, 'href') },
   ];
   let bad = 0;
+  let mainCss = null;
   for (const p of parts) {
     if (!p.src) {
       console.error(`${p.what} nicht in index.html gefunden`);
@@ -53,6 +96,7 @@ function check() {
       bad++;
       continue;
     }
+    if (p.kind === 'css') mainCss = file;
     const raw = readFileSync(file);
     const gz = gzipSync(raw, { level: 9 }).byteLength;
     const limit = LIMITS[p.kind] * 1000;
@@ -63,12 +107,13 @@ function check() {
         `Grenze ${LIMITS[p.kind]} kB`,
     );
   }
+  await lazyCss(mainCss);
   return bad ? 1 : 0;
 }
 
 let code;
 try {
-  code = check();
+  code = await check();
 } finally {
   if (clean) rmSync(dir, { recursive: true, force: true });
 }

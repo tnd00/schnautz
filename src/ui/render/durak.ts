@@ -37,6 +37,7 @@ import { markTosses } from '../toss';
 import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
 import { aimAttrs, dkcHTML, marksHTML, reignHTML } from './marks';
 import { betResultHTML, botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
+import type { OldTable } from '../table/spec';
 
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 const SUIT_NAME: Record<Suit, string> = { C: 'Kreuz', S: 'Pik', H: 'Herz', D: 'Karo' };
@@ -519,3 +520,5 @@ export function dkSheet(v: View): Sheet | null {
 export function renderDkOverlay(v: View): void {
   renderResult(v, dkSheet(v));
 }
+
+export const dkSpec: OldTable = { badge: false, old: { draw: renderDk, overlay: renderDkOverlay } };

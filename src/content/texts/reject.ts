@@ -63,6 +63,8 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
   'seat.fullPlaying': 'Die Partie läuft schon und alle Plätze sind besetzt.',
   'seat.taken': 'Dieser Platz ist schon besetzt.',
   'net.oldPage': 'An diesem Tisch läuft {game}. Lade die Seite neu, dann kannst du mitspielen.',
+  // Wortteil „Lade die Seite neu“ eingefroren: Gäste von 2.7 kennen den Code nicht und lesen nur msg (keepsInvite)
+  'net.update': 'An diesem Tisch läuft eine neuere Version. Lade die Seite neu, dann kannst du mitspielen.',
   'sh.swapOver': 'Tauschen geht nur vor dem Start.',
   'sh.swapping': "Erst wird getauscht. Los geht's, wenn alle fertig getauscht haben.",
   'sh.noFour': 'Du hast keine 4.',

@@ -1,8 +1,9 @@
 /*
  * Statuszeile über dem eigenen Platz, gemeinsam für alle Spiele (Stufe 2.7 „Klare Worte“).
  * Jedes Spiel liefert seinen Status als Daten (`shStatus`, `dkStatus`, `cbStatus`, `szStatus`), `renderStatus`
- * schreibt ihn immer mit Haupt- und Unterzeile, damit die Zeile ihre Höhe behält. Ohne DOM bis auf `renderStatus`,
- * damit Vitest die Sätze prüfen kann. Die Spiele importieren von hier nur Funktionen, der Kreis ist deshalb harmlos.
+ * schreibt ihn über `paintStatus` immer mit Haupt- und Unterzeile, damit die Zeile ihre Höhe behält. Ohne DOM bis
+ * auf `paintStatus`, damit Vitest die Sätze prüfen kann. Die Spiele importieren von hier nur Funktionen, der Kreis
+ * ist deshalb harmlos.
  */
 import { unreachable } from '../game/games';
 import type { View } from '../game/types';
@@ -70,7 +71,11 @@ export function statusOf(v: View): Status {
 
 /** Schreibt #status für alle Spiele in derselben Form. */
 export function renderStatus(v: View): void {
-  const s = statusOf(v);
+  paintStatus(statusOf(v));
+}
+
+/** Schreibt einen fertigen Status nach #status, Klasse tone-<x>. renderTable ruft das mit spec.status(v). */
+export function paintStatus(s: Status): void {
   const el = $('#status');
   el.className = `status sline tone-${s.tone}${s.quick ? ' hasquick' : ''}`;
   el.innerHTML =

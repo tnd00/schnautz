@@ -1,0 +1,237 @@
+/*
+ * Wortschatz am Tisch (--tb-*), Legacy-Werte. Steht im Haupt-CSS direkt nach base.css.
+ *
+ * Bausteine lesen Farben, Schatten und Schriftschnitte nur über diese Namen, nie über --felt, --brass, --cream oder
+ * --st-* direkt. Der nackte :root trägt den heutigen Tisch, :root[data-look='sticker'] (table/tokens-sticker.css) und
+ * :root[data-look='sticker'][data-theme='dark'] (table/tokens-dark.css) tragen dieselben Namen mit eigenen Werten
+ * (Parität prüft tests/unit/look-css.test.ts). Neue Namen kommen nur über den Zusammenführer in alle drei Dateien.
+ * Geometrie steht in keinem Token, außer Rundungen und --tb-cut. Deckkraft-Stufen entstehen per color-mix() aus
+ * einem Token. Werte nach .impeccable/mocks/table/tokens.md, in Runde 1 liest noch keine Regel sie.
+ */
+:root {
+  /* Grund, Schrift und Bedeutung */
+  --tb-ground: radial-gradient(
+    110% 80% at 50% 38%,
+    var(--felt-hi) 0%,
+    var(--felt) 48%,
+    var(--felt-lo) 100%
+  ); /* Grund hinter dem Tisch */
+  --tb-ground-base: var(--felt-lo); /* Grundfarbe unter dem Verlauf */
+  --tb-ground-grain: 1; /* Rauschen und Vignette (Deckkraft 0 oder 1, Dekor nur Legacy), geschätzt */
+  --tb-text: var(--cream); /* Schrift direkt auf dem Grund */
+  --tb-text-soft: #b4cbc0; /* Nebentext */
+  --tb-ink: var(--cream); /* Tinte für Zeichen auf hellen Bausteinen */
+  --tb-accent: var(--brass-hi); /* am Zug, Hervorhebung */
+  --tb-accent-strong: var(--brass); /* gefüllte Akzente */
+  --tb-on-accent: #2a1a05; /* Schrift auf Akzent */
+  --tb-shade: #000; /* dunkle Schleier (Grundfarbe für color-mix) */
+  --tb-line: color-mix(in srgb, var(--cream) 16%, transparent); /* dünne Kanten und Trenner */
+  --tb-lose: #e0675d; /* Verlust, Verlierer */
+  --tb-reject-bg: color-mix(in srgb, var(--tb-shade) 30%, transparent); /* Ablehnungsgrund Fläche, geschätzt */
+  --tb-reject-text: var(--cream); /* Ablehnungsgrund Schrift, geschätzt */
+  --tb-sea: var(--sea); /* Schwimmen, Schieben, geschätzt */
+  --tb-ok: #7fe3a3; /* online, bereit */
+  --tb-focus: var(--brass-hi); /* Fokusring auf hellem Grund */
+  --tb-focus-on-dark: var(--brass-hi); /* Fokusring auf Tinte, geschätzt */
+
+  /* Schrift */
+  --tb-display: var(--serif); /* Familie für das eine große Wort */
+  --tb-display-style: italic; /* Schnitt */
+  --tb-display-weight: 800; /* Gewicht */
+  --tb-display-axes: normal; /* font-variation-settings */
+  --tb-name-family: var(--ui); /* Familie für Namen */
+  --tb-name-style: normal; /* Schnitt der Namen */
+
+  /* Form, Glanz und Schatten */
+  --tb-cut: 0px; /* Stanzrand (Rahmenbreite in Knöpfen, Innenschatten sonst) */
+  --tb-gloss: none; /* Glanz oben links auf Stickern */
+  --tb-edge: inset 0 0 0 0 transparent; /* Glanzkante oben, dunkle Kante unten */
+  --tb-shadow: 0 6px 16px color-mix(in srgb, var(--tb-shade) 30%, transparent); /* Schatten Ruhe */
+  --tb-shadow-lift: 0 14px 34px color-mix(in srgb, var(--tb-shade) 50%, transparent); /* Schatten angehoben */
+  --tb-shadow-lift-sm: var(
+    --st-shadow-lift-sm
+  ); /* kleiner angehobener Schatten (Ziel unter dem Finger, Etikett am Geist, Menü) */
+  --tb-shadow-flat: none; /* flacher Schatten für dichte Nachbarn (Plätze, Chips) */
+  --tb-tilt: 0; /* Faktor für alle festen Neigungen (1 oder 0) */
+  --tb-turn-anim: turnGlow; /* Animation am Zug */
+
+  /* Gegnerkachel und eigener Platz */
+  --tb-seat-bg: color-mix(in srgb, var(--tb-shade) 12%, transparent); /* Fläche einer Gegnerkachel */
+  --tb-seat-text: var(--cream); /* Schrift auf Kacheln und der Du-Pille */
+  --tb-seat-line: color-mix(in srgb, var(--cream) 8%, transparent); /* Rand der Kachel */
+  --tb-seat-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cream) 8%, transparent); /* Schatten der Kachel */
+  --tb-seat-radius: 14px; /* Rundung der Kachel */
+  --tb-turn-line: var(--brass-hi); /* Rand am Zug */
+  --tb-turn-glow:
+    inset 0 0 0 1.5px var(--brass-hi), 0 0 22px color-mix(in srgb, var(--brass-hi) 35%, transparent); /* Ring und Hub am Zug */
+  --tb-me-bg: transparent; /* Fläche eigener Platz, geschätzt */
+  --tb-me-line: color-mix(in srgb, var(--brass-hi) 45%, transparent); /* Rand eigener Platz */
+  --tb-me-turn:
+    inset 0 0 22px color-mix(in srgb, var(--brass-hi) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--brass-hi) 35%, transparent),
+    0 0 34px color-mix(in srgb, var(--brass-hi) 30%, transparent); /* Leuchten eigener Platz am Zug */
+
+  /* Mitte */
+  --tb-zone-bg: radial-gradient(
+    rgba(255, 255, 255, 0.05),
+    color-mix(in srgb, var(--tb-shade) 12%, transparent)
+  ); /* Fläche der Mitte */
+  --tb-zone-line: color-mix(in srgb, var(--cream) 7%, transparent); /* Rand der Mitte */
+  --tb-zone-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cream) 7%, transparent); /* Innenschatten der Mitte, geschätzt */
+  --tb-zone-radius: 22px; /* Rundung der Mitte */
+
+  /* Beschriftungen und Etiketten */
+  --tb-cap-bg: var(--felt); /* Beschriftung oben an der Mitte, Fläche */
+  --tb-cap-text: #b4cbc0; /* dito Schrift */
+  --tb-cap-case: uppercase; /* text-transform */
+  --tb-cap-track: 0.16em; /* Laufweite */
+  --tb-cap-shadow: none; /* Schatten */
+  --tb-cnt-bg: color-mix(in srgb, var(--tb-shade) 30%, transparent); /* Chip unter Stapeln, Fläche */
+  --tb-cnt-text: var(--cream); /* dito Schrift */
+  --tb-cnt-shadow: none; /* dito Schatten */
+  --tb-tag-bg: color-mix(in srgb, var(--tb-shade) 25%, transparent); /* Etikett Fläche */
+  --tb-tag-text: #b4cbc0; /* Etikett Schrift */
+  --tb-tag-case: uppercase; /* text-transform */
+  --tb-tag-track: 0.08em; /* Laufweite */
+  --tb-tag-line: none; /* weißer Rand um Etiketten */
+  --tb-tag-turn-bg: var(--brass); /* Etikett am Zug */
+  --tb-tag-turn-text: #2a1a05; /* dito Schrift */
+  --tb-tag-alert-bg: color-mix(in srgb, var(--tb-lose) 25%, transparent); /* gegangen, Verlierer */
+  --tb-tag-alert-text: #ffd2cc; /* dito Schrift */
+  --tb-tag-knock-bg: #8a4b2a; /* geklopft */
+  --tb-tag-knock-text: #fff3dc; /* dito Schrift */
+
+  /* Zahlen und Werte */
+  --tb-num-bg: var(--cream); /* Zahl-Sticker hell */
+  --tb-num-text: var(--ink); /* dito Schrift */
+  --tb-num-ink-bg: var(--cream); /* Zahl-Sticker dunkel (Stapelzahl, Zahl der gesehenen Karte), geschätzt */
+  --tb-num-ink-text: var(--ink); /* dito Schrift, geschätzt */
+  --tb-num-shadow: 0 2px 6px color-mix(in srgb, var(--tb-shade) 35%, transparent); /* Schatten der Zahl-Sticker */
+  --tb-val-bg: #0f2a20; /* Wert einer Person (Handkarten, Punkte, Leben) an Kachel und eigenem Platz, Fläche */
+  --tb-val-text: var(--cream); /* dito Schrift */
+  --tb-val-line: 0 0 0 1px color-mix(in srgb, var(--brass-hi) 40%, transparent); /* dito Rand */
+  --tb-val-shadow: 0 2px 6px color-mix(in srgb, var(--tb-shade) 35%, transparent); /* dito Schatten */
+  --tb-val-soft: color-mix(in srgb, var(--cream) 32%, transparent); /* verlorenes Leben auf dem Wert, Ring */
+
+  /* KI */
+  --tb-bot-bg: color-mix(in srgb, var(--sea) 18%, transparent); /* Schild „KI“ */
+  --tb-bot-text: var(--sea); /* dito Schrift */
+  --tb-av-bot-bg: color-mix(in srgb, var(--tb-shade) 25%, transparent); /* Avatar einer KI, geschätzt */
+
+  /* Knöpfe */
+  --tb-btn-radius: 13px; /* Rundung der Knöpfe */
+  --tb-btn-go-bg: linear-gradient(var(--brass-hi), var(--brass)); /* Hauptknopf */
+  --tb-btn-go-text: #2a1a05; /* dito Schrift */
+  --tb-btn-go-gloss: none; /* Glanz auf dem Hauptknopf */
+  --tb-btn-go-line: transparent; /* Stanzrand des Hauptknopfs */
+  --tb-btn-alt-bg: color-mix(in srgb, var(--tb-shade) 20%, transparent); /* Nebenknopf */
+  --tb-btn-alt-text: var(--cream); /* dito Schrift */
+  --tb-btn-take-bg: linear-gradient(180deg, #8a4b2a, #5f2f18); /* Aufnehmen, Klopfen, Schnappen */
+  --tb-btn-take-text: #fff3dc; /* dito Schrift */
+  --tb-btn-line: color-mix(in srgb, var(--cream) 22%, transparent); /* Stanzrand der Knöpfe */
+  --tb-btn-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 color-mix(in srgb, var(--tb-shade) 18%, transparent),
+    0 6px 16px color-mix(in srgb, var(--tb-shade) 30%, transparent); /* Schatten der Knöpfe */
+  --tb-btn-off: 0.5; /* Deckkraft gesperrt */
+
+  /* Kopfzeile */
+  --tb-head-bg: color-mix(in srgb, var(--tb-shade) 18%, transparent); /* Kopfknöpfe und runde Knöpfe */
+  --tb-head-text: var(--cream); /* dito Schrift */
+  --tb-head-line: color-mix(in srgb, var(--cream) 14%, transparent); /* dito Rand */
+  --tb-head-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cream) 14%, transparent); /* dito Schatten */
+  --tb-brand-bg: transparent; /* Wortmarke am Tisch */
+  --tb-brand-text: var(--brass-hi); /* dito Schrift */
+  --tb-brand-line: transparent; /* dito Stanzrand, geschätzt */
+
+  /* Statuszeile */
+  --tb-status-bg: transparent; /* Statuszeile */
+  --tb-status-text: var(--cream); /* dito Hauptzeile */
+  --tb-status-soft: #b4cbc0; /* dito Unterzeile */
+  --tb-status-shadow: none; /* dito Schatten */
+  --tb-status-turn-bg: transparent; /* Statuszeile, wenn ich gefragt bin */
+  --tb-status-turn-text: var(--brass-hi); /* dito Hauptzeile */
+  --tb-status-turn-soft: #b4cbc0; /* dito Unterzeile */
+  --tb-status-family: var(--serif); /* Familie der Hauptzeile */
+  --tb-status-style: italic; /* Schnitt */
+  --tb-status-weight: 700; /* Gewicht */
+
+  /* Ziele für Tippen und Ziehen */
+  --tb-target-ring:
+    0 0 0 3px var(--brass-hi), 0 0 26px color-mix(in srgb, var(--brass-hi) 55%, transparent); /* Ziel unter dem Finger (Tippen und Ziehen) */
+  --tb-target-soft: 0 0 0 2px color-mix(in srgb, var(--brass-hi) 50%, transparent); /* gültiges Ziel, nicht unter dem Finger, geschätzt */
+  --tb-target-no: var(--cream); /* ungültiges Ziel, gestrichelt */
+
+  /* Sonstiges und Bewegung */
+  --tb-offline-text: #f0a59c; /* „offline“ */
+  --tb-ease: cubic-bezier(0.2, 0.8, 0.2, 1); /* Kurve */
+  --tb-lift-ms: 200ms; /* Dauer Anheben */
+
+  /* Karten */
+  --tb-card-shadow:
+    0 0 0 1px rgba(70, 45, 10, 0.2), 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 7px 16px color-mix(in srgb, var(--tb-shade) 33%, transparent),
+    0 2px 3px color-mix(in srgb, var(--tb-shade) 22%, transparent); /* Schatten der Kartenvorderseite (cards.css) */
+  --tb-card-back-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tb-shade) 25%, transparent),
+    0 7px 16px color-mix(in srgb, var(--tb-shade) 33%, transparent); /* Schatten der Rückseite */
+  --tb-card-sel:
+    0 0 0 3px var(--brass-hi), 0 0 26px color-mix(in srgb, var(--brass-hi) 55%, transparent),
+    0 14px 24px color-mix(in srgb, var(--tb-shade) 40%, transparent); /* gewählte Karte */
+  --tb-card-dim: brightness(0.62); /* Filter für nicht spielbare Karten */
+  --tb-slot-line: color-mix(in srgb, var(--cream) 30%, transparent); /* leerer Platz, gestrichelt, geschätzt */
+  --tb-suit-red: var(--red); /* Rot eines Farbzeichens außerhalb einer Karte (Trumpf in der Beschriftung) */
+
+  /* Meldungen und Reaktionen */
+  --tb-fx-ann-bg: linear-gradient(180deg, #fbf6e8, #efe4c8); /* Meldung Fläche */
+  --tb-fx-ann-text: #2a241b; /* Meldung Schrift */
+  --tb-fx-ann-title: var(--red); /* Meldung großes Wort */
+  --tb-fx-ann-soft: #5a5040; /* Meldung Unterzeile */
+  --tb-fx-ann-line: transparent; /* Meldung Stanzrand */
+  --tb-fx-ann-shadow:
+    0 0 0 2px color-mix(in srgb, var(--red) 55%, transparent),
+    0 30px 70px color-mix(in srgb, var(--tb-shade) 55%, transparent); /* Meldung Schatten */
+  --tb-fx-label-bg: rgba(10, 26, 19, 0.92); /* Etikett am Geist, geschätzt */
+  --tb-fx-label-text: var(--cream); /* dito Schrift, geschätzt */
+  --tb-fx-label-line: color-mix(in srgb, var(--brass-hi) 60%, transparent); /* dito Rand, geschätzt */
+  --tb-fx-emotes-bg: #0f2a20; /* Reaktionsleiste am Handy */
+  --tb-fx-emote-bg: color-mix(in srgb, var(--tb-shade) 20%, transparent); /* einzelne Reaktion */
+  --tb-fx-emote-on: var(--brass-hi); /* gedrückt */
+  --tb-fx-emote-on-text: var(--brass-hi); /* Zeichen im gedrückten Smiley-Knopf */
+  --tb-fx-emotes-gloss: none; /* Glanz auf Menü B2 und der Wurf-Reihe */
+  --tb-fx-emotes-line: color-mix(in srgb, var(--cream) 20%, transparent); /* Stanzrand von Menü B2 und Wurf-Reihe */
+  --tb-fx-emotes-well: color-mix(in srgb, var(--tb-shade) 25%, transparent); /* Mulde der Reiter, Zurück-Knopf */
+  --tb-fx-emotes-text: var(--cream); /* Schrift im Menü */
+  --tb-fx-emotes-soft: #b4cbc0; /* Nebentext im Menü (Reiter, Beschriftung der Klänge) */
+  --tb-aim-bg: #fff; /* Wurf-Marke oben auf der Kachel, Fläche */
+  --tb-aim-ring: #1a1830; /* dito Ring */
+
+  /* Ergebnisblatt */
+  --tb-sheet-bg: #f8f2e2; /* Ergebnisblatt */
+  --tb-sheet-ink: #2a241b; /* dito Schrift */
+  --tb-sheet-soft: #6a5f4c; /* dito Nebentext */
+  --tb-sheet-lines:
+    linear-gradient(
+      90deg,
+      transparent 38px,
+      color-mix(in srgb, var(--red) 35%, transparent) 38px 39.5px,
+      transparent 39.5px
+    ),
+    repeating-linear-gradient(180deg, transparent 0 29px, rgba(70, 110, 160, 0.14) 29px 30px); /* Notizpapier, geschätzt */
+  --tb-sheet-gloss: none; /* Glanz auf dem Ergebnisblatt */
+  --tb-sheet-row: transparent; /* Zeile, geschätzt */
+  --tb-sheet-row-line: rgba(70, 45, 10, 0.12); /* Linie unter der Zeile, geschätzt */
+  --tb-sheet-win-bg: color-mix(in srgb, var(--brass) 18%, transparent); /* Zeile Sieger, geschätzt */
+  --tb-sheet-lose-bg: color-mix(in srgb, var(--red) 10%, transparent); /* Zeile Verlierer, geschätzt */
+  --tb-sheet-lose-text: #8e231d; /* dito Schrift */
+  --tb-sheet-shadow: 0 30px 70px color-mix(in srgb, var(--tb-shade) 55%, transparent); /* Schatten des Blatts, geschätzt */
+  --tb-sheet-dim: rgba(3, 14, 9, 0.55); /* Schleier, geschätzt */
+  --tb-sheet-alt-bg: rgba(70, 45, 10, 0.08); /* Nebenknopf auf dem Blatt, geschätzt */
+  --tb-sheet-alt-text: #2a241b; /* dito Schrift, geschätzt */
+
+  /* Seitenleiste am PC */
+  --tb-side-bg: rgba(4, 16, 11, 0.35); /* Seitenleiste am PC */
+  --tb-side-text: var(--cream); /* dito Schrift */
+  --tb-side-soft: #b4cbc0; /* dito Nebentext */
+  --tb-side-line: color-mix(in srgb, var(--cream) 8%, transparent); /* dito Trenner */
+  --tb-field-bg: color-mix(in srgb, var(--tb-shade) 20%, transparent); /* Eingabefeld Chat, geschätzt */
+}

@@ -1,0 +1,222 @@
+/*
+ * Wortschatz am Tisch (--tb-*) im Sticker-Look. Lädt nachgeladen über looks/sticker.css.
+ * Dieselben Namen wie table/tokens.css, nur Werte, keine Geometrie. Die fünf Werte mit Spielfarbe stehen zusätzlich
+ * an .g-<spiel>, weil --g erst dort gesetzt ist (ein var(--g) auf :root bliebe leer). Auf :root stehen für sie
+ * neutrale Werte, damit außerhalb eines Spiels nichts vom Legacy-Block durchsickert.
+ */
+:root[data-look='sticker'] {
+  /* Grund, Schrift und Bedeutung */
+  --tb-ground:
+    radial-gradient(115% 62% at 4% -6%, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0) 52%),
+    radial-gradient(90% 70% at 104% 108%, rgba(40, 34, 150, 0.3) 0%, rgba(40, 34, 150, 0) 64%), var(--st-ground);
+  --tb-ground-base: var(--st-ground);
+  --tb-ground-grain: 0;
+  --tb-text: var(--st-paper);
+  --tb-text-soft: var(--st-ink-soft);
+  --tb-ink: var(--st-ink);
+  --tb-accent: var(--st-ink); /* neutral, an .g-<spiel> die Spielfarbe */
+  --tb-accent-strong: var(--st-ink);
+  --tb-on-accent: var(--st-ink);
+  --tb-shade: var(--st-ink);
+  --tb-line: var(--st-line);
+  --tb-lose: var(--st-ink);
+  --tb-reject-bg: var(--st-paper);
+  --tb-reject-text: var(--st-ink);
+  --tb-sea: #3f7fd8;
+  --tb-ok: #2fbf71;
+  --tb-focus: var(--st-ink);
+  --tb-focus-on-dark: var(--st-paper);
+
+  /* Schrift */
+  --tb-display: var(--st-display);
+  --tb-display-style: normal;
+  --tb-display-weight: 900;
+  --tb-display-axes: 'SOFT' 100;
+  --tb-name-family: var(--ui);
+  --tb-name-style: normal;
+
+  /* Form, Glanz und Schatten */
+  --tb-cut: 4px;
+  --tb-gloss: linear-gradient(152deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 34%);
+  --tb-edge:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 0 color-mix(in srgb, var(--st-ink) 7%, transparent);
+  --tb-shadow: var(--st-shadow);
+  --tb-shadow-lift: var(--st-shadow-lift);
+  --tb-shadow-lift-sm: var(--st-shadow-lift-sm);
+  --tb-shadow-flat:
+    0 1px 1.5px color-mix(in srgb, var(--st-ink) 20%, transparent),
+    0 6px 10px -6px color-mix(in srgb, var(--st-ink) 40%, transparent);
+  --tb-tilt: 1;
+  --tb-turn-anim: none;
+
+  /* Gegnerkachel und eigener Platz */
+  --tb-seat-bg: var(--st-paper);
+  --tb-seat-text: var(--st-ink);
+  --tb-seat-line: transparent;
+  --tb-seat-shadow: var(--tb-edge), var(--tb-shadow-flat);
+  --tb-seat-radius: 16px;
+  --tb-turn-line: var(--st-ink);
+  --tb-turn-glow: var(--tb-edge), 0 0 0 3px var(--st-ink), var(--st-shadow-lift-sm);
+  --tb-me-bg: transparent;
+  --tb-me-line: transparent;
+  --tb-me-turn: none;
+
+  /* Mitte */
+  --tb-zone-bg: rgba(255, 255, 255, 0.15);
+  --tb-zone-line: transparent;
+  --tb-zone-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -10px 24px -18px rgba(40, 34, 150, 0.5);
+  --tb-zone-radius: 28px;
+
+  /* Beschriftungen und Etiketten */
+  --tb-cap-bg: var(--st-paper);
+  --tb-cap-text: var(--st-ink);
+  --tb-cap-case: none;
+  --tb-cap-track: 0;
+  --tb-cap-shadow: var(--tb-shadow-flat);
+  --tb-cnt-bg: var(--st-paper);
+  --tb-cnt-text: var(--st-ink);
+  --tb-cnt-shadow: var(--tb-shadow-flat);
+  --tb-tag-bg: var(--st-ink);
+  --tb-tag-text: var(--st-paper);
+  --tb-tag-case: none;
+  --tb-tag-track: 0;
+  --tb-tag-line: 0 0 0 2.5px var(--st-paper);
+  --tb-tag-turn-bg: var(--st-paper); /* neutral, an .g-<spiel> die Spielfarbe */
+  --tb-tag-turn-text: var(--st-ink);
+  --tb-tag-alert-bg: var(--st-paper);
+  --tb-tag-alert-text: var(--st-ink);
+  --tb-tag-knock-bg: var(--st-ink);
+  --tb-tag-knock-text: var(--st-paper);
+
+  /* Zahlen und Werte */
+  --tb-num-bg: var(--st-paper);
+  --tb-num-text: var(--st-ink);
+  --tb-num-ink-bg: var(--st-ink);
+  --tb-num-ink-text: var(--st-paper);
+  --tb-num-shadow:
+    0 1px 1px color-mix(in srgb, var(--st-ink) 20%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--st-ink) 30%, transparent);
+  --tb-val-bg: var(--st-ink);
+  --tb-val-text: var(--st-paper);
+  --tb-val-line: 0 0 0 2.5px var(--st-paper);
+  --tb-val-shadow:
+    0 1px 1px color-mix(in srgb, var(--st-ink) 20%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--st-ink) 30%, transparent);
+  --tb-val-soft: rgba(255, 255, 255, 0.45);
+
+  /* KI */
+  --tb-bot-bg: var(--st-ink);
+  --tb-bot-text: var(--st-paper);
+  --tb-av-bot-bg: var(--st-field);
+
+  /* Knöpfe */
+  --tb-btn-radius: 18px;
+  --tb-btn-go-bg: var(--st-ink);
+  --tb-btn-go-text: var(--st-paper);
+  --tb-btn-go-gloss: linear-gradient(152deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 40%);
+  --tb-btn-go-line: var(--st-paper);
+  --tb-btn-alt-bg: var(--st-paper);
+  --tb-btn-alt-text: var(--st-ink);
+  --tb-btn-take-bg: var(--st-paper);
+  --tb-btn-take-text: var(--st-ink);
+  --tb-btn-line: var(--st-paper);
+  --tb-btn-shadow: var(--tb-edge), var(--st-shadow);
+  --tb-btn-off: 0.5;
+
+  /* Kopfzeile */
+  --tb-head-bg: var(--st-paper);
+  --tb-head-text: var(--st-ink);
+  --tb-head-line: var(--st-paper);
+  --tb-head-shadow: var(--tb-edge), var(--st-shadow);
+  --tb-brand-bg: var(--st-paper); /* neutral, an .g-<spiel> die Spielfarbe */
+  --tb-brand-text: var(--st-ink);
+  --tb-brand-line: var(--st-paper);
+
+  /* Statuszeile */
+  --tb-status-bg: var(--st-paper);
+  --tb-status-text: var(--st-ink);
+  --tb-status-soft: var(--st-ink-soft);
+  --tb-status-shadow: var(--tb-edge), var(--tb-shadow-flat);
+  --tb-status-turn-bg: var(--st-paper); /* neutral, an .g-<spiel> die Spielfarbe */
+  --tb-status-turn-text: var(--st-ink);
+  --tb-status-turn-soft: var(--st-ink);
+  --tb-status-family: var(--ui);
+  --tb-status-style: normal;
+  --tb-status-weight: 800;
+
+  /* Ziele für Tippen und Ziehen */
+  --tb-target-ring: 0 0 0 3px var(--st-ink), 0 0 0 6px var(--st-paper);
+  --tb-target-soft: 0 0 0 2px var(--st-ink);
+  --tb-target-no: var(--st-ink);
+
+  /* Sonstiges und Bewegung */
+  --tb-offline-text: var(--st-ink-soft);
+  --tb-ease: var(--st-ease);
+  --tb-lift-ms: 180ms;
+
+  /* Karten */
+  --tb-card-shadow:
+    0 0 0 1px color-mix(in srgb, var(--st-ink) 18%, transparent), 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 7px 14px -2px color-mix(in srgb, var(--st-ink) 34%, transparent),
+    0 2px 3px color-mix(in srgb, var(--st-ink) 20%, transparent);
+  --tb-card-back-shadow:
+    0 0 0 1px color-mix(in srgb, var(--st-ink) 25%, transparent),
+    0 6px 12px -2px color-mix(in srgb, var(--st-ink) 34%, transparent);
+  --tb-card-sel: 0 0 0 3px var(--st-ink), var(--st-shadow-lift);
+  --tb-card-dim: opacity(0.5);
+  --tb-slot-line: rgba(255, 255, 255, 0.7);
+  --tb-suit-red: var(--card-red, #d81f3c);
+
+  /* Meldungen und Reaktionen */
+  --tb-fx-ann-bg: var(--st-ink);
+  --tb-fx-ann-text: var(--st-paper);
+  --tb-fx-ann-title: var(--st-paper);
+  --tb-fx-ann-soft: rgba(255, 255, 255, 0.82);
+  --tb-fx-ann-line: var(--st-paper);
+  --tb-fx-ann-shadow: var(--st-shadow-lift);
+  --tb-fx-label-bg: var(--st-ink);
+  --tb-fx-label-text: var(--st-paper);
+  --tb-fx-label-line: var(--st-paper);
+  --tb-fx-emotes-bg: var(--st-sheet);
+  --tb-fx-emote-bg: var(--st-paper);
+  --tb-fx-emote-on: var(--st-ink);
+  --tb-fx-emote-on-text: var(--st-paper);
+  --tb-fx-emotes-gloss: radial-gradient(120% 60% at 0% 0%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%);
+  --tb-fx-emotes-line: var(--st-paper);
+  --tb-fx-emotes-well: var(--st-field);
+  --tb-fx-emotes-text: var(--st-ink);
+  --tb-fx-emotes-soft: var(--st-ink-soft);
+  --tb-aim-bg: var(--st-paper);
+  --tb-aim-ring: var(--st-ink);
+
+  /* Ergebnisblatt */
+  --tb-sheet-bg: var(--st-sheet);
+  --tb-sheet-ink: var(--st-ink);
+  --tb-sheet-soft: var(--st-ink-soft);
+  --tb-sheet-lines: none;
+  --tb-sheet-gloss: radial-gradient(120% 50% at 0% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%);
+  --tb-sheet-row: var(--st-paper);
+  --tb-sheet-row-line: transparent;
+  --tb-sheet-win-bg: var(--st-field); /* neutral, an .g-<spiel> die Spielfarbe */
+  --tb-sheet-lose-bg: var(--st-ink);
+  --tb-sheet-lose-text: var(--st-paper);
+  --tb-sheet-shadow: var(--st-shadow-sheet);
+  --tb-sheet-dim: var(--st-dim);
+  --tb-sheet-alt-bg: var(--st-paper);
+  --tb-sheet-alt-text: var(--st-ink);
+
+  /* Seitenleiste am PC */
+  --tb-side-bg: var(--st-sheet);
+  --tb-side-text: var(--st-ink);
+  --tb-side-soft: var(--st-ink-soft);
+  --tb-side-line: var(--st-line);
+  --tb-field-bg: var(--st-paper);
+}
+
+:root[data-look='sticker'] :is(.g-schnautz, .g-shithead, .g-durak, .g-cabo) {
+  --tb-accent: var(--g);
+  --tb-tag-turn-bg: var(--g);
+  --tb-brand-bg: var(--g);
+  --tb-status-turn-bg: var(--g);
+  --tb-sheet-win-bg: color-mix(in srgb, var(--g) 34%, var(--st-paper));
+}

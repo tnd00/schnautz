@@ -17,6 +17,7 @@ import { endMain, renderStatus, turnMain, whoHTML, type Status } from '../status
 import { OFFLINE_WAIT, offline, STATUS } from '../../content/texts/status';
 import { SZ_SHEET, SZ_STATUS } from '../../content/texts/status-schnautz';
 import { ctxOfView, rejectText } from '../../content/texts/reject';
+import type { OldTable } from '../table/spec';
 
 /** Schnautz-Tisch: Gegner, Mitte, Status und eigene Hand. */
 export function renderGame(v: View): void {
@@ -488,3 +489,5 @@ export function szSheet(v: View): Sheet | null {
 export function renderOverlay(v: View): void {
   renderResult(v, szSheet(v));
 }
+
+export const szSpec: OldTable = { badge: true, old: { draw: renderGame, overlay: renderOverlay } };

@@ -21,6 +21,7 @@ import { OFFLINE_WAIT, offline, playFor, STATUS } from '../../content/texts/stat
 import { CB_STATUS, cbHeld, cbLastSub, cbOtherDeck, cbOtherPile, cbOtherPower } from '../../content/texts/status-cb';
 import { ceremonyOn } from '../ceremony';
 import { endMain, renderStatus, turnMain, waitSub, type Status } from '../status';
+import type { OldTable } from '../table/spec';
 
 const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 
@@ -571,3 +572,5 @@ export function cbSheet(v: View): Sheet | null {
 export function renderCbOverlay(v: View): void {
   renderResult(v, cbSheet(v));
 }
+
+export const cbSpec: OldTable = { badge: false, old: { draw: renderCb, overlay: renderCbOverlay } };

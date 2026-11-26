@@ -1,0 +1,7 @@
+/*
+ * Nachgeladenes Stück für den Sticker-Look am Tisch. src/ui/look.ts lädt es per import(), sobald data-look='sticker'
+ * gilt. Bis Runde 6 steht hier alles, was nur der Sticker-Tisch braucht, damit das Haupt-CSS unter 40 kB bleibt.
+ * Später kommen table/cards-vinyl.css und die Häute table/sticker-*.css dazu. Look-Dateien setzen nur Farben,
+ * Hintergründe, Schatten, rotate und Schriftschnitte, keine Maße (tests/unit/look-css.test.ts).
+ */
+@import '../table/tokens-sticker.css';

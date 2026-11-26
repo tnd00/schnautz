@@ -64,6 +64,7 @@ exports[`Katalog > zeigt jeden Wortlaut im Schnappschuss, die Sätze für Gäste
   "dk.transferOff": "Weiterschieben ist an diesem Tisch aus.",
   "dk.transferRank": "Weiterschieben geht nur mit dem gleichen Wert.",
   "net.oldPage": "An diesem Tisch läuft Cabo. Lade die Seite neu, dann kannst du mitspielen.",
+  "net.update": "An diesem Tisch läuft eine neuere Version. Lade die Seite neu, dann kannst du mitspielen.",
   "seat.full": "Der Tisch ist voll.",
   "seat.fullPlaying": "Die Partie läuft schon und alle Plätze sind besetzt.",
   "seat.taken": "Dieser Platz ist schon besetzt.",
