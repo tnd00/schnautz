@@ -97,6 +97,7 @@ export const REJECT_SAMPLES: Readonly<Record<RejectCode, RejectArgs | undefined>
   'seat.taken': undefined,
   'net.oldPage': { g: 'cabo' },
   'net.update': undefined,
+  'net.hostOld': undefined,
   'sh.swapOver': undefined,
   'sh.swapping': undefined,
   'sh.noFour': undefined,

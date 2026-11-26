@@ -65,6 +65,7 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
   'net.oldPage': 'An diesem Tisch läuft {game}. Lade die Seite neu, dann kannst du mitspielen.',
   // Wortteil „Lade die Seite neu“ eingefroren: Gäste von 2.7 kennen den Code nicht und lesen nur msg (keepsInvite)
   'net.update': 'An diesem Tisch läuft eine neuere Version. Lade die Seite neu, dann kannst du mitspielen.',
+  'net.hostOld': 'An diesem Tisch läuft noch eine ältere Version. Der Gastgeber muss die Seite neu laden.',
   'sh.swapOver': 'Tauschen geht nur vor dem Start.',
   'sh.swapping': "Erst wird getauscht. Los geht's, wenn alle fertig getauscht haben.",
   'sh.noFour': 'Du hast keine 4.',

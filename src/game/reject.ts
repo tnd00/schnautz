@@ -36,6 +36,8 @@ export const REJECT_CODES = [
   // Gast mit älterem Build (Neulade-Pflicht ab 2.8). Die Vorlage nennt „Lade die Seite neu“, damit Gäste von 2.7
   // die Einladung behalten
   'net.update',
+  // Gast mit neuerem Build an einem älteren Gastgeber: der Gast zeigt es selbst, die Einladung bleibt
+  'net.hostOld',
   // Shithead
   'sh.swapOver',
   'sh.swapping',
