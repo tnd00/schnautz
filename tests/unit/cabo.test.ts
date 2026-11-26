@@ -540,6 +540,7 @@ describe('Cabo: zufällige Partien', () => {
     expect(stats.snaps).toBeGreaterThan(0);
   });
 
+  // Lange Schleife: auf den CI-Rechnern dauert sie bis 80 s, deshalb eine eigene Zeitgrenze statt der 60 s aus vite.config.ts
   it('KIs spielen 100 Partien zu Ende, ohne abgelehnte Züge', () => {
     let cabos = 0;
     for (let g = 0; g < 100; g++) {
@@ -567,7 +568,7 @@ describe('Cabo: zufällige Partien', () => {
       expect(st.phase).toBe('over');
     }
     expect(cabos).toBeGreaterThan(50);
-  });
+  }, 180_000);
 
   it('bleibt nie hängen, wenn alle offline sind: Der Host überspringt sie', () => {
     for (let g = 0; g < 30; g++) {

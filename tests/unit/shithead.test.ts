@@ -457,6 +457,7 @@ describe('Shithead: verdeckte Karten', () => {
 });
 
 describe('Shithead: zufällige Partien', () => {
+  // Lange Schleife wie bei Cabo: eigene Zeitgrenze, damit langsame CI-Rechner nicht an 60 s scheitern
   it('spielt 3000 Partien mit allen Regelkombinationen fehlerfrei durch', () => {
     const stats = { games: 0, burn10: 0, burn4: 0, blind: 0, blindfail: 0, win: 0, thrown: 0, bomb: 0, long: 0 };
     for (let g = 0; g < 3000; g++) {
@@ -590,7 +591,7 @@ describe('Shithead: zufällige Partien', () => {
     expect(stats.win).toBeGreaterThan(0);
     expect(stats.thrown).toBeGreaterThan(0);
     expect(stats.bomb).toBeGreaterThan(0);
-  });
+  }, 180_000);
 
   it('versteckt Hand und verdeckte Karten während des Spiels', () => {
     const rng = rngF(3);
