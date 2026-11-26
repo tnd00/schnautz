@@ -4,6 +4,7 @@
  * Abkürzungen ändern den Spielstand und gehen nur beim Host. Effekte und Klänge schickt der Host an alle
  * (Logeintrag `dev`), Gäste sehen und hören sie nur selbst. Die Datei wird erst beim Öffnen nachgeladen.
  */
+import '../styles/dev.css';
 import { BOT_LINES } from '../bots/lines';
 import { botDecide } from '../bots/index';
 import { EMOTES, SOUNDS, TOSS_ICON, TOSS_ITEMS } from '../game/constants';

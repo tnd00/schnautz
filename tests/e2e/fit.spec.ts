@@ -50,6 +50,12 @@ async function setLook(ctx: BrowserContext): Promise<void> {
     ([l, t]) => {
       if (l) localStorage.setItem('schnautz:look', JSON.stringify(l));
       if (t) localStorage.setItem('schnautz:theme', JSON.stringify(t));
+      // Kommt der Look nicht an, misst der Lauf still Legacy: als Konsolenfehler melden, Errors lässt den Test scheitern
+      addEventListener('load', () => {
+        const d = document.documentElement.dataset;
+        if ((l && d.look !== l) || (t && l !== 'legacy' && d.look === 'sticker' && d.theme !== t))
+          console.error(`Look nicht angekommen: ${d.look}/${d.theme} statt ${l}/${t}`);
+      });
     },
     [LOOK, THEME],
   );

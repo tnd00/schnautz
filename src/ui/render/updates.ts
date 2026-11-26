@@ -1,4 +1,5 @@
 /* Updates: alle Versionen mit ihren Änderungen, neueste zuerst. */
+import '../../styles/updates.css';
 import { CHANGELOG } from '../../content/changelog';
 import { APP_VERSION } from '../../content/version';
 import { esc } from '../dom';

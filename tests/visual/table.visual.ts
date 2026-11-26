@@ -77,6 +77,8 @@ async function seed(page: Page, entries: Record<string, unknown>): Promise<void>
 async function resume(page: Page, act: 'resumehost' | 'resumeguest'): Promise<void> {
   await page.goto(START);
   await page.waitForFunction(() => !!window.__schnautz);
+  // Sonst misst PW_LOOK=sticker still Legacy
+  expect(await page.evaluate(() => document.documentElement.dataset.look)).toBe(LOOK);
   await page.evaluate(() => {
     window.__schnautz!.BOTS.hold = true;
   });
