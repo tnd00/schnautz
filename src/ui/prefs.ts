@@ -43,3 +43,8 @@ export const calm = (): boolean => reduceMotion();
 export function openPrefs(): void {
   // Stummel, Runde 2
 }
+
+/** Setzt die Klasse calm an html (Standard folgt prefers-reduced-motion). Stummel, A11y baut es in Runde 2. */
+export function applyCalm(): void {
+  // Stummel, Runde 2
+}
