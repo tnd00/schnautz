@@ -1,0 +1,132 @@
+{
+  "meta": { "id": "sh-wait-4", "game": "shithead", "goal": "wait", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "AK6WR",
+    "me": "h-3ac1f8a87041",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "shithead",
+      "sh": {
+        "deck": ["C3", "D2", "S10", "SD", "S8", "H7", "D3", "D7", "C10", "D8", "C8"],
+        "pile": ["S4", "H4", "D4", "C7", "S7"],
+        "burned": [],
+        "P": {
+          "h-3ac1f8a87041": { "down": ["DA", "HB", "S3"], "up": ["H2", "D10", "H9"], "hand": ["C4", "C6", "H6"] },
+          "b-c4c7ffb0ffff": { "down": ["C9", "S9", "S5"], "up": ["C2", "SK", "H10"], "hand": ["D6", "DB", "DK"] },
+          "b-19e28381ffff": { "down": ["HA", "SB", "DD"], "up": ["H3", "HD", "S2"], "hand": ["D9", "CB", "CD"] },
+          "b-c5b6d6e7ffff": { "down": ["H8", "H5", "SA"], "up": ["S6", "CA", "HK"], "hand": ["C5", "D5", "CK"] }
+        },
+        "finished": [],
+        "shithead": null,
+        "decks": 1,
+        "win": null
+      },
+      "host": "h-3ac1f8a87041",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-3ac1f8a87041",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-c4c7ffb0ffff",
+          "name": "Rudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-19e28381ffff",
+          "name": "Hotte",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-c5b6d6e7ffff",
+          "name": "Trudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 1,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "shplay", "p": "h-3ac1f8a87041", "n": 10, "cards": ["C7", "S7"], "src": "hand" },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-c4c7ffb0ffff", "name": "Rudi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-19e28381ffff", "name": "Hotte", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-c5b6d6e7ffff", "name": "Trudi", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "game": "shithead", "n": 4 },
+        { "k": "shdeal", "n": 5 },
+        { "k": "shstart", "p": "b-19e28381ffff", "card": "H4", "name": "Hotte", "n": 6 },
+        { "k": "shthrow", "p": "h-3ac1f8a87041", "cards": ["S4"], "src": "hand", "name": "Tahna", "n": 7 },
+        { "k": "shplay", "p": "b-19e28381ffff", "cards": ["H4"], "src": "hand", "name": "Hotte", "n": 8 },
+        { "k": "shplay", "p": "b-c5b6d6e7ffff", "cards": ["D4"], "src": "hand", "name": "Trudi", "n": 9 },
+        { "k": "shplay", "p": "h-3ac1f8a87041", "cards": ["C7", "S7"], "src": "hand", "name": "Tahna", "n": 10 }
+      ],
+      "n": 10,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": {}
+  },
+  "guest": null
+}

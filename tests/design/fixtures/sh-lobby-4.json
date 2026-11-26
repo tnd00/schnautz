@@ -1,0 +1,101 @@
+{
+  "meta": { "id": "sh-lobby-4", "game": "shithead", "goal": "lobby", "seats": 4, "long": false, "screen": "lobby" },
+  "host": {
+    "code": "MVJQW",
+    "me": "h-619d32d78d73",
+    "name": "Tahna",
+    "st": {
+      "phase": "lobby",
+      "game": "shithead",
+      "sh": null,
+      "host": "h-619d32d78d73",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-619d32d78d73",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0
+        },
+        {
+          "id": "b-7b560aeeffff",
+          "name": "Elfi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-b51e5106ffff",
+          "name": "Trudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-a85237f9ffff",
+          "name": "Rudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        }
+      ],
+      "round": 0,
+      "dealer": -1,
+      "turn": -1,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": null,
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-7b560aeeffff", "name": "Elfi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-b51e5106ffff", "name": "Trudi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-a85237f9ffff", "name": "Rudi", "bot": true, "n": 3 }
+      ],
+      "n": 3,
+      "games": 0
+    },
+    "keys": {}
+  },
+  "guest": null
+}

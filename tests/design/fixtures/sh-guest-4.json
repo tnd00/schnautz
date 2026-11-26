@@ -1,0 +1,134 @@
+{
+  "meta": { "id": "sh-guest-4", "game": "shithead", "goal": "guest", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "NCJ4D",
+    "me": "h-784b091d5d01",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "shithead",
+      "sh": {
+        "deck": ["CB", "D8", "SB", "S4", "S5", "C7", "HD", "S8", "C10", "H6", "D4", "D6"],
+        "pile": ["C4", "D5", "H8", "SK"],
+        "burned": [],
+        "P": {
+          "h-784b091d5d01": { "down": ["C9", "C6", "SA"], "up": ["S2", "DK", "C2"], "hand": ["S7", "S9", "DB"] },
+          "b-66d275caffff": { "down": ["SD", "CK", "H10"], "up": ["D10", "C3", "DD"], "hand": ["H9", "HB", "CD"] },
+          "b-5f0c83faffff": { "down": ["H2", "H5", "S10"], "up": ["D2", "S3", "D9"], "hand": ["H4", "H7", "D7"] },
+          "b-1d57f189ffff": { "down": ["HK", "CA", "C5"], "up": ["D3", "H3", "HA"], "hand": ["S6", "C8", "DA"] }
+        },
+        "finished": [],
+        "shithead": null,
+        "decks": 1,
+        "win": null
+      },
+      "host": "h-784b091d5d01",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-784b091d5d01",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-66d275caffff",
+          "name": "Kalle",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-5f0c83faffff",
+          "name": "Rudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-1d57f189ffff",
+          "name": "Lena",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "stats": {},
+          "shc": 0,
+          "dkc": 0,
+          "place": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 3,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "shplay", "p": "b-5f0c83faffff", "n": 11, "cards": ["SK"], "src": "hand" },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-66d275caffff", "name": "Kalle", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-5f0c83faffff", "name": "Rudi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-1d57f189ffff", "name": "Gitti", "bot": true, "n": 3 },
+        { "k": "takeover", "p": "b-1d57f189ffff", "name": "Lena", "from": "Gitti", "lobby": true, "n": 4 },
+        { "k": "game", "g": 1, "game": "shithead", "n": 5 },
+        { "k": "shdeal", "n": 6 },
+        { "k": "shstart", "p": "b-5f0c83faffff", "card": "C4", "name": "Rudi", "n": 7 },
+        { "k": "shplay", "p": "b-5f0c83faffff", "cards": ["C4"], "src": "hand", "name": "Rudi", "n": 8 },
+        { "k": "shplay", "p": "b-1d57f189ffff", "cards": ["D5"], "src": "hand", "name": "Lena", "n": 9 },
+        { "k": "shplay", "p": "h-784b091d5d01", "cards": ["H8"], "src": "hand", "name": "Tahna", "n": 10 },
+        { "k": "shplay", "p": "b-5f0c83faffff", "cards": ["SK"], "src": "hand", "name": "Rudi", "n": 11 }
+      ],
+      "n": 11,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": { "b-1d57f189ffff": "k-9549a945d69a" }
+  },
+  "guest": { "pid": "b-1d57f189ffff", "key": "k-9549a945d69a", "name": "Lena" }
+}

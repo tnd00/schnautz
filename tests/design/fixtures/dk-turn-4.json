@@ -1,0 +1,143 @@
+{
+  "meta": { "id": "dk-turn-4", "game": "durak", "goal": "turn", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "EK4EW",
+    "me": "h-9f7dbecdb490",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "durak",
+      "sh": null,
+      "host": "h-9f7dbecdb490",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-9f7dbecdb490",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "dkc": 0
+        },
+        {
+          "id": "b-1049e492ffff",
+          "name": "Elfi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "dkc": 0
+        },
+        {
+          "id": "b-d27335feffff",
+          "name": "Rudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "dkc": 0
+        },
+        {
+          "id": "b-2358716affff",
+          "name": "Uschi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "dkc": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 3,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "dkbito", "p": "b-2358716affff", "n": 15, "cnt": 6 },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-1049e492ffff", "name": "Elfi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-d27335feffff", "name": "Rudi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-2358716affff", "name": "Uschi", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "game": "durak", "n": 4 },
+        { "k": "dkdeal", "trump": "CA", "att": "b-d27335feffff", "def": "b-2358716affff", "n": 5 },
+        { "k": "dkattack", "p": "b-d27335feffff", "cards": ["S6", "D6"], "lead": true, "name": "Rudi", "n": 6 },
+        { "k": "dkdefend", "p": "b-2358716affff", "a": "S6", "d": "S9", "name": "Uschi", "n": 7 },
+        { "k": "dkdefend", "p": "b-2358716affff", "a": "D6", "d": "D9", "name": "Uschi", "n": 8 },
+        { "k": "dkpass", "p": "h-9f7dbecdb490", "name": "Tahna", "n": 9 },
+        { "k": "dkattack", "p": "b-1049e492ffff", "cards": ["H9"], "name": "Elfi", "n": 10 },
+        { "k": "dkdefend", "p": "b-2358716affff", "a": "H9", "d": "HB", "name": "Uschi", "n": 11 },
+        { "k": "dkpass", "p": "h-9f7dbecdb490", "name": "Tahna", "n": 12 },
+        { "k": "dkpass", "p": "b-1049e492ffff", "name": "Elfi", "n": 13 },
+        { "k": "dkpass", "p": "b-d27335feffff", "name": "Rudi", "n": 14 },
+        { "k": "dkbito", "p": "b-2358716affff", "cnt": 6, "name": "Uschi", "n": 15 }
+      ],
+      "n": 15,
+      "games": 1,
+      "cb": null,
+      "dk": {
+        "deck": ["CA", "C7", "HD", "DK", "H6", "C6"],
+        "trump": "CA",
+        "P": {
+          "h-9f7dbecdb490": ["H7", "D7", "DD", "HK", "DA", "CD"],
+          "b-1049e492ffff": ["S8", "H8", "D10", "SA", "C8", "CB"],
+          "b-d27335feffff": ["S7", "D8", "SK", "HA", "C9", "C10"],
+          "b-2358716affff": ["S10", "H10", "SB", "DB", "SD", "CK"]
+        },
+        "table": [],
+        "att": "b-2358716affff",
+        "def": "h-9f7dbecdb490",
+        "take": false,
+        "done": [],
+        "limit": 6,
+        "bout": 2,
+        "discard": 6,
+        "finished": [],
+        "durak": null,
+        "size": 36
+      }
+    },
+    "keys": {}
+  },
+  "guest": null
+}

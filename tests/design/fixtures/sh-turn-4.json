@@ -1,0 +1,137 @@
+{
+  "meta": { "id": "sh-turn-4", "game": "shithead", "goal": "turn", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "VCMP6",
+    "me": "h-5c651562de9c",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "shithead",
+      "sh": {
+        "deck": ["D2", "HD", "S8", "D7", "D4", "S6", "D6", "S9", "H3", "H7", "S4"],
+        "pile": [],
+        "burned": [],
+        "P": {
+          "h-5c651562de9c": { "down": ["C4", "SA", "D10"], "up": ["C2", "H2", "S3"], "hand": ["S5", "D8", "SB"] },
+          "b-5d9006efffff": { "down": ["C5", "C9", "C3"], "up": ["HA", "S10", "DK"], "hand": ["C6", "CB", "DD"] },
+          "b-1266dcd2ffff": { "down": ["H8", "HB", "S7"], "up": ["DA", "CA", "S2"], "hand": ["C7", "DB", "CD"] },
+          "b-888603ecffff": {
+            "down": ["C10", "SD", "H10"],
+            "up": ["HK", "C8", "D3"],
+            "hand": ["H4", "H5", "D5", "H6", "H9", "D9", "CK", "SK"]
+          }
+        },
+        "finished": [],
+        "shithead": null,
+        "decks": 1,
+        "win": { "r": "4", "by": [], "id": 11, "lock": false }
+      },
+      "host": "h-5c651562de9c",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-5c651562de9c",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-5d9006efffff",
+          "name": "Uschi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-1266dcd2ffff",
+          "name": "Gitti",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-888603ecffff",
+          "name": "Heinzi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 0,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "shpickup", "p": "b-888603ecffff", "n": 11, "cnt": 5 },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-5d9006efffff", "name": "Uschi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-1266dcd2ffff", "name": "Gitti", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-888603ecffff", "name": "Heinzi", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "game": "shithead", "n": 4 },
+        { "k": "shdeal", "n": 5 },
+        { "k": "shstart", "p": "b-888603ecffff", "card": "H4", "name": "Heinzi", "n": 6 },
+        { "k": "shplay", "p": "b-888603ecffff", "cards": ["H4"], "src": "hand", "name": "Heinzi", "n": 7 },
+        { "k": "shplay", "p": "h-5c651562de9c", "cards": ["D9"], "src": "hand", "name": "Tahna", "n": 8 },
+        { "k": "shplay", "p": "b-5d9006efffff", "cards": ["H9"], "src": "hand", "name": "Uschi", "n": 9 },
+        { "k": "shplay", "p": "b-1266dcd2ffff", "cards": ["CK", "SK"], "src": "hand", "name": "Gitti", "n": 10 },
+        { "k": "shpickup", "p": "b-888603ecffff", "cnt": 5, "name": "Heinzi", "n": 11 }
+      ],
+      "n": 11,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": {}
+  },
+  "guest": null
+}

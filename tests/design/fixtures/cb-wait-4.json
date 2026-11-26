@@ -1,0 +1,238 @@
+{
+  "meta": { "id": "cb-wait-4", "game": "cabo", "goal": "wait", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "RHAFB",
+    "me": "h-ebcfb7a90965",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "cabo",
+      "sh": null,
+      "host": "h-ebcfb7a90965",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-ebcfb7a90965",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "cbp": 0
+        },
+        {
+          "id": "b-d40552f8ffff",
+          "name": "Trudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "cbp": 0
+        },
+        {
+          "id": "b-4819739effff",
+          "name": "Elfi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "cbp": 0
+        },
+        {
+          "id": "b-003f7da7ffff",
+          "name": "Biggi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "cbp": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 1,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "cbswap", "p": "h-ebcfb7a90965", "n": 16, "cards": ["S10"] },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-d40552f8ffff", "name": "Trudi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-4819739effff", "name": "Elfi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-003f7da7ffff", "name": "Biggi", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "game": "cabo", "n": 4 },
+        { "k": "cbdeal", "r": 1, "start": "b-4819739effff", "n": 5 },
+        { "k": "cblook", "p": "h-ebcfb7a90965", "ids": [1, 2], "name": "Tahna", "n": 6 },
+        { "k": "cblook", "p": "b-d40552f8ffff", "ids": [5, 6], "name": "Trudi", "n": 7 },
+        { "k": "cblook", "p": "b-4819739effff", "ids": [9, 10], "name": "Elfi", "n": 8 },
+        { "k": "cblook", "p": "b-003f7da7ffff", "ids": [13, 14], "name": "Biggi", "n": 9 },
+        { "k": "cbdraw", "p": "b-4819739effff", "from": "deck", "name": "Elfi", "n": 10 },
+        { "k": "cbdiscard", "p": "b-4819739effff", "c": "CK", "name": "Elfi", "n": 11 },
+        { "k": "cbdraw", "p": "b-003f7da7ffff", "from": "deck", "name": "Biggi", "n": 12 },
+        { "k": "cbdiscard", "p": "b-003f7da7ffff", "c": "D8", "power": "peek", "name": "Biggi", "n": 13 },
+        { "k": "cbpeek", "p": "b-003f7da7ffff", "id": 15, "name": "Biggi", "n": 14 },
+        { "k": "cbdraw", "p": "h-ebcfb7a90965", "from": "deck", "name": "Tahna", "n": 15 },
+        {
+          "k": "cbswap",
+          "p": "h-ebcfb7a90965",
+          "out": ["S10"],
+          "ok": true,
+          "slots": 1,
+          "ids": [1],
+          "name": "Tahna",
+          "n": 16
+        }
+      ],
+      "n": 16,
+      "games": 1,
+      "dk": null,
+      "cb": {
+        "deck": [
+          "H2",
+          "HD",
+          "S3",
+          "C6",
+          "DB",
+          "CD",
+          "H5",
+          "D10",
+          "C7",
+          "D2",
+          "C2",
+          "S5",
+          "S9",
+          "D6",
+          "S6",
+          "H3",
+          "C3",
+          "DD",
+          "S7",
+          "C9",
+          "C10",
+          "S4",
+          "SD",
+          "DK",
+          "D7",
+          "D9",
+          "C4",
+          "S2",
+          "HK",
+          "D4",
+          "SA",
+          "CB"
+        ],
+        "pile": ["HB", "CK", "D8", "S10"],
+        "P": {
+          "h-ebcfb7a90965": [
+            { "id": 1, "c": "C5" },
+            { "id": 2, "c": "C8" },
+            { "id": 3, "c": "H7" },
+            { "id": 4, "c": "SK" }
+          ],
+          "b-d40552f8ffff": [
+            { "id": 5, "c": "H8" },
+            { "id": 6, "c": "D3" },
+            { "id": 7, "c": "SB" },
+            { "id": 8, "c": "HA" }
+          ],
+          "b-4819739effff": [
+            { "id": 9, "c": "H9" },
+            { "id": 10, "c": "H6" },
+            { "id": 11, "c": "S8" },
+            { "id": 12, "c": "H10" }
+          ],
+          "b-003f7da7ffff": [
+            { "id": 13, "c": "D5" },
+            { "id": 14, "c": "DA" },
+            { "id": 15, "c": "H4" },
+            { "id": 16, "c": "CA" }
+          ]
+        },
+        "sid": 17,
+        "hold": null,
+        "power": null,
+        "cabo": null,
+        "left": [],
+        "t": 3,
+        "know": {
+          "h-ebcfb7a90965": { "1": { "c": "C5", "t": 2 }, "2": { "c": "C8", "t": 0 } },
+          "b-d40552f8ffff": { "5": { "c": "H8", "t": 0 }, "6": { "c": "D3", "t": 0 } },
+          "b-4819739effff": { "9": { "c": "H9", "t": 0 }, "10": { "c": "H6", "t": 0 } },
+          "b-003f7da7ffff": { "13": { "c": "D5", "t": 0 }, "14": { "c": "DA", "t": 0 }, "15": { "c": "H4", "t": 1 } }
+        },
+        "reveal": {
+          "h-ebcfb7a90965": {
+            "id": 1,
+            "t": 0,
+            "items": [
+              { "owner": "h-ebcfb7a90965", "slot": 1, "c": "S10" },
+              { "owner": "h-ebcfb7a90965", "slot": 2, "c": "C8" }
+            ]
+          },
+          "b-d40552f8ffff": {
+            "id": 2,
+            "t": 0,
+            "items": [
+              { "owner": "b-d40552f8ffff", "slot": 5, "c": "H8" },
+              { "owner": "b-d40552f8ffff", "slot": 6, "c": "D3" }
+            ]
+          },
+          "b-4819739effff": {
+            "id": 3,
+            "t": 0,
+            "items": [
+              { "owner": "b-4819739effff", "slot": 9, "c": "H9" },
+              { "owner": "b-4819739effff", "slot": 10, "c": "H6" }
+            ]
+          },
+          "b-003f7da7ffff": { "id": 5, "t": 1, "items": [{ "owner": "b-003f7da7ffff", "slot": 15, "c": "H4" }] }
+        },
+        "rid": 5,
+        "resets": [],
+        "start": "b-4819739effff",
+        "decks": 1
+      }
+    },
+    "keys": {}
+  },
+  "guest": null
+}

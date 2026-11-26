@@ -1,0 +1,139 @@
+{
+  "meta": { "id": "sz-guest-4", "game": "schnautz", "goal": "guest", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "VUSEQ",
+    "me": "h-e17649254a5e",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "schnautz",
+      "sh": null,
+      "host": "h-e17649254a5e",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-e17649254a5e",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0
+        },
+        {
+          "id": "b-12ba21b8ffff",
+          "name": "Kalle",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-b16113c9ffff",
+          "name": "Biggi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-3e11c665ffff",
+          "name": "Lena",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "stats": {},
+          "shc": 0,
+          "dkc": 0
+        }
+      ],
+      "round": 1,
+      "dealer": 0,
+      "turn": 3,
+      "deck": [
+        "D10",
+        "SA",
+        "C10",
+        "S7",
+        "H7",
+        "CK",
+        "C8",
+        "S10",
+        "H10",
+        "HA",
+        "HD",
+        "DK",
+        "CA",
+        "HB",
+        "DA",
+        "D7",
+        "CB"
+      ],
+      "discard": [],
+      "hands": {
+        "h-e17649254a5e": ["SB", "S9", "SD"],
+        "b-12ba21b8ffff": ["DD", "DB", "D9"],
+        "b-b16113c9ffff": ["D8", "S8", "H8"],
+        "b-3e11c665ffff": ["SK", "HK", "H9"]
+      },
+      "middle": ["CD", "C9", "C7"],
+      "spare": null,
+      "knocker": "b-12ba21b8ffff",
+      "afterKnock": 2,
+      "passes": 1,
+      "turns": 6,
+      "last": { "k": "pass", "p": "b-b16113c9ffff", "n": 14 },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-12ba21b8ffff", "name": "Kalle", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-b16113c9ffff", "name": "Biggi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-3e11c665ffff", "name": "Rudi", "bot": true, "n": 3 },
+        { "k": "chat", "p": "b-12ba21b8ffff", "text": "Hallo in die Runde 👋", "bot": true, "name": "Kalle", "n": 4 },
+        { "k": "takeover", "p": "b-3e11c665ffff", "name": "Lena", "from": "Rudi", "lobby": true, "n": 5 },
+        { "k": "game", "g": 1, "n": 6 },
+        { "k": "round", "r": 1, "p": "h-e17649254a5e", "start": "b-12ba21b8ffff", "name": "Tahna", "n": 7 },
+        { "k": "take", "p": "h-e17649254a5e", "name": "Tahna", "n": 8 },
+        { "k": "swap", "p": "b-12ba21b8ffff", "take": "DD", "give": "C7", "name": "Kalle", "n": 9 },
+        { "k": "swap", "p": "b-b16113c9ffff", "take": "H8", "give": "CD", "name": "Biggi", "n": 10 },
+        { "k": "pass", "p": "b-3e11c665ffff", "name": "Lena", "n": 11 },
+        { "k": "swap", "p": "h-e17649254a5e", "take": "S9", "give": "C9", "name": "Tahna", "n": 12 },
+        { "k": "knock", "p": "b-12ba21b8ffff", "name": "Kalle", "n": 13 },
+        { "k": "pass", "p": "b-b16113c9ffff", "name": "Biggi", "n": 14 }
+      ],
+      "n": 14,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": { "b-3e11c665ffff": "k-470e13737baf" }
+  },
+  "guest": { "pid": "b-3e11c665ffff", "key": "k-470e13737baf", "name": "Lena" }
+}

@@ -1,0 +1,259 @@
+{
+  "meta": { "id": "cb-guest-4", "game": "cabo", "goal": "guest", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "4WKZC",
+    "me": "h-c2233560c163",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "cabo",
+      "sh": null,
+      "host": "h-c2233560c163",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-c2233560c163",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "cbp": 0
+        },
+        {
+          "id": "b-64293cc3ffff",
+          "name": "Hotte",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "cbp": 0
+        },
+        {
+          "id": "b-93a46be9ffff",
+          "name": "Manni",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "cbp": 0
+        },
+        {
+          "id": "b-a3d295ecffff",
+          "name": "Lena",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "stats": {},
+          "shc": 0,
+          "dkc": 0,
+          "place": 0,
+          "cbp": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 3,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "cbdiscard", "p": "b-93a46be9ffff", "n": 19, "cards": ["CD"] },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-64293cc3ffff", "name": "Hotte", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-93a46be9ffff", "name": "Manni", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-a3d295ecffff", "name": "Kalle", "bot": true, "n": 3 },
+        { "k": "takeover", "p": "b-a3d295ecffff", "name": "Lena", "from": "Kalle", "lobby": true, "n": 4 },
+        { "k": "game", "g": 1, "game": "cabo", "n": 5 },
+        { "k": "cbdeal", "r": 1, "start": "b-a3d295ecffff", "n": 6 },
+        { "k": "cblook", "p": "h-c2233560c163", "ids": [1, 2], "name": "Tahna", "n": 7 },
+        { "k": "cblook", "p": "b-64293cc3ffff", "ids": [5, 6], "name": "Hotte", "n": 8 },
+        { "k": "cblook", "p": "b-93a46be9ffff", "ids": [9, 10], "name": "Manni", "n": 9 },
+        { "k": "cblook", "p": "b-a3d295ecffff", "ids": [13, 14], "name": "Lena", "n": 10 },
+        { "k": "cbdraw", "p": "b-a3d295ecffff", "from": "deck", "name": "Lena", "n": 11 },
+        {
+          "k": "cbswap",
+          "p": "b-a3d295ecffff",
+          "out": ["S10"],
+          "ok": true,
+          "slots": 1,
+          "ids": [13],
+          "name": "Lena",
+          "n": 12
+        },
+        { "k": "cbdraw", "p": "h-c2233560c163", "from": "deck", "name": "Tahna", "n": 13 },
+        {
+          "k": "cbswap",
+          "p": "h-c2233560c163",
+          "out": ["S8"],
+          "ok": true,
+          "slots": 1,
+          "ids": [1],
+          "name": "Tahna",
+          "n": 14
+        },
+        { "k": "cbdraw", "p": "b-64293cc3ffff", "from": "deck", "name": "Hotte", "n": 15 },
+        { "k": "cbdiscard", "p": "b-64293cc3ffff", "c": "SD", "power": "swap", "name": "Hotte", "n": 16 },
+        { "k": "cbskip", "p": "b-64293cc3ffff", "name": "Hotte", "n": 17 },
+        { "k": "cbdraw", "p": "b-93a46be9ffff", "from": "deck", "name": "Manni", "n": 18 },
+        { "k": "cbdiscard", "p": "b-93a46be9ffff", "c": "CD", "power": "swap", "name": "Manni", "n": 19 },
+        { "k": "cbskip", "p": "b-93a46be9ffff", "name": "Manni", "n": 20 }
+      ],
+      "n": 20,
+      "games": 1,
+      "dk": null,
+      "cb": {
+        "deck": [
+          "DB",
+          "HA",
+          "CA",
+          "H8",
+          "C5",
+          "D3",
+          "CK",
+          "C3",
+          "C9",
+          "HB",
+          "H7",
+          "H3",
+          "D4",
+          "D6",
+          "SB",
+          "D9",
+          "C2",
+          "S9",
+          "S7",
+          "D2",
+          "D10",
+          "S5",
+          "C7",
+          "C6",
+          "CB",
+          "C10",
+          "S4",
+          "H9",
+          "SA",
+          "D7",
+          "HD"
+        ],
+        "pile": ["D8", "S10", "S8", "SD", "CD"],
+        "P": {
+          "h-c2233560c163": [
+            { "id": 1, "c": "S2" },
+            { "id": 2, "c": "H6" },
+            { "id": 3, "c": "SK" },
+            { "id": 4, "c": "H2" }
+          ],
+          "b-64293cc3ffff": [
+            { "id": 5, "c": "DK" },
+            { "id": 6, "c": "H5" },
+            { "id": 7, "c": "DA" },
+            { "id": 8, "c": "S6" }
+          ],
+          "b-93a46be9ffff": [
+            { "id": 9, "c": "H10" },
+            { "id": 10, "c": "C8" },
+            { "id": 11, "c": "S3" },
+            { "id": 12, "c": "C4" }
+          ],
+          "b-a3d295ecffff": [
+            { "id": 13, "c": "HK" },
+            { "id": 14, "c": "D5" },
+            { "id": 15, "c": "H4" },
+            { "id": 16, "c": "DD" }
+          ]
+        },
+        "sid": 17,
+        "hold": null,
+        "power": null,
+        "cabo": null,
+        "left": [],
+        "t": 4,
+        "know": {
+          "h-c2233560c163": { "1": { "c": "S2", "t": 1 }, "2": { "c": "H6", "t": 0 } },
+          "b-64293cc3ffff": { "5": { "c": "DK", "t": 0 }, "6": { "c": "H5", "t": 0 } },
+          "b-93a46be9ffff": { "9": { "c": "H10", "t": 0 }, "10": { "c": "C8", "t": 0 } },
+          "b-a3d295ecffff": { "13": { "c": "HK", "t": 0 }, "14": { "c": "D5", "t": 0 } }
+        },
+        "reveal": {
+          "h-c2233560c163": {
+            "id": 1,
+            "t": 0,
+            "items": [
+              { "owner": "h-c2233560c163", "slot": 1, "c": "S8" },
+              { "owner": "h-c2233560c163", "slot": 2, "c": "H6" }
+            ]
+          },
+          "b-64293cc3ffff": {
+            "id": 2,
+            "t": 0,
+            "items": [
+              { "owner": "b-64293cc3ffff", "slot": 5, "c": "DK" },
+              { "owner": "b-64293cc3ffff", "slot": 6, "c": "H5" }
+            ]
+          },
+          "b-93a46be9ffff": {
+            "id": 3,
+            "t": 0,
+            "items": [
+              { "owner": "b-93a46be9ffff", "slot": 9, "c": "H10" },
+              { "owner": "b-93a46be9ffff", "slot": 10, "c": "C8" }
+            ]
+          },
+          "b-a3d295ecffff": {
+            "id": 4,
+            "t": 0,
+            "items": [
+              { "owner": "b-a3d295ecffff", "slot": 13, "c": "S10" },
+              { "owner": "b-a3d295ecffff", "slot": 14, "c": "D5" }
+            ]
+          }
+        },
+        "rid": 4,
+        "resets": [],
+        "start": "b-a3d295ecffff",
+        "decks": 1
+      }
+    },
+    "keys": { "b-a3d295ecffff": "k-ff848af849a1" }
+  },
+  "guest": { "pid": "b-a3d295ecffff", "key": "k-ff848af849a1", "name": "Lena" }
+}

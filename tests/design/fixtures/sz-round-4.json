@@ -1,0 +1,157 @@
+{
+  "meta": { "id": "sz-round-4", "game": "schnautz", "goal": "round", "seats": 4, "long": false, "screen": "result" },
+  "host": {
+    "code": "LTUYB",
+    "me": "h-d08faf412422",
+    "name": "Tahna",
+    "st": {
+      "phase": "end",
+      "game": "schnautz",
+      "sh": null,
+      "host": "h-d08faf412422",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-d08faf412422",
+          "name": "Tahna",
+          "lives": 2,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "stats": { "schnautz": { "games": 0, "wins": 0, "coasters": 1 } }
+        },
+        {
+          "id": "b-02292420ffff",
+          "name": "Kalle",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-a3dd1649ffff",
+          "name": "Uschi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-02a2d956ffff",
+          "name": "Elfi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        }
+      ],
+      "round": 1,
+      "dealer": 1,
+      "turn": -1,
+      "deck": ["HD", "C7", "SD", "C9", "CK", "CB", "D8", "H10", "H7", "SK", "DA", "SB", "CD", "DK", "C10", "HB", "S9"],
+      "discard": [],
+      "hands": {
+        "h-d08faf412422": ["SA", "S7", "S10"],
+        "b-02292420ffff": ["HA", "H9", "HK"],
+        "b-a3dd1649ffff": ["C8", "S8", "H8"],
+        "b-02a2d956ffff": ["D10", "DB", "DD"]
+      },
+      "middle": ["D9", "CA", "D7"],
+      "spare": null,
+      "knocker": "b-02292420ffff",
+      "afterKnock": 0,
+      "passes": 1,
+      "turns": 11,
+      "last": { "k": "pass", "p": "h-d08faf412422", "n": 17 },
+      "result": {
+        "reason": "knock",
+        "by": "b-02292420ffff",
+        "knocker": "b-02292420ffff",
+        "hands": {
+          "h-d08faf412422": ["SA", "S7", "S10"],
+          "b-02292420ffff": ["HA", "H9", "HK"],
+          "b-a3dd1649ffff": ["C8", "S8", "H8"],
+          "b-02a2d956ffff": ["D10", "DB", "DD"]
+        },
+        "vals": {
+          "h-d08faf412422": { "v": 28, "kind": "normal", "suit": "S" },
+          "b-02292420ffff": { "v": 30, "kind": "normal", "suit": "H" },
+          "b-a3dd1649ffff": { "v": 30.5, "kind": "drei", "suit": null },
+          "b-02a2d956ffff": { "v": 30, "kind": "normal", "suit": "D" }
+        },
+        "losers": ["h-d08faf412422"],
+        "changes": { "h-d08faf412422": { "n": 1, "to": "life" } },
+        "round": 1
+      },
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-02292420ffff", "name": "Kalle", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-a3dd1649ffff", "name": "Uschi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-02a2d956ffff", "name": "Elfi", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "n": 4 },
+        { "k": "round", "r": 1, "p": "b-02292420ffff", "start": "b-a3dd1649ffff", "name": "Kalle", "n": 5 },
+        { "k": "take", "p": "b-02292420ffff", "name": "Kalle", "n": 6 },
+        { "k": "pass", "p": "b-a3dd1649ffff", "name": "Uschi", "n": 7 },
+        { "k": "swap", "p": "b-02a2d956ffff", "take": "DD", "give": "HK", "name": "Elfi", "n": 8 },
+        { "k": "swap", "p": "h-d08faf412422", "take": "SA", "give": "H9", "name": "Tahna", "n": 9 },
+        { "k": "swapAll", "p": "b-02292420ffff", "name": "Kalle", "n": 10 },
+        { "k": "swap", "p": "b-a3dd1649ffff", "take": "S8", "give": "CA", "name": "Uschi", "n": 11 },
+        { "k": "swap", "p": "b-02a2d956ffff", "take": "D10", "give": "D7", "name": "Elfi", "n": 12 },
+        { "k": "swap", "p": "h-d08faf412422", "take": "S7", "give": "DB", "name": "Tahna", "n": 13 },
+        { "k": "knock", "p": "b-02292420ffff", "name": "Kalle", "n": 14 },
+        { "k": "pass", "p": "b-a3dd1649ffff", "name": "Uschi", "n": 15 },
+        { "k": "swap", "p": "b-02a2d956ffff", "take": "DB", "give": "D9", "name": "Elfi", "n": 16 },
+        { "k": "pass", "p": "h-d08faf412422", "name": "Tahna", "n": 17 },
+        {
+          "k": "result",
+          "reason": "knock",
+          "by": "b-02292420ffff",
+          "changes": { "h-d08faf412422": { "n": 1, "to": "life" } },
+          "tie": false,
+          "names": {
+            "h-d08faf412422": "Tahna",
+            "b-02292420ffff": "Kalle",
+            "b-a3dd1649ffff": "Uschi",
+            "b-02a2d956ffff": "Elfi"
+          },
+          "n": 18
+        }
+      ],
+      "n": 18,
+      "games": 1,
+      "dk": null,
+      "cb": null,
+      "loser": "h-d08faf412422"
+    },
+    "keys": {}
+  },
+  "guest": null
+}

@@ -1,0 +1,116 @@
+{
+  "meta": { "id": "sz-wait-4", "game": "schnautz", "goal": "wait", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "NR2XX",
+    "me": "h-03184a181451",
+    "name": "Tahna",
+    "st": {
+      "phase": "play",
+      "game": "schnautz",
+      "sh": null,
+      "host": "h-03184a181451",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-03184a181451",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0
+        },
+        {
+          "id": "b-884d74b7ffff",
+          "name": "Trudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-03431b82ffff",
+          "name": "Hotte",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-55bb0817ffff",
+          "name": "Heinzi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        }
+      ],
+      "round": 1,
+      "dealer": 3,
+      "turn": 1,
+      "deck": ["CA", "D7", "SK", "S7", "DA", "DB", "S9", "D10", "SB", "H7", "CK", "C9", "CD", "DK", "S8", "SA", "H10"],
+      "discard": [],
+      "hands": {
+        "h-03184a181451": ["SD", "S10", "HD"],
+        "b-884d74b7ffff": ["D9", "DD", "C8"],
+        "b-03431b82ffff": ["HA", "H8", "D8"],
+        "b-55bb0817ffff": ["HK", "HB", "CB"]
+      },
+      "middle": ["H9", "C7", "C10"],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 5,
+      "last": { "k": "swap", "p": "h-03184a181451", "h": 0, "m": 0, "n": 11, "take": "SD", "give": "H9" },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-884d74b7ffff", "name": "Trudi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-03431b82ffff", "name": "Hotte", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-55bb0817ffff", "name": "Heinzi", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "n": 4 },
+        { "k": "round", "r": 1, "p": "b-55bb0817ffff", "start": "h-03184a181451", "name": "Heinzi", "n": 5 },
+        { "k": "take", "p": "b-55bb0817ffff", "name": "Heinzi", "n": 6 },
+        { "k": "pass", "p": "h-03184a181451", "name": "Tahna", "n": 7 },
+        { "k": "swap", "p": "b-884d74b7ffff", "take": "DD", "give": "H8", "name": "Trudi", "n": 8 },
+        { "k": "swap", "p": "b-03431b82ffff", "take": "H8", "give": "SD", "name": "Hotte", "n": 9 },
+        { "k": "pass", "p": "b-55bb0817ffff", "name": "Heinzi", "n": 10 },
+        { "k": "swap", "p": "h-03184a181451", "take": "SD", "give": "H9", "name": "Tahna", "n": 11 }
+      ],
+      "n": 11,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": {}
+  },
+  "guest": null
+}

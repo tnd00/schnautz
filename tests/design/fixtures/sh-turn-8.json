@@ -1,0 +1,253 @@
+{
+  "meta": { "id": "sh-turn-8", "game": "shithead", "goal": "turn", "seats": 8, "long": true, "screen": "game" },
+  "host": {
+    "code": "RZNL8",
+    "me": "h-1902d60a3362",
+    "name": "Tahna-Kristoffer",
+    "st": {
+      "phase": "play",
+      "game": "shithead",
+      "sh": {
+        "deck": [
+          "H8:2",
+          "D5",
+          "HB",
+          "H9",
+          "S2:2",
+          "H10:2",
+          "C7:2",
+          "HD",
+          "S7:2",
+          "D5:2",
+          "D3:2",
+          "H5:2",
+          "H6:2",
+          "CB",
+          "HK:2",
+          "SK:2",
+          "C6",
+          "C6:2",
+          "D10:2",
+          "S9:2",
+          "D7",
+          "C4:2"
+        ],
+        "pile": ["C4", "D4", "D4:2", "H6", "C7", "H7:2", "S5", "C5", "C9:2", "D9:2"],
+        "burned": [],
+        "P": {
+          "h-1902d60a3362": {
+            "down": ["D8", "C8", "HK"],
+            "up": ["C10:2", "D2:2", "DA:2"],
+            "hand": ["H9:2", "SB", "SK"]
+          },
+          "b-6ffa00e0ffff": {
+            "down": ["C9", "H4", "D6:2"],
+            "up": ["DD", "HB:2", "CD:2"],
+            "hand": ["S5:2", "D6", "HA"]
+          },
+          "b-21a750baffff": {
+            "down": ["CD", "CA:2", "S2"],
+            "up": ["D3", "CK:2", "SD:2"],
+            "hand": ["H7", "S8", "CB:2"]
+          },
+          "b-6882136fffff": {
+            "down": ["S6:2", "D8:2", "S6"],
+            "up": ["H2:2", "S3:2", "C3"],
+            "hand": ["H8", "S9", "DK:2"]
+          },
+          "b-026b9f71ffff": {
+            "down": ["D7:2", "SA:2", "HD:2"],
+            "up": ["S8:2", "DK", "DB:2"],
+            "hand": ["C5:2", "SB:2", "SD"]
+          },
+          "b-f028fc75ffff": {
+            "down": ["S10:2", "C10", "H3"],
+            "up": ["C2:2", "S10", "DA"],
+            "hand": ["C8:2", "DD:2", "HA:2"]
+          },
+          "b-63f1d627ffff": { "down": ["C3:2", "D2", "H4:2"], "up": ["CA", "H10", "C2"], "hand": ["H5", "S7", "CK"] },
+          "b-57125266ffff": { "down": ["S4", "H2", "D9"], "up": ["SA", "DB", "H3:2"], "hand": ["S3", "S4:2", "D10"] }
+        },
+        "finished": [],
+        "shithead": null,
+        "decks": 2,
+        "win": null
+      },
+      "host": "h-1902d60a3362",
+      "rules": {
+        "seats": 8,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-1902d60a3362",
+          "name": "Tahna-Kristoffer",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-6ffa00e0ffff",
+          "name": "Wolfgang-Amadeu0",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-21a750baffff",
+          "name": "Wolfgang-Amadeu1",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-6882136fffff",
+          "name": "Wolfgang-Amadeu2",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-026b9f71ffff",
+          "name": "Wolfgang-Amadeu3",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-f028fc75ffff",
+          "name": "Wolfgang-Amadeu4",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-63f1d627ffff",
+          "name": "Wolfgang-Amadeu5",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-57125266ffff",
+          "name": "Wolfgang-Amadeu6",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": 0,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": { "k": "shplay", "p": "b-57125266ffff", "n": 19, "cards": ["C9:2", "D9:2"], "src": "hand" },
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-6ffa00e0ffff", "name": "Rudi", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-21a750baffff", "name": "Gitti", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-6882136fffff", "name": "Hotte", "bot": true, "n": 3 },
+        { "k": "join", "p": "b-026b9f71ffff", "name": "Elfi", "bot": true, "n": 4 },
+        { "k": "join", "p": "b-f028fc75ffff", "name": "Uschi", "bot": true, "n": 5 },
+        { "k": "join", "p": "b-63f1d627ffff", "name": "Biggi", "bot": true, "n": 6 },
+        { "k": "join", "p": "b-57125266ffff", "name": "Trudi", "bot": true, "n": 7 },
+        { "k": "game", "g": 1, "game": "shithead", "n": 9 },
+        { "k": "shdeal", "n": 10 },
+        { "k": "shstart", "p": "b-6ffa00e0ffff", "card": "D4", "name": "Wolfgang-Amadeu0", "n": 11 },
+        { "k": "shthrow", "p": "h-1902d60a3362", "cards": ["C4"], "src": "hand", "name": "Tahna-Kristoffer", "n": 12 },
+        { "k": "shplay", "p": "b-6ffa00e0ffff", "cards": ["D4"], "src": "hand", "name": "Wolfgang-Amadeu0", "n": 13 },
+        { "k": "shplay", "p": "b-21a750baffff", "cards": ["D4:2"], "src": "hand", "name": "Wolfgang-Amadeu1", "n": 14 },
+        { "k": "shplay", "p": "b-6882136fffff", "cards": ["H6"], "src": "hand", "name": "Wolfgang-Amadeu2", "n": 15 },
+        {
+          "k": "shplay",
+          "p": "b-026b9f71ffff",
+          "cards": ["C7", "H7:2"],
+          "src": "hand",
+          "name": "Wolfgang-Amadeu3",
+          "n": 16
+        },
+        { "k": "shplay", "p": "b-f028fc75ffff", "cards": ["S5"], "src": "hand", "name": "Wolfgang-Amadeu4", "n": 17 },
+        { "k": "shplay", "p": "b-63f1d627ffff", "cards": ["C5"], "src": "hand", "name": "Wolfgang-Amadeu5", "n": 18 },
+        {
+          "k": "shplay",
+          "p": "b-57125266ffff",
+          "cards": ["C9:2", "D9:2"],
+          "src": "hand",
+          "name": "Wolfgang-Amadeu6",
+          "n": 19
+        }
+      ],
+      "n": 19,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": {}
+  },
+  "guest": null
+}

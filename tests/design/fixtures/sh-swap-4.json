@@ -1,0 +1,126 @@
+{
+  "meta": { "id": "sh-swap-4", "game": "shithead", "goal": "swap", "seats": 4, "long": false, "screen": "game" },
+  "host": {
+    "code": "AKVWN",
+    "me": "h-15847a44e5dd",
+    "name": "Tahna",
+    "st": {
+      "phase": "swap",
+      "game": "shithead",
+      "sh": {
+        "deck": ["D2", "SK", "HA", "SB", "DA", "D8", "D5", "C6", "H5", "C4", "CB", "D7", "S7", "S8", "S5", "C10"],
+        "pile": [],
+        "burned": [],
+        "P": {
+          "h-15847a44e5dd": { "down": ["C5", "S3", "C7"], "up": ["D4", "D10", "DK"], "hand": ["S6", "H6", "DD"] },
+          "b-6ccf02a9ffff": { "down": ["D9", "H4", "S4"], "up": ["H7", "CD", "D6"], "hand": ["D3", "H8", "C9"] },
+          "b-869edc83ffff": { "down": ["H9", "C3", "S2"], "up": ["HB", "SA", "H2"], "hand": ["S10", "DB", "HK"] },
+          "b-733e90d3ffff": { "down": ["H10", "CK", "H3"], "up": ["C8", "C2", "CA"], "hand": ["S9", "SD", "HD"] }
+        },
+        "finished": [],
+        "shithead": null,
+        "decks": 1
+      },
+      "host": "h-15847a44e5dd",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-15847a44e5dd",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-6ccf02a9ffff",
+          "name": "Hotte",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-869edc83ffff",
+          "name": "Trudi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        },
+        {
+          "id": "b-733e90d3ffff",
+          "name": "Gitti",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true,
+          "place": 0,
+          "shc": 0
+        }
+      ],
+      "round": 1,
+      "dealer": -1,
+      "turn": -1,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": null,
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-6ccf02a9ffff", "name": "Hotte", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-869edc83ffff", "name": "Trudi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-733e90d3ffff", "name": "Gitti", "bot": true, "n": 3 },
+        { "k": "game", "g": 1, "game": "shithead", "n": 4 },
+        { "k": "shdeal", "n": 5 }
+      ],
+      "n": 5,
+      "games": 1,
+      "dk": null,
+      "cb": null
+    },
+    "keys": {}
+  },
+  "guest": null
+}

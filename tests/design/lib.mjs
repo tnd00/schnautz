@@ -11,6 +11,8 @@
  *   --serve     SERVE=1    Dev-Server und PeerServer selbst starten und am Ende beenden
  *   --reduce    REDUCE=1   „Bewegung reduzieren“ einschalten
  *   --headed    HEADED=1   Browser sichtbar
+ *   --look=L    LOOK       Look vor dem Laden setzen (schnautz:look), Liste wie sticker,legacy erlaubt
+ *   --theme=T   THEME      Thema vor dem Laden setzen (schnautz:theme), Liste wie light,dark erlaubt
  *               PW_CHROME  eigenes Chrome statt des Chromiums von Playwright
  */
 import { chromium } from '@playwright/test';
@@ -35,6 +37,27 @@ export const APP = arg('app', process.env.APP ?? `http://127.0.0.1:${PORT}/`);
 export const START = `${APP}?peerhost=127.0.0.1&peerport=${PEER_PORT}&noice=1`;
 export const OUT = resolve(arg('out', process.env.OUT ?? join(tmpdir(), 'schnautz-design')));
 const REDUCE = flag('reduce', 'REDUCE');
+
+/**
+ * Look und Thema als Liste aus `--look=sticker,legacy` und `--theme=light,dark`. Ohne Angabe steht dort `null`, dann
+ * setzt `context()` nichts und die Seite nimmt ihren Standard (so laufen alte Aufrufe unverändert).
+ */
+const list = (name, env) => {
+  const v = arg(name, process.env[env] ?? '');
+  return v ? v.split(',').filter(Boolean) : [null];
+};
+export const LOOKS = list('look', 'LOOK');
+export const THEMES = list('theme', 'THEME');
+
+/**
+ * Alle Paare aus Look und Thema. `tag` hängt an Dateinamen (leer, wenn beides fehlt), etwa `legacy-dark`.
+ */
+export function variants() {
+  const out = [];
+  for (const look of LOOKS)
+    for (const theme of THEMES) out.push({ look, theme, tag: [look, theme].filter(Boolean).join('-') });
+  return out;
+}
 
 if (!relative(REPO, OUT).startsWith('..')) console.warn(`Achtung: Ausgabe ${OUT} liegt im Repo`);
 
@@ -132,8 +155,12 @@ export async function launch() {
   });
 }
 
-/** Kontext passend zur Größe: bis 960 px wie ein Handy (Touch, isMobile), sonst wie ein PC. Dev-Menü frei. */
-export async function context(browser, size) {
+/**
+ * Kontext passend zur Größe: bis 960 px wie ein Handy (Touch, isMobile), sonst wie ein PC. Dev-Menü frei. Mit
+ * `look` oder `theme` stehen `schnautz:look` und `schnautz:theme` vor dem ersten Laden im Speicher (als JSON wie bei
+ * `LS.set`), ohne bleibt der Speicher, wie er ist.
+ */
+export async function context(browser, size, { look = null, theme = null } = {}) {
   const phone = isPhoneSize(size);
   const ctx = await browser.newContext({
     viewport: parseSize(size),
@@ -142,7 +169,14 @@ export async function context(browser, size) {
     hasTouch: phone,
     reducedMotion: REDUCE ? 'reduce' : 'no-preference',
   });
-  await ctx.addInitScript(() => localStorage.setItem('schnautz:dev', 'true'));
+  await ctx.addInitScript(
+    ([l, t]) => {
+      localStorage.setItem('schnautz:dev', 'true');
+      if (l) localStorage.setItem('schnautz:look', JSON.stringify(l));
+      if (t) localStorage.setItem('schnautz:theme', JSON.stringify(t));
+    },
+    [look, theme],
+  );
   return ctx;
 }
 
@@ -329,7 +363,7 @@ export async function measure(page, extra = []) {
     for (const s of sels) boxes[s] = box(s);
     const inner = [];
     document
-      .querySelectorAll('.lpane, .seats, .lgames, .lgc, #overlay .paper, #modal .paper, .side, #opps')
+      .querySelectorAll('.lpane, .seats, .lgames, .lgc, #overlay .paper, #modal .paper, .side, #opps, #menu')
       .forEach((el) => {
         if (!el.getClientRects().length) return;
         const over = el.scrollHeight - el.clientHeight;
@@ -393,10 +427,45 @@ export async function sheetInfo(page) {
 }
 
 /**
+ * Menü ⋯: Lage des Bogens, Überlauf in sich (`over`, bei `overflow: hidden` heißt das abgeschnitten) und jeder
+ * sichtbare Eintrag, der nicht ganz im Bogen oder im Fenster liegt (`cut`). `null`, wenn das Menü zu ist.
+ */
+export async function menuInfo(page) {
+  return page.evaluate(() => {
+    const m = document.querySelector('#menu');
+    if (!m || m.hidden || !m.getClientRects().length) return null;
+    const H = window.innerHeight;
+    const W = window.innerWidth;
+    const r = m.getBoundingClientRect();
+    const cut = [];
+    for (const b of m.querySelectorAll('.mi')) {
+      if (!b.getClientRects().length) continue;
+      const q = b.getBoundingClientRect();
+      const out =
+        q.top < r.top - 1 ||
+        q.bottom > r.bottom + 1 ||
+        q.top < -1 ||
+        q.bottom > H + 1 ||
+        q.left < -1 ||
+        q.right > W + 1;
+      if (out || b.scrollWidth > b.clientWidth + 1) cut.push(b.dataset.act || b.id || b.textContent.trim());
+    }
+    return {
+      top: Math.round(r.top),
+      bottom: Math.round(r.bottom),
+      h: Math.round(r.height),
+      over: m.scrollHeight - m.clientHeight,
+      items: [...m.querySelectorAll('.mi')].filter((b) => b.getClientRects().length).length,
+      cut,
+    };
+  });
+}
+
+/**
  * Kurzurteil: `ok`, wenn nichts scrollt, nichts unter der Startleiste liegt, die Schlüsselelemente ganz im Bild sind
  * und am Tisch nichts unter den Rand ragt. Fehlt ein Schlüsselelement, ist das ein Befund.
  */
-export function verdict(m, keys, { table = true, sheet = null } = {}) {
+export function verdict(m, keys, { table = true, sheet = null, menu } = {}) {
   const bad = [];
   if (m.vScroll) bad.push(`Seite ${m.docH}>${m.h}`);
   if (m.hScroll) bad.push(`quer ${m.docW}>${m.w}`);
@@ -415,6 +484,11 @@ export function verdict(m, keys, { table = true, sheet = null } = {}) {
     if (sheet.over > 1) bad.push(`Blatt scrollt ${sheet.over}px`);
     if (sheet.me === false) bad.push('eigene Zeile verdeckt');
     if (sheet.loser === false) bad.push('Verlierer verdeckt');
+  }
+  if (menu === null) bad.push('Menü zu');
+  else if (menu) {
+    if (menu.over > 1) bad.push(`Menü ${menu.over}px abgeschnitten`);
+    if (menu.cut.length) bad.push(`Menü schneidet ${menu.cut.join(', ')}`);
   }
   return bad.length ? bad.join(', ') : 'ok';
 }

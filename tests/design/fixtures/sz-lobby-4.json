@@ -1,0 +1,101 @@
+{
+  "meta": { "id": "sz-lobby-4", "game": "schnautz", "goal": "lobby", "seats": 4, "long": false, "screen": "lobby" },
+  "host": {
+    "code": "DF775",
+    "me": "h-2926ecede4c1",
+    "name": "Tahna",
+    "st": {
+      "phase": "lobby",
+      "game": "schnautz",
+      "sh": null,
+      "host": "h-2926ecede4c1",
+      "rules": {
+        "seats": 4,
+        "fill": true,
+        "turnSecs": 0,
+        "lives": 3,
+        "feuer": true,
+        "dealerChoice": true,
+        "knockFirst": false,
+        "knockDouble": false,
+        "sh": {
+          "two": true,
+          "three": true,
+          "seven": true,
+          "ten": true,
+          "eight": true,
+          "four": true,
+          "cut": true,
+          "deck5": false
+        },
+        "dk": { "transfer": false },
+        "cb": { "target": 100, "snap": false }
+      },
+      "players": [
+        {
+          "id": "h-2926ecede4c1",
+          "name": "Tahna",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0
+        },
+        {
+          "id": "b-daa7d416ffff",
+          "name": "Hotte",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-d9a5ce2affff",
+          "name": "Biggi",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        },
+        {
+          "id": "b-89cf036effff",
+          "name": "Gitti",
+          "lives": 3,
+          "out": false,
+          "ready": false,
+          "online": true,
+          "wins": 0,
+          "bot": true
+        }
+      ],
+      "round": 0,
+      "dealer": -1,
+      "turn": -1,
+      "deck": [],
+      "discard": [],
+      "hands": {},
+      "middle": [],
+      "spare": null,
+      "knocker": null,
+      "afterKnock": 0,
+      "passes": 0,
+      "turns": 0,
+      "last": null,
+      "result": null,
+      "winner": null,
+      "log": [
+        { "k": "join", "p": "b-daa7d416ffff", "name": "Hotte", "bot": true, "n": 1 },
+        { "k": "join", "p": "b-d9a5ce2affff", "name": "Biggi", "bot": true, "n": 2 },
+        { "k": "join", "p": "b-89cf036effff", "name": "Gitti", "bot": true, "n": 3 }
+      ],
+      "n": 3,
+      "games": 0
+    },
+    "keys": {}
+  },
+  "guest": null
+}
