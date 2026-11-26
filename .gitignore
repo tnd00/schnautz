@@ -5,5 +5,16 @@ playwright-report/
 test-results/
 .DS_Store
 *.log
+
+# Arbeitsdateien für Claude Code und seine Skills, gehören nicht ins öffentliche Repo
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+.claude/
+.mcp.json
+skills-lock.json
+.impeccable/
+.graphifyignore
 graphify-out/
-.claude/settings.local.json
+DESIGN.md
+PRODUCT.md
