@@ -1,0 +1,17 @@
+/* Barrierefreiheit (Plan 2.8): Vorleser-Region und Fokusziele, die nur der Vorleser braucht. */
+
+/* Nur für den Vorleser da (src/ui/a11y/say.ts), steht außerhalb von #app */
+#sr-say {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Fokus nach Abläufen (Titel des Ergebnisblatts, Statuszeile danach): gelesen wird er, ein Ring wäre nur Lärm */
+#overlay .paper.result .rhead h2:focus,
+#status[tabindex='-1']:focus {
+  outline: none;
+}

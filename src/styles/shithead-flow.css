@@ -1,4 +1,3 @@
-/* tb: offen */
 /* Shithead Ablauf, Legende und Reaktionen */
 .g3d {
   position: fixed;
@@ -26,7 +25,7 @@
   }
   35% {
     filter: brightness(1.3) sepia(1) saturate(4) hue-rotate(-20deg);
-    box-shadow: 0 0 30px 8px rgba(255, 120, 30, 0.8);
+    box-shadow: 0 0 30px 8px var(--tb-fx-burn);
   }
   100% {
     filter: brightness(0.4) sepia(1) saturate(5);
@@ -68,7 +67,7 @@
 @keyframes bumpN {
   40% {
     transform: scale(1.6);
-    color: #ffb35c;
+    color: var(--tb-fx-flame);
   }
 }
 .nopelbl {
@@ -76,14 +75,14 @@
   z-index: 47;
   transform: translate(-50%, -100%);
   background: var(--red);
-  color: #fff;
+  color: var(--tb-light);
   font-weight: 800;
   font-size: 14px;
   padding: 5px 14px;
   border-radius: 999px;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--tb-shade) 40%, transparent);
   animation: bubIn 0.3s cubic-bezier(0.2, 1.3, 0.4, 1);
 }
 .tauntlbl {
@@ -92,8 +91,8 @@
   transform: translate(-50%, -100%);
   width: max-content;
   max-width: min(90vw, 440px);
-  background: #fbf6e8;
-  color: #2a241b;
+  background: var(--tb-bubble-bg);
+  color: var(--tb-bubble-text);
   font-weight: 700;
   font-size: 15px;
   line-height: 1.3;
@@ -102,8 +101,8 @@
   border-radius: 16px;
   pointer-events: none;
   box-shadow:
-    0 0 0 2px rgba(179, 49, 42, 0.35),
-    0 14px 30px rgba(0, 0, 0, 0.45);
+    0 0 0 2px color-mix(in srgb, var(--tb-alert) 35%, transparent),
+    0 14px 30px color-mix(in srgb, var(--tb-shade) 45%, transparent);
   animation: bubIn 0.35s cubic-bezier(0.2, 1.3, 0.4, 1);
 }
 .tauntlbl.out,
@@ -123,7 +122,11 @@
   border-radius: 50%;
   margin-left: 12px;
   vertical-align: middle;
-  background: conic-gradient(var(--brass-hi) calc(var(--p, 1) * 360deg), rgba(255, 255, 255, 0.12) 0);
+  background: conic-gradient(
+    in srgb,
+    var(--brass-hi) calc(var(--p, 1) * 360deg),
+    color-mix(in srgb, var(--tb-light) 12%, transparent) 0
+  );
 }
 .wincd b {
   display: grid;
@@ -131,7 +134,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #123526;
+  background: var(--tb-clock-bg);
   font-family: var(--display);
   font-size: 19px;
   font-style: normal;
@@ -150,19 +153,17 @@
   padding: 0 26px;
 }
 .btn.bomb {
-  background: linear-gradient(180deg, #e45a43, #a3261c);
-  color: #fff;
-  border: 1px solid #ff9a7e;
+  background: var(--tb-btn-bomb-bg);
+  color: var(--tb-light);
+  border: 1px solid var(--tb-btn-bomb-line);
   min-height: 54px;
   font-size: 18px;
   padding: 0 24px;
-  box-shadow:
-    0 0 0 3px rgba(255, 140, 100, 0.3),
-    0 0 36px rgba(255, 90, 40, 0.55);
+  box-shadow: var(--tb-btn-bomb-glow);
 }
 .legend {
   padding: 12px 16px 12px;
-  border-bottom: 1px solid rgba(246, 239, 223, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--tb-text) 8%, transparent);
   max-height: 46%;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -175,11 +176,11 @@
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .legend-h button {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(246, 239, 223, 0.16);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 16%, transparent);
   color: var(--cream);
   border-radius: 999px;
   font-size: 11.5px;
@@ -202,21 +203,21 @@
   height: 40px;
   padding: 0 4px;
   border-radius: 6px;
-  background: linear-gradient(155deg, #fffdf6, #efe3c8);
+  background: var(--tb-card-face);
   color: var(--ink);
   font-family: var(--display);
   font-weight: 800;
   font-size: 16px;
   box-shadow:
-    0 0 0 1px rgba(70, 45, 10, 0.25),
-    0 3px 6px rgba(0, 0, 0, 0.3);
+    0 0 0 1px var(--tb-card-edge),
+    0 3px 6px color-mix(in srgb, var(--tb-shade) 30%, transparent);
 }
 .lg .rk.r {
   color: var(--red);
 }
 .lg .rk.e {
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: inset 0 0 0 1px rgba(246, 239, 223, 0.16);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tb-text) 16%, transparent);
   color: var(--cream);
   font-size: 16px;
 }
@@ -227,7 +228,7 @@
 }
 .lg .t span {
   display: block;
-  color: var(--muted);
+  color: var(--tb-muted);
   font-size: 12.5px;
   line-height: 1.3;
 }
@@ -244,7 +245,7 @@
   display: flex;
   gap: 4px;
   padding-right: 10px;
-  border-right: 1px solid rgba(246, 239, 223, 0.14);
+  border-right: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
 }
 .erow {
   position: relative;
@@ -274,17 +275,15 @@
     transform: scaleX(0);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .erow.cool::after {
-    animation: none;
-  }
+:where(html.calm) .erow.cool::after {
+  animation: none;
 }
 .emotes button {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 1px solid rgba(246, 239, 223, 0.14);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
   font-size: 21px;
   line-height: 1;
   display: grid;
@@ -321,7 +320,7 @@
 .emotes .etab.on {
   opacity: 1;
   border-color: var(--brass-hi);
-  background: rgba(243, 205, 125, 0.14);
+  background: color-mix(in srgb, var(--tb-accent) 14%, transparent);
 }
 .erow.e-snd button {
   width: 50px;
@@ -337,7 +336,7 @@
 }
 .erow.e-snd button small {
   font: 650 9.5px/1 var(--ui);
-  color: var(--muted);
+  color: var(--tb-muted);
   white-space: nowrap;
 }
 /* Ziel wählen: legt sich über den eigenen Platz, der Tisch springt nicht */
@@ -350,9 +349,9 @@
   z-index: 12;
   padding: 10px;
   border-radius: 18px;
-  background: #0f2a20;
-  border: 1px solid rgba(246, 239, 223, 0.18);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  background: var(--tb-fx-emotes-bg);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 18%, transparent);
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--tb-shade) 50%, transparent);
   animation: rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .ehead {
@@ -396,7 +395,7 @@
 .echips .none {
   grid-column: 1 / -1;
   font: 13px/1.3 var(--ui);
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 
 /* Ergebnisfenster: Soundzeile und Knöpfe bleiben unten stehen, auch wenn die Zeilen scrollen */
@@ -406,7 +405,7 @@
   z-index: 2;
   margin: 10px -18px -18px;
   padding: 12px 18px 18px;
-  background: linear-gradient(180deg, rgba(7, 23, 15, 0), #07170f 14px);
+  background: var(--tb-board-foot);
 }
 /* Reaktionsfenster im Ergebnisfenster: gleiche Knöpfe wie am Tisch */
 .paper .emotes.oemotes {
@@ -442,13 +441,13 @@
   gap: 6px;
   margin-top: 10px;
   font: 600 12px/1.2 var(--ui);
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .outrow .chip {
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(246, 239, 223, 0.18);
-  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 18%, transparent);
+  background: color-mix(in srgb, var(--tb-shade) 20%, transparent);
   color: var(--cream);
   cursor: pointer;
 }
@@ -458,7 +457,7 @@
   font-size: 66px;
   line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--tb-shade) 45%, transparent));
 }
 .rainp {
   position: fixed;
@@ -483,8 +482,8 @@
   }
 }
 .sb-p.shamed {
-  border-color: rgba(176, 120, 60, 0.65);
-  background: rgba(120, 70, 30, 0.28);
+  border-color: var(--tb-shame-line);
+  background: var(--tb-shame-bg);
 }
 .paper .taunt {
   margin: -4px 0 14px;
@@ -493,23 +492,23 @@
   font-style: italic;
   font-weight: 700;
   font-size: clamp(17px, 3.4vw, 20px);
-  color: #8e231d;
+  color: var(--tb-sheet-lose-text);
 }
 .paper .taunt.good {
-  color: #7a5a12;
+  color: var(--tb-sheet-good-text);
 }
 .ann-s .tt {
   display: block;
   margin-top: 6px;
   font-style: italic;
   font-weight: 700;
-  color: #8e231d;
+  color: var(--tb-fx-taunt);
 }
 .ann.gold .ann-s .tt {
-  color: #5a3d06;
+  color: var(--tb-fx-gold-soft);
 }
 .ann.wood .ann-s .tt {
-  color: #ffd9b8;
+  color: var(--tb-knock-text);
 }
 .row .hat {
   display: inline-block;
@@ -523,31 +522,29 @@
     min-height: 50px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  /* 0s statt 0.01ms: Sonst bekommt jedes Element ohne eigenen Übergang (transition-property all) für jede
-   * Eigenschaft einen Übergang und zeigt einen Frame lang den alten Wert. fitLobby und Karussell messen dann die
-   * vorige Größe. */
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0s !important;
-  }
+/* 0s statt 0.01ms: Sonst bekommt jedes Element ohne eigenen Übergang (transition-property all) für jede
+ * Eigenschaft einen Übergang und zeigt einen Frame lang den alten Wert. fitLobby und Karussell messen dann die
+ * vorige Größe. */
+:where(html.calm) * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
 }
 
 /* 4er reinwerfen: gleicher Auftritt wie die Bombe, nur in Messing */
 .btn.throw {
-  color: #2a1a05;
-  background: linear-gradient(180deg, #ffe7a8, var(--brass));
-  border: 1px solid #ffeec2;
+  color: var(--tb-on-accent);
+  background: var(--tb-btn-throw-bg);
+  border: 1px solid var(--tb-btn-throw-line);
   min-height: 54px;
   font-size: 18px;
   padding: 0 24px;
   box-shadow:
-    0 0 0 3px rgba(243, 205, 125, 0.3),
-    0 0 36px rgba(243, 205, 125, 0.5);
+    0 0 0 3px color-mix(in srgb, var(--tb-accent) 30%, transparent),
+    0 0 36px color-mix(in srgb, var(--tb-accent) 50%, transparent);
 }
 .tag.four {
-  background: rgba(243, 205, 125, 0.18);
+  background: color-mix(in srgb, var(--tb-accent) 18%, transparent);
   color: var(--brass-hi);
 }
 
@@ -560,11 +557,11 @@
   width: min(560px, 100%);
   gap: 12px;
   padding: 18px 16px 16px;
-  border-color: rgba(243, 205, 125, 0.45);
-  background: linear-gradient(180deg, rgba(10, 34, 25, 0.82), rgba(6, 22, 16, 0.9));
+  border-color: color-mix(in srgb, var(--tb-accent) 45%, transparent);
+  background: var(--tb-swap-bg);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.2),
-    0 24px 60px rgba(0, 0, 0, 0.45);
+    0 0 0 1px color-mix(in srgb, var(--tb-shade) 20%, transparent),
+    0 24px 60px color-mix(in srgb, var(--tb-shade) 45%, transparent);
   animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .swhead {
@@ -587,7 +584,7 @@
   margin-top: 4px;
   font-size: 13px;
   line-height: 1.35;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .swrow {
   display: flex;
@@ -600,7 +597,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .me.swapping .tcards {
   --tw: clamp(62px, 19vw, 88px);
@@ -645,15 +642,15 @@
   margin: 8px 0 14px 22px;
 }
 .paper .lg .t b {
-  color: #2a241b;
+  color: var(--tb-sheet-ink);
 }
 .paper .lg .t span {
-  color: #6a5f4c;
+  color: var(--tb-sheet-soft);
 }
 .paper .lg .rk.e {
-  background: rgba(42, 36, 27, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(42, 36, 27, 0.2);
-  color: #2a241b;
+  background: color-mix(in srgb, var(--tb-sheet-ink) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tb-sheet-ink) 20%, transparent);
+  color: var(--tb-sheet-ink);
 }
 
 /* Hinweis oben im Chat-Fenster (nur mobil sichtbar) */
@@ -663,7 +660,7 @@
   align-items: center;
   gap: 8px;
   padding: 14px 14px 10px;
-  border-bottom: 1px solid rgba(246, 239, 223, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--tb-text) 8%, transparent);
   text-align: center;
 }
 .turnnote > span {
@@ -697,8 +694,8 @@
   gap: 4px;
   padding: 8px 8px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(60, 40, 10, 0.1);
+  background: var(--tb-sheet-row);
+  border: 1px solid var(--tb-sheet-row-line);
 }
 .brow.bhead {
   background: none;
@@ -707,16 +704,16 @@
   padding-bottom: 0;
 }
 .brow.top {
-  background: rgba(214, 162, 74, 0.16);
-  border-color: rgba(214, 162, 74, 0.55);
+  background: color-mix(in srgb, var(--tb-accent-strong) 16%, transparent);
+  border-color: color-mix(in srgb, var(--tb-accent-strong) 55%, transparent);
 }
 .brow.mine .bn {
-  color: #8a6424;
+  color: var(--tb-sheet-win-text);
 }
 .bp {
   font-family: var(--display);
   font-weight: 800;
-  color: #6a5f4c;
+  color: var(--tb-sheet-soft);
 }
 .bn {
   min-width: 0;
@@ -743,7 +740,7 @@
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #6a5f4c;
+  color: var(--tb-sheet-soft);
   white-space: nowrap;
 }
 @media (max-width: 520px) {
@@ -772,7 +769,7 @@
   width: 1.4em;
   height: 1.02em;
   vertical-align: -0.16em;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--tb-shade) 25%, transparent));
 }
 .hcount {
   display: inline-flex;
@@ -788,16 +785,14 @@
   width: min(600px, 100%);
   color: var(--cream);
   background-color: var(--felt-lo);
-  background-image:
-    radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), transparent 72%),
-    linear-gradient(180deg, #10301f, #07170f);
-  border: 1px solid rgba(243, 205, 125, 0.32);
+  background-image: var(--tb-board-bg);
+  border: 1px solid color-mix(in srgb, var(--tb-accent) 32%, transparent);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 30px 80px rgba(0, 0, 0, 0.6);
+    0 0 0 1px color-mix(in srgb, var(--tb-shade) 35%, transparent),
+    0 30px 80px color-mix(in srgb, var(--tb-shade) 60%, transparent);
   padding: 22px 18px 18px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(243, 205, 125, 0.3) transparent;
+  scrollbar-color: color-mix(in srgb, var(--tb-accent) 30%, transparent) transparent;
 }
 .paper.sheet.board {
   width: min(540px, 100%);
@@ -835,11 +830,11 @@
   text-align: center;
   font-size: 14px;
   line-height: 1.4;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .paper.sheet .x {
-  background: rgba(246, 239, 223, 0.08);
-  border: 1px solid rgba(246, 239, 223, 0.14);
+  background: color-mix(in srgb, var(--tb-text) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
   color: var(--cream);
 }
 .paper.sheet .gamesel {
@@ -849,8 +844,8 @@
   margin-top: 10px;
   padding: 12px 14px 13px;
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(246, 239, 223, 0.07);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 7%, transparent);
 }
 .paper.sheet .rsec h3 {
   margin: 0 0 6px;
@@ -861,14 +856,14 @@
   margin: 0 0 7px;
   font-size: 14.5px;
   line-height: 1.5;
-  color: rgba(246, 239, 223, 0.86);
+  color: color-mix(in srgb, var(--tb-text) 86%, transparent);
 }
 .paper.sheet .rsec p:last-child {
   margin-bottom: 0;
 }
 .paper.sheet .rsec.glance {
-  border-color: rgba(243, 205, 125, 0.22);
-  background: rgba(243, 205, 125, 0.06);
+  border-color: color-mix(in srgb, var(--tb-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--tb-accent) 6%, transparent);
 }
 .paper.sheet .lg {
   margin: 10px 0 0;
@@ -879,42 +874,42 @@
   font-size: 14px;
 }
 .paper.sheet .lg .t span {
-  color: var(--muted);
+  color: var(--tb-muted);
   font-size: 13px;
 }
 .paper.sheet .lg .rk.e {
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: inset 0 0 0 1px rgba(246, 239, 223, 0.16);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tb-text) 16%, transparent);
   color: var(--cream);
 }
 .paper.sheet .btable {
   margin: 4px 0 2px;
 }
 .paper.sheet .brow {
-  background: rgba(0, 0, 0, 0.22);
-  border-color: rgba(246, 239, 223, 0.08);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
+  border-color: color-mix(in srgb, var(--tb-text) 8%, transparent);
 }
 .paper.sheet .brow.bhead {
   background: none;
   border-color: transparent;
 }
 .paper.sheet .brow.top {
-  background: rgba(243, 205, 125, 0.13);
-  border-color: rgba(243, 205, 125, 0.5);
+  background: color-mix(in srgb, var(--tb-accent) 13%, transparent);
+  border-color: color-mix(in srgb, var(--tb-accent) 50%, transparent);
 }
 .paper.sheet .brow.mine .bn {
   color: var(--brass-hi);
 }
 .paper.sheet .bp {
-  color: var(--muted);
+  color: var(--tb-muted);
   text-align: center;
   font-size: 17px;
 }
 .paper.sheet .bhead .bv small {
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .paper.sheet .shc {
-  background: rgba(0, 0, 0, 0.25);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
 }
 /* Ergebnis und Abfragen im selben Look */
 .paper.sheet .trophy {
@@ -923,46 +918,46 @@
 .paper.sheet .verdict {
   margin: 0 0 14px;
   text-align: center;
-  background: rgba(0, 0, 0, 0.22);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
   color: var(--cream);
 }
 .paper.sheet .verdict.bad {
-  background: rgba(224, 103, 93, 0.14);
-  color: #f6b3aa;
-  box-shadow: inset 0 0 0 1.5px rgba(224, 103, 93, 0.45);
+  background: color-mix(in srgb, var(--tb-lose) 14%, transparent);
+  color: var(--tb-lose-soft);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tb-lose) 45%, transparent);
 }
 .paper.sheet .verdict.good {
   background: linear-gradient(180deg, var(--brass-hi), var(--brass));
-  color: #2a1a05;
+  color: var(--tb-on-accent);
   box-shadow: none;
 }
 .paper.sheet .taunt {
   padding-left: 0;
   text-align: center;
-  color: #f0a59c;
+  color: var(--tb-lose-text);
 }
 .paper.sheet .taunt.good {
   color: var(--brass-hi);
 }
 .paper.sheet .row {
-  background: rgba(0, 0, 0, 0.22);
-  border-color: rgba(246, 239, 223, 0.08);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
+  border-color: color-mix(in srgb, var(--tb-text) 8%, transparent);
 }
 .paper.sheet .row.lose {
-  background: rgba(224, 103, 93, 0.12);
-  border-color: rgba(224, 103, 93, 0.45);
+  background: color-mix(in srgb, var(--tb-lose) 12%, transparent);
+  border-color: color-mix(in srgb, var(--tb-lose) 45%, transparent);
 }
 .paper.sheet .row.win {
-  background: rgba(243, 205, 125, 0.13);
-  border-color: rgba(243, 205, 125, 0.5);
+  background: color-mix(in srgb, var(--tb-accent) 13%, transparent);
+  border-color: color-mix(in srgb, var(--tb-accent) 50%, transparent);
 }
 .paper.sheet .row .who > span,
 .paper.sheet .mini .more,
 .paper.sheet .foot .waittxt {
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .paper.sheet .conseq {
-  color: #f0a59c;
+  color: var(--tb-lose-text);
 }
 .paper.sheet .conseq.swim {
   color: var(--sea);
@@ -973,16 +968,16 @@
 }
 .paper.sheet .row .mini .card {
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 2px 5px rgba(0, 0, 0, 0.35);
+    0 0 0 1px color-mix(in srgb, var(--tb-shade) 35%, transparent),
+    0 2px 5px color-mix(in srgb, var(--tb-shade) 35%, transparent);
 }
 .paper.sheet .lives .coaster.lost {
-  box-shadow: inset 0 0 0 1.5px rgba(246, 239, 223, 0.25);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tb-text) 25%, transparent);
 }
 .paper.sheet .btn.ghost {
   color: var(--cream);
-  border-color: rgba(246, 239, 223, 0.28);
-  background: rgba(0, 0, 0, 0.15);
+  border-color: color-mix(in srgb, var(--tb-text) 28%, transparent);
+  background: color-mix(in srgb, var(--tb-shade) 15%, transparent);
 }
 @media (max-width: 520px) {
   .paper.sheet {
@@ -1033,7 +1028,7 @@ body:not(.intable) .menu .t-only {
   border-radius: 999px;
   font-weight: 800;
   font-size: 13px;
-  color: #2a1a05;
+  color: var(--tb-on-accent);
   background: linear-gradient(180deg, var(--brass-hi), var(--brass));
 }
 .relnow {
@@ -1046,7 +1041,7 @@ body:not(.intable) .menu .t-only {
 .reld {
   margin-left: auto;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .relg + .relg {
   margin-top: 10px;
@@ -1057,7 +1052,7 @@ body:not(.intable) .menu .t-only {
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .relg ul {
   margin: 0;
@@ -1067,7 +1062,7 @@ body:not(.intable) .menu .t-only {
   margin: 3px 0;
   font-size: 14px;
   line-height: 1.45;
-  color: rgba(246, 239, 223, 0.88);
+  color: color-mix(in srgb, var(--tb-text) 88%, transparent);
 }
 .relg li::marker {
   color: var(--brass);
@@ -1082,7 +1077,7 @@ body:not(.intable) .menu .t-only {
   height: 3px;
   border-radius: 2px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--tb-shade) 35%, transparent);
   pointer-events: none;
 }
 .opp > .clk::before {
@@ -1095,7 +1090,7 @@ body:not(.intable) .menu .t-only {
   transition: transform 0.25s linear;
 }
 .opp > .clk.low::before {
-  background: #e0675d;
+  background: var(--tb-lose);
 }
 .clk.mine {
   position: absolute;
@@ -1108,8 +1103,8 @@ body:not(.intable) .menu .t-only {
   gap: 5px;
   padding: 2px 9px 2px 5px;
   border-radius: 999px;
-  border: 1px solid rgba(243, 205, 125, 0.5);
-  background: #0f2a20;
+  border: 1px solid color-mix(in srgb, var(--tb-accent) 50%, transparent);
+  background: var(--tb-val-bg);
   color: var(--brass-hi);
   font-size: 12px;
   font-weight: 800;
@@ -1120,16 +1115,20 @@ body:not(.intable) .menu .t-only {
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: conic-gradient(currentColor calc(var(--p, 1) * 360deg), rgba(246, 239, 223, 0.15) 0);
+  background: conic-gradient(
+    in srgb,
+    currentColor calc(var(--p, 1) * 360deg),
+    color-mix(in srgb, var(--tb-text) 15%, transparent) 0
+  );
 }
 .clk.mine.low {
-  color: #f6b3aa;
-  border-color: rgba(224, 103, 93, 0.75);
+  color: var(--tb-lose-soft);
+  border-color: color-mix(in srgb, var(--tb-lose) 75%, transparent);
   animation: clkPulse 1s ease-in-out infinite;
 }
 @keyframes clkPulse {
   50% {
-    box-shadow: 0 0 0 4px rgba(224, 103, 93, 0.25);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tb-lose) 25%, transparent);
   }
 }
 .clkn {
@@ -1145,9 +1144,9 @@ body:not(.intable) .menu .t-only {
   border-color: var(--brass-hi);
   background: transparent;
   box-shadow:
-    inset 0 0 22px rgba(243, 205, 125, 0.16),
-    0 0 0 1px rgba(243, 205, 125, 0.35),
-    0 0 34px rgba(243, 205, 125, 0.3);
+    inset 0 0 22px color-mix(in srgb, var(--tb-accent) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tb-accent) 35%, transparent),
+    0 0 34px color-mix(in srgb, var(--tb-accent) 30%, transparent);
   animation: meGlow 1.8s ease-in-out infinite;
 }
 .me[data-urg='1'] {
@@ -1159,11 +1158,9 @@ body:not(.intable) .menu .t-only {
 .me[data-urg='3'] {
   animation-duration: 0.5s;
 }
-@media (prefers-reduced-motion: reduce) {
-  .me.turn,
-  .me[data-urg] {
-    animation: none;
-  }
+:where(html.calm) .me.turn,
+:where(html.calm) .me[data-urg] {
+  animation: none;
 }
 
 /* Sprüche und Hinweise mittig in der Spielfläche (fixedLabel) */
@@ -1221,12 +1218,12 @@ body:not(.intable) .menu .t-only {
   gap: 12px;
   padding: 9px 12px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(246, 239, 223, 0.08);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 8%, transparent);
   font-size: 14px;
 }
 .netinfo .nrow span {
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .netinfo .nrow b {
   display: inline-flex;
@@ -1240,7 +1237,7 @@ body:not(.intable) .menu .t-only {
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .npeople {
   list-style: none;
@@ -1259,12 +1256,12 @@ body:not(.intable) .menu .t-only {
 .npeople li span {
   margin-left: auto;
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .netinfo .nnote {
   margin: 10px 0 0;
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 
 /* Einladung (src/ui/render/invite.ts) */
@@ -1294,7 +1291,7 @@ body:not(.intable) .menu .t-only {
 .invite .nnote {
   margin: 12px 0 0;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 
 /* Bestenliste mit Tipp-Punkten: eine Spalte mehr */
@@ -1310,18 +1307,18 @@ body:not(.intable) .menu .t-only {
 
 /* Revanche im Ergebnisfenster */
 .paper.sheet .btn.rv {
-  background: linear-gradient(180deg, #d0493f, #9b2a23);
-  color: #fff3e8;
-  border: 1px solid rgba(243, 205, 125, 0.6);
+  background: var(--tb-btn-rv-bg);
+  color: var(--tb-btn-rv-text);
+  border: 1px solid color-mix(in srgb, var(--tb-accent) 60%, transparent);
   animation: rvPulse 1.6s ease-in-out infinite;
 }
 @keyframes rvPulse {
   50% {
-    box-shadow: 0 0 0 4px rgba(208, 73, 63, 0.25);
+    box-shadow: 0 0 0 4px var(--tb-btn-rv-pulse);
   }
 }
 .paper.sheet .taunt.rv {
-  color: #f6b3aa;
+  color: var(--tb-lose-soft);
 }
 .rmk {
   margin-left: 4px;
@@ -1331,8 +1328,8 @@ body:not(.intable) .menu .t-only {
 }
 /* Tipps: Knopf am eigenen Platz, Hinweis, Fenster, Zahl an den Kacheln und Ergebniszeile */
 .tag.bet {
-  background: rgba(143, 112, 214, 0.22);
-  color: #d9c8ff;
+  background: color-mix(in srgb, var(--tb-bet) 22%, transparent);
+  color: var(--tb-bet-text);
 }
 .betbtn.pulse {
   animation: rvPulse 1.6s ease-in-out infinite;
@@ -1342,8 +1339,8 @@ body:not(.intable) .menu .t-only {
   color: var(--cream);
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(143, 112, 214, 0.16);
-  border: 1px solid rgba(143, 112, 214, 0.35);
+  background: color-mix(in srgb, var(--tb-bet) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-bet) 35%, transparent);
 }
 .paper.bets .betgrid {
   display: grid;
@@ -1358,8 +1355,8 @@ body:not(.intable) .menu .t-only {
   gap: 3px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(246, 239, 223, 0.14);
-  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
   color: var(--cream);
   text-align: left;
   cursor: pointer;
@@ -1374,12 +1371,12 @@ body:not(.intable) .menu .t-only {
 }
 .paper.bets .betc .bs {
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .paper.bets .betc.sel {
-  border-color: #b49cf0;
-  background: rgba(143, 112, 214, 0.22);
-  box-shadow: 0 0 0 2px rgba(180, 156, 240, 0.35);
+  border-color: var(--tb-bet-line);
+  background: color-mix(in srgb, var(--tb-bet) 22%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tb-bet-line) 35%, transparent);
 }
 .paper.bets .foot {
   justify-content: flex-end;
@@ -1387,7 +1384,7 @@ body:not(.intable) .menu .t-only {
 .paper.sheet .betres {
   margin: 10px 0 0;
   font-size: 13.5px;
-  color: #d9c8ff;
+  color: var(--tb-bet-text);
 }
 
 /* Mit Revanche-Knopf werden die anderen Knöpfe kurz, damit alles in eine Zeile passt */

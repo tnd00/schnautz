@@ -73,6 +73,7 @@
 
   /* Mitte */
   --tb-zone-bg: radial-gradient(
+    in srgb,
     rgba(255, 255, 255, 0.05),
     color-mix(in srgb, var(--tb-shade) 12%, transparent)
   ); /* Fläche der Mitte */
@@ -211,20 +212,20 @@
   --tb-sheet-soft: #6a5f4c; /* dito Nebentext */
   --tb-sheet-lines:
     linear-gradient(
-      90deg,
+      90deg in srgb,
       transparent 38px,
       color-mix(in srgb, var(--red) 35%, transparent) 38px 39.5px,
       transparent 39.5px
     ),
     repeating-linear-gradient(180deg, transparent 0 29px, rgba(70, 110, 160, 0.14) 29px 30px); /* Notizpapier, geschätzt */
   --tb-sheet-gloss: none; /* Glanz auf dem Ergebnisblatt */
-  --tb-sheet-row: transparent; /* Zeile, geschätzt */
-  --tb-sheet-row-line: rgba(70, 45, 10, 0.12); /* Linie unter der Zeile, geschätzt */
+  --tb-sheet-row: rgba(255, 255, 255, 0.55); /* Zeile */
+  --tb-sheet-row-line: rgba(60, 40, 10, 0.1); /* Rand der Zeile */
   --tb-sheet-win-bg: color-mix(in srgb, var(--brass) 18%, transparent); /* Zeile Sieger, geschätzt */
   --tb-sheet-lose-bg: color-mix(in srgb, var(--red) 10%, transparent); /* Zeile Verlierer, geschätzt */
   --tb-sheet-lose-text: #8e231d; /* dito Schrift */
   --tb-sheet-shadow: 0 30px 70px color-mix(in srgb, var(--tb-shade) 55%, transparent); /* Schatten des Blatts, geschätzt */
-  --tb-sheet-dim: rgba(3, 14, 9, 0.55); /* Schleier, geschätzt */
+  --tb-sheet-dim: rgba(3, 12, 8, 0.55); /* Schleier hinter Fenstern */
   --tb-sheet-alt-bg: rgba(70, 45, 10, 0.08); /* Nebenknopf auf dem Blatt, geschätzt */
   --tb-sheet-alt-text: #2a241b; /* dito Schrift, geschätzt */
 
@@ -234,4 +235,116 @@
   --tb-side-soft: #b4cbc0; /* dito Nebentext */
   --tb-side-line: color-mix(in srgb, var(--cream) 8%, transparent); /* dito Trenner */
   --tb-field-bg: color-mix(in srgb, var(--tb-shade) 20%, transparent); /* Eingabefeld Chat, geschätzt */
+
+  /* Grundfarben und Flächen der Abläufe */
+  --tb-light: #fff; /* helle Schleier und Weiß auf kräftigen Flächen (Grundfarbe für color-mix) */
+  --tb-muted: var(--muted); /* leiser Nebentext (Legenden, Hinweise, Verlauf) */
+  --tb-alert: var(--red); /* Rot für Verlust und Spott auf hellem Grund (Grundfarbe für color-mix) */
+  --tb-dusk: #08160f; /* dunkle Etiketten über dem Tisch (Grundfarbe für color-mix) */
+  --tb-paper-margin: rgba(179, 49, 42, 0.22); /* Randlinie im Fenster */
+  --tb-paper-rule: rgba(60, 90, 140, 0.1); /* Linien im Fenster */
+  --tb-sheet-lead: #5a5040; /* Vorspann im Fenster */
+  --tb-net-bg: #f0c25b; /* Leiste „Verbindung“, Fläche (Schrift --tb-on-accent) */
+  --tb-bubble-bg: #fbf6e8; /* Sprechblase und Spruch-Etikett */
+  --tb-bubble-text: #2a241b; /* dito Schrift */
+  --tb-card-edge: rgba(70, 45, 10, 0.25); /* Kante kleiner und angehobener Karten */
+  --tb-card-face: linear-gradient(155deg, #fffdf6, #efe3c8); /* Kartensticker in der Legende */
+  --tb-clock-bg: #123526; /* Countdown des 4er-Fensters */
+  --tb-log-text: #d9e4dd; /* Einträge im Verlauf */
+  --tb-side-solid: #0d261c; /* Seitenleiste als Bogen am Handy */
+  --tb-hand-pill-bg: rgba(8, 26, 19, 0.9); /* Pille mit der Zahl der Handkarten */
+  --tb-mark-bg: rgba(10, 18, 14, 0.82); /* Wertmarke an Cabo-Karten */
+  --tb-mark-zero: #2e8b57; /* dito bei null */
+  --tb-swap-bg: linear-gradient(
+    180deg,
+    rgba(10, 34, 25, 0.82),
+    rgba(6, 22, 16, 0.9)
+  ); /* eigener Platz in der Tauschrunde */
+  --tb-board-bg:
+    radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), transparent 72%),
+    linear-gradient(180deg, #10301f, #07170f); /* dunkles Tuch für Regeln, Bestenliste und Ergebnis */
+  --tb-board-foot: linear-gradient(180deg, rgba(7, 23, 15, 0), #07170f 14px); /* Knopfleiste unten im Ergebnisfenster */
+  /* Sieg, Gold und Krone */
+  --tb-fx-gold-bg: linear-gradient(180deg, #ffe9b0, #e7b65a); /* goldene Meldung */
+  --tb-fx-gold-ring: rgba(255, 236, 180, 0.8); /* dito Ring */
+  --tb-fx-gold-soft: #5a3d06; /* dito Spruch */
+  --tb-good-bg: linear-gradient(180deg, #ffe9b0, #efc66f); /* gutes Urteil im Ergebnis */
+  --tb-good-text: #4a3205; /* dito Schrift */
+  --tb-good-line: rgba(160, 110, 20, 0.4); /* dito Rand */
+  --tb-sheet-win-text: var(--brass-lo); /* Sieg auf Papier (Wert, Folge, eigene Zeile) */
+  --tb-sheet-good-text: #7a5a12; /* guter Spruch auf Papier */
+  --tb-fx-glow: #ffd65a; /* Leuchten der geworfenen Krone (Grundfarbe für color-mix) */
+  --tb-fx-glow-hi: #ffe478; /* dito Funkeln */
+  --tb-crown: #e8b64c; /* Ring der Krönung bei Cabo */
+  --tb-crown-dim: rgba(10, 8, 2, 0.78); /* dito Schleier */
+  --tb-crown-hi: #ffe496; /* dito Leuchten */
+  --tb-snap: #f0b33a; /* Schnappen bei Cabo (Grundfarbe für color-mix) */
+  /* Holz, Braun und Schande */
+  --tb-fx-wood-bg: linear-gradient(180deg, #9a5a34, #5f2f18); /* Meldung aus Holz (Schrift --tb-tag-knock-text) */
+  --tb-fx-wood-soft: #f1d9bd; /* dito Unterzeile */
+  --tb-knock-text: #ffd9b8; /* geklopft in der Statuszeile, Spruch auf Holz */
+  --tb-fx-taunt: #8e231d; /* Spruch in Meldung und Etikett */
+  --tb-fx-ann-ring: rgba(60, 40, 10, 0.15); /* feiner Rand der Meldung */
+  --tb-shame: #a0682e; /* Shithead-Braun (Grundfarbe für color-mix) */
+  --tb-shame-line: rgba(176, 120, 60, 0.65); /* Platz des Shitheads in der Leiste, Rand */
+  --tb-shame-bg: rgba(120, 70, 30, 0.28); /* dito Fläche */
+  --tb-fx-brown-bg: linear-gradient(180deg, #f1dfc4, #c9965f); /* braune Meldung */
+  --tb-fx-brown-text: #4a2810; /* dito Schrift */
+  --tb-fx-brown-title: #6b3410; /* dito Hervorhebung im großen Wort */
+  --tb-zer-dim: rgba(14, 8, 3, 0.8); /* Schleier der Enthüllung */
+  --tb-zer-ring: #8a5426; /* dito Ring */
+  --tb-zer-glow: 0 0 34px 6px rgba(176, 122, 66, 0.85), inset 0 0 28px rgba(160, 104, 46, 0.6); /* dito Leuchten */
+  --tb-zer-glow-hi:
+    0 0 52px 12px rgba(217, 169, 107, 0.95), inset 0 0 36px rgba(192, 138, 80, 0.75); /* dito Leuchten im Puls */
+  --tb-coaster-new: radial-gradient(
+    circle at 35% 30%,
+    #fff7e0 0 18%,
+    #ead19a 40%,
+    #b98b3e 100%
+  ); /* eben verlorenes Leben */
+  --tb-coaster-new-line: rgba(110, 64, 18, 0.55); /* dito Rand */
+  /* Rot, Feuer und Knöpfe der Abläufe */
+  --tb-lose-soft: #f6b3aa; /* Verlust auf dunklem Tuch, Uhr knapp */
+  --tb-lose-text: #f0a59c; /* Spruch und Folge auf dunklem Tuch */
+  --tb-tag-def-text: #ffb3aa; /* Etikett „verteidigt“ bei Durak, Schrift */
+  --tb-fx-burn: rgba(255, 120, 30, 0.8); /* Glut beim Verbrennen */
+  --tb-fx-flame: #ffb35c; /* Zahl neben der Flamme */
+  --tb-btn-bomb-bg: linear-gradient(180deg, #e45a43, #a3261c); /* Knopf Bombe (Schrift --tb-light) */
+  --tb-btn-bomb-line: #ff9a7e; /* dito Rand */
+  --tb-btn-bomb-glow: 0 0 0 3px rgba(255, 140, 100, 0.3), 0 0 36px rgba(255, 90, 40, 0.55); /* dito Leuchten */
+  --tb-btn-rv-bg: linear-gradient(180deg, #d0493f, #9b2a23); /* Knopf Revanche */
+  --tb-btn-rv-text: #fff3e8; /* dito Schrift */
+  --tb-btn-rv-pulse: rgba(208, 73, 63, 0.25); /* dito Puls */
+  --tb-btn-throw-bg: linear-gradient(180deg, #ffe7a8, var(--brass)); /* Knopf 4er reinwerfen */
+  --tb-btn-throw-line: #ffeec2; /* dito Rand */
+  /* Tipps, Wasser und Würfe */
+  --tb-bet: #8f70d6; /* Tipp (Grundfarbe für color-mix) */
+  --tb-bet-text: #d9c8ff; /* dito Schrift */
+  --tb-bet-line: #b49cf0; /* gewählter Tipp, Rand */
+  --tb-fx-sea-bg: linear-gradient(180deg, #d7f2fa, #9fd8ea); /* Meldung Schwimmen */
+  --tb-fx-sea-title: #11566c; /* dito großes Wort */
+  --tb-sea-text: #1f7a95; /* Schwimmen auf Papier */
+  --tb-sea-hi: #8fd3ff; /* Schwimmen in der Punkteleiste */
+  --tb-fx-tomato: #e0362b; /* Tomate (Grundfarbe für color-mix) */
+  --tb-fx-tomato-mark: radial-gradient(
+    circle at 42% 40%,
+    #ff7a66 0 14%,
+    #e0362b 15% 52%,
+    rgba(178, 28, 22, 0.92) 53% 68%,
+    transparent 69%
+  ); /* Fleck der Tomate */
+  --tb-fx-splat: #d8322a; /* Spritzer */
+  --tb-fx-egg: #ffcb2e; /* Eigelb (Grundfarbe für color-mix) */
+  --tb-fx-egg-white: #f8f3e4; /* Eiweiß */
+  --tb-fx-egg-mark: radial-gradient(
+    circle at 50% 46%,
+    #ffcb2e 0 20%,
+    #f6a91d 21% 24%,
+    #f8f3e4 25% 58%,
+    rgba(248, 243, 228, 0.86) 59% 68%,
+    transparent 69%
+  ); /* Fleck vom Ei */
+  --tb-fx-poo: #7a4a1f; /* Haufen und Treffer ohne eigene Farbe (Grundfarbe für color-mix) */
+  --tb-fx-heart: #ff5a78; /* Herz (Grundfarbe für color-mix) */
+  --tb-fx-bunny: #ffd1dc; /* Hase (Grundfarbe für color-mix) */
 }

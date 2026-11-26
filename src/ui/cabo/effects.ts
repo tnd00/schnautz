@@ -1,5 +1,6 @@
 import { CB_KAMI, CB_PENALTY, CB_RESET_AT, CB_RESET_TO } from '../../game/constants';
 import type { LogEntry } from '../../game/types';
+import { haptic } from '../a11y/haptic';
 import { App } from '../app';
 import { esc, num } from '../dom';
 import { type Announcement, emit, shakePanel } from '../feedback';
@@ -93,11 +94,7 @@ export function caboEffect(c: LevelCtx, e0: LogEntry): void {
       });
       if (e.to === App.me && !mine) {
         shakePanel(App.me);
-        try {
-          navigator.vibrate?.([40, 40, 40]);
-        } catch {
-          // Manche Browser verbieten Vibration ohne vorherige Geste
-        }
+        haptic('mid');
       }
       return;
     case 'cbcabo': {

@@ -893,15 +893,13 @@ body.invited #scr-start .st-joinlink {
     transform: translateY(100%);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  body.startform #scr-start .startpanel {
-    animation: fade 0.2s;
-  }
-  body:not(.ingame) .top :is(.iconbtn, .chip):is(:hover, :active),
-  #scr-start .st-game:active {
-    translate: none;
-    scale: none;
-  }
+:where(html.calm) body.startform #scr-start .startpanel {
+  animation: fade 0.2s;
+}
+:where(html.calm) body:not(.ingame) .top :is(.iconbtn, .chip):is(:hover, :active),
+:where(html.calm) #scr-start .st-game:active {
+  translate: none;
+  scale: none;
 }
 
 /* Fortsetzen steht vorn: Dann rückt das Formular darunter zusammen, statt zu scrollen. Erst gehen Trenner und
@@ -1091,10 +1089,8 @@ body.invited #scr-start .st-joinlink {
     transform: rotate(6deg) translateX(8px);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  #scr-wait .spinner i {
-    animation-duration: 4s;
-  }
+:where(html.calm) #scr-wait .spinner i {
+  animation-duration: 4s;
 }
 #scr-wait .wait-text {
   font-size: 24px;

@@ -5,6 +5,8 @@ import { $, $opt } from './dom';
 import { toast } from './feedback';
 import { dealerId, myMoveNow } from './helpers';
 import { dlog } from './devlog';
+import { themeColorOf } from './look';
+import { prefs } from './prefs';
 import { GAME_NAME } from '../game/games';
 
 export type Screen = 'start' | 'wait' | 'lobby' | 'game';
@@ -15,8 +17,8 @@ export function showScreen(name: Screen): void {
   });
   // Am Tisch passt mobil alles auf einen Bildschirm, ohne Scrollen
   document.body.classList.toggle('ingame', name === 'game');
-  // Browserleiste in der Farbe des Grundes: Filz am Tisch, Periwinkle im Rahmen
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', name === 'game' ? '#123326' : '#6f6cf0');
+  // Browserleiste in der Farbe des Grundes (look.ts)
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColorOf(prefs().look, name));
   document.body.classList.toggle('inlobby', name === 'lobby');
   document.body.classList.toggle('onstart', name === 'start');
   if (name !== 'start') document.body.classList.remove('startform');

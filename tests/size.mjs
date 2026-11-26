@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /*
  * Größengrenze ohne eigene Abhängigkeit: liest einen fertigen Build, sucht in index.html das Einstiegsstück und das
- * Stylesheet, packt beide mit gzip (Stufe 9) und bricht mit Code 1 ab, wenn eine Grenze überschritten ist.
+ * Stylesheet, packt beide mit gzip (Stufe 9) und bricht mit Code 1 ab, wenn eine Grenze überschritten ist. Stücke,
+ * die index.html per modulepreload mitlädt, zählen zum Einstieg (Rolldown lagert gemeinsame Module dorthin aus).
  *
  *   node tests/size.mjs [ordner] [--clean]
  *
@@ -97,8 +98,17 @@ async function check() {
       continue;
     }
     if (p.kind === 'css') mainCss = file;
-    const raw = readFileSync(file);
-    const gz = gzipSync(raw, { level: 9 }).byteLength;
+    const pre =
+      p.kind === 'js'
+        ? [...html.matchAll(/<link\b[^>]*>/g)]
+            .map((m) => m[0])
+            .filter((t) => /\srel="modulepreload"/.test(t))
+            .map((t) => join(dir, attr(t, 'href').replace(/^\.?\//, '')))
+        : [];
+    const files = [file, ...pre];
+    const raw = { byteLength: files.reduce((n, f) => n + readFileSync(f).byteLength, 0) };
+    const gz = files.reduce((n, f) => n + gzipSync(readFileSync(f), { level: 9 }).byteLength, 0);
+    if (pre.length) console.log(`info  vorgeladen: ${pre.map((f) => relative(dir, f)).join(', ')} (zählt mit)`);
     const limit = LIMITS[p.kind] * 1000;
     const over = gz > limit;
     if (over) bad++;

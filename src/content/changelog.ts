@@ -10,6 +10,29 @@ export interface Release {
 
 export const CHANGELOG: readonly Release[] = [
   {
+    v: '2.8',
+    date: '2026-11-26',
+    title: 'Neuer Tisch',
+    groups: [
+      {
+        h: 'Neu',
+        items: [
+          'Im Menü ⋯ gibt es „Bedienung“. Dort stellst du Ruhig (weniger Bewegung), die Lautstärke, den Ton bei deinem Zug und am Android-Handy die Vibration ein.',
+          'Gibt es eine neue Version, lädt die Seite von selbst neu, sobald gerade nichts passiert. Danach sitzt du wieder an deinem Platz. So spielen alle am Tisch immer mit derselben Version.',
+        ],
+      },
+      {
+        h: 'Besser',
+        items: [
+          'Am Handy stehen Regeln und Bestenliste am Tisch nur noch oben in der Kopfzeile, das Menü ist dadurch kürzer.',
+          'Der Ton, wenn du dran bist, kommt nur noch, wenn du gerade woanders hinschaust. In „Bedienung“ kannst du ihn immer oder nie spielen lassen.',
+          'Mit der Tastatur wandern die Pfeiltasten durch deine Karten, Escape hebt die Auswahl auf und Umschalt mit Enter spielt aus.',
+          'Wer mit Vorleser spielt, hört, wann er dran ist, was ihn betrifft und warum ein Zug gerade nicht geht.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.7',
     date: '2026-11-26',
     title: 'Klare Worte',

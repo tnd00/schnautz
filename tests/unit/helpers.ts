@@ -161,3 +161,131 @@ export const REJECT_SAMPLES: Readonly<Record<RejectCode, RejectArgs | undefined>
   'bet.twice': { on: 'p1' },
   'bet.targetDone': { p: 'p1' },
 };
+
+/*
+ * Kleiner HTML-Baum und CSS-Selektoren ohne DOM, für die Bausteine am Tisch (tests/unit/table.test.ts, hooks.test.ts).
+ * Kann Tags, #id, .klasse, [attr], [attr=wert], [attr~=wert], :not(einfach), Nachfahre, > und Kommalisten. Gedacht für
+ * eigenes, wohlgeformtes HTML aus den Bausteinen, kein allgemeiner Parser.
+ */
+export interface El {
+  tag: string;
+  attrs: Record<string, string>;
+  kids: El[];
+  parent: El | null;
+}
+
+const VOID_TAGS = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'source', 'wbr']);
+
+export function parseHTML(html: string): El {
+  const root: El = { tag: '#root', attrs: {}, kids: [], parent: null };
+  let cur = root;
+  for (const m of html.matchAll(/<(\/?)([a-zA-Z][\w-]*)((?:\s+[\w:-]+(?:="[^"]*")?)*)\s*(\/?)>/g)) {
+    const tag = m[2].toLowerCase();
+    if (m[1]) {
+      let up: El | null = cur;
+      while (up && up !== root && up.tag !== tag) up = up.parent;
+      if (up && up !== root) cur = up.parent ?? root;
+      continue;
+    }
+    const attrs: Record<string, string> = {};
+    for (const a of m[3].matchAll(/([\w:-]+)(?:="([^"]*)")?/g)) attrs[a[1]] = a[2] ?? '';
+    const el: El = { tag, attrs, kids: [], parent: cur };
+    cur.kids.push(el);
+    if (!m[4] && !VOID_TAGS.has(tag)) cur = el;
+  }
+  return root;
+}
+
+interface Comp {
+  tag?: string;
+  ids: string[];
+  cls: string[];
+  attrs: { k: string; op: '' | '=' | '~='; v: string }[];
+  not: Comp[];
+}
+
+/** Teilt an Zeichen auf oberster Ebene, also nicht in [] oder () */
+function splitTop(s: string, at: (ch: string) => boolean): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let buf = '';
+  for (const ch of s) {
+    if (ch === '[' || ch === '(') depth++;
+    if (ch === ']' || ch === ')') depth--;
+    if (!depth && at(ch)) {
+      out.push(buf);
+      buf = '';
+    } else buf += ch;
+  }
+  out.push(buf);
+  return out;
+}
+
+function parseComp(s: string): Comp {
+  const c: Comp = { ids: [], cls: [], attrs: [], not: [] };
+  const re = /^([a-zA-Z][\w-]*)|#([\w-]+)|\.([\w-]+)|\[([\w:-]+)(?:(~?=)"?([^"\]]*)"?)?\]|:not\(([^)]*)\)/g;
+  for (const m of s.matchAll(re)) {
+    if (m[1]) c.tag = m[1].toLowerCase();
+    else if (m[2]) c.ids.push(m[2]);
+    else if (m[3]) c.cls.push(m[3]);
+    else if (m[4]) c.attrs.push({ k: m[4], op: (m[5] ?? '') as '' | '=' | '~=', v: m[6] ?? '' });
+    else if (m[7]) c.not.push(parseComp(m[7]));
+  }
+  return c;
+}
+
+function matchComp(el: El, c: Comp): boolean {
+  const cls = (el.attrs.class ?? '').split(/\s+/);
+  if (c.tag && el.tag !== c.tag) return false;
+  if (c.ids.some((id) => el.attrs.id !== id)) return false;
+  if (c.cls.some((x) => !cls.includes(x))) return false;
+  for (const a of c.attrs) {
+    const v = el.attrs[a.k];
+    if (v == null) return false;
+    if (a.op === '=' && v !== a.v) return false;
+    if (a.op === '~=' && !v.split(/\s+/).includes(a.v)) return false;
+  }
+  return !c.not.some((n) => matchComp(el, n));
+}
+
+type Step = { c: Comp; comb: ' ' | '>' };
+
+/** Passt el auf die Kette bis Index i, rückwärts gelesen */
+function matchChain(el: El, steps: Step[], i: number): boolean {
+  if (!matchComp(el, steps[i].c)) return false;
+  if (i === 0) return true;
+  const comb = steps[i].comb;
+  for (let p = el.parent; p && p.tag !== '#root'; p = p.parent) {
+    if (matchChain(p, steps, i - 1)) return true;
+    if (comb === '>') return false;
+  }
+  return false;
+}
+
+function parseSel(sel: string): Step[] {
+  const steps: Step[] = [];
+  let comb: ' ' | '>' = ' ';
+  for (const part of splitTop(sel.replace(/\s*>\s*/g, ' > ').trim(), (ch) => ch === ' ')) {
+    if (!part) continue;
+    if (part === '>') comb = '>';
+    else {
+      steps.push({ c: parseComp(part), comb });
+      comb = ' ';
+    }
+  }
+  return steps;
+}
+
+/** Alle Elemente im Baum, auf die der Selektor passt */
+export function qsa(root: El, sel: string): El[] {
+  const chains = splitTop(sel, (ch) => ch === ',').map(parseSel);
+  const out: El[] = [];
+  const walk = (el: El): void => {
+    for (const k of el.kids) {
+      if (chains.some((ch) => matchChain(k, ch, ch.length - 1))) out.push(k);
+      walk(k);
+    }
+  };
+  walk(root);
+  return out;
+}

@@ -25,6 +25,8 @@ import { initStart } from './ui/start';
 import { initBackMark, initUpdateCheck, reloadApp, showUpdate, takeBackMark, updateText } from './ui/update';
 import { LS, SS } from './ui/storage';
 import { initDevLog } from './ui/devlog';
+import { applyLook } from './ui/look';
+import { applyCalm } from './ui/prefs';
 import './ui/dialog'; // Fenster: Rolle, Fokus und Rückweg, richtet sich beim Laden selbst ein
 
 declare global {
@@ -47,6 +49,9 @@ declare global {
 
 // Zuerst, damit auch Fehler beim Start im Dev-Menü landen
 initDevLog();
+// Look, Thema und Ruhig an html, bevor irgendetwas gezeichnet wird
+applyLook();
+applyCalm();
 
 /*
  * Ein nachgeladenes Stück fehlt, meist weil inzwischen eine neue Version online ist und die alten Dateien weg sind.

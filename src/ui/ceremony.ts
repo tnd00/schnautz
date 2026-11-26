@@ -8,6 +8,7 @@ import type { GameKind, LogEntry, View } from '../game/types';
 import { confetti, dropOn } from './animations';
 import { App } from './app';
 import { focusOpp, CAR_GLIDE_MS } from './carousel';
+import { plain, sentences } from './a11y/say';
 import { $opt, esc, num, reduceMotion, type Timer } from './dom';
 import { announce, dropAnnouncements, holdForAnnouncements, holdOverlay, panelFor, skipHint } from './feedback';
 import { nameOf } from './helpers';
@@ -217,8 +218,8 @@ export function ceremonyGuard(v: View): void {
   stopCeremony(true);
 }
 
-/** Meldung für den Verlierer, mit Spruch, Zähler und Ergebnis des eigenen Tipps. */
-function message(v: View, e: EndEntry, look: Stage): { title: string; sub: string } {
+/** Meldung für den Verlierer, mit Spruch, Zähler und Ergebnis des eigenen Tipps, dazu derselbe Text für den Vorleser. */
+function message(v: View, e: EndEntry, look: Stage): { title: string; sub: string; say: string } {
   const pid = e.p ?? '';
   const mine = pid === App.me;
   const name = nameOf(v, pid, e.name);
@@ -234,14 +235,14 @@ function message(v: View, e: EndEntry, look: Stage): { title: string; sub: strin
   const bet = (v.sh?.bets ?? v.dk?.bets)?.[App.me];
   if (hit) sub += `<span class="tt bt">🔮 Richtig getippt! +${num(hit.q)} ${hit.q === 1 ? 'Punkt' : 'Punkte'}.</span>`;
   else if (bet && typeof bet.on === 'string') sub += '<span class="tt bt">🔮 Tipp daneben.</span>';
+  // Ohne den Hinweis zum Überspringen, jeder Teil ein eigener Satz
+  const said = [...sub.matchAll(/<span[^>]*>(.*?)<\/span>/g)].map((x) => plain(x[1]));
   sub += `<span class="zer-hint">${skipHint()}</span>`;
   const cls = crown ? 'g' : 'r';
-  return {
-    title: mine
-      ? `Du bist ${crown ? '' : 'der '}<span class="${cls}">${what}!</span>`
-      : `${esc(name)} ist ${crown ? '' : 'der '}<span class="${cls}">${what}!</span>`,
-    sub,
-  };
+  const title = mine
+    ? `Du bist ${crown ? '' : 'der '}<span class="${cls}">${what}!</span>`
+    : `${esc(name)} ist ${crown ? '' : 'der '}<span class="${cls}">${what}!</span>`;
+  return { title, sub, say: sentences(plain(title), ...said) };
 }
 
 /** Startet die Zeremonie zum Eintrag shend, dkend oder cbend. Die Enthüllung beginnt, wenn die Meldung dran ist. */
@@ -273,6 +274,8 @@ export function shitheadCeremony(v: View, e: EndEntry): void {
     title: m.title,
     sub: m.sub,
     ms: ZER_REVEAL_MS,
+    // annNext spricht ihn nach onShow, also mit der Enthüllung und erst nach unhide (App.zerHide)
+    say: m.say,
     onShow: () => reveal(v, pid, gen),
     onEnd: (skipped) => {
       if (gen === ZER.gen) stopCeremony(skipped);

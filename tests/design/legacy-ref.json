@@ -1,12 +1,12 @@
 {
   "_": {
     "made": "2026-11-26",
-    "commit": "b762cd6",
+    "commit": "cfb5e08",
     "sizes": "390x844,1280x860",
     "seats": 4,
     "look": null,
     "theme": null,
-    "count": 10715
+    "count": 10719
   },
   "shithead/lobby-table/390x844": {
     "grund": {
@@ -326,7 +326,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -337,7 +337,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "gegnername": {
       "color": "rgb(246, 239, 223)",
@@ -355,7 +355,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -373,14 +373,14 @@
       "background-image": "linear-gradient(rgba(10, 34, 25, 0.82), rgba(6, 22, 16, 0.9))",
       "border-width": "1px",
       "border-radius": "20px",
-      "box-shadow": "rgba(0, 0, 0, 0.2) 0px 0px 0px 1px, rgba(0, 0, 0, 0.45) 0px 24px 60px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.2) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.45) 0px 24px 60px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "etikettAmZug": {
       "color": "rgb(42, 26, 5)",
@@ -398,7 +398,7 @@
     },
     "etikettFertig": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.14)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.14)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -455,14 +455,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -470,14 +470,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "karte": {
       "color": "rgb(28, 27, 24)",
@@ -557,7 +557,7 @@
     },
     "gegnerHand": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.35)",
+      "background-color": "color(srgb 0 0 0 / 0.35)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -645,7 +645,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -656,7 +656,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "gegnername": {
       "color": "rgb(246, 239, 223)",
@@ -674,7 +674,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -692,7 +692,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "20px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -735,7 +735,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -788,7 +788,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -798,7 +798,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -820,7 +820,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -902,14 +902,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -917,14 +917,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "karte": {
       "color": "rgb(28, 27, 24)",
@@ -1004,7 +1004,7 @@
     },
     "gegnerHand": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.35)",
+      "background-color": "color(srgb 0 0 0 / 0.35)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -1242,7 +1242,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -1284,7 +1284,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -1368,7 +1368,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -1379,15 +1379,15 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kachelAmZug": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.03)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.03)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 18px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 18px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -1412,7 +1412,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -1437,7 +1437,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "eigenerKopf": {
       "color": "rgb(246, 239, 223)",
@@ -1487,7 +1487,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -1526,7 +1526,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -1536,7 +1536,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -1558,7 +1558,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -1625,14 +1625,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -1640,14 +1640,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "karte": {
       "color": "rgb(28, 27, 24)",
@@ -1727,7 +1727,7 @@
     },
     "gegnerHand": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.35)",
+      "background-color": "color(srgb 0 0 0 / 0.35)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -1789,14 +1789,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -1828,7 +1828,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -1839,11 +1839,11 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kernVerlierer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -1854,7 +1854,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -1882,11 +1882,11 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "knopfPrimaer": {
-      "color": "rgb(42, 26, 5)",
+    "revanche": {
+      "color": "rgb(255, 243, 232)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "linear-gradient(rgb(243, 205, 125), rgb(214, 162, 74))",
-      "border-width": "0px",
+      "background-image": "linear-gradient(rgb(208, 73, 63), rgb(155, 42, 35))",
+      "border-width": "1px",
       "border-radius": "13px",
       "box-shadow": "rgba(255, 255, 255, 0.45) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.18) 0px -2px 0px 0px inset, rgba(0, 0, 0, 0.3) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
@@ -1894,11 +1894,12 @@
       "font-weight": "650",
       "font-size": "14px",
       "text-shadow": "none",
-      "opacity": "1"
+      "opacity": "1",
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.6)"
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -1909,7 +1910,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "shithead/lobby/1280x860": {
@@ -2131,7 +2132,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -2149,14 +2150,14 @@
       "background-image": "linear-gradient(rgba(10, 34, 25, 0.82), rgba(6, 22, 16, 0.9))",
       "border-width": "1px",
       "border-radius": "24px",
-      "box-shadow": "rgba(0, 0, 0, 0.2) 0px 0px 0px 1px, rgba(0, 0, 0, 0.45) 0px 24px 60px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.2) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.45) 0px 24px 60px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "etikettAmZug": {
       "color": "rgb(42, 26, 5)",
@@ -2174,7 +2175,7 @@
     },
     "etikettFertig": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.14)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.14)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -2317,7 +2318,7 @@
     },
     "gegnerHand": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.35)",
+      "background-color": "color(srgb 0 0 0 / 0.35)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -2434,7 +2435,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -2452,7 +2453,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "24px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -2495,7 +2496,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -2531,24 +2532,10 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "statusUnter": {
-      "color": "rgb(159, 184, 171)",
-      "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "none",
-      "border-width": "0px",
-      "border-radius": "0px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "400",
-      "font-size": "13px",
-      "text-shadow": "none",
-      "opacity": "1"
-    },
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -2558,7 +2545,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -2580,7 +2567,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -2616,7 +2603,7 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "knopfGhost": {
+    "knopfAus": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0.2)",
       "background-image": "none",
@@ -2628,7 +2615,7 @@
       "font-weight": "650",
       "font-size": "15px",
       "text-shadow": "none",
-      "opacity": "1",
+      "opacity": "0.38",
       "border-color": "rgba(246, 239, 223, 0.22)"
     },
     "kartenruecken": {
@@ -2748,7 +2735,7 @@
     },
     "gegnerHand": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.35)",
+      "background-color": "color(srgb 0 0 0 / 0.35)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -2987,7 +2974,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -3029,7 +3016,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -3128,11 +3115,11 @@
     },
     "kachelAmZug": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.03)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.03)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 18px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 18px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -3157,7 +3144,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -3182,7 +3169,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "eigenerKopf": {
       "color": "rgb(246, 239, 223)",
@@ -3232,7 +3219,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -3271,7 +3258,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -3281,7 +3268,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -3303,7 +3290,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -3456,7 +3443,7 @@
     },
     "gegnerHand": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.35)",
+      "background-color": "color(srgb 0 0 0 / 0.35)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -3518,14 +3505,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -3557,7 +3544,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -3568,11 +3555,41 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
+    },
+    "zeileEigen": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
+      "background-image": "none",
+      "border-width": "1px",
+      "border-radius": "10px",
+      "box-shadow": "rgb(243, 205, 125) 3px 0px 0px 0px inset",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "15px",
+      "text-shadow": "none",
+      "opacity": "1",
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
+    },
+    "kernVerlierer": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
+      "background-image": "none",
+      "border-width": "1px",
+      "border-radius": "10px",
+      "box-shadow": "none",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "15px",
+      "text-shadow": "none",
+      "opacity": "1",
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "sieger": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.13)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.13)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -3583,7 +3600,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.5)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.5)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -3611,11 +3628,11 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "revanche": {
-      "color": "rgb(255, 243, 232)",
+    "knopfPrimaer": {
+      "color": "rgb(42, 26, 5)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "linear-gradient(rgb(208, 73, 63), rgb(155, 42, 35))",
-      "border-width": "1px",
+      "background-image": "linear-gradient(rgb(243, 205, 125), rgb(214, 162, 74))",
+      "border-width": "0px",
       "border-radius": "13px",
       "box-shadow": "rgba(255, 255, 255, 0.45) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.18) 0px -2px 0px 0px inset, rgba(0, 0, 0, 0.3) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
@@ -3623,12 +3640,11 @@
       "font-weight": "650",
       "font-size": "15px",
       "text-shadow": "none",
-      "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.6)"
+      "opacity": "1"
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -3639,7 +3655,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "durak/lobby-table/390x844": {
@@ -3960,7 +3976,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -3971,7 +3987,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "gegnername": {
       "color": "rgb(246, 239, 223)",
@@ -3989,7 +4005,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -4007,7 +4023,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "20px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -4050,7 +4066,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -4103,7 +4119,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -4113,7 +4129,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapelZahl": {
       "color": "rgb(28, 27, 24)",
@@ -4121,7 +4137,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -4188,14 +4204,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -4203,14 +4219,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "karte": {
       "color": "rgb(28, 27, 24)",
@@ -4248,9 +4264,9 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "verteidiger": {
+    "angreifer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -4261,11 +4277,11 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.5)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
-    "etikettAbwehr": {
-      "color": "rgb(255, 179, 170)",
-      "background-color": "rgba(224, 103, 93, 0.2)",
+    "etikettAngriff": {
+      "color": "rgb(243, 205, 125)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.16)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -4292,6 +4308,20 @@
       "opacity": "1"
     },
     "tischfeld": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "background-image": "none",
+      "border-width": "0px",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "14px",
+      "text-shadow": "none",
+      "opacity": "1"
+    },
+    "paar": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
       "background-image": "none",
@@ -4531,7 +4561,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -4573,7 +4603,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -4603,14 +4633,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -4642,7 +4672,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -4653,11 +4683,26 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
+    },
+    "zeileEigen": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
+      "background-image": "none",
+      "border-width": "1px",
+      "border-radius": "10px",
+      "box-shadow": "rgb(243, 205, 125) 3px 0px 0px 0px inset",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "14px",
+      "text-shadow": "none",
+      "opacity": "1",
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kernVerlierer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -4668,7 +4713,22 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
+    },
+    "sieger": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.13)",
+      "background-image": "none",
+      "border-width": "1px",
+      "border-radius": "10px",
+      "box-shadow": "none",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "14px",
+      "text-shadow": "none",
+      "opacity": "1",
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.5)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -4712,7 +4772,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -4723,7 +4783,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "durak/lobby/1280x860": {
@@ -4945,7 +5005,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -4963,7 +5023,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "24px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -5006,7 +5066,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -5059,7 +5119,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -5069,7 +5129,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapelZahl": {
       "color": "rgb(28, 27, 24)",
@@ -5077,7 +5137,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -5188,7 +5248,7 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "angreifer": {
+    "verteidiger": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
       "background-image": "none",
@@ -5201,11 +5261,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.5)"
     },
-    "etikettAngriff": {
-      "color": "rgb(243, 205, 125)",
-      "background-color": "rgba(243, 205, 125, 0.16)",
+    "etikettAbwehr": {
+      "color": "rgb(255, 179, 170)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.2)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -5232,20 +5292,6 @@
       "opacity": "1"
     },
     "tischfeld": {
-      "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "none",
-      "border-width": "0px",
-      "border-radius": "0px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "400",
-      "font-size": "15px",
-      "text-shadow": "none",
-      "opacity": "1"
-    },
-    "paar": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
       "background-image": "none",
@@ -5486,7 +5532,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -5528,7 +5574,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -5558,14 +5604,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -5597,7 +5643,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -5608,26 +5654,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
-    },
-    "zeileEigen": {
-      "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
-      "background-image": "none",
-      "border-width": "1px",
-      "border-radius": "10px",
-      "box-shadow": "rgb(243, 205, 125) 3px 0px 0px 0px inset",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "400",
-      "font-size": "15px",
-      "text-shadow": "none",
-      "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kernVerlierer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -5638,22 +5669,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
-    },
-    "sieger": {
-      "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.13)",
-      "background-image": "none",
-      "border-width": "1px",
-      "border-radius": "10px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "400",
-      "font-size": "15px",
-      "text-shadow": "none",
-      "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.5)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -5697,7 +5713,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -5708,7 +5724,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "cabo/lobby-table/390x844": {
@@ -6029,7 +6045,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -6040,7 +6056,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "gegnername": {
       "color": "rgb(246, 239, 223)",
@@ -6058,7 +6074,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -6076,7 +6092,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "20px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -6119,7 +6135,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -6172,7 +6188,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -6182,7 +6198,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -6204,7 +6220,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -6310,7 +6326,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "11px",
@@ -6321,7 +6337,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "reaktionsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -6329,14 +6345,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -6344,14 +6360,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "eigenerSlot": {
       "color": "rgb(246, 239, 223)",
@@ -6647,7 +6663,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -6689,7 +6705,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -6773,7 +6789,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -6784,15 +6800,15 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kachelAmZug": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.03)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.03)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 18px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 18px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -6817,7 +6833,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -6842,7 +6858,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "eigenerKopf": {
       "color": "rgb(246, 239, 223)",
@@ -6892,7 +6908,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -6931,7 +6947,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -6941,7 +6957,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -6963,7 +6979,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -7040,7 +7056,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "11px",
@@ -7051,7 +7067,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "reaktionsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -7059,14 +7075,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -7074,14 +7090,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "eigenerSlot": {
       "color": "rgb(246, 239, 223)",
@@ -7187,14 +7203,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -7226,7 +7242,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -7237,11 +7253,11 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "zeileEigen": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -7252,11 +7268,11 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kernVerlierer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -7267,7 +7283,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -7323,7 +7339,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -7334,7 +7350,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "cabo/over/390x844": {
@@ -7358,14 +7374,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -7397,7 +7413,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -7408,7 +7424,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -7464,7 +7480,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -7475,7 +7491,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "cabo/lobby/1280x860": {
@@ -7697,7 +7713,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -7715,7 +7731,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "24px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -7758,7 +7774,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -7811,7 +7827,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -7821,7 +7837,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -7843,7 +7859,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -7949,7 +7965,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -7960,11 +7976,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "punktePilleEigen": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.1)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.1)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -7975,7 +7991,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.7)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.7)"
     },
     "reaktionsleiste": {
       "color": "rgb(246, 239, 223)",
@@ -8286,7 +8302,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -8328,7 +8344,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -8427,11 +8443,11 @@
     },
     "kachelAmZug": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.03)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.03)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 18px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 18px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -8456,7 +8472,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -8481,7 +8497,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "eigenerKopf": {
       "color": "rgb(246, 239, 223)",
@@ -8531,7 +8547,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -8570,7 +8586,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -8580,7 +8596,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapel": {
       "color": "rgb(246, 239, 223)",
@@ -8602,7 +8618,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -8679,7 +8695,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -8690,11 +8706,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "punktePilleEigen": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -8705,7 +8721,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "reaktionsleiste": {
       "color": "rgb(246, 239, 223)",
@@ -8802,18 +8818,6 @@
       "font-weight": "800",
       "text-shadow": "none",
       "opacity": "1"
-    },
-    "cboWertNull": {
-      "color": "rgb(255, 255, 255)",
-      "background-color": "rgb(46, 139, 87)",
-      "background-image": "none",
-      "border-width": "0px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "800",
-      "text-shadow": "none",
-      "opacity": "1"
     }
   },
   "cabo/round/1280x860": {
@@ -8837,14 +8841,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -8876,7 +8880,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -8887,11 +8891,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "zeileEigen": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -8902,11 +8906,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kernSieger": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.13)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.13)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -8917,7 +8921,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.5)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.5)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -8973,7 +8977,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -8984,7 +8988,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "cabo/over/1280x860": {
@@ -9008,14 +9012,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -9047,7 +9051,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -9058,7 +9062,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -9114,7 +9118,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -9125,7 +9129,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "schnautz/lobby-table/390x844": {
@@ -9446,7 +9450,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -9457,7 +9461,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "gegnername": {
       "color": "rgb(246, 239, 223)",
@@ -9475,7 +9479,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -9493,7 +9497,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "20px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -9532,7 +9536,7 @@
     },
     "etikett": {
       "color": "rgb(159, 184, 171)",
-      "background-color": "rgba(0, 0, 0, 0.25)",
+      "background-color": "color(srgb 0 0 0 / 0.25)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -9550,7 +9554,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -9603,7 +9607,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -9613,7 +9617,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapelZahl": {
       "color": "rgb(28, 27, 24)",
@@ -9621,7 +9625,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -9713,7 +9717,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "11px",
@@ -9724,7 +9728,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "reaktionsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -9732,14 +9736,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -9747,14 +9751,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "karte": {
       "color": "rgb(28, 27, 24)",
@@ -9815,6 +9819,20 @@
       "font-style": "normal",
       "font-weight": "750",
       "font-size": "11.5px",
+      "text-shadow": "none",
+      "opacity": "1"
+    },
+    "deckelWeg": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "background-image": "none",
+      "border-width": "0px",
+      "border-radius": "50%",
+      "box-shadow": "rgba(246, 239, 223, 0.22) 0px 0px 0px 1.5px inset",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1"
     },
@@ -10072,7 +10090,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -10114,7 +10132,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -10198,7 +10216,7 @@
     },
     "gegnerkachel": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -10209,15 +10227,15 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "kachelAmZug": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.03)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.03)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 18px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 18px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -10242,7 +10260,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -10267,7 +10285,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "eigenerKopf": {
       "color": "rgb(246, 239, 223)",
@@ -10299,7 +10317,7 @@
     },
     "etikett": {
       "color": "rgb(159, 184, 171)",
-      "background-color": "rgba(0, 0, 0, 0.25)",
+      "background-color": "color(srgb 0 0 0 / 0.25)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
@@ -10331,7 +10349,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -10370,7 +10388,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "22px",
       "box-shadow": "none",
@@ -10380,7 +10398,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapelZahl": {
       "color": "rgb(28, 27, 24)",
@@ -10388,7 +10406,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -10465,7 +10483,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "11px",
@@ -10476,7 +10494,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "reaktionsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -10484,14 +10502,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "verlaufsknopf": {
       "color": "rgb(246, 239, 223)",
@@ -10499,14 +10517,14 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "50%",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 6px 16px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 6px 16px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.2)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.2)"
     },
     "karteRot": {
       "color": "rgb(179, 49, 42)",
@@ -10543,6 +10561,20 @@
       "font-style": "normal",
       "font-weight": "750",
       "font-size": "11.5px",
+      "text-shadow": "none",
+      "opacity": "1"
+    },
+    "deckelWeg": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "background-image": "none",
+      "border-width": "0px",
+      "border-radius": "50%",
+      "box-shadow": "rgba(246, 239, 223, 0.22) 0px 0px 0px 1.5px inset",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1"
     },
@@ -10624,14 +10656,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -10663,7 +10695,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -10674,41 +10706,11 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
-    },
-    "zeileEigen": {
-      "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
-      "background-image": "none",
-      "border-width": "1px",
-      "border-radius": "10px",
-      "box-shadow": "rgb(243, 205, 125) 3px 0px 0px 0px inset",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "400",
-      "font-size": "14px",
-      "text-shadow": "none",
-      "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
-    },
-    "kernVerlierer": {
-      "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
-      "background-image": "none",
-      "border-width": "1px",
-      "border-radius": "10px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "400",
-      "font-size": "14px",
-      "text-shadow": "none",
-      "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "sieger": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.13)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.13)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -10719,7 +10721,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.5)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.5)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -10775,7 +10777,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -10786,7 +10788,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "schnautz/over/390x844": {
@@ -10810,14 +10812,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -10849,7 +10851,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -10860,11 +10862,11 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "verlierer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -10875,7 +10877,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -10945,7 +10947,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -10956,7 +10958,7 @@
       "font-size": "14px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "schnautz/lobby/1280x860": {
@@ -11178,7 +11180,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -11196,7 +11198,7 @@
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "24px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 22px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 22px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -11233,27 +11235,13 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "etikett": {
-      "color": "rgb(159, 184, 171)",
-      "background-color": "rgba(0, 0, 0, 0.25)",
-      "background-image": "none",
-      "border-width": "0px",
-      "border-radius": "999px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "700",
-      "font-size": "11px",
-      "text-shadow": "none",
-      "opacity": "1"
-    },
     "pille": {
       "color": "rgb(28, 27, 24)",
       "background-color": "rgb(246, 239, 223)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -11306,7 +11294,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -11316,7 +11304,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapelZahl": {
       "color": "rgb(28, 27, 24)",
@@ -11324,7 +11312,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -11416,7 +11404,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -11427,11 +11415,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "punktePilleEigen": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.1)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.1)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -11442,7 +11430,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.7)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.7)"
     },
     "reaktionsleiste": {
       "color": "rgb(246, 239, 223)",
@@ -11775,7 +11763,7 @@
       "background-image": "linear-gradient(rgb(251, 246, 232), rgb(239, 228, 200))",
       "border-width": "0px",
       "border-radius": "16px",
-      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px 6px 14px 0px",
+      "box-shadow": "rgba(60, 40, 10, 0.15) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.35) 0px 6px 14px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -11817,7 +11805,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "12px",
-      "box-shadow": "rgba(0, 0, 0, 0.4) 0px 12px 30px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.4) 0px 12px 30px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "600",
@@ -11916,11 +11904,11 @@
     },
     "kachelAmZug": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.03)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.03)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(243, 205, 125, 0.16) 0px 0px 18px 0px inset, rgba(243, 205, 125, 0.35) 0px 0px 0px 1px, rgba(243, 205, 125, 0.3) 0px 0px 34px 0px",
+      "box-shadow": "color(srgb 0.952941 0.803922 0.490196 / 0.16) 0px 0px 18px 0px inset, color(srgb 0.952941 0.803922 0.490196 / 0.35) 0px 0px 0px 1px, color(srgb 0.952941 0.803922 0.490196 / 0.3) 0px 0px 34px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
@@ -11945,7 +11933,7 @@
     },
     "kiZeichen": {
       "color": "rgb(143, 211, 232)",
-      "background-color": "rgba(143, 211, 232, 0.18)",
+      "background-color": "color(srgb 0.560784 0.827451 0.909804 / 0.18)",
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "4px",
@@ -11970,7 +11958,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.45)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.45)"
     },
     "eigenerKopf": {
       "color": "rgb(246, 239, 223)",
@@ -12000,20 +11988,6 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "etikett": {
-      "color": "rgb(159, 184, 171)",
-      "background-color": "rgba(0, 0, 0, 0.25)",
-      "background-image": "none",
-      "border-width": "0px",
-      "border-radius": "999px",
-      "box-shadow": "none",
-      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
-      "font-style": "normal",
-      "font-weight": "700",
-      "font-size": "11px",
-      "text-shadow": "none",
-      "opacity": "1"
-    },
     "etikettAmZug": {
       "color": "rgb(42, 26, 5)",
       "background-color": "rgb(214, 162, 74)",
@@ -12034,7 +12008,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.25) 0px 3px 8px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.25) 0px 3px 8px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "700",
@@ -12073,7 +12047,7 @@
     "mitte": {
       "color": "rgb(246, 239, 223)",
       "background-color": "rgba(0, 0, 0, 0)",
-      "background-image": "radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12))",
+      "background-image": "radial-gradient(in srgb, rgba(255, 255, 255, 0.05), color(srgb 0 0 0 / 0.12))",
       "border-width": "1px",
       "border-radius": "28px",
       "box-shadow": "none",
@@ -12083,7 +12057,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.07)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.07)"
     },
     "stapelZahl": {
       "color": "rgb(28, 27, 24)",
@@ -12091,7 +12065,7 @@
       "background-image": "none",
       "border-width": "0px",
       "border-radius": "999px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 2px 6px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 2px 6px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "800",
@@ -12168,7 +12142,7 @@
     },
     "punktePille": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -12179,11 +12153,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "punktePilleEigen": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "14px",
@@ -12194,7 +12168,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "reaktionsleiste": {
       "color": "rgb(246, 239, 223)",
@@ -12326,14 +12300,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -12363,9 +12337,9 @@
       "text-shadow": "none",
       "opacity": "1"
     },
-    "kernVerlierer": {
+    "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -12376,11 +12350,41 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
+    },
+    "zeileEigen": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
+      "background-image": "none",
+      "border-width": "1px",
+      "border-radius": "10px",
+      "box-shadow": "rgb(243, 205, 125) 3px 0px 0px 0px inset",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "15px",
+      "text-shadow": "none",
+      "opacity": "1",
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
+    },
+    "kernVerlierer": {
+      "color": "rgb(246, 239, 223)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
+      "background-image": "none",
+      "border-width": "1px",
+      "border-radius": "10px",
+      "box-shadow": "none",
+      "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+      "font-style": "normal",
+      "font-weight": "400",
+      "font-size": "15px",
+      "text-shadow": "none",
+      "opacity": "1",
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "sieger": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(243, 205, 125, 0.13)",
+      "background-color": "color(srgb 0.952941 0.803922 0.490196 / 0.13)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -12391,7 +12395,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.5)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.5)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -12447,7 +12451,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -12458,7 +12462,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   },
   "schnautz/over/1280x860": {
@@ -12482,14 +12486,14 @@
       "background-image": "radial-gradient(120% 60% at 50% 0%, rgba(33, 84, 63, 0.85), rgba(0, 0, 0, 0) 72%), linear-gradient(rgb(16, 48, 31), rgb(7, 23, 15))",
       "border-width": "1px",
       "border-radius": "18px",
-      "box-shadow": "rgba(0, 0, 0, 0.35) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 30px 80px 0px",
+      "box-shadow": "color(srgb 0 0 0 / 0.35) 0px 0px 0px 1px, color(srgb 0 0 0 / 0.6) 0px 30px 80px 0px",
       "font-family": "\"Bricolage Grotesque Variable\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
       "font-style": "normal",
       "font-weight": "400",
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(243, 205, 125, 0.32)"
+      "border-color": "color(srgb 0.952941 0.803922 0.490196 / 0.32)"
     },
     "kopf": {
       "color": "rgb(246, 239, 223)",
@@ -12521,7 +12525,7 @@
     },
     "zeile": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.22)",
+      "background-color": "color(srgb 0 0 0 / 0.22)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -12532,11 +12536,11 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.08)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.08)"
     },
     "verlierer": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(224, 103, 93, 0.12)",
+      "background-color": "color(srgb 0.878431 0.403922 0.364706 / 0.12)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "10px",
@@ -12547,7 +12551,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(224, 103, 93, 0.45)"
+      "border-color": "color(srgb 0.878431 0.403922 0.364706 / 0.45)"
     },
     "name": {
       "color": "rgb(246, 239, 223)",
@@ -12617,7 +12621,7 @@
     },
     "knopfGhost": {
       "color": "rgb(246, 239, 223)",
-      "background-color": "rgba(0, 0, 0, 0.15)",
+      "background-color": "color(srgb 0 0 0 / 0.15)",
       "background-image": "none",
       "border-width": "1px",
       "border-radius": "13px",
@@ -12628,7 +12632,7 @@
       "font-size": "15px",
       "text-shadow": "none",
       "opacity": "1",
-      "border-color": "rgba(246, 239, 223, 0.28)"
+      "border-color": "color(srgb 0.964706 0.937255 0.87451 / 0.28)"
     }
   }
 }

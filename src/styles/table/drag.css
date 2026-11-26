@@ -1,0 +1,113 @@
+/*
+ * Ziehen am Tisch (ziehen.md 5.4 bis 5.9), geladen nur mit src/ui/table/drag-motor.ts. Jede Regel hängt an einer
+ * Klasse, die erst der Motor setzt (tb-drag an html, sobald ein Spiel einen Adapter hat, tb-dragging während des
+ * Ziehens), damit Legacy ohne Adapter unverändert bleibt. Farben und Schatten nur aus --tb-*, beide Looks gleich gebaut.
+ */
+
+/* Ziehbare Karten scrollen nicht und öffnen kein Kontextmenü, der Tisch federt nicht nach */
+html.tb-drag #table {
+  overscroll-behavior: none;
+}
+html.tb-drag #table [data-drag] {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  cursor: grab;
+}
+html.tb-dragging,
+html.tb-dragging * {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* Die Quelle bleibt als blasse Stelle stehen */
+#table .tb-dragsrc {
+  opacity: 0.35;
+}
+
+/* Gültige Ziele: weicher Ring und knapp angehoben. Unter dem Finger voller Ring und 104 % */
+#table .tb-drop-ok {
+  box-shadow: var(--tb-target-soft), var(--tb-shadow-lift-sm);
+  transition:
+    scale var(--tb-lift-ms) var(--tb-ease),
+    box-shadow var(--tb-lift-ms) var(--tb-ease);
+}
+#table .tb-drop-hot {
+  box-shadow: var(--tb-target-ring), var(--tb-shadow-lift);
+  scale: 1.04;
+}
+/* Ungültiges Ziel unter dem Finger: gestrichelt in Tinte, kein Rot, der Grund steht im Etikett */
+#table .tb-drop-no {
+  outline: 2px dashed var(--tb-target-no);
+  outline-offset: 3px;
+}
+
+/* Geist in #fly: angehoben, folgt dem Finger, nimmt keine Zeiger an */
+.tb-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+  transform-origin: 50% 60%;
+}
+.tb-ghost > .tb-ghost-c {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  box-shadow: var(--tb-shadow-lift);
+  transform-origin: 50% 100%;
+}
+/* Platsch beim Abwurf */
+.tb-ghost.tb-ghost-down > .tb-ghost-c {
+  box-shadow: var(--tb-shadow);
+  transition: box-shadow 320ms var(--tb-ease);
+}
+
+/* Absichtsetikett: kleiner Tinten-Sticker über dem Geist */
+.tb-ghost-lbl {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  translate: -50% 0;
+  max-width: min(70vw, 260px);
+  padding: 4px 10px 5px;
+  border: 1px solid var(--tb-fx-label-line);
+  border-radius: 10px;
+  background: var(--tb-fx-label-bg);
+  color: var(--tb-fx-label-text);
+  box-shadow: var(--tb-shadow);
+  font: 700 13px/1.2 var(--ui);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-ghost-lbl[hidden] {
+  display: none;
+}
+
+/* Zahl am Bündel wie Platzzahl und Leben */
+.tb-ghost-n {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: var(--tb-num-ink-bg);
+  color: var(--tb-num-ink-text);
+  box-shadow: var(--tb-num-shadow);
+  font: 800 13px/1.2 var(--ui);
+  text-align: center;
+}
+
+/* Ruhig: kein Anheben der Ziele, keine Übergänge */
+:where(html.calm) #table .tb-drop-hot {
+  scale: none;
+}
+:where(html.calm) #table .tb-drop-ok,
+:where(html.calm) .tb-ghost.tb-ghost-down > .tb-ghost-c {
+  transition: none;
+}

@@ -4,8 +4,8 @@
  * src/content/texts/drag.ts, eine Ablehnung ist ein Code aus src/game/reject.ts. Jedes Spiel hat seine Regeln in
  * src/game/drop/<spiel>.ts, hier stehen nur die Schlüssel und die Weiche nach Spiel.
  *
- * Stand Runde 1: Vertrag mit Stummeln, nichts ist ziehbar. Runde 2 (Ziehen-Kern) baut den Regelrahmen, Runde 5 die
- * Regeln je Spiel.
+ * Stand Runde 2: Regelrahmen (Weiche, Schlüssel aus dem DOM lesen und vergleichen, Fangradius). Die Regeln je Spiel sind
+ * noch Stummel, nichts ist ziehbar. Runde 5 füllt sie.
  */
 import { cbCanDrag, cbDropOf, cbDropsFor } from './drop/cabo';
 import { dkCanDrag, dkDropOf, dkDropsFor } from './drop/durak';
@@ -134,3 +134,61 @@ export function dropsFor(v: View, me: string, src: DragKey): DropKey[] {
       return unreachable(src);
   }
 }
+
+/** Attribute eines Ziels im DOM, wie sie in `el.dataset` stehen: data-drop, data-i, data-o und data-sid */
+export interface DropAttrs {
+  drop?: string;
+  i?: string;
+  o?: string;
+  sid?: string;
+}
+
+/** Ganze Zahl ab 0 aus einem Attribut, sonst null */
+const idx = (s: string | undefined): number | null => (s != null && /^\d{1,3}$/.test(s) ? Number(s) : null);
+
+/**
+ * Ziel aus den Attributen eines Elements. Eigene Cabo-Plätze tragen kein data-o, dann gehört der Platz `me`.
+ * Unbekanntes oder Kaputtes ergibt null, dann ist das Element kein Ziel.
+ */
+export function dropKeyOf(a: DropAttrs, me: string): DropKey | null {
+  const z = a.drop as DropKey['z'] | undefined;
+  switch (z) {
+    case 'pile':
+    case 'table':
+    case 'transfer':
+    case 'hold':
+      return { z };
+    case 'up':
+    case 'hand':
+    case 'pair':
+    case 'mid': {
+      const i = idx(a.i);
+      return i == null ? null : { z, i };
+    }
+    case 'slot': {
+      const id = idx(a.sid);
+      const owner = a.o || me;
+      return id == null || !owner ? null : { z, owner, id };
+    }
+    case undefined:
+      return null;
+    default: {
+      // Der Compiler meldet hier neue Ziele, zur Laufzeit ist es ein fremder Wert aus dem DOM
+      const rest: never = z;
+      void rest;
+      return null;
+    }
+  }
+}
+
+/** Gleiche Quelle? Karten in derselben Reihenfolge, so wie der Adapter sie baut. */
+export const sameDrag = (a: DragKey | null, b: DragKey | null): boolean =>
+  !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
+
+/** Gleiches Ziel? */
+export const sameDrop = (a: DropKey | null, b: DropKey | null): boolean =>
+  !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
+
+/** Fängt das Ziel auch knapp daneben? Nur die Cabo-Ablage beim Schnappen nicht (ziehen.md 5.4). */
+export const catches = (src: DragKey, dst: DropKey): boolean =>
+  !(src.g === 'cabo' && src.from === 'slot' && dst.z === 'pile');

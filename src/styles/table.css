@@ -1,4 +1,3 @@
-/* tb: offen */
 /* Spieltisch Schnautz und Seitenleiste mit Verlauf */
 .game {
   flex: 1;
@@ -63,19 +62,19 @@
 /* Am Zug leuchtet der Rand, nach innen wird das Gelb schwächer statt die Fläche zu füllen */
 .opp.turn {
   border-color: var(--brass-hi);
-  background: rgba(243, 205, 125, 0.03);
+  background: color-mix(in srgb, var(--tb-accent) 3%, transparent);
   box-shadow:
-    inset 0 0 18px rgba(243, 205, 125, 0.16),
-    0 0 0 1px rgba(243, 205, 125, 0.35),
-    0 0 34px rgba(243, 205, 125, 0.3);
+    inset 0 0 18px color-mix(in srgb, var(--tb-accent) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tb-accent) 35%, transparent),
+    0 0 34px color-mix(in srgb, var(--tb-accent) 30%, transparent);
   animation: turnGlow 1.8s ease-in-out infinite;
 }
 @keyframes turnGlow {
   50% {
     box-shadow:
-      inset 0 0 22px rgba(243, 205, 125, 0.24),
-      0 0 0 3px rgba(243, 205, 125, 0.45),
-      0 0 46px rgba(243, 205, 125, 0.45);
+      inset 0 0 22px color-mix(in srgb, var(--tb-accent) 24%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--tb-accent) 45%, transparent),
+      0 0 46px color-mix(in srgb, var(--tb-accent) 45%, transparent);
   }
 }
 .opp.out {
@@ -83,7 +82,7 @@
 }
 .opp.offline .nm::after {
   content: ' · offline';
-  color: #f0a59c;
+  color: var(--tb-offline-text);
   font-weight: 500;
   font-size: 12px;
 }
@@ -94,20 +93,20 @@
   text-transform: uppercase;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--muted);
+  background: var(--tb-tag-bg);
+  color: var(--tb-muted);
 }
 .tag.turn {
   background: var(--brass);
-  color: #2a1a05;
+  color: var(--tb-tag-turn-text);
 }
 .tag.knock {
-  background: #8a4b2a;
-  color: #fff3dc;
+  background: var(--tb-tag-knock-bg);
+  color: var(--tb-tag-knock-text);
 }
 .tag.outt {
-  background: rgba(224, 103, 93, 0.25);
-  color: #ffd2cc;
+  background: var(--tb-tag-alert-bg);
+  color: var(--tb-tag-alert-text);
 }
 .thinking {
   display: inline-flex;
@@ -145,8 +144,8 @@
   gap: clamp(14px, 3vw, 34px);
   padding: 18px clamp(14px, 3vw, 30px) 38px;
   border-radius: 28px;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12));
-  border: 1px solid rgba(246, 239, 223, 0.07);
+  background: var(--tb-zone-bg);
+  border: 1px solid var(--tb-zone-line);
   position: relative;
 }
 .deck {
@@ -179,8 +178,8 @@
   font-size: 12px;
   font-weight: 700;
   line-height: 1.5;
-  color: var(--muted);
-  background: rgba(0, 0, 0, 0.3);
+  color: var(--tb-muted);
+  background: var(--tb-cnt-bg);
   padding: 1px 9px;
   border-radius: 999px;
   z-index: 2;
@@ -203,7 +202,7 @@
   bottom: -22px;
   text-align: center;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--tb-muted);
   letter-spacing: 0.06em;
 }
 .center .cap {
@@ -217,7 +216,7 @@
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--tb-muted);
   white-space: nowrap;
 }
 
@@ -234,11 +233,11 @@
 }
 .status .sub {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--tb-muted);
   margin-top: 2px;
 }
 .status.knocked .main {
-  color: #ffd9b8;
+  color: var(--tb-knock-text);
 }
 .status .main em {
   color: var(--brass-hi);
@@ -261,7 +260,7 @@
   padding: 14px 18px 16px;
   border-radius: 24px;
   /* Der eigene Platz ist immer gelb umrandet, am Zug leuchtet er wie ein Gegner am Zug */
-  border: 1px solid rgba(243, 205, 125, 0.45);
+  border: 1px solid var(--tb-me-line);
   width: min(560px, 100%);
   transition:
     border-color 0.2s,
@@ -271,18 +270,15 @@
 .me.turn {
   border-color: var(--brass-hi);
   background: transparent;
-  box-shadow:
-    inset 0 0 22px rgba(243, 205, 125, 0.16),
-    0 0 0 1px rgba(243, 205, 125, 0.35),
-    0 0 34px rgba(243, 205, 125, 0.3);
+  box-shadow: var(--tb-me-turn);
   animation: meGlow 1.8s ease-in-out infinite;
 }
 @keyframes meGlow {
   50% {
     box-shadow:
-      inset 0 0 28px rgba(243, 205, 125, 0.24),
-      0 0 0 3px rgba(243, 205, 125, 0.45),
-      0 0 46px rgba(243, 205, 125, 0.45);
+      inset 0 0 28px color-mix(in srgb, var(--tb-accent) 24%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--tb-accent) 45%, transparent),
+      0 0 46px color-mix(in srgb, var(--tb-accent) 45%, transparent);
   }
 }
 .mehead {
@@ -305,14 +301,14 @@
   color: var(--ink);
   font-weight: 700;
   font-size: 14px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--tb-shade) 25%, transparent);
 }
 .pill .r {
   color: var(--red);
 }
 .pill.hot {
   background: linear-gradient(180deg, var(--brass-hi), var(--brass));
-  color: #2a1a05;
+  color: var(--tb-on-accent);
 }
 .hand {
   display: flex;
@@ -358,10 +354,10 @@
   width: 100%;
   text-align: center;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .outmsg {
-  color: var(--muted);
+  color: var(--tb-muted);
   font-style: italic;
   font-family: var(--display);
   font-size: 18px;
@@ -370,8 +366,8 @@
 
 /* side / log */
 .side {
-  border-left: 1px solid rgba(246, 239, 223, 0.08);
-  background: rgba(4, 16, 11, 0.35);
+  border-left: 1px solid var(--tb-side-line);
+  background: var(--tb-side-bg);
   display: flex;
   flex-direction: column;
   /* Höhe der Kopfzeile misst fitDesktop (src/ui/fit.ts) */
@@ -386,7 +382,7 @@
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--tb-muted);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -395,7 +391,7 @@
   display: none;
   background: none;
   border: 0;
-  color: var(--muted);
+  color: var(--tb-muted);
   font-size: 22px;
   line-height: 1;
 }
@@ -410,17 +406,17 @@
   scrollbar-width: thin;
 }
 .log .e {
-  color: #d9e4dd;
+  color: var(--tb-log-text);
   line-height: 1.4;
 }
 .log .e.sys {
-  color: var(--muted);
+  color: var(--tb-muted);
   font-size: 12.5px;
 }
 .log .e.round {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed rgba(246, 239, 223, 0.12);
+  border-top: 1px dashed color-mix(in srgb, var(--tb-side-text) 12%, transparent);
   color: var(--brass-hi);
   font-weight: 600;
   font-size: 12.5px;
@@ -431,7 +427,7 @@
   font-weight: 600;
 }
 .log .e.chat {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--tb-light) 6%, transparent);
   border-radius: 12px;
   padding: 6px 10px;
   color: var(--cream);
@@ -441,7 +437,7 @@
 }
 .log .e.chat.mine {
   align-self: flex-end;
-  background: rgba(214, 162, 74, 0.2);
+  background: color-mix(in srgb, var(--tb-accent-strong) 20%, transparent);
 }
 .log .e.chat b {
   display: block;
@@ -466,7 +462,7 @@
   gap: 8px;
   padding: 10px 12px;
   padding-bottom: max(10px, env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(246, 239, 223, 0.08);
+  border-top: 1px solid var(--tb-side-line);
 }
 .chatform .input {
   height: 42px;
@@ -485,10 +481,10 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(246, 239, 223, 0.2);
-  background: #0f2a20;
+  border: 1px solid var(--tb-fx-emotes-line);
+  background: var(--tb-fx-emotes-bg);
   color: var(--cream);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--tb-shade) 40%, transparent);
   place-items: center;
   padding: 0;
 }
@@ -510,7 +506,7 @@
   height: 20px;
   border-radius: 999px;
   background: var(--red);
-  color: #fff;
+  color: var(--tb-light);
   font-size: 11px;
   font-weight: 700;
   display: grid;
@@ -573,5 +569,5 @@
 .sb-lc svg {
   width: 16px;
   height: 10px;
-  color: #8fd3ff;
+  color: var(--tb-sea-hi);
 }

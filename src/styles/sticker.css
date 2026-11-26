@@ -405,24 +405,24 @@ body:not(.ingame) :is(#modal, .top) :focus-visible {
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .st-lift,
-  .st-btn {
-    transition: box-shadow var(--st-lift-ms) linear;
-  }
-  .st-lift:hover,
-  .st-lift:active,
-  .st-btn:hover,
-  .st-btn:active {
-    translate: none;
-    scale: none;
-  }
-  .st-stick,
-  .st-lift.on,
-  .st-lift[aria-pressed='true'],
-  .st-flip {
-    animation: none;
-  }
+:where(html.calm) .st-lift,
+:where(html.calm) .st-btn {
+  transition: box-shadow var(--st-lift-ms) linear;
+}
+
+:where(html.calm) .st-lift:hover,
+:where(html.calm) .st-lift:active,
+:where(html.calm) .st-btn:hover,
+:where(html.calm) .st-btn:active {
+  translate: none;
+  scale: none;
+}
+
+:where(html.calm) .st-stick,
+:where(html.calm) .st-lift.on,
+:where(html.calm) .st-lift[aria-pressed='true'],
+:where(html.calm) .st-flip {
+  animation: none;
 }
 
 /* ---------- Neigung: fest pro Element, nie zufällig ----------

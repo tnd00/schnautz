@@ -1171,11 +1171,9 @@ body:not(.ingame) #netcode {
     font-size: 12.5px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  #modal .gset .switch,
-  #modal .gset .switch::after {
-    transition: none;
-  }
+:where(html.calm) #modal .gset .switch,
+:where(html.calm) #modal .gset .switch::after {
+  transition: none;
 }
 
 /* ---------- Startleiste: immer sichtbar, nie unter dem Rand ---------- */
@@ -1287,33 +1285,37 @@ body:not(.ingame) #netcode {
   text-align: center;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  /* shithead-flow.css setzt hier jede Übergangsdauer auf 0.01ms, auch bei Elementen ohne eigenen Übergang. Die gehen
-   * dann mit transition-property all durch, jede Größe hält einen Frame lang den alten Wert und fitLobby misst die
-   * vorige Stufe (bis zu 133 px unter der Startleiste). In der Lobby samt Kopfzeile laufen deshalb nur Übergänge, die
-   * eine Regel ausdrücklich nennt */
-  :where(body.inlobby, body.inlobby *) {
-    transition-property: none;
-  }
-  #scr-lobby .lgc.on.st-stick {
-    animation: none;
-  }
-  #scr-lobby .lgc,
-  #scr-lobby .lgc-b {
-    transition: box-shadow var(--st-lift-ms) linear;
-  }
-  #scr-lobby .lgc:not(.on, .off):has(> button.lgc-face:is(:hover, :active)) {
-    translate: none;
-    scale: 0.97;
-  }
-  #scr-lobby .lgc-b:active {
-    translate: none;
-  }
-  #scr-lobby .switch,
-  #scr-lobby .switch::after,
-  body.inlobby {
-    transition: none;
-  }
+/* shithead-flow.css setzt hier jede Übergangsdauer auf 0.01ms, auch bei Elementen ohne eigenen Übergang. Die gehen
+ * dann mit transition-property all durch, jede Größe hält einen Frame lang den alten Wert und fitLobby misst die
+ * vorige Stufe (bis zu 133 px unter der Startleiste). In der Lobby samt Kopfzeile laufen deshalb nur Übergänge, die
+ * eine Regel ausdrücklich nennt */
+
+:where(html.calm) :where(body.inlobby, body.inlobby *) {
+  transition-property: none;
+}
+
+:where(html.calm) #scr-lobby .lgc.on.st-stick {
+  animation: none;
+}
+
+:where(html.calm) #scr-lobby .lgc,
+:where(html.calm) #scr-lobby .lgc-b {
+  transition: box-shadow var(--st-lift-ms) linear;
+}
+
+:where(html.calm) #scr-lobby .lgc:not(.on, .off):has(> button.lgc-face:is(:hover, :active)) {
+  translate: none;
+  scale: 0.97;
+}
+
+:where(html.calm) #scr-lobby .lgc-b:active {
+  translate: none;
+}
+
+:where(html.calm) #scr-lobby .switch,
+:where(html.calm) #scr-lobby .switch::after,
+:where(html.calm) body.inlobby {
+  transition: none;
 }
 
 /* ---------- Handy: zwei Reiter, Startleiste als Bogen unten ---------- */
@@ -2025,13 +2027,11 @@ body:not(.ingame) #menu .g-only {
     opacity: 0;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  #menu.menu,
-  #menu.menu + .menudim {
-    animation: none;
-  }
-  #menu .msw,
-  #menu .msw::after {
-    transition: none;
-  }
+:where(html.calm) #menu.menu,
+:where(html.calm) #menu.menu + .menudim {
+  animation: none;
+}
+:where(html.calm) #menu .msw,
+:where(html.calm) #menu .msw::after {
+  transition: none;
 }

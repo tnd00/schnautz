@@ -20,12 +20,13 @@ export type HostMessage =
   | { t: 'state'; s: View }
   | { t: 'pong' }
   /**
-   * Abweisung beim Beitritt und abgelehnter Zug. `msg` ist der fertige Text aus Sicht des Gastes und bleibt
-   * Pflicht, solange Gäste von 2.6 mitspielen (Entscheidung E6). Neu und freiwillig: Code `e` mit Argumenten `a`,
-   * beim Zug dazu `act`, der Typ der abgelehnten Aktion.
+   * Abweisung beim Beitritt und abgelehnter Zug: Code `e` mit Argumenten `a`, beim Zug dazu `act`, der Typ der
+   * abgelehnten Aktion. Beim Beitritt steht noch eine Stufe lang `msg` dabei, der fertige Text aus Sicht des Gastes,
+   * damit Gäste von 2.7 auch neue Codes wie `net.update` lesen und die Einladung behalten. Beim Zug kommt seit der
+   * Neulade-Pflicht kein `msg` mehr, ein Gastgeber bis 2.7 schickt es noch.
    */
   | { t: 'reject'; msg: string; e?: string; a?: RejectArgs }
-  | { t: 'err'; msg: string; e?: string; a?: RejectArgs; act?: string }
+  | { t: 'err'; msg?: string; e?: string; a?: RejectArgs; act?: string }
   | { t: 'closed' }
   | { t: 'replaced' };
 
@@ -189,8 +190,8 @@ export function asReject(m: unknown): Reject | null {
 }
 
 /**
- * Was der Gastgeber zu einer Ablehnung schickt: Code und Argumente, dazu `msg` aus Sicht des Gastes für Gäste von
- * 2.6, die nur den Text lesen (mindestens bis 2.8, Entscheidung E6).
+ * Was der Gastgeber zu einer Abweisung beim Beitritt schickt: Code und Argumente, dazu `msg` aus Sicht des Gastes für
+ * Gäste von 2.7, die neue Codes nicht kennen und dann den Text lesen (eine Stufe über 2.8 hinaus).
  */
 export function wireReject(r: Reject, ctx: RejectCtx): { e: RejectCode; a?: RejectArgs; msg: string } {
   const msg = rejectText(r, ctx);

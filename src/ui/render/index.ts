@@ -7,37 +7,17 @@ import { renderEmotes } from './emotes';
 import { renderLegend } from './legend';
 import { renderLobby } from './lobby';
 import { renderLog } from './log';
-import { renderGame, renderOverlay } from './schnautz';
 import { renderScore } from './scorebar';
-import { clearSwapGrid, renderSh, renderShOverlay } from './shithead';
+import { clearSwapGrid } from './shithead';
 import { renderTurnNote } from './turnnote';
 import { markTosses } from '../toss';
 import { fitDesktop } from '../fit';
 import { realignFeedback } from '../feedback';
-import { GAME_NAME, unreachable } from '../../game/games';
-import type { View } from '../../game/types';
-import { renderDk, renderDkOverlay } from './durak';
-import { renderCb, renderCbOverlay } from './cabo';
+import { GAME_NAME, GAMES } from '../../game/games';
+import { renderResult } from './result';
+import { renderTable } from '../table/index';
+import { isOld, scorebarOf, specOf } from '../table/spec';
 import { peelChosen } from '../peel';
-
-/** Was jedes Spiel am Tisch zeichnet und ob die Leiste oben und das Abzeichen am Namen dazugehören. */
-function tableOf(v: View): { draw: () => void; overlay: () => void; scorebar: boolean; badge: boolean } {
-  switch (v.game) {
-    case 'shithead':
-      // Bei Shithead stehen alle schon auf dem Spielfeld, die Leiste wäre doppelt
-      return { draw: () => renderSh(v), overlay: () => renderShOverlay(v), scorebar: false, badge: false };
-    case 'durak':
-      // Auch bei Durak zeigen die Kacheln alles, eine Leiste oben wäre doppelt
-      return { draw: () => renderDk(v), overlay: () => renderDkOverlay(v), scorebar: false, badge: false };
-    case 'cabo':
-      // Die Leiste oben zeigt den Punktestand aller, das ist bei Cabo das Wichtigste
-      return { draw: () => renderCb(v), overlay: () => renderCbOverlay(v), scorebar: true, badge: false };
-    case 'schnautz':
-      return { draw: () => renderGame(v), overlay: () => renderOverlay(v), scorebar: true, badge: true };
-    default:
-      return unreachable(v.game);
-  }
-}
 
 /** Zeichnet alles neu, was zur aktuellen Ansicht gehört. */
 export function render(): void {
@@ -47,7 +27,8 @@ export function render(): void {
   labelNet();
   $('#menu-lobby').hidden = !(App.role === 'host' && v.phase !== 'lobby');
   $('#menu-leave').textContent = App.role === 'host' ? 'Tisch auflösen' : 'Tisch verlassen';
-  const t = tableOf(v);
+  const spec = specOf(v.game);
+  const sb = scorebarOf(v.game);
   if (v.phase === 'lobby') {
     showScreen('lobby');
     renderLobby(v);
@@ -61,13 +42,15 @@ export function render(): void {
     tbl.classList.toggle('swap', v.game === 'shithead' && v.phase === 'swap');
     // Das Raster der Shithead-Tauschrunde gehört nur dorthin, sonst bliebe das Karussell aus
     if (v.game !== 'shithead') clearSwapGrid();
-    t.draw();
+    renderTable(v);
   }
   $('#brand-name').textContent = GAME_NAME[v.game];
-  $('#brand-badge').hidden = !t.badge;
+  $('#brand-badge').hidden = !spec.badge;
+  // Spielfarbe --g für den Sticker-Look am Tisch, auch für Fenster und Ergebnisblatt über dem Tisch
+  GAMES.forEach((g) => document.body.classList.toggle(`g-${g}`, v.phase !== 'lobby' && g === v.game));
   if (v.phase !== 'lobby') {
-    $('#scorebar').hidden = !t.scorebar;
-    if (t.scorebar) renderScore(v);
+    $('#scorebar').hidden = !sb;
+    if (sb) renderScore(v);
     renderLegend(v);
     renderEmotes();
   }
@@ -75,7 +58,8 @@ export function render(): void {
   // Offenes Tipp-Fenster mitziehen oder schließen, wenn Tippen nicht mehr geht
   if ($opt('#modal .paper.bets')) renderBetModal(v);
   renderLog(v);
-  t.overlay();
+  if (isOld(spec)) spec.old.overlay(v);
+  else renderResult(v, spec.sheet(v));
   // Beim Ansehen des Tisches nach einer Runde wird nur in der Übersicht reagiert
   document.body.classList.toggle('peeking', App.peek && (v.phase === 'end' || v.phase === 'over'));
   // Das Ergebnisfenster hat ein eigenes Reaktionsfenster

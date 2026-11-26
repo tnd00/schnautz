@@ -279,7 +279,8 @@ export function renderLobby(v: View): void {
   $('#lobby-title').textContent = host ? 'Dein Tisch' : `Tisch von ${hostName}`;
   const code = $('#lobby-code');
   code.textContent = App.code;
-  code.setAttribute('aria-label', `Tischcode ${App.code.split('').join(' ')}, Einladung öffnen`);
+  // Der Name enthält den sichtbaren Code am Stück (axe label-content-name-mismatch, WCAG 2.5.3)
+  code.setAttribute('aria-label', `Tischcode ${App.code}, Einladung öffnen`);
   $('#btn-share').hidden = !('share' in navigator);
   $('#seat-title').textContent = host ? 'Plätze' : 'Am Tisch';
   $('#seat-ctl').innerHTML = host

@@ -28,7 +28,7 @@ import { burst } from './burst';
 import { CAR, initCarousel, layoutOpps } from './carousel';
 import { fitDesktop } from './fit';
 import { FX_WAKE_MS } from './livefx';
-import { $, esc } from './dom';
+import { $, $opt, esc, isMobile } from './dom';
 import { initLazy, openRules, openUpdates } from './lazy';
 import { noteTap, shakeEl, showReject, skipAnnouncement, toast } from './feedback';
 import { ceremonyOn, ZER } from './ceremony';
@@ -59,6 +59,10 @@ import { LS, SS } from './storage';
 import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
 import { dkButton, dkTapHand, dkTapTable } from './durak/input';
 import { cbButton, cbTapMine, cbTapOpp } from './cabo/input';
+import { setLook } from './look';
+import { openPrefs, prefs } from './prefs';
+import { dragCancel } from './table/drag';
+import { dragOn } from './table/index';
 
 /** Shithead: Karte antippen (Tauschrunde oder Auswahl zum Ausspielen). */
 function shTap(kind: 'h' | 'u', i: number): void {
@@ -581,6 +585,14 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
     case 'updates':
       openUpdates(() => ($('#menu').hidden = true));
       break;
+    case 'look':
+      $('#menu').hidden = true;
+      setLook(prefs().look === 'legacy' ? 'sticker' : 'legacy');
+      break;
+    case 'prefs':
+      $('#menu').hidden = true;
+      openPrefs();
+      break;
     case 'reloadapp':
       reloadApp();
       break;
@@ -876,6 +888,69 @@ function aimAt(pid: string): void {
   else openPick(pid);
 }
 
+/** Am Handy am Tisch stehen Regeln und Bestenliste schon in der Kopfzeile, dann fallen sie aus dem Menü */
+function menuHead(): void {
+  const head = isMobile() && document.body.classList.contains('ingame');
+  $('#menu .mi-rules').hidden = head;
+  $('#menu .mi-board').hidden = head;
+}
+
+/** Antippbare Karten und Felder, in deren Gruppe die Pfeiltasten wandern (gefuehl 3.5) */
+const KB_ITEM = '.card[data-act], .dkpair[data-act], .cbslot[data-act]';
+/** Gruppen am Tisch: neue Hand, alte Hände und Reihen aller vier Spiele, Schnautz-Mitte, Durak-Angriffe */
+const KB_GROUP = '.tb-hand, .shhand, .tcards, .cbrow, .hand, .middle, .dktable';
+
+/**
+ * Tastatur in Hand und Reihen: Pfeil links und rechts, Pos1 und Ende bewegen den Fokus, Umschalt und Enter löst die
+ * Hauptaktion aus. true, wenn die Taste damit erledigt ist.
+ */
+function tableKey(e: KeyboardEvent, t: HTMLElement): boolean {
+  if (!t.matches?.(KB_ITEM) || !t.closest('#table')) return false;
+  if (e.key === 'Enter' && e.shiftKey) {
+    const go = $opt<HTMLElement>('#me .actions [data-intent="go"], #me .actions .btn.primary');
+    if (!go) return false;
+    e.preventDefault();
+    go.click();
+    return true;
+  }
+  const g = t.closest(KB_GROUP);
+  const step = { ArrowLeft: -1, ArrowRight: 1, Home: -Infinity, End: Infinity }[e.key];
+  if (!g || step == null) return false;
+  const items = [...g.querySelectorAll<HTMLElement>(KB_ITEM)];
+  const n = items[Math.max(0, Math.min(items.length - 1, items.indexOf(t) + step))];
+  if (!n || n === t) return false;
+  e.preventDefault();
+  // Neue Hand: eine Tabulatorstelle, die mit dem Fokus wandert
+  if (g.classList.contains('tb-hand')) {
+    t.tabIndex = -1;
+    n.tabIndex = 0;
+  }
+  n.focus();
+  return true;
+}
+
+/** Escape am Tisch hebt die Auswahl auf (gefuehl 3.5), Schnappen bei Cabo bleibt an */
+function unselect(): void {
+  if (!document.activeElement?.closest('#table')) return;
+  const any =
+    App.ss.idx.length ||
+    App.ds.idx.length ||
+    App.ds.pair != null ||
+    App.cs.ids.length ||
+    App.cs.opp ||
+    App.sel.h != null ||
+    App.sel.m != null ||
+    App.sw.h != null ||
+    App.sw.u != null;
+  if (!any) return;
+  App.ss = { src: null, idx: [] };
+  App.ds = { idx: [], pair: null };
+  App.cs = { ...App.cs, ids: [], opp: null };
+  App.sel = { h: null, m: null };
+  App.sw = { h: null, u: null };
+  render();
+}
+
 /** Alle Ereignis-Listener einmal beim Start registrieren. */
 export function initEvents(): void {
   // Regeln und Updates laden erst bei Bedarf nach (src/ui/lazy.ts)
@@ -905,6 +980,7 @@ export function initEvents(): void {
     if (v?.phase === 'lobby') fitLobby();
     fitDesktop();
     closePick();
+    if (!$('#menu').hidden) menuHead();
   });
   document.addEventListener('click', (e) => {
     const target = e.target as Element;
@@ -931,6 +1007,8 @@ export function initEvents(): void {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (App.view && dragOn(App.view)) dragCancel('cancel');
+      unselect();
       $('#modal').innerHTML = '';
       // Wer das Menü per Tastatur schließt, landet wieder auf dem Menüknopf
       if (!$('#menu').hidden && document.activeElement?.closest('#menu')) $('#btn-menu').focus();
@@ -945,6 +1023,7 @@ export function initEvents(): void {
     }
     // Karten sind per Tastatur bedienbar
     const t = e.target as HTMLElement;
+    if (tableKey(e, t)) return;
     // Reiter der Lobby: Pfeiltasten wechseln wie bei echten Reitern
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && t.matches?.('#lobby-tabs [role="tab"]')) {
       const other = $<HTMLElement>(`#lobby-tabs [data-t="${t.dataset.t === 'game' ? 'table' : 'game'}"]`);
@@ -1011,9 +1090,12 @@ export function initEvents(): void {
   $('#btn-board').onclick = () => {
     if (App.view) $('#modal').innerHTML = boardHTML(App.view);
   };
+  // Der Look-Schalter ist bis zum Umschaltschritt nur beim Entwickeln zu sehen (Plan 4.2)
+  if (import.meta.env.DEV) $('#menu-look').hidden = false;
   $('#btn-menu').onclick = () => {
     const m = $('#menu');
     $('#menu-dev').hidden = !LS.get('dev', false);
+    menuHead();
     m.hidden = !m.hidden;
   };
   // Menüknopf sagt, ob das Menü offen ist, egal wer es schließt

@@ -4,6 +4,7 @@ import type { Card, LastMove, View } from '../game/types';
 import { App } from './app';
 import { cardHTML } from './cards';
 import { $, $opt, reduceMotion } from './dom';
+import { haptic } from './a11y/haptic';
 import { panelFor, shakeEl } from './feedback';
 import { pById } from './helpers';
 import { sfx, sfxCalm } from './sound';
@@ -292,11 +293,7 @@ export function dropOn(el: HTMLElement, ch: string, onLand?: () => void, stay = 
     sfx('plop');
     splash(x, y + 10, POO_SPLASH);
     shakeEl(el);
-    try {
-      navigator.vibrate?.([30, 40, 60]);
-    } catch {
-      /* Vibrieren ist nur Zierde */
-    }
+    if (el.id === 'me') haptic('big');
     onLand?.();
   };
   // Der Aufprall ist bei 78 Prozent, dort spritzt es

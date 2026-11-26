@@ -194,10 +194,8 @@ button.chip:hover {
     box-shadow: 0 0 0 5px rgba(127, 227, 163, 0.06);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .dot.online {
-    animation: none;
-  }
+:where(html.calm) .dot.online {
+  animation: none;
 }
 button.chip#netchip {
   cursor: pointer;

@@ -4,7 +4,9 @@
  * DOM stehen in src/ui/feedback-rules.ts (Stufe im Schub, Ton) und src/ui/band.ts (Lage im Band, wer weicht, wer
  * wartet). Hier wird gemessen und gesetzt.
  */
+import { plain, resetSay, say, sayBatch, sentences } from './a11y/say';
 import { App } from './app';
+import { SAY_TEXT } from '../content/texts/a11y';
 import { $, $opt, esc, type Timer } from './dom';
 import { render } from './render/index';
 import type { Cue } from './levels';
@@ -81,7 +83,7 @@ const atTable = (): boolean => document.body.classList.contains('ingame') && !!$
  * Freie Spielfläche zwischen Gegnern und eigenem Platz, ungeprüft auf ihre Höhe. Meldungen liegen nur dort, damit
  * sie weder die eigenen Karten noch die Gegner verdecken.
  */
-function fieldBox(): Box | null {
+export function fieldBox(): Box | null {
   if (!document.body.classList.contains('ingame')) return null;
   const table = $opt('#table');
   const opps = $opt('#opps');
@@ -602,6 +604,8 @@ export interface Announcement {
   ms?: number;
   /** Zusätzliche Klasse, etwa für die Zeremonie */
   cls?: string;
+  /** Satz für den Vorleser, reiner Text. Er kommt erst, wenn die Meldung erscheint, nie früher als der Bildschirm */
+  say?: string;
   /** Wenn die Meldung erscheint und wenn sie endet (übersprungen oder abgelaufen) */
   onShow?: () => void;
   onEnd?: (skipped: boolean) => void;
@@ -633,6 +637,7 @@ export function resetAnnouncements(): void {
   WAIT.length = 0;
   endCur(true);
   $('#announce').innerHTML = '';
+  resetSay(0);
 }
 
 /** Wartende Meldungen einer Art verwerfen, die laufende davon schließen. */
@@ -684,6 +689,8 @@ function annNext(): void {
   ANN.t = setTimeout(() => annClose(false), ms(o.ms, 1700));
   if (o.cls !== 'zer') sfxCalm('msg', 500);
   o.onShow?.();
+  // Nach onShow: Die Zeremonie gibt dort erst den Verlierer frei (App.zerHide)
+  if (o.say) say(o.say, 'big');
 }
 
 function annClose(skipped = false): void {
@@ -762,6 +769,7 @@ export function chatBubble(pid: string | undefined, text: string): void {
   b.dataset.pid = pid;
   b.textContent = text;
   $('#fly').appendChild(b);
+  say(SAY_TEXT.chat(App.view?.players.find((p) => p.id === pid)?.name ?? '', text), 'info');
   // Seitlich im Bild halten, der Zipfel zeigt trotzdem auf den Platz
   const cx = r.left + r.width / 2;
   const half = b.offsetWidth / 2;
@@ -932,6 +940,7 @@ let BATCH: BatchState = newBatch();
  */
 export function beginBatch(fresh: readonly LogEntry[] = []): void {
   BATCH = newBatch(fresh);
+  sayBatch(fresh.reduce((mx, e) => Math.max(mx, e.n), 0));
 }
 
 /** Der Shithead-Ablauf hat sein Großes (Verbrennen, Bombe) schon gezeigt: Es zählt für den Zug mit. */
@@ -956,16 +965,20 @@ export function emit(cue: Cue | null, m: Msg): void {
   const taunt = cue.taunt && m.taunt ? m.taunt : '';
   if (level === 'big') {
     const sub = (m.sub ?? '') + (taunt ? `<span class="tt">${esc(taunt)}</span>` : '');
+    const title = m.title ?? esc(labelText(m.pid, m.text, m.mine));
+    // Der Vorleser sagt Große zuerst und Eigenes, sonst nur der Bildschirm. Große erst, wenn sie erscheinen (annNext)
     announce({
       icon: m.icon,
       tone: m.tone,
-      title: m.title ?? esc(labelText(m.pid, m.text, m.mine)),
+      title,
       sub: sub || undefined,
       ms: m.ms,
+      say: sentences(plain(title), plain(m.sub ?? '')),
     });
     if (m.hold !== undefined) holdForAnnouncements(m.hold);
     return;
   }
+  if (m.pid && m.pid === App.me) say(labelText(m.pid, m.text, m.mine), 'mine');
   setTimeout(() => smallMsg(m, taunt, !!cue.sound), m.delay ?? 60);
 }
 
@@ -1068,6 +1081,8 @@ export function showReject(r: Reject, act?: string | null, fallback?: string): v
     return;
   }
   for (const el of rejectTargets(act ?? null)) shakeEl(el);
+  // Toasts liest der Vorleser schon über #toasts, der Grund am Stapel kommt hierüber
+  say(text, 'mine');
   sfxCalm('nope', 400, 0.6);
   fixedLabel('nopelbl', text, $opt('#center .pile') ?? $opt('#center'), 2600, 14);
 }

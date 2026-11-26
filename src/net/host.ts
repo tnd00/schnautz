@@ -23,7 +23,7 @@ import { setNet, setWait, showScreen } from '../ui/screens';
 import { renderResume, showStartError } from '../ui/start';
 import { LS } from '../ui/storage';
 import { noteGuestVersion, showBackHint } from '../ui/update';
-import { APP_VERSION } from '../content/version';
+import { APP_VERSION, cmpVersion } from '../content/version';
 import { cleanName, genCode, genId, PREFIX, peerOptions } from './ids';
 import {
   asMessage,
@@ -40,7 +40,6 @@ import { allowBurst, newRateBook, rateSound } from './rate';
 import { FAST } from './pace';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 import { dlog } from '../ui/devlog';
-import { canShow, GAME_NAME } from '../game/games';
 import {
   browserBus,
   browserLocks,
@@ -318,14 +317,19 @@ function hostSend(conn: DataConnection, m: HostMessage): void {
   }
 }
 
-/** Ablehnung für den Draht: Code und Argumente, dazu `msg` aus Sicht des Gastes `pid` für Gäste von 2.6. */
-function wire(r: Reject, st: State, pid: string): ReturnType<typeof wireReject> {
-  return wireReject(r, ctxOfState(st, pid));
+/** Abweisung beim Beitritt: Code und Argumente, dazu `msg` aus Sicht des Gastes `pid` für Gäste von 2.7. */
+function rejectConn(conn: DataConnection, st: State, pid: string, r: Reject): void {
+  hostSend(conn, { t: 'reject', ...wireReject(r, ctxOfState(st, pid)) });
+  safeClose(conn, 600);
 }
 
-function rejectConn(conn: DataConnection, st: State, pid: string, r: Reject): void {
-  hostSend(conn, { t: 'reject', ...wire(r, st, pid) });
-  safeClose(conn, 600);
+/**
+ * Neulade-Pflicht beim hello: Eine ältere Seite (auch ohne Versionsangabe) muss neu laden, bei einer neueren muss es
+ * der Gastgeber. Gleiche Version mit anderem Build geht durch, den Build prüft die Update-Prüfung in update.ts.
+ */
+export function helloVerdict(v: string | undefined): Reject | null {
+  const c = cmpVersion(v, APP_VERSION);
+  return c < 0 ? rj('net.update') : c > 0 ? rj('net.hostOld') : null;
 }
 
 /**
@@ -337,11 +341,13 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
   let pid = String(m.pid || '');
   const key = String(m.key || '').slice(0, 40);
   const name = cleanName(m.name) || 'Gast';
-  // Eine alte Seite würde ein neueres Spiel falsch zeichnen
   const v = typeof m.v === 'string' ? m.v.slice(0, 20) : undefined;
-  if (!canShow(st.game, v)) {
-    dlog('net', `${name} abgewiesen, Version ${v ?? 'unbekannt'} kennt ${GAME_NAME[st.game]} nicht`);
-    rejectConn(conn, st, pid, rj('net.oldPage', { g: st.game }));
+  const bad = helloVerdict(v);
+  if (bad) {
+    dlog('net', `${name} abgewiesen, Version ${v ?? 'unbekannt'} statt ${APP_VERSION}`);
+    rejectConn(conn, st, pid, bad);
+    // Der Gast ist neuer: sofort nachsehen und selbst neu laden
+    noteGuestVersion(name, v);
     return;
   }
   // Eigene Gast-ID oder ein Platz, den dieser Gast mit seinem Schlüssel schon hatte
@@ -390,9 +396,8 @@ function hostHello(conn: DataConnection, st: State, m: Extract<GuestMessage, { t
   delete p.offSince;
   delete p.gone;
   hostSend(conn, { t: 'welcome', pid, v: APP_VERSION });
-  ci.v = typeof m.v === 'string' ? m.v.slice(0, 20) : undefined;
+  ci.v = v;
   dlog('net', `${name} kommt an den Tisch, Version ${ci.v ?? 'unbekannt'}`);
-  noteGuestVersion(name, ci.v);
   hostCommit();
 }
 
@@ -439,9 +444,11 @@ function hostMsg(conn: DataConnection, raw: unknown): void {
           'game',
           `${st.players[pIdx(st, id)]?.name ?? id}: ${g.type} abgelehnt, ${rejectLog(e, ctxOfState(st, id))}`,
         );
-        // Typ des Zugs nur, wenn er wie ein Aktionsname aussieht, damit nichts Fremdes zurückgeht
+        // Nur Code und Argumente, den Text rendert der Gast selbst. Typ des Zugs nur, wenn er wie ein Aktionsname
+        // aussieht, damit nichts Fremdes zurückgeht
         const k = rejectAct({ act: g.type });
-        hostSend(conn, k ? { t: 'err', ...wire(e, st, id), act: k } : { t: 'err', ...wire(e, st, id) });
+        const r = e.a ? { e: e.e, a: e.a } : { e: e.e };
+        hostSend(conn, k ? { t: 'err', ...r, act: k } : { t: 'err', ...r });
       } else hostCommit();
       return;
     }
@@ -470,15 +477,6 @@ export function gateAct(st: State, pid: string, a: Action, now = Date.now()): Ac
   if (a.bot) s.bot = true;
   if (verdict === 'quiet') s.quiet = true;
   return s;
-}
-
-/** Namen verbundener Gäste, deren Seite dieses Spiel noch nicht kennt. */
-export function outdatedFor(game: GameKind): string[] {
-  const st = H.st;
-  if (!st) return [];
-  return [...H.conns]
-    .filter(([, c]) => c.open && !canShow(game, info(c).v))
-    .map(([pid]) => st.players[pIdx(st, pid)]?.name ?? 'Jemand');
 }
 
 /** Dev-Menü: offene Verbindungen mit letztem Lebenszeichen und Version. */

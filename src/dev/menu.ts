@@ -32,6 +32,8 @@ import { sampleStatus } from '../ui/samples';
 import { SEQ } from '../ui/shithead/sequence';
 import { audio, sfx, SOUND_NAMES, type SoundName, unlockAudio } from '../ui/sound';
 import { LS } from '../ui/storage';
+import { applyLook, setLook } from '../ui/look';
+import { prefs, setPref } from '../ui/prefs';
 import { playToss } from '../ui/toss';
 import { BUILD, reloadApp } from '../ui/update';
 import { spool, spoolCheck, type Spooled, type SpoolGoal, type SpoolWant } from './spool';
@@ -335,7 +337,13 @@ function storageLine(): string {
 }
 
 function toolsHTML(): string {
-  const list = [btn('reload', 'Neu laden, zurück an den Tisch')];
+  const p = prefs();
+  const list = [
+    btn('look', p.look === 'legacy' ? 'Look wechseln (zu Sticker)' : 'Look wechseln (zu Legacy)'),
+    // Das Thema wirkt nur unter Sticker (look.ts setzt data-theme nie unter Legacy)
+    btn('theme', p.theme === 'dark' ? 'Dunkel aus' : 'Dunkel an'),
+    btn('reload', 'Neu laden, zurück an den Tisch'),
+  ];
   if (App.role === 'guest') list.push(btn('drop', 'Verbindung kurz trennen'));
   list.push(btn('hide', 'Dev-Menü ausblenden'));
   return grid(list);
@@ -629,6 +637,14 @@ export function devAct(id: string, t: HTMLElement): void {
       break;
     case 'fx':
       fx({ fx: s as DevFx, ...(s === 'poo' ? { to: App.me } : {}) });
+      break;
+    case 'look':
+      setLook(prefs().look === 'legacy' ? 'sticker' : 'legacy');
+      break;
+    case 'theme':
+      setPref('theme', prefs().theme === 'dark' ? 'light' : 'dark');
+      applyLook();
+      if (prefs().look === 'legacy') toast('Dunkel wirkt nur im Sticker-Look.');
       break;
     case 'reload':
       reloadApp();

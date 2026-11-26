@@ -1,14 +1,20 @@
 /*
  * Neue Version: Die Seite fragt ab und zu nach, ob ein neuer Stand veröffentlicht wurde, und Gastgeber und Gäste
- * vergleichen ihre Version beim Beitreten. Dann erscheint oben ein Hinweis mit Knopf zum Neuladen.
- * Nach dem Neuladen geht es von selbst zurück an den Tisch, ebenso nach jedem anderen Neuladen am Tisch.
+ * vergleichen ihre Version beim Beitreten. Dann kündigt oben ein Hinweis mit Ton das Neuladen an, die Seite lädt
+ * von selbst neu, sobald es ruhig ist (Neulade-Pflicht, Plan 2.8). Danach geht es ohne Tippen zurück an den Tisch,
+ * ebenso nach jedem anderen Neuladen am Tisch.
  */
 import { APP_VERSION, cmpVersion } from '../content/version';
+import { UPD, type UpdWho } from '../content/texts/update';
 import { App } from './app';
 import { $opt, esc } from './dom';
 import { toast } from './feedback';
+import { sfx } from './sound';
 import { SS } from './storage';
 import { dlog } from './devlog';
+import { tableBusy } from './table/index';
+import { dkWaiting } from '../game/durak';
+import type { View } from '../game/types';
 
 /** Kennung dieses Builds, setzt vite.config.ts. Beim Entwickeln gibt es keine. */
 declare const __BUILD_ID__: string | undefined;
@@ -28,8 +34,8 @@ export function showUpdate(text: string, reload: boolean): void {
   }
   bar.innerHTML =
     `<span>${esc(text)}</span>` +
-    (reload ? '<button type="button" class="btn primary small" data-act="reloadapp">Neu laden</button>' : '') +
-    '<button type="button" class="x" data-act="closeupd" aria-label="Schließen">×</button>';
+    (reload ? `<button type="button" class="btn primary small" data-act="reloadapp">${UPD.reload}</button>` : '') +
+    `<button type="button" class="x" data-act="closeupd" aria-label="${UPD.close}">×</button>`;
   shown = true;
   watch(bar);
 }
@@ -86,6 +92,8 @@ export interface BackMark {
 const MARK = 'autoresume';
 /** Gerade läuft reloadApp: Der Merker steht schon und bleibt */
 let reloading = false;
+/** Rückweg für einen Gast, den der Gastgeber wegen alter Version abgewiesen hat (er sitzt nicht mehr am Tisch) */
+let backAfter: BackMark | null = null;
 
 /** Merker lesen. Ein Tab mit 2.6 hat nur die Rolle als Text geschrieben, das zählt wie ein Update. */
 export function peekBackMark(): BackMark | null {
@@ -139,10 +147,8 @@ export function initBackMark(): void {
 
 /** Neu laden und danach an den Tisch zurück, als hätte man „Fortsetzen“ getippt. */
 export function reloadApp(): void {
-  if (App.role) {
-    const m: BackMark = { role: App.role, code: App.code, name: App.name, why: 'update' };
-    SS.set(MARK, m);
-  }
+  const m: BackMark | null = App.role ? { role: App.role, code: App.code, name: App.name, why: 'update' } : backAfter;
+  if (m) SS.set(MARK, m);
   reloading = true;
   location.reload();
 }
@@ -158,48 +164,97 @@ export function armBackHint(on = true): void {
 export function showBackHint(): void {
   if (!backHint) return;
   backHint = false;
-  toast('Zurück an deinem Tisch.', 2500);
+  toast(UPD.back, 2500);
 }
 
-/** Gast: Der Gastgeber meldet seine Version. Unterschied heißt, einer von beiden sollte neu laden. */
+/** Ziel beim Neuladen wegen einer Version statt eines Builds: irgendetwas Neueres als diese Seite */
+export const newerThanMe = (): string => `>${APP_VERSION}`;
+
+/** Gast: Der Gastgeber meldet seine Version. Einen älteren Gastgeber fängt guest.ts schon vorher ab. */
 export function noteHostVersion(v: string | undefined): void {
   // Kommt mit welcome, der Gast sitzt also wieder am Tisch
   showBackHint();
-  const c = cmpVersion(v, APP_VERSION);
-  if (c < 0)
-    showUpdate('Der Tisch läuft noch mit einer älteren Version. Bitte den Gastgeber, die Seite neu zu laden.', false);
-  else if (c > 0) showUpdate('Neue Version verfügbar. Lade neu, dein Platz bleibt.', true);
+  if (cmpVersion(v, APP_VERSION) > 0) reloadSoon(newerThanMe());
 }
 
-/** Gastgeber: Ein Gast kommt mit anderer Version. */
+/** Gastgeber: Ein Gast kommt mit neuerer Version, also sofort nachsehen und neu laden. */
 export function noteGuestVersion(name: string, v: string | undefined): void {
-  const c = cmpVersion(v, APP_VERSION);
-  if (c < 0) toast(`${name} nutzt noch eine ältere Version. Bitte neu laden lassen.`, 6000);
-  else if (c > 0) showUpdate(`${name} hat schon eine neuere Version. Lade neu, der Tisch läuft danach weiter.`, true);
+  if (cmpVersion(v, APP_VERSION) <= 0) return;
+  void check(true).then((found) => {
+    if (!found) showUpdate(UPD.guestNewer(name), true);
+  });
 }
+
+const who = (): UpdWho => App.role ?? (backAfter ? 'guest' : 'none');
 
 /** Hinweis auf eine neue Version, passend dazu, ob und wie dieser Tab am Tisch sitzt. */
 export function updateText(): string {
-  return !App.role
-    ? 'Neue Version verfügbar. Lade kurz neu.'
-    : App.role === 'host'
-      ? 'Neue Version verfügbar. Lade neu, der Tisch läuft danach weiter.'
-      : 'Neue Version verfügbar. Lade neu, dein Platz bleibt.';
+  return UPD.now[who()];
 }
 
-async function check(): Promise<void> {
-  if (!BUILD || shown || document.hidden) return;
+/** Erst lesen lassen, dann auf Ruhe warten. Fenster und Abläufe warten höchstens bis zur Frist, der eigene Zug immer. */
+const SOON_MIN_MS = 2500;
+const SOON_MAX_MS = 15_000;
+/** Ziel des letzten Neuladens von selbst. Für dasselbe Ziel nie noch einmal, sonst ginge es mit altem Zwischenspeicher im Kreis */
+const TARGET = 'updTo';
+let soon: ReturnType<typeof setInterval> | null = null;
+
+/** Bin ich gerade dran oder läuft meine Uhr? Auch in der Tauschrunde und beim Ansehen, solange ich nicht fertig bin. */
+function myTurn(v: View): boolean {
+  const me = v.players.find((p) => p.id === App.me);
+  if (!me || me.out) return false;
+  if (v.clock?.ids.includes(App.me)) return true;
+  if (v.phase === 'swap' || v.phase === 'peek') return !me.ready;
+  if (v.game === 'durak') return dkWaiting(v).includes(App.me);
+  if (v.phase === 'choose') return v.players[v.dealer]?.id === App.me;
+  return v.phase === 'play' && v.players[v.turn]?.id === App.me;
+}
+
+/** Ablauf am Tisch oder offenes Fenster: Darauf wartet das Neuladen nur bis zur Frist. */
+const busy = (): boolean => tableBusy() || !!$opt('#modal')?.firstElementChild;
+
+/**
+ * Neuer Stand erkannt: mit Text und Ton ankündigen und neu laden, sobald es ruhig ist. `target`: Ziel-Build oder
+ * `>Version`. `back`: Gast, den der Gastgeber wegen alter Version abgewiesen hat, danach geht es an diesen Tisch zurück.
+ */
+export function reloadSoon(target: string, back?: { code: string; name: string }): void {
+  if (back) backAfter = { role: 'guest', code: back.code, name: back.name, why: 'update' };
+  if (soon) return;
+  if (SS.get<string>(TARGET, '') === target) {
+    // Schon einmal dafür neu geladen und doch nicht angekommen: nur der Hinweis mit Knopf
+    dlog('net', `Neuladen für ${target} brachte keinen neuen Stand, nur Hinweis`);
+    showUpdate(updateText(), true);
+    return;
+  }
+  dlog('net', 'Neue Version, lade neu, sobald es ruhig ist');
+  showUpdate(UPD.soon[who()], true);
+  sfx('msg');
+  const t0 = Date.now();
+  soon = setInterval(() => {
+    const dt = Date.now() - t0;
+    if (dt < SOON_MIN_MS || (App.view && myTurn(App.view)) || (dt < SOON_MAX_MS && busy())) return;
+    if (soon) clearInterval(soon);
+    SS.set(TARGET, target);
+    reloadApp();
+  }, 500);
+}
+
+/** Fragt den Server nach dem aktuellen Build. `force`: auch wenn schon ein Hinweis steht oder der Tab versteckt ist. */
+async function check(force = false): Promise<boolean> {
+  if (!BUILD || (!force && (shown || document.hidden))) return false;
   try {
     const r = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
-    if (!r.ok) return;
+    if (!r.ok) return false;
     const j = (await r.json()) as { build?: unknown };
     if (typeof j.build === 'string' && j.build !== BUILD) {
       dlog('net', `Neue Version auf dem Server: ${j.build}`);
-      showUpdate(updateText(), true);
+      reloadSoon(j.build);
+      return true;
     }
   } catch {
     /* offline oder beim Entwickeln: kein Hinweis */
   }
+  return false;
 }
 
 export function initUpdateCheck(): void {

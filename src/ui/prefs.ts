@@ -4,11 +4,10 @@
  * tests/e2e/fit.spec.ts und tests/design), alles Übrige als ein Objekt unter `prefs`. Geprüft wird mit asPrefs aus
  * src/net/protocol.ts.
  *
- * Stummel aus Runde 1: Lesen und Schreiben gehen, wirken tut noch nichts. `calm()` folgt wie heute nur dem System.
- * Runde 2 (A11y) baut den Bogen „Bedienung“ und schließt Ton, Haptik und Ruhig an.
+ * Ruhig hat eine Quelle, die Klasse `calm` an html: applyCalm setzt sie, reduceMotion() in dom.ts und das CSS
+ * (`:where(html.calm)`) lesen sie. Der Bogen „Bedienung“ lädt nach (src/ui/render/prefs.ts).
  */
 import { asPrefs, type Prefs } from '../net/protocol';
-import { reduceMotion } from './dom';
 import { LS } from './storage';
 
 export type { Prefs } from '../net/protocol';
@@ -36,15 +35,28 @@ export function setPref<K extends keyof Prefs>(k: K, val: Prefs[K]): void {
   LS.set('prefs', { ...rest, [k]: val });
 }
 
-/** Bewegung reduzieren? Ersetzt später reduceMotion() an allen Stellen, heute nur das System. */
-export const calm = (): boolean => reduceMotion();
+const SYS_CALM = '(prefers-reduced-motion: reduce)';
+const sysCalm = (): boolean => typeof window !== 'undefined' && !!window.matchMedia?.(SYS_CALM).matches;
 
-/** Bogen „Bedienung“ in #modal. Stummel, Runde 2. */
+/** Bewegung reduzieren? 'on' an, 'off' aus, 'auto' folgt dem System. */
+export const calm = (): boolean => {
+  const c = prefs().calm;
+  return c === 'on' || (c === 'auto' && sysCalm());
+};
+
+/** Bogen „Bedienung“ in #modal, lädt beim ersten Öffnen nach. */
 export function openPrefs(): void {
-  // Stummel, Runde 2
+  void import('./render/prefs').then((m) => m.renderPrefs());
 }
 
-/** Setzt die Klasse calm an html (Standard folgt prefers-reduced-motion). Stummel, A11y baut es in Runde 2. */
+let watching = false;
+
+/** Setzt die Klasse calm an html. Folgt Änderungen der Systemeinstellung, solange Ruhig auf auto steht. */
 export function applyCalm(): void {
-  // Stummel, Runde 2
+  document.documentElement.classList.toggle('calm', calm());
+  if (watching || !window.matchMedia) return;
+  watching = true;
+  window.matchMedia(SYS_CALM).addEventListener?.('change', () => {
+    if (prefs().calm === 'auto') applyCalm();
+  });
 }

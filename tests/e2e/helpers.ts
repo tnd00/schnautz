@@ -302,3 +302,31 @@ export async function fillWithBots(host: Page, n: number): Promise<void> {
   }, n);
   await expect.poll(async () => (await view(host))?.players.length).toBe(n);
 }
+
+/**
+ * Ziehen mit echtem Finger über CDP (ziehen.md 7), damit touch-action und Pointer Events wirklich mitspielen. Von der
+ * Mitte der Quelle zur Mitte des Ziels in `steps` Schritten, nur in Chromium.
+ */
+export async function touchDrag(page: Page, from: Locator, to: Locator, steps = 10): Promise<void> {
+  const a = await from.boundingBox();
+  const b = await to.boundingBox();
+  if (!a || !b) throw new Error('Quelle oder Ziel nicht sichtbar');
+  const cdp = await page.context().newCDPSession(page);
+  const at = (x: number, y: number) => [{ x, y, id: 1 }];
+  const [x0, y0] = [a.x + a.width / 2, a.y + a.height / 2];
+  const [x1, y1] = [b.x + b.width / 2, b.y + b.height / 2];
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(x0, y0) });
+    for (let i = 1; i <= steps; i++) {
+      const k = i / steps;
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: at(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k),
+      });
+      await page.waitForTimeout(16);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await cdp.detach();
+  }
+}

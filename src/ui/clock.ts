@@ -3,7 +3,9 @@
  * Die Restzeit kommt mit jeder Ansicht vom Host, dazwischen zählt die Anzeige selbst weiter.
  */
 import type { View } from '../game/types';
+import { say } from './a11y/say';
 import { App } from './app';
+import { SAY_TEXT } from '../content/texts/a11y';
 import { $opt, num } from './dom';
 import { panelFor } from './feedback';
 import { sfx } from './sound';
@@ -84,6 +86,8 @@ export function markClocks(): void {
     const c = document.createElement('span');
     c.className = id === App.me ? 'clk mine' : 'clk';
     c.setAttribute('aria-label', 'Restzeit für diesen Zug');
+    // Die Uhr selbst sagt nichts an, der Vorleser meldet einmal die letzten 5 Sekunden
+    c.setAttribute('role', 'timer');
     c.innerHTML = id === App.me ? '<i></i><b></b>' : '';
     el.appendChild(c);
   });
@@ -102,6 +106,7 @@ function tick(): void {
   const s = Math.ceil(l / 1000);
   if (CLK.ids.includes(App.me) && s >= 1 && s <= TICK_S && !document.hidden) {
     if (s !== CLK.tickS) {
+      if (s === TICK_S) say(SAY_TEXT.clock5, 'turn');
       CLK.tickS = s;
       sfx('tick');
     }

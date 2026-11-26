@@ -1,0 +1,26 @@
+/* Bogen „Bedienung“ (src/ui/render/prefs.ts, lädt mit ihm nach). Zeilen, Schalter und Regler kommen aus .gset in
+ * lobby.css, hier nur die Auswahl in drei Teilen, die unter ihrer Beschriftung über die ganze Breite steht. */
+#modal .gset.prefs .lead {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--st-ink-soft);
+}
+#modal .gset.prefs .pseg {
+  flex-wrap: wrap;
+  cursor: default;
+}
+#modal .gset.prefs .pseg .rl {
+  flex-basis: 100%;
+}
+#modal .gset.prefs .pseg .segs {
+  flex: 1 1 100%;
+}
+#modal .gset.prefs .pseg .seg {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1.15;
+  white-space: normal;
+}

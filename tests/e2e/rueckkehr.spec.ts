@@ -1,6 +1,6 @@
 /*
  * Rückkehr an den Tisch: per Einladungslink auf den eigenen Platz (Lobby und laufende Partie), Neuladen ohne Tippen
- * und ein zweiter Gastgeber-Tab, der den Tisch erst nach Rückfrage übernimmt.
+ * ein zweiter Gastgeber-Tab, der den Tisch erst nach Rückfrage übernimmt, und die Neulade-Pflicht für alte Seiten.
  */
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -147,5 +147,29 @@ test('Gastgeber lädt neu und ist ohne Tippen zurück, ein zweiter Tab holt den 
     expect(await playerCount(host)).toBe(1);
   });
 
+  expect(errors.list).toEqual([]);
+});
+
+test('Gast mit altem Build lädt nach der Abweisung von selbst neu und landet am Tisch', async ({ browser }) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  const guest = errors.watch(await (await phone(browser)).newPage(), 'gast');
+  const code = await hostTable(host, 'Tahna');
+  await guest.goto(`${START}#${code}`);
+  // Alter Build: nur über den Testzugang, nach dem Neuladen ist er weg. Der Merker zeigt, ob neu geladen wurde
+  await guest.evaluate(() => {
+    const s = window.__schnautz;
+    if (!s) throw new Error('kein Testzugang');
+    s.G.fakeV = '2.0.0';
+    (window as unknown as { oldPage?: boolean }).oldPage = true;
+  });
+  await guest.fill('#name', 'Lena');
+  await guest.click('#btn-join');
+  await expect(guest.locator('#start-err')).toContainText('Lade die Seite neu');
+  await expect(guest.locator('#updbar')).toContainText('lädt gleich von selbst neu');
+  await expect(guest.locator('#scr-lobby')).toBeVisible({ timeout: 30_000 });
+  expect(await guest.evaluate(() => (window as unknown as { oldPage?: boolean }).oldPage)).toBeUndefined();
+  expect(await guest.evaluate(() => window.__schnautz?.App.code)).toBe(code);
+  await expect.poll(() => playerCount(host)).toBe(2);
   expect(errors.list).toEqual([]);
 });

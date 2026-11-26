@@ -184,12 +184,17 @@ function keepIn(e: KeyboardEvent, root: HTMLElement): void {
   }
 }
 
-/** Tab und Umschalt+Tab bleiben im offenen Fenster. Ist keins offen, kümmert sich menuTab ums Menü ⋯. */
+/**
+ * Tab und Umschalt+Tab bleiben im offenen Fenster. Ist keins offen, kümmert sich menuTab ums Menü ⋯, sonst hält das
+ * Ergebnisblatt am Handy (aria-modal, render/result.ts) den Fokus bei sich.
+ */
 function trap(e: KeyboardEvent): void {
   if (e.key !== 'Tab') return;
   const box = $opt('#modal');
   const paper = open && box ? paperOf(box) : null;
+  const sheet = $opt('#overlay .paper.result[aria-modal="true"]');
   if (paper) keepIn(e, paper);
+  else if (sheet && $opt('#menu')?.hidden !== false) keepIn(e, sheet);
   else menuTab(e);
 }
 

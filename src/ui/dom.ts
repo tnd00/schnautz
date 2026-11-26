@@ -25,7 +25,9 @@ export function num(x: unknown): number {
 export const listJoin = (a: string[]): string =>
   a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} und ${a[a.length - 1]}`;
 
-export const reduceMotion = (): boolean => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+/** Ruhig? Liest die Klasse calm an html, die applyCalm aus prefs.ts setzt (Standard folgt dem System). */
+export const reduceMotion = (): boolean =>
+  typeof document !== 'undefined' && document.documentElement.classList.contains('calm');
 
 /** Gleiche Grenze wie im CSS: Darunter ist der Verlauf ein Fenster zum Hochschieben und der Tisch passt ohne Scrollen. */
 export const isMobile = (): boolean => !!window.matchMedia?.('(max-width: 960px)').matches;

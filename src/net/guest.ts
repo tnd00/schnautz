@@ -8,8 +8,10 @@ import { resetTableUI } from '../ui/reset';
 import { setNet, setWait, showScreen } from '../ui/screens';
 import { endInvite, renderResume, showStartError } from '../ui/start';
 import { LS, SS } from '../ui/storage';
-import { noteHostVersion } from '../ui/update';
-import { APP_VERSION } from '../content/version';
+import { newerThanMe, noteHostVersion, reloadSoon } from '../ui/update';
+import { UPD } from '../content/texts/update';
+import { resetSay } from '../ui/a11y/say';
+import { APP_VERSION, cmpVersion } from '../content/version';
 import { genId, PREFIX, peerOptions } from './ids';
 import {
   asMessage,
@@ -22,8 +24,8 @@ import {
   type HostMessage,
   type SavedGuest,
 } from './protocol';
-import { ctxOfView } from '../content/texts';
-import type { RejectCode } from '../game/reject';
+import { ctxOfView, rejectText } from '../content/texts';
+import { rj, type RejectCode } from '../game/reject';
 import { keepSignal, safeClose, safeDestroy } from './signal';
 import { dlog } from '../ui/devlog';
 
@@ -97,6 +99,14 @@ export function searchStep(s: Search, now: number): SearchStep {
   return { t: 'slow', at: now + SLOW_GIVEUP_MS };
 }
 
+/**
+ * Gastgeber mit älterer Version (net.hostOld): Der Gast sucht wie bei der Rückkehr weiter, bis der Gastgeber neu
+ * geladen hat. Die Frist läuft ab dem ersten Mal (`oldAt`, 0 ohne), jedes weitere Mal verlängert sie nicht.
+ */
+export function hostOldSearch(oldAt: number, now: number): { first: boolean; since: number } {
+  return oldAt ? { first: false, since: oldAt } : { first: true, since: now };
+}
+
 /** Meldung auf der Startseite und ob die Einladung endet. */
 export function searchEndText(why: SearchEnd, code: string): { msg: string; endInv: boolean } {
   switch (why) {
@@ -159,6 +169,13 @@ export const G = {
   connTo: null as Timer | null,
   /** Nächste Prüfung der Fristen (searchStep) */
   giveTo: null as Timer | null,
+  /**
+   * Nur für E2E: Version, die das hello vortäuscht (alter Build). Setzen lässt sie sich nur über window.__schnautz,
+   * das es nur beim Entwickeln und mit dem Testparameter ?peerhost= gibt. Nach dem Neuladen ist sie weg.
+   */
+  fakeV: '',
+  /** Seit wann der Gast auf einen Gastgeber mit älterer Version wartet, 0 ohne (hostOldSearch) */
+  oldAt: 0,
 };
 
 /**
@@ -187,6 +204,7 @@ export function guestStart(code: string, name: string, pid: string, key?: string
     tryAt: 0,
     slowAt: 0,
     downSince: 0,
+    oldAt: 0,
   });
   dlog('net', resume ? `Zurück an Tisch ${code}` : `Beitritt zu Tisch ${code}`);
   showScreen('wait');
@@ -219,8 +237,12 @@ function searchCheck(): boolean {
   );
   if (s.t === 'end') {
     dlog('net', `Suche endet (${s.why})`);
-    const e = searchEndText(s.why, App.code);
-    guestFail(e.msg, e.endInv);
+    // Der Gastgeber hat in der Frist nicht neu geladen: Grund nennen, die Einladung bleibt
+    if (G.oldAt) guestFail(rejectText(rj('net.hostOld'), ctxOfView(App.view)));
+    else {
+      const e = searchEndText(s.why, App.code);
+      guestFail(e.msg, e.endInv);
+    }
     return true;
   }
   if (s.t === 'slow') {
@@ -300,7 +322,8 @@ function guestPeer(): void {
       dropPending();
       if (searchCheck()) return;
       setNet('reconnecting');
-      if (!G.ever)
+      if (G.oldAt) setWait(UPD.hostReload, UPD.hostReloadSub);
+      else if (!G.ever)
         setWait(
           `Tisch ${App.code} antwortet gerade nicht…`,
           'Vielleicht lädt der Gastgeber gerade neu. Der nächste Versuch läuft schon.',
@@ -354,7 +377,7 @@ function guestConnect(): void {
     G.fails++;
     // Zeitgrenze ohne „gibt es nicht“: Den Tisch gibt es, die direkte Verbindung hakt. Die letzte Auskunft zählt.
     G.notFound = 0;
-    if (!G.ever && !G.stopped) waitSlow();
+    if (!G.ever && !G.stopped && !G.oldAt) waitSlow();
     guestRetry();
   }, CONNECT_TIMEOUT_MS);
   conn.on('open', () => {
@@ -363,7 +386,7 @@ function guestConnect(): void {
     G.pending = false;
     G.fails = 0;
     G.lastPong = Date.now();
-    sendToHost({ t: 'hello', pid: App.me, key: App.key, name: App.name, v: APP_VERSION });
+    sendToHost({ t: 'hello', pid: App.me, key: App.key, name: App.name, v: G.fakeV || APP_VERSION });
   });
   conn.on('data', (m) => {
     if (G.conn === conn) guestMsg(m);
@@ -433,14 +456,24 @@ function guestMsg(raw: unknown): void {
       if (App.net !== 'online') setNet('online');
       return;
     case 'welcome': {
+      const hv = typeof m.v === 'string' ? m.v : undefined;
+      // Gastgeber mit älterer Version (bis 2.7 weist er neuere Gäste nicht selbst ab): nicht mitspielen
+      if (cmpVersion(hv, APP_VERSION) < 0) {
+        dlog('net', `Gastgeber hat Version ${hv ?? 'unbekannt'}, er muss neu laden`);
+        waitHostReload();
+        return;
+      }
       G.ever = true;
+      G.oldAt = 0;
+      // Nach dem Beitritt keinen alten Verlauf vorlesen
+      resetSay(App.seenN);
       // Ab jetzt sucht der Gast ohne Frist weiter, wenn die Verbindung abreißt
       if (G.giveTo) clearTimeout(G.giveTo);
       G.giveTo = null;
       G.slowAt = 0;
       // Nach dem Neuverbinden keine alten Würfe und Klänge nachspielen
       App.fxSync = true;
-      noteHostVersion(typeof m.v === 'string' ? m.v : undefined);
+      noteHostVersion(hv);
       G.lastPong = Date.now();
       setNet('online');
       if (typeof m.pid === 'string' && m.pid && m.pid !== App.me) {
@@ -468,7 +501,14 @@ function guestMsg(raw: unknown): void {
       // Mit Code rendert der Gast selbst, sonst zeigt er den Text vom Gastgeber (auch von 2.6)
       const r = readReject(m, ctxOfView(App.view), 'Beitreten hat nicht geklappt.');
       dlog('net', `Abgewiesen: ${r.text}${r.code ? ` [${r.code}]` : ''}`);
+      if (r.code === 'net.hostOld') {
+        waitHostReload();
+        return;
+      }
+      const back = { code: App.code, name: App.name };
       guestFail(r.text, !keepsInvite(typeof m.msg === 'string' ? m.msg : undefined, r.code));
+      // Diese Seite ist älter als der Tisch: neu laden und danach von selbst wieder beitreten
+      if (r.code === 'net.update') reloadSoon(newerThanMe(), back);
       return;
     }
     case 'err': {
@@ -490,6 +530,25 @@ function guestMsg(raw: unknown): void {
       guestFail('Du sitzt jetzt in einem anderen Tab oder auf einem anderen Gerät am Tisch.');
       return;
   }
+}
+
+/** Gastgeber mit älterer Version: Verbindung lösen und wie bei der Rückkehr weiter suchen, bis er neu geladen hat. */
+function waitHostReload(): void {
+  clearConnTo();
+  G.pending = false;
+  const c = G.conn;
+  G.conn = null;
+  safeClose(c);
+  const s = hostOldSearch(G.oldAt, Date.now());
+  if (s.first) {
+    Object.assign(G, { oldAt: s.since, since: s.since, resume: true, ever: false, notFound: 0, slowAt: 0, tryAt: 0 });
+    resetTableUI();
+    App.view = null;
+    showScreen('wait');
+  }
+  setWait(UPD.hostReload, UPD.hostReloadSub);
+  setNet('reconnecting');
+  if (!searchCheck()) guestRetry();
 }
 
 export function guestStop(): void {
@@ -516,12 +575,18 @@ export function guestLeave(): void {
 }
 
 /** Codes, nach denen die Einladung bleibt. */
-const KEEP_INVITE: ReadonlySet<RejectCode> = new Set<RejectCode>(['seat.full', 'seat.fullPlaying', 'net.oldPage']);
+const KEEP_INVITE: ReadonlySet<RejectCode> = new Set<RejectCode>([
+  'seat.full',
+  'seat.fullPlaying',
+  'net.oldPage',
+  'net.update',
+  'net.hostOld',
+]);
 
 /**
- * Abweisungen, nach denen die Einladung bleibt: Der Tisch ist voll (später klappt es vielleicht) oder die Seite soll
- * neu laden (dann braucht es den Code im Link). Mit Code entscheidet der Code. Ohne Code (Gastgeber von 2.6) der
- * Text, die drei Wortteile sind deshalb in src/content/texts/reject.ts eingefroren.
+ * Abweisungen, nach denen die Einladung bleibt: Der Tisch ist voll (später klappt es vielleicht) oder eine der beiden
+ * Seiten soll neu laden (dann braucht es den Code im Link). Mit Code entscheidet der Code. Ohne Code (Gastgeber von
+ * 2.6) der Text, die drei Wortteile sind deshalb in src/content/texts/reject.ts eingefroren.
  */
 export function keepsInvite(msg: string | undefined, code?: RejectCode | null): boolean {
   if (code) return KEEP_INVITE.has(code);

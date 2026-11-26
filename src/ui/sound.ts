@@ -4,8 +4,21 @@ import { $ } from './dom';
 import { loadSamples, startSample, type SampleName } from './samples';
 import { trombone } from './soundboard';
 import { dlog } from './devlog';
+import { prefs } from './prefs';
 
 let AC: AudioContext | null = null;
+/** Hauptregler zwischen allen Klängen und dem Ausgang: Lautstärke aus den Vorlieben, stumm auf null */
+let MASTER: GainNode | null = null;
+
+/** Der Hauptregler des Kontexts, beim ersten Mal angelegt */
+function master(ac: AudioContext): GainNode {
+  if (!MASTER || MASTER.context !== ac) {
+    MASTER = ac.createGain();
+    MASTER.connect(ac.destination);
+    MASTER.gain.value = App.muted ? 0 : prefs().volume;
+  }
+  return MASTER;
+}
 
 let primed = false;
 
@@ -40,7 +53,7 @@ export function unlockAudio(): void {
       const b = AC.createBuffer(1, 1, 22050);
       const src = AC.createBufferSource();
       src.buffer = b;
-      src.connect(AC.destination);
+      src.connect(master(AC));
       src.start(0);
     } catch {
       primed = false;
@@ -231,15 +244,16 @@ const NOOP = (): void => undefined;
 /** Spielton. `vol` unter 1 dämpft, etwa für fremde Würfe. Gibt eine Funktion zurück, die den Ton abbricht. */
 export function sfx(name: SoundName, vol = 1): () => void {
   const ac = audio();
-  if (App.muted || !ac) return NOOP;
+  if (App.muted || !ac || (name === 'turn' && !turnToneNow())) return NOOP;
   try {
     const sample = SAMPLE_OF[name];
-    const played = sample ? startSample(ac, sample, ac.destination, Math.max(0, vol)) : null;
+    const out = master(ac);
+    const played = sample ? startSample(ac, sample, out, Math.max(0, vol)) : null;
     if (played) return played.stop;
     // Eigener Bus pro Ton, damit er sich sanft abbrechen lässt
     const g = ac.createGain();
     g.gain.value = Math.max(0, vol);
-    g.connect(ac.destination);
+    g.connect(out);
     SFX[name](ac, ac.currentTime + 0.01, g);
     return () => {
       try {
@@ -273,7 +287,7 @@ export function sbBus(ac: AudioContext): GainNode {
     const comp = ac.createDynamicsCompressor();
     comp.threshold.value = -18;
     comp.ratio.value = 6;
-    comp.connect(ac.destination);
+    comp.connect(master(ac));
     SB = ac.createGain();
     SB.connect(comp);
   }
@@ -281,9 +295,31 @@ export function sbBus(ac: AudioContext): GainNode {
   return SB;
 }
 
-/** Stummschalten wirkt sofort, auch mitten in einem Klang. */
+/** Stummschalten und Lautstärke wirken sofort, auch mitten in einem Klang. */
 export function setSbVolume(): void {
   if (SB) SB.gain.value = App.muted || App.sbOff ? 0 : 0.7;
+  if (MASTER) MASTER.gain.value = App.muted ? 0 : prefs().volume;
+}
+
+/** So lange ohne Tipp oder Taste gilt als weggeschaut */
+const AWAY_MS = 3000;
+let lastInput = 0;
+if (typeof document !== 'undefined') {
+  const note = (): void => void (lastInput = Date.now());
+  document.addEventListener('pointerdown', note, { capture: true, passive: true });
+  document.addEventListener('keydown', note, { capture: true, passive: true });
+}
+
+/** Zug-Ton nach Vorliebe: immer, nie oder nur bei verdecktem Tab oder nach kurzer Ruhe */
+function turnToneNow(): boolean {
+  switch (prefs().turnTone) {
+    case 'always':
+      return true;
+    case 'off':
+      return false;
+    case 'away':
+      return document.hidden || Date.now() - lastInput > AWAY_MS;
+  }
 }
 
 const ICON_MUTED =

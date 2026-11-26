@@ -1,6 +1,7 @@
 import { unreachable } from '../game/games';
 import type { LogEntry, View } from '../game/types';
 import { emojiFly } from './animations';
+import { haptic } from './a11y/haptic';
 import { App } from './app';
 import { $opt, listJoin } from './dom';
 import { REMATCH_ANN_MS } from '../game/constants';
@@ -89,11 +90,7 @@ export function effects(prev: View, v: View, seqd = false): void {
   const was = myMoveNow(prev) && !prev.sh?.win?.lock;
   if (myMoveNow(v) && !v.sh?.win?.lock && !was) {
     sfx('turn');
-    try {
-      navigator.vibrate?.(60);
-    } catch {
-      // Manche Browser verbieten Vibration ohne vorherige Geste
-    }
+    haptic('big');
   }
   updateTitle();
 }
@@ -129,11 +126,7 @@ function timeoutEffect(c: LevelCtx, e: Extract<LogEntry, { k: 'timeout' }>): voi
     return;
   }
   // Zu lange gebraucht: Damit klar ist, warum plötzlich etwas passiert ist
-  try {
-    navigator.vibrate?.([60, 60, 60]);
-  } catch {
-    // Manche Browser verbieten Vibration ohne vorherige Geste
-  }
+  haptic('big');
   emit(cue, {
     text: cue?.level === 'big' ? SEAT.timeoutTitle : SEAT.timeoutPassSelf,
     icon: '⏰',

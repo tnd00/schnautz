@@ -1,8 +1,10 @@
 /* Karten als HTML zeichnen. Alle Kartenwerte werden gegen CARD_RE geprüft, bevor sie in HTML landen. */
 import { rankOf, suitOf } from '../game/cards';
 import { SUIT_SYM } from '../game/constants';
-import type { Card, HandValue, Player, Rank, Rules, Suit } from '../game/types';
-import { num } from './dom';
+import type { Card, HandValue, Player, Rules, Suit } from '../game/types';
+import { RANK_NAME, SUIT_NAME, TABLE } from '../content/texts/table';
+import { esc, num } from './dom';
+import type { CardOpts } from './table/types';
 
 type Pip = readonly [x: number, y: number];
 
@@ -85,48 +87,61 @@ const PIPS: Readonly<Record<string, readonly Pip[]>> = {
 /** Zweites Deck trägt hinten `:2` (siehe DECK2 in game/cards). */
 export const CARD_RE = /^[CSHD](2|3|4|5|6|7|8|9|10|B|D|K|A)(:2)?$/;
 
-const SUIT_NAME: Record<Suit, string> = { C: 'Kreuz', S: 'Pik', H: 'Herz', D: 'Karo' };
-const RANK_NAME: Record<Rank, string> = {
-  2: 'Zwei',
-  3: 'Drei',
-  4: 'Vier',
-  5: 'Fünf',
-  6: 'Sechs',
-  7: 'Sieben',
-  8: 'Acht',
-  9: 'Neun',
-  10: 'Zehn',
-  B: 'Bube',
-  D: 'Dame',
-  K: 'König',
-  A: 'Ass',
-};
-
 const isRed = (s: Suit | null) => s === 'H' || s === 'D';
 export const cardName = (c: Card): string => `${SUIT_NAME[suitOf(c)]} ${RANK_NAME[rankOf(c)]}`;
 
-/**
- * Eine Karte als HTML. Ohne gültigen Kartenwert wird die Rückseite gezeichnet.
- * `attrs` darf nur Attribute aus eigenem, sicherem Code enthalten.
- */
-export function cardHTML(c?: Card | null, cls = '', attrs = ''): string {
-  if (!c || !CARD_RE.test(c)) return `<div class="card back ${cls}" ${attrs}></div>`;
+/** Vorderseite ohne Hülle: Ecken und Augen. `--x`/`--y` tragen die Augenlage im Raster 0 bis 100 (Kartenset Vinyl). */
+function faceHTML(c: Card): string {
   const s = suitOf(c);
   const r = rankOf(c);
   const sym = SUIT_SYM[s];
   const ix = `<span class="ix"><span>${r}</span><i>${sym}</i></span><span class="ix br"><span>${r}</span><i>${sym}</i></span>`;
-  let body: string;
   const pips = PIPS[r];
-  if (pips) {
-    body = pips
-      .map(([x, y]) => `<span class="pip${y > 55 ? ' f' : ''}" style="left:${x}%;top:${19 + y * 0.62}%">${sym}</span>`)
-      .join('');
-  } else if (r === 'A') {
-    body = `<div class="ace"><b>${sym}</b></div>`;
-  } else {
-    body = `<div class="face"><i>${sym}</i><b>${r}</b><i>${sym}</i></div>`;
-  }
-  return `<div class="card ${isRed(s) ? 'red ' : ''}${cls}" ${attrs} aria-label="${cardName(c)}">${ix}${body}</div>`;
+  if (pips)
+    return (
+      ix +
+      pips
+        .map(
+          ([x, y]) =>
+            `<span class="pip${y > 55 ? ' f' : ''}" style="--x:${x};--y:${y};left:${x}%;top:${19 + y * 0.62}%">${sym}</span>`,
+        )
+        .join('')
+    );
+  if (r === 'A') return `${ix}<div class="ace"><b>${sym}</b></div>`;
+  return `${ix}<div class="face"><i>${sym}</i><b>${r}</b><i>${sym}</i></div>`;
+}
+
+/**
+ * Eine Karte als HTML. Ohne gültigen Kartenwert wird die Rückseite gezeichnet.
+ * Neue Form `cardHTML(c, o)` mit Rollen, Namen und `data-fk` aus den Optionen (gefuehl 3.3). Die alte Form mit `cls`
+ * und `attrs` bleibt bis 4a, `attrs` darf nur Attribute aus eigenem, sicherem Code enthalten.
+ */
+export function cardHTML(c?: Card | null, o: CardOpts | string = '', attrs = ''): string {
+  const ok = !!c && CARD_RE.test(c);
+  if (typeof o === 'object') return optsHTML(ok ? (c as Card) : null, o);
+  if (!ok) return `<div class="card back ${o}" ${attrs}></div>`;
+  const s = suitOf(c as Card);
+  return `<div class="card ${isRed(s) ? 'red ' : ''}${o}" ${attrs} aria-label="${cardName(c as Card)}" data-r="${rankOf(c as Card)}">${faceHTML(c as Card)}</div>`;
+}
+
+/** Neue Form: Rolle, Name, Zustand und Haken fürs Ziehen. Fremde verdeckte Karten tragen nie einen Wert. */
+function optsHTML(c: Card | null, o: CardOpts): string {
+  const cls = `card${c ? (isRed(suitOf(c)) ? ' red' : '') : ' back'}${o.cls ? ` ${o.cls}` : ''}${o.sel ? ' sel' : ''}${o.dim ? ' dim' : ''}`;
+  const name = c
+    ? cardName(c) + (o.trump ? TABLE.trump : '') + (o.value != null ? TABLE.points(o.value) : '')
+    : (o.backName ?? (o.act ? TABLE.back : ''));
+  let a = ` data-fk="${esc(o.key)}"`;
+  if (o.act) a += ` data-act="${o.act}" role="button" tabindex="${o.tab ?? 0}" aria-pressed="${!!o.sel}"`;
+  else if (name) a += ' role="img"';
+  a += name ? ` aria-label="${esc(name)}"` : ' aria-hidden="true"';
+  if (o.why) a += ` aria-disabled="true" aria-description="${esc(o.why)}"`;
+  if (o.i != null) a += ` data-i="${o.i}"`;
+  if (o.sid != null) a += ` data-sid="${o.sid}"`;
+  if (o.owner) a += ` data-o="${esc(o.owner)}"`;
+  if (o.drag) a += ` data-drag="${o.drag}"`;
+  if (c) a += ` data-r="${rankOf(c)}"`;
+  if (o.style) a += ` style="${o.style}"`;
+  return `<div class="${cls}"${a}>${c ? faceHTML(c) : ''}${o.extra ?? ''}</div>`;
 }
 
 /** Kleine Karte im Fließtext (Verlauf). */

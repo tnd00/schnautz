@@ -8,7 +8,8 @@ import type { Card, Player, ShBetResult, View } from '../../game/types';
 import { ffwdInLog } from '../../net/pace';
 import { App } from '../app';
 import { cardHTML } from '../cards';
-import { $, esc, listJoin, num } from '../dom';
+import { holdFocus, restoreFocus } from '../a11y/focus';
+import { $, $opt, esc, isMobile, listJoin, num } from '../dom';
 import { holdOverlay } from '../feedback';
 import { aimAttrs } from './marks';
 import { AUTO_NEXT_MS } from '../../game/constants';
@@ -380,20 +381,77 @@ export function renderSheet(v: View, s: Sheet): string {
   );
 }
 
+/** Steht das Blatt als Dialog? Dann ist #table inert und der Fokus gehört ins Blatt. */
+let sheetOpen = false;
+
+/** Wer gerade tippt (Chat, Name), behält den Fokus, wenn das Blatt aufgeht */
+const typing = (a: Element | null): boolean =>
+  !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || (a as HTMLElement).isContentEditable);
+
+/** Blatt zu (nächste Runde, „Tisch ansehen“): Tisch wieder bedienbar, ein verlorener Fokus geht auf die Statuszeile. */
+function closeSheet(): void {
+  if (!sheetOpen) return;
+  sheetOpen = false;
+  $('#table').inert = false;
+  const a = document.activeElement;
+  const st = $opt('#status');
+  if (st && (!a || a === document.body)) {
+    st.tabIndex = -1;
+    st.focus({ preventScroll: true });
+  }
+}
+
+let watched = false;
+/** Andere leeren #overlay auch direkt (Bildschirmwechsel, Verlassen): dann darf #table nicht inert bleiben */
+function watchOverlay(): void {
+  if (watched) return;
+  watched = true;
+  new MutationObserver(() => {
+    if (!$opt('#overlay .paper.result')) closeSheet();
+  }).observe($('#overlay'), { childList: true });
+}
+
+/**
+ * Das Blatt als Dialog (Plan 4.14): am Handy modal mit Tab-Falle (dialog.ts), am PC ohne aria-modal, damit Verlauf
+ * und Chat bedienbar bleiben. inert liegt nur auf #table. Beim Aufgehen wandert der Fokus auf den Titel, ohne Ring.
+ */
+function openSheet(mark: ReturnType<typeof holdFocus>): void {
+  const paper = $opt('#overlay .paper.result');
+  const h = paper?.querySelector<HTMLElement>('.rhead h2');
+  if (!paper || !h) return;
+  paper.setAttribute('role', 'dialog');
+  if (isMobile()) paper.setAttribute('aria-modal', 'true');
+  h.id = 'rs-t';
+  h.tabIndex = -1;
+  paper.setAttribute('aria-labelledby', 'rs-t');
+  $('#table').inert = true;
+  watchOverlay();
+  if (sheetOpen) {
+    restoreFocus(mark);
+    return;
+  }
+  sheetOpen = true;
+  if (!typing(document.activeElement)) h.focus({ preventScroll: true });
+}
+
 /** Schreibt #overlay: wartet auf Meldungen und Zeremonie, zeigt bei „Tisch ansehen“ die Leiste, sonst das Blatt. */
 export function renderResult(v: View, s: Sheet | null): void {
   const ov = $('#overlay');
   if (!s) {
     ov.innerHTML = '';
+    closeSheet();
     return;
   }
   if (holdOverlay()) return;
   const me = v.players.find((p) => p.id === App.me) ?? null;
   if (App.peek) {
     ov.innerHTML = peekHTML(v, me);
+    closeSheet();
     return;
   }
+  const mark = sheetOpen ? holdFocus() : null;
   ov.innerHTML = `<div class="modal"><div class="paper sheet result rs${s.cls ? ` ${s.cls}` : ''}">${renderSheet(v, s)}</div></div>`;
+  openSheet(mark);
   hookFitSheet();
   fitSheet();
 }

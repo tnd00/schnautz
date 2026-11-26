@@ -118,15 +118,15 @@
     max-width: 190px;
     gap: 4px;
     padding: 12px 4px 6px;
-    border-color: rgba(246, 239, 223, 0.08);
-    background: rgba(0, 0, 0, 0.12);
+    border-color: var(--tb-seat-line);
+    background: var(--tb-seat-bg);
     border-radius: 14px;
   }
   /* Muss nach der Regel oben stehen, sonst verliert die Hervorhebung gegen den neutralen Rahmen */
   .opp.turn,
   .opp.sh.turn {
     border-color: var(--brass-hi);
-    background: rgba(243, 205, 125, 0.03);
+    background: color-mix(in srgb, var(--tb-accent) 3%, transparent);
   }
   .opp .reign {
     font-size: 12px;
@@ -181,7 +181,7 @@
     animation-delay: -1.3s;
   }
   .opp.offline .nm {
-    color: #f0a59c;
+    color: var(--tb-offline-text);
   }
   .opp.offline .nm::after {
     content: '';
@@ -247,9 +247,6 @@
     padding: 20px 12px 34px;
     border-radius: 22px;
   }
-  #table[data-game='schnautz'] .center {
-    padding-bottom: 14px;
-  }
   .center .cnt {
     bottom: -25px;
     font-size: 11.5px;
@@ -266,9 +263,6 @@
   .middle {
     --mw: calc(var(--u) * 17);
     gap: calc(var(--u) * 2);
-  }
-  #table[data-game='schnautz'] .deck {
-    --mw: calc(var(--u) * 15);
   }
   .burned {
     min-width: 44px;
@@ -367,14 +361,6 @@
     padding: 0 8px;
     font-size: 14px;
   }
-  #table[data-game='schnautz'] .me .actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  /* Der ausgegraute Klopfen-Knopf reicht als Hinweis, die Zeile darunter kostet zu viel Platz */
-  #table[data-game='schnautz'] .me .actions .hint {
-    display: none;
-  }
   .outmsg {
     padding: 10px 0;
   }
@@ -427,11 +413,6 @@
   .me.swapping .swhead {
     padding: 0 44px;
   }
-  .me.swapping .tcards,
-  .me.swapping .shhand {
-    --tw: calc(var(--u) * 20);
-    --hw: calc(var(--u) * 20);
-  }
   /* Gleichmäßige Abstände: Überschrift, Tisch, Hand, Knopf */
   .me.swapping .swrow {
     gap: 6px;
@@ -445,9 +426,6 @@
   .me.swapping .shhand {
     padding: 2px 0 4px;
   }
-  .me.swapping .actions {
-    margin-top: 2px;
-  }
 
   /* Tauschrunde: Die Gegner füllen den freien Platz als gleich große Kacheln, die Spaltenzahl setzt layoutSwapOpps */
   .table.swap .opps[data-grid] {
@@ -458,25 +436,6 @@
     justify-content: center;
     gap: 16px 8px;
     margin-bottom: 8px;
-  }
-  .table.swap .opps[data-grid] .opp {
-    flex: 0 0 calc((100% - (var(--cols, 3) - 1) * 8px) / var(--cols, 3));
-    height: var(--rowh, 120px);
-    /* Allein oder zu zweit nicht über die ganze Breite ziehen */
-    max-width: 300px;
-    min-height: 0;
-    justify-content: center;
-    container-type: size;
-  }
-  .table.swap .opps[data-grid] .opp .tcards {
-    --tw: clamp(26px, min(calc((100cqw - 8px) / 3.25), calc((100cqh - 34px) / 1.5)), 78px);
-    gap: 6px;
-  }
-  .table.swap .opps[data-grid] .opp .tslot {
-    height: calc(var(--tw) * 1.4 + 10px);
-  }
-  .table.swap .opps[data-grid] .opp .tslot .upc {
-    top: 10px;
   }
   .me.swapping .actions .btn {
     flex: 0 1 auto;
@@ -497,9 +456,9 @@
     gap: 4px;
     padding: 6px;
     border-radius: 999px;
-    background: #0f2a20;
-    border: 1px solid rgba(246, 239, 223, 0.18);
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+    background: var(--tb-fx-emotes-bg);
+    border: 1px solid color-mix(in srgb, var(--tb-fx-emotes-text) 18%, transparent);
+    box-shadow: var(--tb-shadow-lift);
     flex-wrap: nowrap;
     animation: rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
@@ -691,9 +650,6 @@
   .center {
     padding: 16px 10px 30px;
   }
-  #table[data-game='schnautz'] .center {
-    padding-bottom: 12px;
-  }
   .pile,
   .deck {
     --mw: calc(var(--u) * 16);
@@ -726,39 +682,6 @@
   .me.swapping {
     gap: 6px;
     padding: 12px 10px 10px;
-  }
-  .me.swapping .swhead > span {
-    font-size: 12px;
-  }
-}
-
-/*
- * Schnautz zu acht auf den kürzesten Handys (375x548): Zwei Knopfreihen und ein zweizeiliger Status passen nur mit
- * engeren Abständen und etwas flacheren Knöpfen. Die Karten bleiben so groß wie vorher.
- */
-@media (max-width: 960px) and (max-height: 580px) {
-  body.ingame #table[data-game='schnautz'] {
-    gap: 3px;
-  }
-  #table[data-game='schnautz'] .me {
-    gap: 3px;
-    padding-top: 4px;
-    padding-bottom: 6px;
-  }
-  /* Die Hand behält ihren Abstand nach oben, sonst verdeckt die gewählte Karte die Leben */
-  #table[data-game='schnautz'] .me .actions .btn {
-    min-height: 36px;
-  }
-  /* Haben schon welche geschoben, zählt der Stand mehr als der Tipp, sonst wird der Status dreizeilig */
-  #table[data-game='schnautz'] .status .sub:has(.np) .tip {
-    display: none;
-  }
-}
-
-@media (max-width: 960px) {
-  /* Mit Vorschau („18 ♦ → 26 ♣“) braucht die Pille die Breite, das Etikett „du gibst“ tritt so lange zurück */
-  #table[data-game='schnautz'] .mehead:has(.pill.pre) .tag {
-    display: none;
   }
 }
 
@@ -797,13 +720,6 @@
     padding: 1px 5px;
     font-size: 10.5px;
   }
-  .opps.car .opp .lives {
-    gap: 2px;
-  }
-  .opps.car .opp .lives .coaster {
-    width: 10px;
-    height: 10px;
-  }
 }
 
 /* Nur noch Handkarten: Anzahl als Abzeichen mittig auf dem Fächer, passt in jede Kachel */
@@ -822,9 +738,9 @@
   gap: 4px;
   padding: 3px 9px 3px 11px;
   border-radius: 999px;
-  border: 1px solid rgba(243, 205, 125, 0.55);
-  background: rgba(8, 26, 19, 0.9);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  border: 1px solid color-mix(in srgb, var(--tb-accent) 55%, transparent);
+  background: var(--tb-hand-pill-bg);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--tb-shade) 45%, transparent);
   font-size: 13px;
   line-height: 1;
   white-space: nowrap;
@@ -870,16 +786,16 @@
     opacity: 1;
   }
 }
-@media (max-width: 960px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 960px) {
   /* Ohne Bewegung stehen beide Zeichen nebeneinander */
-  .opp .ometa .marks.two {
+  :where(html.calm) .opp .ometa .marks.two {
     width: 34px;
   }
-  .opp .ometa .marks.two > * {
+  :where(html.calm) .opp .ometa .marks.two > * {
     animation: none;
     width: 16px;
   }
-  .opp .ometa .marks.two > :nth-child(2) {
+  :where(html.calm) .opp .ometa .marks.two > :nth-child(2) {
     left: 18px;
   }
 }

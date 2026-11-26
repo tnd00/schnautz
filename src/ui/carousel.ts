@@ -29,6 +29,11 @@ export const CAR = {
   hold: 0,
   /** Letzter Tipp auf eine Kachel, damit der Klick danach nicht doppelt zählt */
   tapAt: 0,
+  /**
+   * Wer ins Karussell geholt wird, wenn das Spiel es selbst sagt: renderTable setzt specOf(game).actor eines
+   * umgestellten Spiels (Kino P7), null heißt wie bisher. So hängt das Karussell nicht an den Render-Dateien.
+   */
+  who: null as ((v: View) => string | null) | null,
 };
 
 /** So lange gleitet das Karussell (CSS in fit.css). */
@@ -40,6 +45,8 @@ const WHEEL_IDLE_MS = 700;
 
 const actorOf = (v: View): string | null =>
   v.phase === 'choose' ? dealerId(v) : v.phase === 'play' ? turnId(v) : null;
+
+const actorFor = (v: View): string | null => (CAR.who ?? actorOf)(v);
 
 const visible = (): number => (isMobile() ? 3 : 5);
 
@@ -112,7 +119,7 @@ export function layoutOpps(v: View): void {
     CAR.actor = null;
   }
   CAR.n = n;
-  const actor = actorOf(v);
+  const actor = actorFor(v);
   let target = CAR.shown;
   // Bei jedem Zugwechsel zur Person am Zug. Bin ich selbst dran oder wische gerade, bleibt es stehen
   if (actor !== CAR.actor && !CAR.drag && !CAR.wheeling && Date.now() >= CAR.hold) {
@@ -142,7 +149,7 @@ function snap(el: HTMLElement, to: number): void {
 /** Loslassen: sofort zurück zur Person, die gerade dran ist. Bin ich selbst dran, zum nächsten Gegner. */
 function snapBack(el: HTMLElement): void {
   const v = App.view;
-  const actor = v ? actorOf(v) : null;
+  const actor = v ? actorFor(v) : null;
   CAR.actor = actor;
   const i = boxesOf(el).findIndex((b) => b.dataset.pid === actor);
   if (actor && actor !== App.me && i >= 0) snap(el, CAR.shown + circ(i - CAR.shown, CAR.n));

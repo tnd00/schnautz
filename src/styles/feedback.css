@@ -1,4 +1,3 @@
-/* tb: offen */
 /* Punkteleiste, große Meldungen, Rundenergebnis und KI in der Lobby */
 .scorebar {
   display: flex;
@@ -18,7 +17,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 4px 12px 4px 4px;
-  border-right: 1px solid rgba(246, 239, 223, 0.12);
+  border-right: 1px solid color-mix(in srgb, var(--tb-text) 12%, transparent);
   white-space: nowrap;
 }
 .sb-meta b {
@@ -28,7 +27,7 @@
 }
 .sb-meta small {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--tb-muted);
   letter-spacing: 0.06em;
 }
 .sb-p {
@@ -37,8 +36,8 @@
   gap: 8px;
   padding: 6px 12px;
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(246, 239, 223, 0.08);
+  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 8%, transparent);
   white-space: nowrap;
   flex: none;
   transition:
@@ -46,8 +45,8 @@
     background 0.2s;
 }
 .sb-p.cur {
-  border-color: rgba(243, 205, 125, 0.7);
-  background: rgba(243, 205, 125, 0.1);
+  border-color: color-mix(in srgb, var(--tb-accent) 70%, transparent);
+  background: color-mix(in srgb, var(--tb-accent) 10%, transparent);
 }
 .sb-p.mine .sb-n {
   color: var(--brass-hi);
@@ -64,14 +63,14 @@
 }
 .sb-c {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--tb-muted);
 }
 .sb-w {
   font-size: 12px;
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.25);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
 }
 .botb {
   font-style: normal;
@@ -80,7 +79,7 @@
   letter-spacing: 0.08em;
   padding: 1px 5px;
   border-radius: 5px;
-  background: rgba(143, 211, 232, 0.18);
+  background: color-mix(in srgb, var(--tb-sea) 18%, transparent);
   color: var(--sea);
   margin-left: 5px;
   vertical-align: middle;
@@ -95,13 +94,13 @@
   }
   15% {
     box-shadow:
-      0 0 0 2px rgba(224, 103, 93, 0.9),
-      0 0 26px rgba(224, 103, 93, 0.55);
+      0 0 0 2px color-mix(in srgb, var(--tb-lose) 90%, transparent),
+      0 0 26px color-mix(in srgb, var(--tb-lose) 55%, transparent);
   }
   60% {
     box-shadow:
-      0 0 0 2px rgba(224, 103, 93, 0.5),
-      0 0 14px rgba(224, 103, 93, 0.3);
+      0 0 0 2px color-mix(in srgb, var(--tb-lose) 50%, transparent),
+      0 0 14px color-mix(in srgb, var(--tb-lose) 30%, transparent);
   }
 }
 .coaster.justlost::before {
@@ -109,8 +108,8 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff7e0 0 18%, #ead19a 40%, #b98b3e 100%);
-  box-shadow: inset 0 0 0 1.5px rgba(110, 64, 18, 0.55);
+  background: var(--tb-coaster-new);
+  box-shadow: inset 0 0 0 1.5px var(--tb-coaster-new-line);
   animation: coasterLost 1.6s 0.2s cubic-bezier(0.5, 0, 0.7, 0.4) forwards;
 }
 @keyframes coasterLost {
@@ -148,11 +147,11 @@
   text-align: center;
   padding: 18px 26px 16px;
   border-radius: 22px;
-  color: #2a241b;
-  background: linear-gradient(180deg, #fbf6e8, #efe4c8);
+  color: var(--tb-fx-ann-text);
+  background: var(--tb-fx-ann-bg);
   box-shadow:
-    0 0 0 1px rgba(60, 40, 10, 0.15),
-    0 30px 70px rgba(0, 0, 0, 0.55);
+    0 0 0 1px var(--tb-fx-ann-ring),
+    0 30px 70px color-mix(in srgb, var(--tb-shade) 55%, transparent);
   animation: annIn 0.45s cubic-bezier(0.2, 1.3, 0.4, 1);
 }
 .ann.out {
@@ -177,8 +176,8 @@
 }
 .ann-t {
   font-family: var(--display);
-  font-style: italic;
-  font-weight: 800;
+  font-style: var(--tb-display-style);
+  font-weight: var(--tb-display-weight);
   font-size: clamp(26px, 6vw, 40px);
   line-height: 1.05;
   letter-spacing: -0.015em;
@@ -186,35 +185,33 @@
 .ann-s {
   margin-top: 6px;
   font-size: 14px;
-  color: #5a5040;
+  color: var(--tb-fx-ann-soft);
 }
 .ann.gold {
-  background: linear-gradient(180deg, #ffe9b0, #e7b65a);
+  background: var(--tb-fx-gold-bg);
   box-shadow:
-    0 0 0 2px rgba(255, 236, 180, 0.8),
-    0 0 60px rgba(243, 205, 125, 0.55),
-    0 30px 70px rgba(0, 0, 0, 0.5);
+    0 0 0 2px var(--tb-fx-gold-ring),
+    0 0 60px color-mix(in srgb, var(--tb-accent) 55%, transparent),
+    0 30px 70px color-mix(in srgb, var(--tb-shade) 50%, transparent);
 }
 .ann.red .ann-t {
   color: var(--red);
 }
 .ann.red {
-  box-shadow:
-    0 0 0 2px rgba(179, 49, 42, 0.55),
-    0 30px 70px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--tb-fx-ann-shadow);
 }
 .ann.wood {
-  background: linear-gradient(180deg, #9a5a34, #5f2f18);
-  color: #fff3dc;
+  background: var(--tb-fx-wood-bg);
+  color: var(--tb-tag-knock-text);
 }
 .ann.wood .ann-s {
-  color: #f1d9bd;
+  color: var(--tb-fx-wood-soft);
 }
 .ann.sea {
-  background: linear-gradient(180deg, #d7f2fa, #9fd8ea);
+  background: var(--tb-fx-sea-bg);
 }
 .ann.sea .ann-t {
-  color: #11566c;
+  color: var(--tb-fx-sea-title);
 }
 .floatlbl {
   position: absolute;
@@ -230,7 +227,7 @@
   font-size: 13px;
   padding: 4px 12px;
   border-radius: 999px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--tb-shade) 40%, transparent);
   animation: floatUp 1.6s ease-out forwards;
 }
 @keyframes floatUp {
@@ -260,14 +257,14 @@
   z-index: 46;
   max-width: min(240px, calc(100vw - 16px));
   width: max-content;
-  background: #fbf6e8;
-  color: #2a241b;
+  background: var(--tb-bubble-bg);
+  color: var(--tb-bubble-text);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.3;
   padding: 7px 12px;
   border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--tb-shade) 40%, transparent);
   animation: bubIn 0.3s cubic-bezier(0.2, 1.3, 0.4, 1);
   pointer-events: none;
   text-align: center;
@@ -280,7 +277,7 @@
   transform: translateX(-50%) rotate(45deg);
   width: 12px;
   height: 12px;
-  background: #fbf6e8;
+  background: var(--tb-bubble-bg);
 }
 .bubble.out {
   opacity: 0;
@@ -341,15 +338,15 @@ body.logopen #fly .bubble {
 /* Rundenergebnis am Tisch */
 .opp.rwin,
 .me.rwin {
-  border-color: rgba(243, 205, 125, 0.9);
-  background: rgba(243, 205, 125, 0.12);
-  box-shadow: 0 0 50px rgba(243, 205, 125, 0.25);
+  border-color: color-mix(in srgb, var(--tb-accent) 90%, transparent);
+  background: color-mix(in srgb, var(--tb-accent) 12%, transparent);
+  box-shadow: 0 0 50px color-mix(in srgb, var(--tb-accent) 25%, transparent);
 }
 .opp.rlose,
 .me.rlose {
-  border-color: rgba(224, 103, 93, 0.85);
-  background: rgba(224, 103, 93, 0.1);
-  box-shadow: 0 0 50px rgba(224, 103, 93, 0.2);
+  border-color: color-mix(in srgb, var(--tb-lose) 85%, transparent);
+  background: color-mix(in srgb, var(--tb-lose) 10%, transparent);
+  box-shadow: 0 0 50px color-mix(in srgb, var(--tb-lose) 20%, transparent);
 }
 .verdict {
   margin: 0 0 14px 22px;
@@ -358,37 +355,37 @@ body.logopen #fly .bubble {
   font-family: var(--display);
   font-weight: 700;
   font-size: clamp(17px, 3.6vw, 21px);
-  background: rgba(42, 36, 27, 0.07);
-  color: #2a241b;
+  background: color-mix(in srgb, var(--tb-sheet-ink) 7%, transparent);
+  color: var(--tb-sheet-ink);
 }
 .verdict.bad {
-  background: rgba(179, 49, 42, 0.12);
-  color: #8e231d;
-  box-shadow: inset 0 0 0 1.5px rgba(179, 49, 42, 0.35);
+  background: color-mix(in srgb, var(--tb-alert) 12%, transparent);
+  color: var(--tb-sheet-lose-text);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tb-alert) 35%, transparent);
 }
 .verdict.good {
-  background: linear-gradient(180deg, #ffe9b0, #efc66f);
-  color: #4a3205;
-  box-shadow: inset 0 0 0 1.5px rgba(160, 110, 20, 0.4);
+  background: var(--tb-good-bg);
+  color: var(--tb-good-text);
+  box-shadow: inset 0 0 0 1.5px var(--tb-good-line);
 }
 .conseq.good {
-  color: #8a6424;
+  color: var(--tb-sheet-win-text);
 }
 .row.win .val {
-  color: #8a6424;
+  color: var(--tb-sheet-win-text);
 }
 
 /* Lobby: KI */
 .badge.kib {
   color: var(--sea);
-  border-color: rgba(143, 211, 232, 0.45);
+  border-color: color-mix(in srgb, var(--tb-sea) 45%, transparent);
 }
 .xbtn {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1px solid rgba(246, 239, 223, 0.2);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 20%, transparent);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
   color: var(--cream);
   font-size: 18px;
   line-height: 1;
@@ -397,8 +394,8 @@ body.logopen #fly .bubble {
   flex: none;
 }
 .xbtn:hover {
-  border-color: #e0675d;
-  color: #ffd2cc;
+  border-color: var(--tb-lose);
+  color: var(--tb-tag-alert-text);
 }
 .seats li.addbot {
   background: transparent;
@@ -452,24 +449,24 @@ body.logopen #fly .bubble {
   min-width: min(80%, 260px);
   border-radius: 16px;
   box-shadow:
-    0 0 0 1px rgba(60, 40, 10, 0.15),
-    0 6px 14px rgba(0, 0, 0, 0.35);
+    0 0 0 1px var(--tb-fx-ann-ring),
+    0 6px 14px color-mix(in srgb, var(--tb-shade) 35%, transparent);
   animation: annBandIn 0.28s cubic-bezier(0.2, 0, 0, 1);
 }
 #announce.band .ann.gold {
   box-shadow:
-    0 0 0 2px rgba(255, 236, 180, 0.8),
-    0 6px 14px rgba(0, 0, 0, 0.35);
+    0 0 0 2px var(--tb-fx-gold-ring),
+    0 6px 14px color-mix(in srgb, var(--tb-shade) 35%, transparent);
 }
 #announce.band .ann.red {
   box-shadow:
-    0 0 0 2px rgba(179, 49, 42, 0.55),
-    0 6px 14px rgba(0, 0, 0, 0.35);
+    0 0 0 2px color-mix(in srgb, var(--tb-alert) 55%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tb-shade) 35%, transparent);
 }
 #announce.band .ann.brown {
   box-shadow:
-    0 0 0 2px rgba(160, 104, 46, 0.8),
-    0 6px 14px rgba(0, 0, 0, 0.35);
+    0 0 0 2px color-mix(in srgb, var(--tb-shame) 80%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tb-shade) 35%, transparent);
 }
 #announce.band .ann.out {
   animation: annOut 0.2s ease-in forwards;
@@ -526,8 +523,8 @@ body.logopen #fly .bubble {
   max-width: min(var(--bw, calc(100vw - 24px)), 440px);
   /* Kurzer Schatten wie bei den kleinen Meldungen: Der eigene Platz liegt oft direkt darunter */
   box-shadow:
-    0 0 0 2px rgba(179, 49, 42, 0.35),
-    0 3px 8px rgba(0, 0, 0, 0.35);
+    0 0 0 2px color-mix(in srgb, var(--tb-alert) 35%, transparent),
+    0 3px 8px color-mix(in srgb, var(--tb-shade) 35%, transparent);
 }
 /* Hinweis und Spruch als eine Meldung (comboLabel): oben wer was getan hat, darunter der Spruch */
 #fly .tauntlbl.combo .hint {
@@ -540,7 +537,7 @@ body.logopen #fly .bubble {
   margin-top: 1px;
   font-style: italic;
   font-weight: 700;
-  color: #8e231d;
+  color: var(--tb-fx-taunt);
 }
 /* Kleine Meldungen: lange brechen um statt abgeschnitten zu werden (16 Zeichen lange Namen) */
 #fly .fieldlbl.mid,
@@ -560,7 +557,7 @@ body.logopen #fly .bubble {
   padding: 2px 12px;
   max-width: var(--bw, calc(100vw - 24px));
   /* Kurzer Schatten: Im Band liegt der eigene Platz direkt darunter */
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--tb-shade) 35%, transparent);
 }
 /* Lange Hinweise, die so gerade in eine Zeile passen (positionMessage setzt slim nur dann) */
 #fly .mid.band.slim {
@@ -585,7 +582,7 @@ body.logopen #fly .bubble {
   line-height: 1.25;
   padding: 3px 13px;
   border-radius: 999px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--tb-shade) 40%, transparent);
   animation: fieldPop 1.8s ease-out forwards;
 }
 /* Verdrängter Hinweis (src/ui/band.ts, pillStack): kurz ausblenden statt zu verschwinden. Automatisches wartet */
@@ -632,7 +629,7 @@ body.logopen #fly .bubble {
   font-size: clamp(26px, 7vw, 40px);
   line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 6px 10px color-mix(in srgb, var(--tb-shade) 45%, transparent));
   will-change: transform;
 }
 /* Volltreffer auf mich (src/ui/toss.ts): großes Ding, Spritzer und ein farbiger Rand am Bildschirm */
@@ -642,7 +639,7 @@ body.logopen #fly .bubble {
   font-size: clamp(72px, 22vw, 120px);
   line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--tb-shade) 50%, transparent));
 }
 .hitdrop {
   position: fixed;
@@ -655,26 +652,26 @@ body.logopen #fly .bubble {
   inset: 0;
   z-index: 56;
   pointer-events: none;
-  box-shadow: inset 0 0 90px 24px var(--hit, rgba(122, 74, 31, 0.8));
+  box-shadow: inset 0 0 90px 24px var(--hit, color-mix(in srgb, var(--tb-fx-poo) 80%, transparent));
   animation: hitflash 0.95s ease-out forwards;
 }
 .hitflash.tomato {
-  --hit: rgba(224, 54, 43, 0.75);
+  --hit: color-mix(in srgb, var(--tb-fx-tomato) 75%, transparent);
 }
 .hitflash.egg {
-  --hit: rgba(255, 203, 46, 0.7);
+  --hit: color-mix(in srgb, var(--tb-fx-egg) 70%, transparent);
 }
 .hitflash.poo {
-  --hit: rgba(122, 74, 31, 0.85);
+  --hit: color-mix(in srgb, var(--tb-fx-poo) 85%, transparent);
 }
 .hitflash.crown {
-  --hit: rgba(243, 205, 125, 0.75);
+  --hit: color-mix(in srgb, var(--tb-accent) 75%, transparent);
 }
 .hitflash.heart {
-  --hit: rgba(255, 90, 120, 0.7);
+  --hit: color-mix(in srgb, var(--tb-fx-heart) 70%, transparent);
 }
 .hitflash.bunny {
-  --hit: rgba(255, 209, 220, 0.7);
+  --hit: color-mix(in srgb, var(--tb-fx-bunny) 70%, transparent);
 }
 @keyframes hitflash {
   from {
@@ -693,8 +690,8 @@ body.logopen #fly .bubble {
   transform: translate(-50%, -50%);
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(8, 22, 15, 0.92);
-  border: 1px solid rgba(246, 239, 223, 0.2);
+  background: color-mix(in srgb, var(--tb-dusk) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 20%, transparent);
   color: var(--cream);
   font: 650 12px/1.2 var(--ui);
   white-space: nowrap;
@@ -725,31 +722,18 @@ body.logopen #fly .bubble {
   animation: splat 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.3) backwards;
 }
 .tossmark.tomato {
-  background: radial-gradient(
-    circle at 42% 40%,
-    #ff7a66 0 14%,
-    #e0362b 15% 52%,
-    rgba(178, 28, 22, 0.92) 53% 68%,
-    transparent 69%
-  );
+  background: var(--tb-fx-tomato-mark);
 }
 .tossmark.egg {
-  background: radial-gradient(
-    circle at 50% 46%,
-    #ffcb2e 0 20%,
-    #f6a91d 21% 24%,
-    #f8f3e4 25% 58%,
-    rgba(248, 243, 228, 0.86) 59% 68%,
-    transparent 69%
-  );
+  background: var(--tb-fx-egg-mark);
 }
 .tossmark i {
   position: absolute;
   border-radius: 50%;
-  background: #d8322a;
+  background: var(--tb-fx-splat);
 }
 .tossmark.egg i {
-  background: #f8f3e4;
+  background: var(--tb-fx-egg-white);
 }
 .tossmark i:nth-child(1) {
   width: 18%;
@@ -772,7 +756,7 @@ body.logopen #fly .bubble {
   animation: drip 3.2s ease-in forwards;
 }
 .tossmark.egg i:nth-child(3) {
-  background: #ffcb2e;
+  background: var(--tb-fx-egg);
 }
 /* Haufen, Herz und Hase landen wie Tomate und Ei mitten auf den Karten */
 .tossmark.poo,
@@ -782,7 +766,7 @@ body.logopen #fly .bubble {
   top: 42%;
   translate: -50% -50%;
   font-size: 34px;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 3px 4px color-mix(in srgb, var(--tb-shade) 55%, transparent));
   animation:
     plop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.4) backwards,
     stink 1.6s ease-in-out infinite;
@@ -792,7 +776,8 @@ body.logopen #fly .bubble {
   top: -16px;
   font-size: 30px;
   rotate: -18deg;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 7px rgba(255, 214, 90, 0.85));
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--tb-shade) 50%, transparent))
+    drop-shadow(0 0 7px color-mix(in srgb, var(--tb-fx-glow) 85%, transparent));
   animation:
     crownin 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.5) backwards,
     sparkle 1.2s ease-in-out infinite;
@@ -810,7 +795,8 @@ body.logopen #fly .bubble {
   }
 }
 .tossmark.heart {
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 8px rgba(255, 90, 120, 0.7));
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--tb-shade) 50%, transparent))
+    drop-shadow(0 0 8px color-mix(in srgb, var(--tb-fx-heart) 70%, transparent));
   animation:
     crownin 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.5) backwards,
     beat 0.9s ease-in-out infinite;
@@ -861,7 +847,8 @@ body.logopen #fly .bubble {
 }
 @keyframes sparkle {
   50% {
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 13px rgba(255, 228, 120, 1));
+    filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--tb-shade) 50%, transparent))
+      drop-shadow(0 0 13px var(--tb-fx-glow-hi));
     scale: 1.06;
   }
 }
@@ -979,17 +966,17 @@ body.logopen #fly .bubble {
   gap: 6px;
   padding: 6px;
   border-radius: 999px;
-  background: #0f2a20;
-  border: 1px solid rgba(246, 239, 223, 0.2);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  background: var(--tb-fx-emotes-bg);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 20%, transparent);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--tb-shade) 55%, transparent);
   animation: rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 #tosspick button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(246, 239, 223, 0.14);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
+  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
   font-size: 21px;
   line-height: 1;
   display: grid;
@@ -1022,7 +1009,7 @@ body.logopen #fly .bubble {
   content: '';
   position: absolute;
   inset: -6px;
-  border: 2px solid rgba(243, 205, 125, 0.6);
+  border: 2px solid color-mix(in srgb, var(--tb-accent) 60%, transparent);
   border-radius: 50%;
   animation: ring 1s ease-out infinite;
 }
@@ -1032,7 +1019,7 @@ body.logopen #fly .bubble {
 .emo.snd small {
   font: 650 11px/1.2 var(--ui);
   color: var(--cream);
-  background: rgba(8, 22, 15, 0.88);
+  background: color-mix(in srgb, var(--tb-dusk) 88%, transparent);
   padding: 2px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -1050,14 +1037,12 @@ body.logopen #fly .bubble {
     opacity: 0;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .tossmark,
-  .tossmark *,
-  .tossfly,
-  .emo.snd i::before,
-  .emo.snd i::after {
-    animation: none !important;
-  }
+:where(html.calm) .tossmark,
+:where(html.calm) .tossmark *,
+:where(html.calm) .tossfly,
+:where(html.calm) .emo.snd i::before,
+:where(html.calm) .emo.snd i::after {
+  animation: none !important;
 }
 
 /*
@@ -1078,7 +1063,7 @@ body.logopen #fly .bubble {
   animation: fade 0.3s;
 }
 #zer.reveal.nohole {
-  background: rgba(14, 8, 3, 0.8);
+  background: var(--tb-zer-dim);
 }
 /* Spotlicht: alles außer dem Platz wird dunkel, ein dicker brauner Ring zoomt heran und pulsiert */
 .zer-ring {
@@ -1086,12 +1071,11 @@ body.logopen #fly .bubble {
   left: 0;
   top: 0;
   display: none;
-  border: 5px solid #8a5426;
+  border: 5px solid var(--tb-zer-ring);
   border-radius: 18px;
   box-shadow:
-    0 0 0 200vmax rgba(14, 8, 3, 0.8),
-    0 0 34px 6px rgba(176, 122, 66, 0.85),
-    inset 0 0 28px rgba(160, 104, 46, 0.6);
+    0 0 0 200vmax var(--tb-zer-dim),
+    var(--tb-zer-glow);
   animation:
     zerIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
     zerPulse 1.4s ease-in-out 0.6s infinite;
@@ -1112,15 +1096,14 @@ body.logopen #fly .bubble {
   right: -16px;
   top: -20px;
   font-size: 32px;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--tb-shade) 50%, transparent));
   animation: splat 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.3) backwards;
 }
 @keyframes zerPulse {
   50% {
     box-shadow:
-      0 0 0 200vmax rgba(14, 8, 3, 0.8),
-      0 0 52px 12px rgba(217, 169, 107, 0.95),
-      inset 0 0 36px rgba(192, 138, 80, 0.75);
+      0 0 0 200vmax var(--tb-zer-dim),
+      var(--tb-zer-glow-hi);
   }
 }
 .zer-bar {
@@ -1128,7 +1111,7 @@ body.logopen #fly .bubble {
   left: 0;
   right: 0;
   height: clamp(18px, 5vh, 40px);
-  background: rgba(0, 0, 0, 0.88);
+  background: color-mix(in srgb, var(--tb-shade) 88%, transparent);
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   display: grid;
   place-items: center;
@@ -1148,23 +1131,23 @@ body.logopen #fly .bubble {
   font: 700 11px/1 var(--ui);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(246, 239, 223, 0.7);
+  color: color-mix(in srgb, var(--tb-text) 70%, transparent);
 }
 /* Meldung in Braun, langsam eingeblendet */
 .ann.brown {
-  background: linear-gradient(180deg, #f1dfc4, #c9965f);
+  background: var(--tb-fx-brown-bg);
   box-shadow:
-    0 0 0 2px rgba(160, 104, 46, 0.8),
-    0 0 60px rgba(160, 104, 46, 0.5),
-    0 30px 70px rgba(0, 0, 0, 0.55);
+    0 0 0 2px color-mix(in srgb, var(--tb-shame) 80%, transparent),
+    0 0 60px color-mix(in srgb, var(--tb-shame) 50%, transparent),
+    0 30px 70px color-mix(in srgb, var(--tb-shade) 55%, transparent);
 }
 .ann.brown .ann-t,
 .ann.brown .ann-s,
 .ann.brown .ann-s .tt {
-  color: #4a2810;
+  color: var(--tb-fx-brown-text);
 }
 .ann.brown .ann-t .r {
-  color: #6b3410;
+  color: var(--tb-fx-brown-title);
 }
 .ann.zer {
   animation: annSlow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1198,7 +1181,7 @@ body.logopen #fly .bubble {
   font-size: clamp(48px, 12vw, 72px);
   line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 6px 8px color-mix(in srgb, var(--tb-shade) 55%, transparent));
 }
 .zersplash {
   position: fixed;
@@ -1221,8 +1204,8 @@ body.logopen #fly .bubble {
   text-overflow: ellipsis;
   padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(8, 22, 15, 0.92);
-  border: 1px solid rgba(224, 103, 93, 0.7);
+  background: color-mix(in srgb, var(--tb-dusk) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tb-lose) 70%, transparent);
   color: var(--cream);
   font: 650 13px/1.3 var(--ui);
   white-space: nowrap;
@@ -1233,13 +1216,11 @@ body.logopen #fly .bubble {
   opacity: 0;
   transition: opacity 0.3s;
 }
-@media (prefers-reduced-motion: reduce) {
-  .zer-ring,
-  .ann.zer,
-  .zer-bar {
-    animation: none !important;
-    transition: none !important;
-  }
+:where(html.calm) .zer-ring,
+:where(html.calm) .ann.zer,
+:where(html.calm) .zer-bar {
+  animation: none !important;
+  transition: none !important;
 }
 /* Menü, Verlauf oder Reaktionen offen: die Abdunklung tritt zurück */
 body.emoopen #zer,

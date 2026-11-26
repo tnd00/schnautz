@@ -8,6 +8,7 @@
 import { unreachable } from '../game/games';
 import type { View } from '../game/types';
 import { STATUS, turnOf, waitLine } from '../content/texts/status';
+import { sayStatus } from './a11y/say';
 import { App } from './app';
 import { $, esc } from './dom';
 import { nameOf, pById } from './helpers';
@@ -81,4 +82,5 @@ export function paintStatus(s: Status): void {
   el.innerHTML =
     `<div class="main">${s.main}</div>` +
     (s.quick ? `<div class="quick">${s.quick}</div>` : `<div class="sub">${s.sub}</div>`);
+  sayStatus(s);
 }

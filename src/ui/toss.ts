@@ -8,6 +8,8 @@ import { App } from './app';
 import { burst } from './burst';
 import { carouselRelease, carouselShow, offscreen } from './carousel';
 import { $, $opt, esc, reduceMotion, type Timer } from './dom';
+import { haptic } from './a11y/haptic';
+import { say } from './a11y/say';
 import { emit, shakeEl } from './feedback';
 import { cueOf } from './levels';
 import { seatOrder } from './helpers';
@@ -233,6 +235,8 @@ function land(e: TossEntry): void {
   if (hitMe) hitMeFx(e.item);
   if (hitMe && e.p && now - TOSS.hintAt >= 1500) {
     TOSS.hintAt = now;
+    // emit sagt nur Eigenes vor, der Wurf kommt von jemand anderem, betrifft aber mich
+    say(`${nameOf(e.p)} ${TOSS_TEXT[e.item].hit}`, 'mine');
     const v = App.view;
     if (v)
       emit(cueOf(e, { prev: v, v, fresh: [e], me: App.me, seqd: false }), {
@@ -269,11 +273,7 @@ function hitMeFx(item: TossItem): void {
   flash.className = `hitflash ${item}`;
   $('#fly').appendChild(flash);
   setTimeout(() => flash.remove(), 1000);
-  try {
-    navigator.vibrate?.([50, 40, 90]);
-  } catch {
-    /* Vibrieren ist nur Zierde */
-  }
+  haptic('big');
   if (reduceMotion()) return;
   const modal = $opt('#overlay .modal');
   const anchor = modal ? tossAnchor(App.me)?.el : $opt('#me');

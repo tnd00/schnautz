@@ -1,4 +1,3 @@
-/* tb: offen */
 /* Statuszeile am Tisch für alle Spiele (src/ui/status.ts). Lädt nach fit.css und cabo.css, damit sie gewinnt. */
 
 /*
@@ -33,7 +32,7 @@
 }
 /* Geklopft: dieselbe warme Farbe wie früher an .status.knocked (table.css) */
 .status.sline.tone-knock .main {
-  color: #ffd9b8;
+  color: var(--tb-knock-text);
 }
 /* Ring nicht höher als die Zeile, sonst schneidet die feste Höhe ihn ab */
 .status.sline .wincd {

@@ -273,6 +273,10 @@ export interface CardOpts {
   backName?: string;
   /** data-drag */
   drag?: DragSrcKind;
+  /** tabindex einer antippbaren Karte, Standard 0. Die Hand setzt -1 für alle außer ihrer einen Tabulatorstelle */
+  tab?: 0 | -1;
+  /** Slot auf der Karte als fertiges HTML (Cabo-Wert, Auge, Restzeit) */
+  extra?: string;
   cls?: string;
   style?: string;
 }

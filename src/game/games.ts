@@ -40,13 +40,6 @@ export const GAME_SINCE: Readonly<Record<GameKind, string>> = {
   cabo: '2.5.0',
 };
 
-/** Seiten vor 2.2.1 schicken keine Version mit, sie gelten als diese */
-const NO_VERSION = '2.2.0';
-
-/** Kann eine Seite mit dieser Version das Spiel anzeigen? */
-export const canShow = (game: GameKind, v: string | undefined): boolean =>
-  cmpVersion(v ?? NO_VERSION, GAME_SINCE[game]) >= 0;
-
 /** So viele Minor-Versionen nach seiner Einführung trägt das neueste Spiel auf der Startseite „Neu“. */
 const NEW_FOR_MINORS = 1;
 
