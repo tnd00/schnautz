@@ -1,0 +1,134 @@
+/*
+ * Eigenheiten von Shithead im Sticker-Look (Plan 2.8 Runde 3). Lädt nur über looks/sticker.css, das Gemeinsame
+ * aller Tische steht in table/look-sticker.css. Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße.
+ */
+
+/* Handkarten der Gegner: Wert als Tinten-Sticker */
+:root[data-look='sticker'] body.ingame .hcount {
+  color: var(--tb-val-text);
+  background: var(--tb-val-bg);
+  box-shadow: var(--tb-val-line), var(--tb-val-shadow);
+}
+
+/* Mitte: Zahl am Nachziehstapel als Tinten-Sticker, verbrannte Karten als heller Zahl-Sticker */
+:root[data-look='sticker'] body.ingame .pcount {
+  color: var(--tb-num-ink-text);
+  background: var(--tb-num-ink-bg);
+  box-shadow: var(--tb-val-line), var(--tb-num-shadow);
+  rotate: calc(var(--tb-tilt) * -2deg);
+}
+:root[data-look='sticker'] body.ingame .emptyslot {
+  color: var(--tb-text);
+  border-color: var(--tb-slot-line);
+  font-weight: 700;
+}
+:root[data-look='sticker'] body.ingame .burned {
+  color: var(--tb-text);
+}
+:root[data-look='sticker'] body.ingame .burned .flame {
+  filter: none;
+}
+:root[data-look='sticker'] body.ingame .burned b {
+  color: var(--tb-text);
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+  font-weight: 800;
+}
+:root[data-look='sticker'] body.ingame .center .burned .cnt {
+  color: var(--tb-text);
+  background: none;
+  box-shadow: none;
+  font-weight: 700;
+}
+/* Warnung am Stapel (4er-Fenster, Bombe): Tinten-Etikett statt Holz */
+:root[data-look='sticker'] body.ingame .pile .cnt.warn {
+  color: var(--tb-tag-knock-text);
+  background: var(--tb-tag-knock-bg);
+  box-shadow: var(--tb-tag-line);
+}
+:root[data-look='sticker'] body.ingame .card.blindc {
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.05) var(--card-back-rim),
+    0 0 0 3px var(--tb-turn-line),
+    var(--tb-shadow-lift-sm);
+}
+
+/* Bombe und 4er reinwerfen: die Ausnahme-Knöpfe in Spielfarbe mit Tinte, der Hauptknopf bleibt Tinte */
+:root[data-look='sticker'] body.ingame .btn.bomb {
+  color: var(--tb-tag-turn-text);
+  background: var(--tb-gloss), var(--tb-accent);
+  border-color: var(--tb-btn-bomb-line);
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-btn-bomb-line),
+    var(--tb-btn-shadow);
+}
+:root[data-look='sticker'] body.ingame .btn.throw {
+  color: var(--tb-btn-alt-text);
+  background: var(--tb-gloss), var(--tb-btn-throw-bg);
+  border-color: var(--tb-btn-throw-line);
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-btn-throw-line),
+    var(--tb-btn-shadow);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .btn.rv {
+  color: var(--tb-btn-rv-text);
+  background: var(--tb-gloss), var(--tb-btn-rv-bg);
+  border-color: transparent;
+  box-shadow: var(--tb-edge), var(--tb-shadow-flat);
+}
+:root[data-look='sticker'] body.ingame .wincd b {
+  color: var(--tb-tag-text);
+  background: var(--tb-clock-bg);
+}
+
+/* Große Hand: Zahl der Karten */
+:root[data-look='sticker'] body.ingame .bhn {
+  color: var(--tb-text);
+}
+:root[data-look='sticker'] body.ingame .bhn b {
+  color: var(--tb-text);
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+  font-weight: 800;
+}
+:root[data-look='sticker'] body.ingame .tnone {
+  color: var(--tb-text);
+  font-style: normal;
+}
+
+/* Tauschrunde: der eigene Platz als helle Matte wie die Mitte, „Tauschrunde“ ist das eine große Wort */
+:root[data-look='sticker'] body.ingame .me.swapping {
+  background: var(--tb-swap-bg);
+  border-color: transparent;
+  border-radius: var(--tb-zone-radius);
+  box-shadow: var(--tb-zone-shadow);
+}
+:root[data-look='sticker'] body.ingame .swhead b {
+  color: var(--tb-text);
+  font-family: var(--tb-display);
+  font-style: var(--tb-display-style);
+  font-weight: var(--tb-display-weight);
+  font-variation-settings: var(--tb-display-axes);
+}
+:root[data-look='sticker'] body.ingame .swhead > span {
+  color: var(--tb-text);
+  font-weight: 600;
+}
+:root[data-look='sticker'] body.ingame .swlbl {
+  color: var(--tb-text);
+  text-transform: var(--tb-cap-case);
+  letter-spacing: var(--tb-cap-track);
+  font-weight: 800;
+}
+
+/* 4er-Fenster: Ring der Uhr in Tinte, Etikett „4er“ wie die anderen Etiketten */
+:root[data-look='sticker'] body.ingame .wincd {
+  background: conic-gradient(
+    in srgb,
+    var(--tb-turn-line) calc(var(--p, 1) * 360deg),
+    color-mix(in srgb, var(--tb-shade) 14%, transparent) 0
+  );
+}
+:root[data-look='sticker'] body.ingame .tag.four {
+  color: var(--tb-tag-text);
+}

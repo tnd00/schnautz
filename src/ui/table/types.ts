@@ -34,7 +34,19 @@ export type SeatState =
 /** Rolle in dieser Runde, unabhängig vom Zustand, steht in `data-role` */
 export type SeatRole = 'att' | 'def' | 'deal' | 'knock';
 
-export type TagKind = 'plain' | 'turn' | 'done' | 'role' | 'take' | 'knock' | 'call' | 'king' | 'loser' | 'four';
+export type TagKind =
+  | 'plain'
+  | 'turn'
+  | 'done'
+  | 'role'
+  | 'take'
+  | 'knock'
+  | 'call'
+  | 'king'
+  | 'loser'
+  | 'four'
+  /** Zahl der Tipps auf diese Person (Shithead, Durak) */
+  | 'bet';
 
 /** Etikett am Platz („ist dran“, „verteidigt“, „hat geklopft“) */
 export interface TagModel {
@@ -43,8 +55,10 @@ export interface TagModel {
   kind: TagKind;
   /** Denkpünktchen anhängen */
   think?: boolean;
-  /** alte Klassen als Haken: 'turn', 'done', 'outt', 'knock', 'take', 'def', 'att', 'cabo', 'king' */
+  /** alte Klassen als Haken: 'turn', 'done', 'outt', 'knock', 'take', 'def', 'att', 'cabo', 'king', 'bet', 'four' */
   cls?: string;
+  /** Hinweis beim Überfahren, Klartext */
+  title?: string;
 }
 
 /** Ein Gegnerplatz als Kachel */
@@ -114,6 +128,8 @@ export interface MeOut {
   out: string;
   /** Vorspulen bei Schnautz, wenn man raus ist */
   bar?: BarModel | null;
+  /** alte Klassen von #me wie beim Mitspielen ('shme', in der Tauschrunde 'swapping'), damit die Breite bleibt */
+  cls?: readonly string[];
 }
 
 /** Was eine Karte am Tisch als Quelle fürs Ziehen ist, steht in `data-drag` */
@@ -155,6 +171,8 @@ export interface HandCard {
   extra?: string;
   /** Quelle fürs Ziehen */
   drag?: DragSrcKind;
+  /** Ziel fürs Ziehen, die Karte selbst (Shithead-Tauschrunde, Schnautz). Mit `i` als data-i */
+  drop?: DropKind;
   /** Name für Rückseiten, „verdeckte Karte 2“ */
   label?: string;
 }
@@ -230,6 +248,11 @@ export interface BarButton {
    */
   why?: Reject | null;
   pulse?: boolean;
+  /**
+   * Übergang, bis Shithead (3b) und Durak (Runde 4) ihre Knöpfe umstellen: gesperrt heißt echtes `disabled` wie in 2.7
+   * statt aria-disabled, damit Legacy gleich aussieht. Der Grund steht trotzdem in aria-description.
+   */
+  hard?: boolean;
   /** Schalter (Schnappen), aria-pressed */
   on?: boolean;
   aria?: string;
@@ -249,7 +272,10 @@ export interface BarModel {
  * damit keine Rollen mehr selbst. Die alte Form mit `attrs` bleibt bis 4a gültig.
  */
 export interface CardOpts {
-  /** Fokus-Schlüssel `data-fk`, die Karte selbst (eindeutig auch mit `:2`), bei Cabo Besitzer und Platz-ID */
+  /**
+   * Fokus-Schlüssel `data-fk`, die Karte selbst (eindeutig auch mit `:2`), bei Cabo Besitzer und Platz-ID. Leer
+   * schreibt keinen, so bei Karten, die nie Fokus bekommen (Stapel, fremde Tischkarten, Fächer).
+   */
   key: string;
   /** data-act, wenn antippbar. Dann role="button" und tabindex aus der Hand-Gruppe */
   act?: string;
@@ -273,6 +299,8 @@ export interface CardOpts {
   backName?: string;
   /** data-drag */
   drag?: DragSrcKind;
+  /** data-drop, mit `i` als data-i */
+  drop?: DropKind;
   /** tabindex einer antippbaren Karte, Standard 0. Die Hand setzt -1 für alle außer ihrer einen Tabulatorstelle */
   tab?: 0 | -1;
   /** Slot auf der Karte als fertiges HTML (Cabo-Wert, Auge, Restzeit) */

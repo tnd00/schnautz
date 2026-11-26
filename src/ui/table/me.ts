@@ -21,7 +21,7 @@ export function meHTML(m: MeModel | MeOut): string {
 
 /** Klassen von #me: me, die alten Klassen des Spiels und die Zustände turn, looking und swapping wie heute */
 export function meClass(m: MeModel | MeOut): string {
-  if (isOut(m)) return 'me';
+  if (isOut(m)) return ['me', ...(m.cls ?? [])].join(' ');
   return ['me', ...m.cls, ...m.st.filter((s) => s === 'turn' || s === 'looking' || s === 'swapping')].join(' ');
 }
 

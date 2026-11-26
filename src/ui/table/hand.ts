@@ -32,6 +32,7 @@ export function handHTML(h: HandModel): string {
       why: whyText(x.why),
       backName: x.label,
       drag: x.drag,
+      drop: x.drop,
       tab: x === stop ? 0 : -1,
       extra: x.extra,
       cls: x.cls,

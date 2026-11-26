@@ -130,7 +130,7 @@ function optsHTML(c: Card | null, o: CardOpts): string {
   const name = c
     ? cardName(c) + (o.trump ? TABLE.trump : '') + (o.value != null ? TABLE.points(o.value) : '')
     : (o.backName ?? (o.act ? TABLE.back : ''));
-  let a = ` data-fk="${esc(o.key)}"`;
+  let a = o.key ? ` data-fk="${esc(o.key)}"` : '';
   if (o.act) a += ` data-act="${o.act}" role="button" tabindex="${o.tab ?? 0}" aria-pressed="${!!o.sel}"`;
   else if (name) a += ' role="img"';
   a += name ? ` aria-label="${esc(name)}"` : ' aria-hidden="true"';
@@ -139,6 +139,7 @@ function optsHTML(c: Card | null, o: CardOpts): string {
   if (o.sid != null) a += ` data-sid="${o.sid}"`;
   if (o.owner) a += ` data-o="${esc(o.owner)}"`;
   if (o.drag) a += ` data-drag="${o.drag}"`;
+  if (o.drop) a += ` data-drop="${o.drop}"`;
   if (c) a += ` data-r="${rankOf(c)}"`;
   if (o.style) a += ` style="${o.style}"`;
   return `<div class="${cls}"${a}>${c ? faceHTML(c) : ''}${o.extra ?? ''}</div>`;

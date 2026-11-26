@@ -1,14 +1,16 @@
 /*
  * Gemeinsames Zeichnen des Tisches (Plan 2.8 Abschnitt 8, geruest.md 3.3): Fokus halten, Teile aus den Modellen
  * schreiben, Karussell, Uhren und Würfe nachziehen, Ziehen auffrischen. Ein `OldTable` zeichnet wie heute selbst.
+ *
+ * Stand Runde 3a: Shithead ist ein `NewTable`, Durak, Cabo und Schnautz zeichnen noch selbst.
  */
 import type { View } from '../../game/types';
 import { holdFocus, restoreFocus } from '../a11y/focus';
 import { App } from '../app';
 import { CAR, layoutOpps } from '../carousel';
-import { ceremonyOn } from '../ceremony';
+import { ceremonyOn, ZER } from '../ceremony';
 import { markClocks } from '../clock';
-import { $, $opt } from '../dom';
+import { $, $opt, isMobile } from '../dom';
 import { prefs } from '../prefs';
 import { SEQ } from '../shithead/sequence';
 import { paintStatus } from '../status';
@@ -24,9 +26,12 @@ import { isOld, specOf } from './spec';
 export type Part = 'opps' | 'center' | 'status' | 'me';
 
 export interface RenderOpts {
-  /** Standard alle vier */
+  /**
+   * Standard alle vier. Nur die Mitte (Schritte im Shithead-Ablauf) schreibt nur #center, ohne Karussell, Uhren und
+   * Würfe neu zu setzen, so wie früher renderShCenter.
+   */
   parts?: readonly Part[];
-  /** Ansicht für Gegner und Status während einer Sequenz (Kino 36). Standard v */
+  /** Ansicht für Gegner, Status und Karussell während einer Sequenz (Kino 36). Standard v, noch nutzt es niemand */
   hold?: View;
 }
 
@@ -76,6 +81,7 @@ export function renderTable(v: View, o: RenderOpts = {}): void {
     zone(el, 'group', m?.label);
     el.innerHTML = m ? centerHTML(m) : '';
   }
+  // paintStatus meldet einen Wechsel selbst an den Vorleser (sayStatus)
   if (parts.includes('status')) paintStatus(spec.status(hv));
   if (parts.includes('me')) {
     const m = spec.me(v);
@@ -85,10 +91,13 @@ export function renderTable(v: View, o: RenderOpts = {}): void {
     zone(me, 'group', m ? meLabel(m) : '');
     me.innerHTML = m ? meHTML(m) : '';
   }
-  spec.after?.(v);
-  layoutOpps(v);
-  markClocks();
-  markTosses();
+  // Plätze neu geschrieben: Hand einpassen, Karussell, Uhren und Würfe wieder an ihre Kacheln
+  if (parts.includes('opps') || parts.includes('me')) {
+    spec.after?.(v);
+    layoutOpps(hv);
+    markClocks();
+    markTosses();
+  }
   restoreFocus(fm);
   if (dragOn(v)) {
     if (!dragInit) initDrag();
@@ -99,8 +108,20 @@ export function renderTable(v: View, o: RenderOpts = {}): void {
 
 /**
  * Läuft am Tisch gerade etwas, das Eingaben wie Ziehen nicht stören dürfen? Sperre nach einem Zug, Shithead-Ablauf,
- * Zeremonie und offene Fenster (Menü, Bogen, Ergebnisblatt).
+ * Zeremonie samt Zeitlupe und verborgenem Verlierer davor, offene Fenster (Menü, Bogen, Ergebnisblatt) sowie Verlauf
+ * und Reaktionen, solange sie am Handy über dem Tisch liegen. src/ui/update.ts wartet darauf mit dem Neuladen.
  */
 export function tableBusy(): boolean {
-  return App.busy || SEQ.busy || ceremonyOn() || !$('#menu').hidden || !!$opt('#modal > *') || !!$opt('#overlay > *');
+  const b = document.body.classList;
+  return (
+    App.busy ||
+    SEQ.busy ||
+    ceremonyOn() ||
+    ZER.slow ||
+    !!App.zerHide ||
+    !$('#menu').hidden ||
+    !!$opt('#modal > *') ||
+    !!$opt('#overlay > *') ||
+    (isMobile() && (b.contains('logopen') || b.contains('emoopen')))
+  );
 }

@@ -14,12 +14,16 @@ export const BAR_GUARD_MS = 400;
 /** Zuletzt gezeichnete Knopfzeile und wann sie sich geändert hat */
 export const BAR = { sig: '', at: 0 };
 
-/** Ein Knopf. Gesperrt bleibt er antippbar und nennt beim Tipp seinen Grund. */
+/** Zwei Fassungen einer Beschriftung, die kurze steht, wo der Platz knapp ist (CSS .blong und .bshort) */
+export const twoLabel = (long: string, short: string): string =>
+  `<span class="blong">${long}</span><span class="bshort">${short}</span>`;
+
+/** Ein Knopf. Gesperrt bleibt er antippbar und nennt beim Tipp seinen Grund (außer im Übergang mit `hard`). */
 export function btnHTML(b: BarButton): string {
   const why = b.ok ? null : whyText(b.why);
   return (
     `<button class="btn ${b.cls}${b.pulse ? ' pulse' : ''}" data-act="${b.act}" data-intent="${b.intent}"` +
-    (b.ok ? '' : ' aria-disabled="true"') +
+    (b.ok ? '' : b.hard ? ' disabled' : ' aria-disabled="true"') +
     (why ? ` aria-description="${esc(why)}"` : '') +
     (b.on != null ? ` aria-pressed="${b.on}"` : '') +
     (b.aria ? ` aria-label="${esc(b.aria)}"` : '') +

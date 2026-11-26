@@ -13,7 +13,8 @@ import { $opt, esc, num, reduceMotion, type Timer } from '../dom';
 import { type Announcement, boomFx, emit, shakeEl } from '../feedback';
 import { burnCue, cueOf, type LevelCtx } from '../levels';
 import { nameOf, vb } from '../helpers';
-import { renderSh, renderShCenter } from '../render/shithead';
+import { renderSh } from '../render/shithead';
+import { renderTable } from '../table/index';
 import { sfx } from '../sound';
 import { taunt } from '../taunts';
 import { zerSlow } from '../ceremony';
@@ -198,6 +199,9 @@ export function runSeq(steps: Step[], v: View, done: () => void): void {
 const pileEls = (): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>('#center .pile .card'));
 const rotOf = (el: Element): string => getComputedStyle(el).getPropertyValue('--rot').trim() || '0deg';
 
+/** Nur die Mitte mit dem Zwischenstand aus SEQ.ov neu, Plätze und Status bleiben */
+const paintCenter = (v: View): void => renderTable(v, { parts: ['center'] });
+
 /** Woher kommen die Karten eines Spielers (Hand oder Tischkarten)? */
 function shSrcEl(pid: string | undefined, src: 'hand' | 'up' | 'down'): HTMLElement | null {
   const root = pid === App.me ? $opt('#me') : $opt(`.opp[data-pid="${pid}"]`);
@@ -245,7 +249,7 @@ function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
   switch (s.k) {
     case 'play': {
       ov.pile = s.pile;
-      renderShCenter(v);
+      paintCenter(v);
       const cards = s.e.cards;
       const els = pileEls();
       const n = Math.min(cards.length, els.length);
@@ -324,14 +328,14 @@ function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
         if (!SEQ.ov) return;
         SEQ.ov.pile = [];
         SEQ.ov.burned = s.burned;
-        renderShCenter(v);
+        paintCenter(v);
         $opt('#center .burned')?.classList.add('hot');
       }, 700);
       break;
     }
     case 'blind': {
       ov.pile = s.pile;
-      renderShCenter(v);
+      paintCenter(v);
       const bt = pileEls().pop();
       const br = srcRects(e.p, 'down', 1)[0];
       if (bt && br) {
@@ -377,7 +381,7 @@ function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
         );
       }
       ov.pile = [];
-      renderShCenter(v);
+      paintCenter(v);
       if (mine && ov.myHand) {
         later(() => {
           if (!SEQ.ov) return;

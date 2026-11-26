@@ -3,7 +3,7 @@
  * ist, steht als `OldTable` da und zeichnet wie heute selbst. Ein umgestelltes Spiel ist ein `NewTable` und liefert
  * nur Modelle, die gemeinsamen Bausteine zeichnen. `specOf` löst `tableOf` aus src/ui/render/index.ts ab.
  *
- * Stand Runde 1: alle vier Spiele sind `OldTable`, eingebunden ist noch nichts.
+ * Stand Runde 3a: Shithead ist ein `NewTable`, Durak, Cabo und Schnautz sind noch `OldTable`.
  */
 import { unreachable } from '../../game/games';
 import type { GameKind, Player, View } from '../../game/types';
@@ -33,7 +33,7 @@ export interface NewTable {
   seat(v: View, p: Player): SeatModel | null;
   center(v: View): CenterModel | null;
   me(v: View): MeModel | MeOut | null;
-  /** aus src/ui/status.ts, renderTable ruft paintStatus(spec.status(v)) und sayStatus */
+  /** aus src/ui/status.ts, renderTable ruft paintStatus(spec.status(v)), das meldet den Vorleser selbst */
   status(v: View): Status;
   /** aus src/ui/render/result.ts, render() ruft renderResult(v, spec.sheet(v)) */
   sheet(v: View): Sheet | null;

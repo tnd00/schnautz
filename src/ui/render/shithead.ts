@@ -1,32 +1,49 @@
-/* Shithead-Tisch: Gegner, Stapel, Status mit 4er-Fenster und Bombe, eigener Platz, Tauschrunde und Ergebnis. */
+/*
+ * Shithead-Tisch als `NewTable` (Plan 2.8 Runde 3): Gegner, Stapel, Status mit 4er-Fenster und Bombe, eigener Platz,
+ * Tauschrunde und Ergebnis als Modelle, die Bausteine in src/ui/table zeichnen. Während eines Ablaufs liest die Mitte
+ * den Zwischenstand aus `SEQ.ov`, die eigene Hand vor dem Aufnehmen ebenso.
+ */
+import { shBetsOn } from '../../game/bets';
 import { rankOf } from '../../game/cards';
 import { SH_WIN_MS } from '../../game/constants';
+import { rj, type Reject } from '../../game/reject';
 import { shCanBomb, shCanPlay, shCanThrow, shNeed, shTopRun } from '../../game/shithead';
-import type { Card, Player, Rank, ShitheadResult, ShPlayerView, ShView, View } from '../../game/types';
+import type { Card, Player, Rank, ShitheadResult, ShPlayerView, View } from '../../game/types';
 import { LOSER_MARK } from '../../game/games';
 import { App } from '../app';
 import { cardHTML, HAND_ICON } from '../cards';
-import { layoutOpps } from '../carousel';
-import { aimAttrs, marksHTML, reignHTML } from './marks';
-import { markClocks } from '../clock';
-import { markTosses } from '../toss';
+import { marksHTML, reignHTML } from './marks';
 import { $, esc, hashStr, isMobile, num } from '../dom';
-import { myTurn, nameOf, onlyBotsPlaying, pById, seatOrder, turnId, vb } from '../helpers';
-import { fitHand } from '../shithead/hand';
+import { myTurn, nameOf, onlyBotsPlaying, pById, turnId, vb } from '../helpers';
 import { SEQ } from '../shithead/sequence';
 import { winLeft, winSecs } from '../shithead/window';
 import { taunt } from '../taunts';
-import { betActionHTML, betsOnMeSub, betSub, betTagHTML } from './bets';
-import { betResultHTML, botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
+import { betActionHTML, betsOnMeSub, betSub } from './bets';
+import { betResultHTML, botsOnlyHTML, type Sheet, type SheetRow } from './result';
 import { STATUS, SH_SHEET, SH_STATUS, OFFLINE_WAIT, offline, playFor, waitWho } from '../../content/texts/status';
+import { SH_TABLE } from '../../content/texts/table-sh';
 import { ceremonyOn } from '../ceremony';
-import { endMain, renderStatus, turnMain, waitSub, type Status } from '../status';
-import type { OldTable } from '../table/spec';
+import { endMain, turnMain, waitSub, type Status } from '../status';
+import { renderTable } from '../table/index';
+import { fitHand, handHTML } from '../table/hand';
+import { cardsMini, deckCards } from '../table/pile';
+import { fanHTML, numHTML, THINKING } from '../table/seat';
+import type { NewTable } from '../table/spec';
+import type {
+  BarButton,
+  BarModel,
+  CenterModel,
+  HandCard,
+  MeModel,
+  MeOut,
+  SeatModel,
+  SeatState,
+  TagModel,
+} from '../table/types';
 
 type Source = 'hand' | 'up' | 'down';
 type OwnCards = { hand: Card[]; up: Card[]; down: Card[] | number };
 
-const THINKING = '<span class="thinking"><i></i><i></i><i></i></span>';
 const count = (x: Card[] | number): number => (typeof x === 'number' ? x : x.length);
 
 /** Wie oft jemand schon Shithead war. Das Mal der gerade beendeten Partie zählt erst nach der Enthüllung. */
@@ -74,7 +91,15 @@ export function shPileInfo(v: View, pile: Card[]): string {
   }
 }
 
-const cardStyle = (delay: number) => `style="--d:${delay}s"`;
+/** Klassen aus Teilen, leere fallen weg */
+const cl = (...xs: (string | false | null | undefined)[]): string => xs.filter(Boolean).join(' ');
+
+/** Grund einer ausgegrauten Karte, derselbe Code wie shWhyNot beim Gastgeber (eigener Zug, Karte passt nicht) */
+function noFit(v: View, c: Card): Reject {
+  const pile = v.sh?.pile ?? [];
+  const top = pile[pile.length - 1];
+  return rj('sh.noFit', top ? { c, top } : { c });
+}
 
 /** Verdeckte und offene Tischkarten einer Person. `focus`: Die Hand ist leer, jetzt sind sie dran. */
 function shTableHTML(v: View, P: ShPlayerView, mine: boolean, focus = false): string {
@@ -87,15 +112,18 @@ function shTableHTML(v: View, P: ShPlayerView, mine: boolean, focus = false): st
   const swapping = mine && v.phase === 'swap' && !!meP && !meP.ready;
   // Am eigenen Platz sieht man die Hand ohnehin, bei Gegnern steht der Hinweis so hoch wie die Karten
   if (!slots) return mine ? '' : '<div class="tcards"><div class="tnone">keine Tischkarten</div></div>';
-  const deal = App.anim.deal ? ' deal' : '';
+  const deal = App.anim.deal && 'deal';
   let h = `<div class="tcards${focus ? ' focus' : ''}">`;
   for (let i = 0; i < slots; i++) {
     h += '<div class="tslot">';
     if (i < down) {
       const blind = playing && src === 'down';
-      const attrs =
-        (blind ? `data-act="shd" data-i="${i}" role="button" tabindex="0" ` : '') + cardStyle(0.05 + i * 0.05);
-      h += cardHTML(Array.isArray(P.down) ? P.down[i] : null, (blind ? 'pick blindc' : '') + deal, attrs);
+      h += cardHTML(Array.isArray(P.down) ? P.down[i] : null, {
+        key: mine ? `down:${i}` : '',
+        ...(blind ? { act: 'shd', i, drag: 'down', backName: SH_TABLE.down(i) } : {}),
+        cls: cl(blind && 'pick blindc', deal),
+        style: `--d:${0.05 + i * 0.05}s`,
+      });
     }
     if (i < up.length) {
       const c = up[i];
@@ -103,114 +131,144 @@ function shTableHTML(v: View, P: ShPlayerView, mine: boolean, focus = false): st
       const selected = mine && ((swapping && App.sw.u === i) || (App.ss.src === 'up' && App.ss.idx.includes(i)));
       // Ausgegraut bleibt antippbar, der Tipp nennt dann den Grund (src/ui/shithead/input.ts)
       const dim = playing && src === 'up' && !shCanPlay(v, rankOf(c));
-      const cls = (selectable ? ' pick' : '') + (selected ? ' sel' : '') + (dim ? ' dim' : '') + deal;
-      const attrs =
-        (selectable ? `data-act="shu" data-i="${i}" role="button" tabindex="0" ` : '') + cardStyle(0.2 + i * 0.05);
-      h += `<div class="upc">${cardHTML(c, cls, attrs)}</div>`;
+      const card = cardHTML(c, {
+        key: mine ? `up:${c}` : '',
+        ...(selectable ? { act: 'shu', i, drag: 'up' as const } : {}),
+        // In der Tauschrunde ist die offene Karte auch Ziel für eine Handkarte
+        ...(swapping ? { drop: 'up' as const } : {}),
+        sel: selected,
+        // Ohne why: aria-disabled ließe Playwright in shithead.spec.ts nicht mehr tippen, das stellt erst 3b um
+        dim,
+        cls: cl(selectable && 'pick', deal),
+        style: `--d:${0.2 + i * 0.05}s`,
+      });
+      h += `<div class="upc">${card}</div>`;
     }
     h += '</div>';
   }
   return `${h}</div>`;
 }
 
-/**
- * Handkarten eines Gegners ohne Tischkarten: ein gehaltener Fächer mit „auf der Hand“ in der Mitte.
- * Ohne die Worte sähen zwei Kartenrücken aus wie verdeckte Tischkarten, die man nur einzeln aufdecken darf.
- * Höchstens vier Karten, damit es auch in schmale Kacheln passt.
- */
-function bigHandHTML(hn: number): string {
-  let fan = '';
-  const shown = Math.min(hn, 4);
-  for (let i = 0; i < shown; i++) {
-    const rot = (i - (shown - 1) / 2) * 14;
-    fan += cardHTML(null, App.anim.deal ? 'deal' : '', `style="--rot:${rot}deg; --d:${i * 0.05}s"`);
-  }
-  return (
-    `<div class="bighand" title="Keine Tischkarten mehr, nur noch ${hn} ${hn === 1 ? 'Handkarte' : 'Handkarten'}">` +
-    `<span class="ohand bigfan">${fan}</span>` +
-    `<span class="bhn"><b>${hn}</b><span class="bht">auf der Hand</span></span></div>`
-  );
+/** Etikett an der Kachel: gegangen, Platz, Shithead, Tauschrunde, am Zug, 4er rein, sonst die Zahl der Tipps */
+function shTag(v: View, p: Player): TagModel | null {
+  const S = v.sh;
+  if (!S) return null;
+  const over = v.phase === 'over';
+  if (p.out) return { text: 'gegangen', kind: 'plain', cls: 'outt' };
+  if (S.finished.includes(p.id)) return { text: `Platz ${num(p.place)}`, kind: 'plain' };
+  // Bis zur Enthüllung verrät auch das Etikett den Shithead nicht
+  if (over && S.shithead === p.id && App.zerHide !== p.id)
+    return { text: `${LOSER_MARK.shithead} Shithead`, kind: 'loser', cls: 'outt' };
+  if (v.phase === 'swap')
+    return p.ready
+      ? { text: 'bereit ✓', kind: 'done', cls: 'done' }
+      : { text: 'tauscht', kind: 'turn', cls: 'turn', think: true };
+  if (v.phase === 'play' && turnId(v) === p.id) return { text: 'ist dran', kind: 'turn', cls: 'turn', think: true };
+  if (v.phase === 'play' && S.win?.by.includes(p.id)) return { text: '4er rein', kind: 'four', cls: 'four' };
+  const n = v.phase === 'play' ? shBetsOn(v, p.id).length : 0;
+  return n ? { text: `🔮 ${n}`, kind: 'bet', cls: 'bet', title: 'So oft getippt' } : null;
 }
 
-function opponentHTML(v: View, S: ShView, p: Player): string {
-  const P = S.P[p.id];
-  if (!P) return '';
+/**
+ * Gegnerkachel: Tischkarten oder ohne sie ein gehaltener Fächer mit „auf der Hand“ in der Mitte. Ohne die Worte
+ * sähen zwei Kartenrücken aus wie verdeckte Tischkarten, die man nur einzeln aufdecken darf. Höchstens vier Karten,
+ * damit es auch in schmale Kacheln passt. Am Ende liegen die übrigen Handkarten offen.
+ */
+function shSeat(v: View, p: Player): SeatModel | null {
+  const S = v.sh;
+  const P = S?.P[p.id];
+  if (!S || !P) return null;
   const over = v.phase === 'over';
-  const tId = turnId(v);
   const hn = count(P.hand);
   // Keine Tischkarten mehr: Dann zählen nur noch die Handkarten und die sollen alle sehen
   const handOnly = !over && hn > 0 && !P.up.length && !count(P.down);
-  // Am Ende liegen die übrigen Handkarten offen
-  const revealed =
-    Array.isArray(P.hand) && over
-      ? P.hand
-          .slice(0, 8)
-          .map((c) => cardHTML(c))
-          .join('')
-      : '';
+  // shortcut: höchstens acht ohne „+n“ wie in 2.7, der sichtbare Schritt (3b) gibt cardsMini das ganze Blatt
+  const revealed = Array.isArray(P.hand) && over ? cardsMini(P.hand.slice(0, 8)) : '';
   const done = S.finished.includes(p.id);
-  let tag = '';
-  if (p.out) tag = '<span class="tag outt">gegangen</span>';
-  else if (done) tag = `<span class="tag">Platz ${num(p.place)}</span>`;
-  // Bis zur Enthüllung verrät auch das Etikett den Shithead nicht
-  else if (over && S.shithead === p.id && App.zerHide !== p.id)
-    tag = `<span class="tag outt">${LOSER_MARK.shithead} Shithead</span>`;
-  else if (v.phase === 'swap')
-    tag = p.ready ? '<span class="tag done">bereit ✓</span>' : `<span class="tag turn">tauscht${THINKING}</span>`;
-  else if (v.phase === 'play' && tId === p.id) tag = `<span class="tag turn">ist dran${THINKING}</span>`;
-  else if (v.phase === 'play' && S.win?.by.includes(p.id)) tag = '<span class="tag four">4er rein</span>';
-  // Sonst die Zahl der Tipps auf diese Person
-  if (!tag) tag = betTagHTML(v, p.id);
-  const on = v.phase === 'play' && tId === p.id;
-  const cls = ['opp sh', on && 'turn', (p.out || done) && 'out', !p.online && 'offline', handOnly && 'handonly']
-    .filter(Boolean)
-    .join(' ');
-  const count0 = hn ? '' : ' zero';
-  return (
-    `<div data-pid="${esc(p.id)}" class="${cls}"${aimAttrs(p)}>` +
-    (handOnly ? bigHandHTML(hn) : shTableHTML(v, P, false)) +
-    `<div class="ometa">${marksHTML(v, p)}<span class="nm">${esc(p.name)}</span>` +
-    (handOnly
-      ? ''
-      : `<span class="ohand" title="Karten auf der Hand">${revealed}<span class="hcount${count0}">${hn}${HAND_ICON}</span></span>`) +
-    `${shcHTML(p)}</div>` +
-    (tag || '<span class="tag" style="visibility:hidden">.</span>') +
-    '</div>'
-  );
+  const on = v.phase === 'play' && turnId(v) === p.id;
+  const tag = shTag(v, p);
+  const st: SeatState[] = [];
+  if (on) st.push('turn');
+  if (done) st.push('done');
+  if (p.out || done) st.push('out');
+  if (!p.online) st.push('offline');
+  const body = handOnly
+    ? fanHTML(hn, {
+        max: 4,
+        deg: 14,
+        word: 'auf der Hand',
+        title: `Keine Tischkarten mehr, nur noch ${hn} ${hn === 1 ? 'Handkarte' : 'Handkarten'}`,
+        deal: !!App.anim.deal,
+      })
+    : shTableHTML(v, P, false);
+  const ohand = handOnly
+    ? ''
+    : `<span class="ohand" title="Karten auf der Hand">${revealed}<span class="hcount${hn ? '' : ' zero'}">${hn}${HAND_ICON}</span></span>`;
+  return {
+    id: p.id,
+    name: p.name,
+    marks: marksHTML(v, p),
+    value: '',
+    count: ohand + shcHTML(p),
+    tag,
+    body,
+    st,
+    aim: v.players.some((q) => q.id === App.me),
+    cls: handOnly ? ['sh', 'handonly'] : ['sh'],
+    say: SH_TABLE.seat({ bot: !!p.bot, hand: hn, up: P.up.length, down: count(P.down), tag: tag?.text ?? '' }),
+  };
 }
 
 /** Nachziehstapel, Ablagestapel und verbrannte Karten. Während einer Sequenz zeigt sie deren Zwischenstand. */
-export function renderShCenter(v: View): void {
+function shCenter(v: View): CenterModel | null {
   const S = v.sh;
-  if (!S) return;
+  if (!S) return null;
   const ov = SEQ.ov;
   const pile = ov ? ov.pile : S.pile;
   const burned = ov ? ov.burned : num(S.burned);
   const dn = num(S.deck);
-  // Die Zahl am Stapel reicht als Beschriftung, darunter ist Platz für lange Hinweise zum Ablagestapel
-  const deck = dn
-    ? cardHTML(null) +
-      (dn > 1 ? cardHTML(null) : '') +
-      (dn > 2 ? cardHTML(null) : '') +
-      `<span class="pcount" title="Karten zum Nachziehen">${dn}</span>`
-    : '<div class="emptyslot">leer</div>';
   let pileHTML = '';
   for (let k = Math.max(0, pile.length - 5); k < pile.length; k++) {
     // Jede Karte liegt leicht schief, aber immer gleich (Hash statt Zufall). Nur wenig, sonst ragt sie in den Hinweis darunter
     const hh = hashStr(`${pile[k]}:${k}`);
     const isTop = k === pile.length - 1;
-    const style = `style="--rot:${(hh % 15) - 7}deg; left:${(hh % 7) - 3}px; top:${((hh >> 3) % 5) - 2}px"`;
-    pileHTML += cardHTML(pile[k], isTop && App.anim.pilePop && !ov ? 'pop' : '', style);
+    pileHTML += cardHTML(pile[k], {
+      key: '',
+      cls: isTop && App.anim.pilePop && !ov ? 'pop' : '',
+      style: `--rot:${(hh % 15) - 7}deg; left:${(hh % 7) - 3}px; top:${((hh >> 3) % 5) - 2}px`,
+    });
   }
   if (!pile.length) pileHTML = '<div class="emptyslot">leer</div>';
-  const warn = shNeed({ rules: v.rules, sh: { pile } }).k === 'max';
-  $('#center').innerHTML =
-    '<span class="cap">Stapel</span>' +
-    `<div class="deck" title="Nachziehstapel">${deck}</div>` +
-    `<div class="pile">${pileHTML}<span class="cnt${warn ? ' warn' : ''}">${esc(shPileInfo(v, pile))}</span>` +
-    (pile.length > 5 ? `<span class="pcount">${pile.length}</span>` : '') +
-    '</div>' +
-    `<div class="burned" title="Verbrannte Karten"><span class="flame">🔥</span><b>${burned}</b><span class="cnt">verbrannt</span></div>`;
+  const info = shPileInfo(v, pile);
+  return {
+    cap: 'Stapel',
+    label: SH_TABLE.center(pile.length, info),
+    stacks: [
+      {
+        k: 'deck',
+        cls: 'deck',
+        title: 'Nachziehstapel',
+        // Die Zahl am Stapel reicht als Beschriftung, darunter ist Platz für lange Hinweise zum Ablagestapel
+        body: deckCards(dn) + (dn ? numHTML(dn, { cls: 'pcount', title: 'Karten zum Nachziehen' }) : ''),
+      },
+      {
+        k: 'pile',
+        cls: 'pile',
+        title: '',
+        body: pileHTML,
+        cnt: { text: info, warn: shNeed({ rules: v.rules, sh: { pile } }).k === 'max' },
+        count: pile.length > 5 ? pile.length : undefined,
+        drop: 'pile',
+      },
+      {
+        k: 'counter',
+        cls: 'burned',
+        title: 'Verbrannte Karten',
+        body: `<span class="flame">🔥</span><b>${burned}</b>`,
+        cnt: { text: 'verbrannt' },
+      },
+    ],
+  };
 }
 
 /** Knopf zum Reinwerfen der eigenen 4er. Macht die letzte 4 den Stapel voll, ist es eine Bombe. */
@@ -238,7 +296,7 @@ export function quickHTML(v: View): string {
 
 /**
  * Status über dem eigenen Platz als Daten: wer dran ist, neuer Stapel mit 4er-Knopf, Bombe-Knopf. Ohne DOM, damit
- * Vitest jede Phase prüfen kann. `renderStatus` (src/ui/status.ts) schreibt ihn.
+ * Vitest jede Phase prüfen kann. renderTable schreibt ihn über paintStatus (src/ui/status.ts).
  */
 export function shStatus(v: View): Status {
   const S = v.sh;
@@ -303,71 +361,55 @@ export function shStatus(v: View): Status {
 }
 
 /** Tauschrunde: eigene Tisch- und Handkarten groß über dem Spielfeld, das noch nicht gebraucht wird. */
-function swapHTML(v: View, me: Player, mine: OwnCards): string {
+function swapModel(v: View, me: Player, mine: OwnCards): MeModel {
   const ready = me.ready;
   let head: string;
-  let foot: string;
+  let btns: BarButton[];
   if (!ready) {
     head =
       '<b>Tauschrunde</b><span>Tippe eine Handkarte und eine Tischkarte an, um sie zu tauschen. Starke Karten gehören auf den Tisch.</span>';
-    foot = '<button class="btn primary" data-act="shready">Bereit</button>';
+    btns = [{ act: 'shready', label: 'Bereit', intent: 'go', cls: 'primary', ok: true }];
   } else {
     const wn = v.players.filter((p) => !p.ready && !p.out).map((p) => p.name);
     head = wn.length
       ? `<b>Bereit!</b><span>Warte auf ${waitWho(wn.map(esc))}${THINKING}</span>`
       : '<b>Bereit!</b><span>Gleich geht es los.</span>';
-    foot =
+    btns =
       wn.length && App.role === 'host'
-        ? '<button class="btn ghost" data-act="force">Nicht warten, jetzt starten</button>'
-        : '';
+        ? [{ act: 'force', label: 'Nicht warten, jetzt starten', intent: 'alt', cls: 'ghost', ok: true }]
+        : [];
   }
-  let hand = '';
-  mine.hand.forEach((c, i) => {
-    const sel = !ready && App.sw.h === i;
-    const cls = (ready ? '' : 'pick') + (sel ? ' sel' : '') + (App.anim.deal ? ' deal' : '');
-    const attrs = (ready ? '' : `data-act="shh" data-i="${i}" role="button" tabindex="0" `) + cardStyle(0.3 + i * 0.06);
-    hand += cardHTML(c, cls, attrs);
-  });
-  return (
-    `<div class="swhead">${head}</div>` +
-    '<div class="swrow"><span class="swlbl">Auf dem Tisch</span>' +
-    shTableHTML(v, mine, true) +
-    '</div><div class="swrow"><span class="swlbl">Auf der Hand</span>' +
-    `<div class="shhand">${hand}</div></div>` +
-    `<div class="actions">${foot}</div>`
-  );
+  const deal = App.anim.deal && 'deal';
+  const cards: HandCard[] = mine.hand.map((c, i) => ({
+    c,
+    i,
+    ...(ready ? {} : { act: 'shh', drag: 'hand' as const, drop: 'hand' as const }),
+    sel: !ready && App.sw.h === i,
+    cls: cl(!ready && 'pick', deal),
+    delay: 0.3 + i * 0.06,
+  }));
+  return {
+    head: null,
+    lead: `<div class="swhead">${head}</div>`,
+    rows:
+      '<div class="swrow"><span class="swlbl">Auf dem Tisch</span>' +
+      shTableHTML(v, mine, true) +
+      '</div><div class="swrow"><span class="swlbl">Auf der Hand</span>' +
+      handHTML({ kind: 'row', cls: 'shhand', label: SH_TABLE.hand(cards.length), cards, fit: true }) +
+      '</div>',
+    bar: { btns },
+    st: ready ? ['swapping'] : ['swapping', 'turn'],
+    cls: ['shme'],
+    say: SH_TABLE.meSwap(ready),
+  };
 }
 
-/** Eigener Platz: Tischkarten, Hand und Knöpfe. */
-function myPlaceHTML(v: View, S: ShView, me: Player, mine: OwnCards, src: Source | null, canAny: boolean): string {
-  if (v.phase === 'swap') return swapHTML(v, me, mine);
-  const locked = myTurn(v) && !!S.win?.lock;
+/** Knöpfe am eigenen Platz im Spiel: Ausspielen, Alle n wählen, Aufnehmen, wer fertig ist, den Tipp-Knopf. */
+function shBar(v: View, mine: OwnCards, src: Source | null, canAny: boolean): BarModel {
+  const S = v.sh;
+  const locked = myTurn(v) && !!S?.win?.lock;
   const playing = myTurn(v) && !locked;
-  const meDone = S.finished.includes(App.me);
-  const hand = SEQ.ov?.myHand ?? mine.hand;
-  // Ist die Hand leer, rücken die Tischkarten groß in den Fokus
-  const focus = !hand.length && (src === 'up' || src === 'down');
-  let mh =
-    `<div class="mehead">${reignHTML(v, me.id)}<span class="nm">Du</span>${shcHTML(me)}` +
-    (meDone ? `<span class="tag">Platz ${num(me.place)}</span>` : '') +
-    `<span class="pill">${hand.length ? `${hand.length}${HAND_ICON}${hand.length === 1 ? 'Handkarte' : 'Handkarten'}` : `${HAND_ICON}Hand leer`}</span></div>`;
-  mh += `<div class="shrow${focus ? ' focus' : ''}">${shTableHTML(v, mine, true, focus)}`;
-  if (hand.length) mh += '<div class="shhand">';
-  hand.forEach((c, i) => {
-    // Während der kurzen Sperre darf man schon auswählen, nur noch nicht legen
-    const selectable = myTurn(v) && src === 'hand';
-    const selected = App.ss.src === 'hand' && App.ss.idx.includes(i);
-    const dim = playing && src === 'hand' && !shCanPlay(v, rankOf(c));
-    const cls =
-      (selectable ? 'pick' : '') + (selected ? ' sel' : '') + (dim ? ' dim' : '') + (App.anim.deal ? ' deal' : '');
-    const attrs =
-      (selectable ? `data-act="shh" data-i="${i}" role="button" tabindex="0" ` : '') +
-      cardStyle(0.3 + Math.min(i, 8) * 0.06);
-    mh += cardHTML(c, cls, attrs);
-  });
-  if (hand.length) mh += '</div>';
-  mh += '</div><div class="actions">';
-  if (myTurn(v) && (src === 'hand' || src === 'up')) {
+  if (S && myTurn(v) && (src === 'hand' || src === 'up')) {
     const arr = mine[src];
     const selIdx = App.ss.src === src ? App.ss.idx : [];
     const selRank = selIdx.length ? rankOf(arr[selIdx[0]]) : null;
@@ -375,46 +417,105 @@ function myPlaceHTML(v: View, S: ShView, me: Player, mine: OwnCards, src: Source
       ? `${selIdx.length > 1 ? `${selIdx.length}× ` : ''}${shRankLabel(selRank)} ausspielen`
       : 'Ausspielen';
     const okSel = playing && !!selRank && shCanPlay(v, selRank);
-    mh += `<button class="btn primary${okSel ? ' pulse' : ''}" data-act="shplay"${okSel ? '' : ' disabled'}>${esc(locked ? 'Moment…' : label)}</button>`;
+    const btns: BarButton[] = [
+      {
+        act: 'shplay',
+        label: esc(locked ? 'Moment…' : label),
+        intent: 'go',
+        cls: 'primary',
+        ok: okSel,
+        pulse: okSel,
+        hard: true,
+        why: locked ? rj('sh.winLock') : !selRank ? rj('any.pickCard') : okSel ? null : noFit(v, arr[selIdx[0]]),
+      },
+    ];
     if (selRank) {
       const sameN = arr.filter((c) => rankOf(c) === selRank).length;
-      if (sameN > selIdx.length) mh += `<button class="btn ghost" data-act="shselall">Alle ${sameN} wählen</button>`;
+      if (sameN > selIdx.length)
+        btns.push({ act: 'shselall', label: `Alle ${sameN} wählen`, intent: 'alt', cls: 'ghost', ok: true });
     }
     const pileN = S.pile.length;
     const pickOk = playing && pileN > 0;
-    mh += `<button class="btn ${canAny || !pickOk ? 'ghost' : 'wood pulse'}" data-act="shpickup"${pickOk ? '' : ' disabled'}>Aufnehmen (${pileN})</button>`;
-  } else if (meDone) mh += betActionHTML(v);
-  return `${mh}</div>`;
+    const calm = canAny || !pickOk;
+    btns.push({
+      act: 'shpickup',
+      label: `Aufnehmen (${pileN})`,
+      intent: 'take',
+      cls: calm ? 'ghost' : 'wood',
+      ok: pickOk,
+      pulse: !calm,
+      hard: true,
+      why: locked ? rj('sh.winLock') : pickOk ? null : rj('sh.pileEmpty'),
+    });
+    return { btns };
+  }
+  return { btns: [], extra: S?.finished.includes(App.me) ? betActionHTML(v) : '' };
 }
 
-export function renderSh(v: View): void {
+/** Eigener Platz: Kopf, Tischkarten und Hand, Knöpfe. Wer nicht mitspielt, bekommt einen Satz. */
+function shMe(v: View): MeModel | MeOut | null {
   const S = v.sh;
-  if (!S) return;
+  if (!S) return null;
   const me = pById(v, App.me);
   const mine = shMine(v);
-  const src = shSrc(v);
-  const canAny = !!mine && (src === 'hand' || src === 'up') && mine[src].some((c) => shCanPlay(v, rankOf(c)));
-
-  $('#opps').innerHTML = seatOrder(v)
-    .map((p) => opponentHTML(v, S, p))
-    .join('');
-  renderShCenter(v);
-
-  renderStatus(v);
-
-  const playing = myTurn(v) && !S.win?.lock;
   const swap = v.phase === 'swap';
-  const meEl = $('#me');
-  meEl.className = `me shme${swap ? ' swapping' : ''}${playing || (swap && me && !me.ready) ? ' turn' : ''}`;
-  meEl.innerHTML =
-    me && mine
-      ? myPlaceHTML(v, S, me, mine, src, canAny)
-      : '<div class="outmsg">Du spielst diese Partie nicht mit.</div>';
-  fitHand();
-  layoutSwapOpps(v);
-  layoutOpps(v);
-  markClocks();
-  markTosses();
+  // Auch ohne eigenen Platz bleiben die alten Klassen, .shme gibt die Breite vor
+  if (!me || !mine) return { out: 'Du spielst diese Partie nicht mit.', cls: swap ? ['shme', 'swapping'] : ['shme'] };
+  if (swap) return swapModel(v, me, mine);
+  const src = shSrc(v);
+  const canAny = (src === 'hand' || src === 'up') && mine[src].some((c) => shCanPlay(v, rankOf(c)));
+  const playing = myTurn(v) && !S.win?.lock;
+  const meDone = S.finished.includes(App.me);
+  const hand = SEQ.ov?.myHand ?? mine.hand;
+  // Ist die Hand leer, rücken die Tischkarten groß in den Fokus
+  const focus = !hand.length && (src === 'up' || src === 'down');
+  const deal = App.anim.deal && 'deal';
+  const cards: HandCard[] = hand.map((c, i) => {
+    // Während der kurzen Sperre darf man schon auswählen, nur noch nicht legen
+    const selectable = myTurn(v) && src === 'hand';
+    const dim = playing && src === 'hand' && !shCanPlay(v, rankOf(c));
+    return {
+      c,
+      i,
+      ...(selectable ? { act: 'shh', drag: 'hand' as const } : {}),
+      sel: App.ss.src === 'hand' && App.ss.idx.includes(i),
+      // Den Grund nennt der Tipp (shWhyTap), `why` mit aria-disabled kommt mit 3b wie bei den offenen Karten
+      dim,
+      cls: cl(selectable && 'pick', deal),
+      delay: 0.3 + Math.min(i, 8) * 0.06,
+    };
+  });
+  const rows =
+    `<div class="shrow${focus ? ' focus' : ''}">${shTableHTML(v, mine, true, focus)}` +
+    (hand.length ? handHTML({ kind: 'row', cls: 'shhand', label: SH_TABLE.hand(hand.length), cards, fit: true }) : '') +
+    '</div>';
+  const pill = hand.length
+    ? `${hand.length}${HAND_ICON}${hand.length === 1 ? 'Handkarte' : 'Handkarten'}`
+    : `${HAND_ICON}Hand leer`;
+  return {
+    head: {
+      marks: reignHTML(v, me.id),
+      count: shcHTML(me),
+      tags: meDone ? `<span class="tag">Platz ${num(me.place)}</span>` : '',
+      pill: `<span class="pill">${pill}</span>`,
+    },
+    rows,
+    bar: shBar(v, mine, src, canAny),
+    st: playing ? ['turn'] : [],
+    cls: ['shme'],
+    say: SH_TABLE.me({
+      turn: playing,
+      place: meDone ? num(me.place) : 0,
+      hand: hand.length,
+      up: mine.up.length,
+      down: count(mine.down),
+    }),
+  };
+}
+
+/** Zeichnet den ganzen Tisch neu (Auswahl, Ende eines Aufnehmens im Ablauf). */
+export function renderSh(v: View): void {
+  renderTable(v);
 }
 
 /** Abstände zwischen den Gegnerkacheln in der Tauschrunde, wie in fit.css. */
@@ -534,9 +635,17 @@ export function shSheet(v: View): Sheet | null {
   };
 }
 
-/** Ergebnis am Ende über das gemeinsame Blatt. */
-export function renderShOverlay(v: View): void {
-  renderResult(v, shSheet(v));
-}
-
-export const shSpec: OldTable = { badge: false, old: { draw: renderSh, overlay: renderShOverlay } };
+export const shSpec: NewTable = {
+  badge: false,
+  actor: (v) => (v.phase === 'play' ? turnId(v) : null),
+  seat: shSeat,
+  center: shCenter,
+  me: shMe,
+  status: shStatus,
+  sheet: shSheet,
+  drag: null,
+  after(v) {
+    fitHand();
+    layoutSwapOpps(v);
+  },
+};

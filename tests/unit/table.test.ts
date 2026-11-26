@@ -6,11 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { rj } from '../../src/game/reject';
 import { REJECT_TEXT } from '../../src/content/texts/reject';
 import { TABLE } from '../../src/content/texts/table';
-import { BAR, BAR_GUARD_MS, barGuard, barHTML } from '../../src/ui/table/bar';
+import { cardHTML } from '../../src/ui/cards';
+import { BAR, BAR_GUARD_MS, barGuard, barHTML, twoLabel } from '../../src/ui/table/bar';
 import { handHTML } from '../../src/ui/table/hand';
 import { meClass, meHTML, meLabel } from '../../src/ui/table/me';
-import { centerHTML, deckCards, stackHTML } from '../../src/ui/table/pile';
-import { seatHTML, tagHTML } from '../../src/ui/table/seat';
+import { cardsMini, centerHTML, deckCards, stackHTML } from '../../src/ui/table/pile';
+import { fanHTML, numHTML, seatHTML, tagHTML } from '../../src/ui/table/seat';
 import type { BarModel, HandModel, SeatModel } from '../../src/ui/table/types';
 import { parseHTML, qsa } from './helpers';
 
@@ -45,6 +46,12 @@ describe('Etikett', () => {
     expect(one(h, '.tag.turn')['data-k']).toBe('turn');
     expect(qsa(parseHTML(h), '.tag .thinking i')).toHaveLength(3);
     expect(h).toContain('ist &lt;dran&gt;');
+    expect(one(h, '.tag').title).toBeUndefined();
+  });
+  it('mit Hinweis beim Überfahren', () => {
+    expect(one(tagHTML({ text: '🔮 2', kind: 'bet', cls: 'bet', title: 'So <oft>' }), '.tag.bet').title).toBe(
+      'So &lt;oft&gt;',
+    );
   });
 });
 
@@ -58,17 +65,55 @@ describe('Platz', () => {
     expect(a['data-act']).toBe('aim');
     expect(a.title).toBe(TABLE.aim('Lena &lt;3'));
   });
-  it('Name, Zähler und Etikett an den alten Stellen', () => {
+  it('Name, Zähler und Etikett an den alten Stellen, Slots in Hüllen ohne eigenes Layout', () => {
     const h = seatHTML(SEAT);
     expect(qsa(parseHTML(h), '.opp > .ometa > .nm')).toHaveLength(1);
-    expect(qsa(parseHTML(h), '.ometa .shc')).toHaveLength(1);
-    expect(qsa(parseHTML(h), '.opp > .tcards')).toHaveLength(1);
+    expect(qsa(parseHTML(h), '.ometa > .tb-count > .shc')).toHaveLength(1);
+    expect(qsa(parseHTML(h), '.opp > .tb-body > .tcards')).toHaveLength(1);
+    expect(qsa(parseHTML(h), '.opp > .tag')).toHaveLength(1);
   });
   it('Ziel einer Fähigkeit ist kein Wurfziel, Rolle steht in data-role', () => {
     const a = one(seatHTML({ ...SEAT, st: ['target'], role: 'def', tag: null }), '.opp');
     expect(a['data-act']).toBeUndefined();
     expect(a['data-role']).toBe('def');
     expect(a.class).not.toContain('target');
+  });
+});
+
+describe('Fächer und Zahl', () => {
+  it('Fächer mit höchstens max Rücken, gleichmäßig gedreht, Zahl und Wort in der Mitte', () => {
+    const h = fanHTML(6, { max: 4, deg: 14, word: 'auf der Hand', title: 'Nur noch <6>', deal: true });
+    const backs = qsa(parseHTML(h), '.bighand .ohand.bigfan .card.back');
+    expect(backs.map((e) => e.attrs.style)).toEqual([
+      '--rot:-21deg; --d:0s',
+      '--rot:-7deg; --d:0.05s',
+      '--rot:7deg; --d:0.1s',
+      '--rot:21deg; --d:0.15000000000000002s',
+    ]);
+    expect(backs.every((e) => e.attrs['aria-hidden'] === 'true' && e.attrs.class.includes('deal'))).toBe(true);
+    expect(one(h, '.bighand').title).toBe('Nur noch &lt;6&gt;');
+    expect(h).toContain('<span class="bhn"><b>6</b><span class="bht">auf der Hand</span></span>');
+  });
+  it('Zahl mit data-n, Hinweis nur wenn gegeben', () => {
+    expect(numHTML(12, { cls: 'pcount', title: 'Karten zum Nachziehen' })).toBe(
+      '<span class="pcount" data-n="12" title="Karten zum Nachziehen">12</span>',
+    );
+    expect(numHTML(3, { cls: 'pcount' })).toBe('<span class="pcount" data-n="3">3</span>');
+  });
+  it('kleine Karten mit „+n“ über max', () => {
+    const cs = ['HA', 'S2', 'C3', 'D4', 'H5', 'S6', 'C7', 'D8', 'H9', 'S10'];
+    expect(qsa(parseHTML(cardsMini(cs)), '.card')).toHaveLength(8);
+    expect(cardsMini(cs)).toContain('<span class="more">+2</span>');
+    expect(cardsMini(cs.slice(0, 3))).not.toContain('more');
+    expect(one(cardsMini(['HA']), '.card').role).toBe('img');
+  });
+});
+
+describe('Karte', () => {
+  it('ohne Schlüssel kein data-fk, Ziel mit data-drop und data-i', () => {
+    expect(one(cardHTML('HA', { key: '' }), '.card')['data-fk']).toBeUndefined();
+    const a = one(cardHTML('HA', { key: 'up:HA', act: 'shu', i: 1, drag: 'up', drop: 'up' }), '.card');
+    expect([a['data-fk'], a['data-drag'], a['data-drop'], a['data-i']]).toEqual(['up:HA', 'up', 'up', '1']);
   });
 });
 
@@ -142,6 +187,19 @@ describe('Knopfleiste', () => {
     expect(one(h, '[data-act=cbsnap]')['aria-pressed']).toBe('false');
     expect(barHTML(null)).toBe('');
   });
+  it('im Übergang echtes disabled, der Grund steht trotzdem da', () => {
+    const h = barHTML({ btns: [{ ...B.btns[1], hard: true }] });
+    const a = one(h, '[data-act=shpickup]');
+    expect('disabled' in a).toBe(true);
+    expect(a['aria-disabled']).toBeUndefined();
+    expect(a['aria-description']).toBe(REJECT_TEXT['sh.handFirst'] as string);
+    expect('disabled' in one(barHTML({ btns: [{ ...B.btns[0], hard: true }] }), '.btn')).toBe(false);
+  });
+  it('zwei Fassungen einer Beschriftung', () => {
+    expect(twoLabel('Weiterschieben', 'Schieben')).toBe(
+      '<span class="blong">Weiterschieben</span><span class="bshort">Schieben</span>',
+    );
+  });
   it('merkt sich einen Wechsel der Knöpfe für die Sperre', () => {
     barHTML({ btns: [] });
     vi.advanceTimersByTime(BAR_GUARD_MS + 1);
@@ -192,6 +250,7 @@ describe('Eigener Platz', () => {
     const m = { out: 'Du spielst <nicht> mit.', bar: { btns: [] } };
     expect(meHTML(m)).toContain('<div class="outmsg">Du spielst &lt;nicht&gt; mit.</div>');
     expect(meClass(m)).toBe('me');
+    expect(meClass({ ...m, cls: ['shme', 'swapping'] })).toBe('me shme swapping');
     expect(meLabel(m)).toBe(TABLE.me('Du spielst <nicht> mit.'));
   });
   it('Kopf, Reihen und Knöpfe, Zustände als alte Klassen', () => {

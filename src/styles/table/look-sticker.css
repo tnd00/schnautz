@@ -1,0 +1,649 @@
+/*
+ * Haut des Sticker-Looks für alle Tische (Plan 2.8 Runde 3, Skizze .impeccable/mocks/table). Lädt nur über
+ * looks/sticker.css, jede Regel hängt zusätzlich an :root[data-look='sticker'], damit nach einem Wechsel zu Legacy
+ * nichts hängen bleibt. Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße (tests/unit/look-css.test.ts).
+ *
+ * Stanzrand: ein Innenschatten in der Breite --tb-cut, nie ein Rahmen, so bleibt die Geometrie beider Looks gleich.
+ * Neigung: rotate mal --tb-tilt, höchstens 3 Grad. Spielfarbe nur über die fünf Tokens an .g-<spiel>.
+ * Kein Rot außer auf Karten, Limette nur bei Cabo, Sonnengelb nie am Tisch.
+ * Schrift: Namen und Zeilen in Bricolage (--tb-name-family), Fraunces Soft (--tb-display) nur für das eine große
+ * Wort (Wortmarke, Titel von Meldung, Tauschrunde und Ergebnisblatt).
+ */
+
+/* ---------- Grund ---------- */
+:root[data-look='sticker'] body.ingame {
+  background: var(--tb-ground);
+  background-color: var(--tb-ground-base);
+  color: var(--tb-text);
+}
+/* Rauschen und Vignette gibt es nur im Legacy-Look */
+:root[data-look='sticker'] body.ingame::before,
+:root[data-look='sticker'] body.ingame::after {
+  opacity: var(--tb-ground-grain);
+}
+:root[data-look='sticker'][data-theme='dark'] body.ingame {
+  color-scheme: dark;
+}
+:root[data-look='sticker'] body.ingame ::selection {
+  background: var(--tb-fx-label-bg);
+  color: var(--tb-fx-label-text);
+}
+/* Fokusring: nur die Farbe, Stärke und Abstand stehen in der Struktur. Auf Tinte hell, damit er nicht wie ein
+ * zweiter dunkler Rand um den Stanzrand aussieht */
+:root[data-look='sticker'] body.ingame :focus-visible {
+  outline-color: var(--tb-focus);
+}
+:root[data-look='sticker'] body.ingame :is(.btn.primary, .tag, .fab[aria-pressed='true']):focus-visible {
+  outline-color: var(--tb-focus-on-dark);
+}
+
+/* ---------- Kopfzeile ---------- */
+/* Wortmarke als Sticker in Spielfarbe. Der seitliche Innenabstand und der Stanzrand kommen aus Schatten neben dem
+ * Kasten, damit die Maße beider Looks gleich bleiben */
+:root[data-look='sticker'] body.ingame .top .brand {
+  color: var(--tb-brand-text);
+  background: var(--tb-gloss), var(--tb-brand-bg);
+  border-radius: 10px;
+  font-family: var(--tb-display);
+  font-style: var(--tb-display-style);
+  font-weight: var(--tb-display-weight);
+  font-variation-settings: var(--tb-display-axes);
+  text-shadow: none;
+  box-shadow:
+    -7px 0 0 0 var(--tb-brand-bg),
+    7px 0 0 0 var(--tb-brand-bg),
+    -7px 0 0 var(--tb-cut) var(--tb-brand-line),
+    7px 0 0 var(--tb-cut) var(--tb-brand-line),
+    0 6px 10px 0 color-mix(in srgb, var(--tb-shade) 28%, transparent);
+  rotate: calc(var(--tb-tilt) * -1.5deg);
+}
+:root[data-look='sticker'] body.ingame .top .brand small {
+  color: var(--tb-brand-bg);
+  background: var(--tb-brand-text);
+}
+:root[data-look='sticker'] body.ingame .top :is(.iconbtn, .chip) {
+  color: var(--tb-head-text);
+  background: var(--tb-gloss), var(--tb-head-bg);
+  border-color: var(--tb-head-line);
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-head-line),
+    var(--tb-head-shadow);
+}
+:root[data-look='sticker'] body.ingame .top .chip b {
+  color: var(--tb-head-text);
+}
+:root[data-look='sticker'] body.ingame #netchip {
+  rotate: calc(var(--tb-tilt) * 1deg);
+}
+:root[data-look='sticker'] body.ingame #btn-rules {
+  rotate: calc(var(--tb-tilt) * -1deg);
+}
+:root[data-look='sticker'] body.ingame #btn-board {
+  rotate: calc(var(--tb-tilt) * 0.8deg);
+}
+:root[data-look='sticker'] body.ingame #btn-menu {
+  rotate: calc(var(--tb-tilt) * -1.5deg);
+}
+@media (hover: hover) {
+  :root[data-look='sticker'] body.ingame .top :is(.iconbtn, .chip):hover {
+    border-color: var(--tb-head-line);
+    box-shadow:
+      inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-head-line),
+      var(--tb-edge),
+      var(--tb-shadow-lift-sm);
+  }
+}
+:root[data-look='sticker'] body.ingame .dot.online {
+  background: var(--tb-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tb-ok) 25%, transparent);
+}
+
+/* ---------- Gegnerkacheln ---------- */
+:root[data-look='sticker'] body.ingame .opp {
+  color: var(--tb-seat-text);
+  background: var(--tb-gloss), var(--tb-seat-bg);
+  border-color: var(--tb-seat-line);
+  border-radius: var(--tb-seat-radius);
+  box-shadow: var(--tb-seat-shadow);
+  rotate: calc(var(--tb-tilt) * -0.8deg);
+}
+:root[data-look='sticker'] body.ingame .opp:nth-child(2n) {
+  rotate: calc(var(--tb-tilt) * 0.7deg);
+}
+:root[data-look='sticker'] body.ingame .opp:nth-child(3n) {
+  rotate: calc(var(--tb-tilt) * -0.4deg);
+}
+/* Am Zug: Tintenring um die Kachel (bei Nacht in Spielfarbe), Etikett in Spielfarbe, kein Glühen */
+:root[data-look='sticker'] body.ingame .opp.turn {
+  background: var(--tb-gloss), var(--tb-seat-bg);
+  border-color: var(--tb-turn-line);
+  box-shadow: var(--tb-turn-glow);
+  animation: var(--tb-turn-anim);
+}
+:root[data-look='sticker'] body.ingame .opp .nm {
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+  font-weight: 800;
+}
+:root[data-look='sticker'] body.ingame .opp.offline .nm,
+:root[data-look='sticker'] body.ingame .opp.offline .nm::after {
+  color: var(--tb-offline-text);
+}
+:root[data-look='sticker'] body.ingame .botb {
+  color: var(--tb-bot-text);
+  background: var(--tb-bot-bg);
+}
+
+/* Etiketten: Tinte mit weißem Rand, am Zug in Spielfarbe */
+:root[data-look='sticker'] body.ingame .tag {
+  color: var(--tb-tag-text);
+  background: var(--tb-tag-bg);
+  text-transform: var(--tb-tag-case);
+  letter-spacing: var(--tb-tag-track);
+  font-weight: 800;
+  box-shadow: var(--tb-tag-line);
+}
+:root[data-look='sticker'] body.ingame .tag.turn {
+  color: var(--tb-tag-turn-text);
+  background: var(--tb-tag-turn-bg);
+}
+:root[data-look='sticker'] body.ingame .tag.knock {
+  color: var(--tb-tag-knock-text);
+  background: var(--tb-tag-knock-bg);
+}
+:root[data-look='sticker'] body.ingame .tag.outt {
+  color: var(--tb-tag-alert-text);
+  background: var(--tb-tag-alert-bg);
+}
+
+/* ---------- Mitte ---------- */
+:root[data-look='sticker'] body.ingame .center {
+  background: var(--tb-zone-bg);
+  border-color: var(--tb-zone-line);
+  border-radius: var(--tb-zone-radius);
+  box-shadow: var(--tb-zone-shadow);
+}
+:root[data-look='sticker'] body.ingame .center .cap {
+  color: var(--tb-cap-text);
+  background: var(--tb-cap-bg);
+  text-transform: var(--tb-cap-case);
+  letter-spacing: var(--tb-cap-track);
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: var(--tb-cap-shadow);
+}
+:root[data-look='sticker'] body.ingame .center .cnt {
+  color: var(--tb-cnt-text);
+  background: var(--tb-cnt-bg);
+  font-weight: 800;
+  box-shadow: var(--tb-cnt-shadow);
+}
+
+/* ---------- Statuszeile ---------- */
+:root[data-look='sticker'] body.ingame .status {
+  color: var(--tb-status-text);
+  background: var(--tb-gloss), var(--tb-status-bg);
+  border-radius: 18px;
+  box-shadow: var(--tb-status-shadow);
+  rotate: calc(var(--tb-tilt) * -0.4deg);
+}
+:root[data-look='sticker'] body.ingame .status .main {
+  font-family: var(--tb-status-family);
+  font-style: var(--tb-status-style);
+  font-weight: var(--tb-status-weight);
+}
+:root[data-look='sticker'] body.ingame .status .main em {
+  color: inherit;
+  font-style: normal;
+}
+:root[data-look='sticker'] body.ingame .status .sub {
+  color: var(--tb-status-soft);
+  font-weight: 600;
+}
+:root[data-look='sticker'] body.ingame .status.tone-turn {
+  color: var(--tb-status-turn-text);
+  background: var(--tb-gloss), var(--tb-status-turn-bg);
+}
+:root[data-look='sticker'] body.ingame .status.tone-turn .sub {
+  color: var(--tb-status-turn-soft);
+}
+:root[data-look='sticker'] body.ingame .status:is(.knocked, .tone-knock) .main {
+  color: var(--tb-knock-text);
+}
+
+/* ---------- Eigener Platz ---------- */
+:root[data-look='sticker'] body.ingame .me {
+  background: var(--tb-me-bg);
+  border-color: var(--tb-me-line);
+}
+:root[data-look='sticker'] body.ingame .me.turn {
+  background: var(--tb-me-bg);
+  border-color: var(--tb-me-line);
+  box-shadow: var(--tb-me-turn);
+  animation: var(--tb-turn-anim);
+}
+:root[data-look='sticker'] body.ingame .me .nm {
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+  font-weight: 800;
+}
+/* Wert am eigenen Platz: derselbe Tinten-Sticker wie auf der Kachel */
+:root[data-look='sticker'] body.ingame .pill {
+  color: var(--tb-val-text);
+  background: var(--tb-val-bg);
+  box-shadow: var(--tb-val-line), var(--tb-val-shadow);
+}
+:root[data-look='sticker'] body.ingame .pill .r {
+  color: inherit;
+}
+:root[data-look='sticker'] body.ingame .pill.hot {
+  color: var(--tb-tag-turn-text);
+  background: var(--tb-tag-turn-bg);
+}
+:root[data-look='sticker'] body.ingame :is(.actions .hint, .outmsg) {
+  color: var(--tb-text);
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+}
+
+/* ---------- Knöpfe ---------- */
+:root[data-look='sticker'] body.ingame .btn {
+  border-radius: var(--tb-btn-radius);
+  font-weight: 800;
+  text-shadow: none;
+}
+:root[data-look='sticker'] body.ingame .btn.primary {
+  color: var(--tb-btn-go-text);
+  background: var(--tb-btn-go-gloss), var(--tb-btn-go-bg);
+  box-shadow:
+    inset 0 0 0 var(--tb-cut) var(--tb-btn-go-line),
+    var(--tb-btn-shadow);
+}
+:root[data-look='sticker'] body.ingame .btn.ghost {
+  color: var(--tb-btn-alt-text);
+  background: var(--tb-gloss), var(--tb-btn-alt-bg);
+  border-color: var(--tb-btn-line);
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-btn-line),
+    var(--tb-btn-shadow);
+}
+:root[data-look='sticker'] body.ingame .btn.wood {
+  color: var(--tb-btn-take-text);
+  background: var(--tb-gloss), var(--tb-btn-take-bg);
+  box-shadow:
+    inset 0 0 0 var(--tb-cut) var(--tb-btn-line),
+    var(--tb-btn-shadow);
+}
+:root[data-look='sticker'] body.ingame :is(.btn[disabled], .me .actions .btn[aria-disabled='true']) {
+  opacity: var(--tb-btn-off);
+  filter: none;
+  box-shadow: var(--tb-edge);
+}
+:root[data-look='sticker'] body.ingame .btn.pulse {
+  animation: none;
+}
+@media (hover: hover) {
+  :root[data-look='sticker'] body.ingame .btn:is(.primary, .ghost):not([disabled]):hover {
+    filter: none;
+    border-color: var(--tb-btn-line);
+  }
+}
+
+/* Runde Knöpfe am eigenen Platz */
+:root[data-look='sticker'] body.ingame .fab {
+  color: var(--tb-head-text);
+  background: var(--tb-gloss), var(--tb-head-bg);
+  border-color: var(--tb-head-line);
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-head-line),
+    var(--tb-head-shadow);
+}
+:root[data-look='sticker'] body.ingame .emofab {
+  rotate: calc(var(--tb-tilt) * -2deg);
+}
+:root[data-look='sticker'] body.ingame .logfab {
+  rotate: calc(var(--tb-tilt) * 2deg);
+}
+:root[data-look='sticker'] body.emoopen .emofab {
+  color: var(--tb-fx-emote-on-text);
+  background: var(--tb-fx-emote-on);
+  border-color: var(--tb-head-line);
+}
+:root[data-look='sticker'] body.ingame .logfab .n {
+  color: var(--tb-num-ink-text);
+  background: var(--tb-num-ink-bg);
+  box-shadow: var(--tb-tag-line);
+}
+
+/* Reaktionsleiste */
+:root[data-look='sticker'] body.ingame .emotes {
+  color: var(--tb-fx-emotes-text);
+  background: var(--tb-fx-emotes-gloss), var(--tb-fx-emotes-bg);
+  border-color: var(--tb-fx-emotes-line);
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-fx-emotes-line),
+    var(--tb-shadow-lift);
+}
+:root[data-look='sticker'] body.ingame .emotes .etab {
+  color: var(--tb-fx-emotes-soft);
+  background: var(--tb-fx-emotes-well);
+  border-color: transparent;
+}
+:root[data-look='sticker'] body.ingame .emotes .etab.on {
+  color: var(--tb-fx-emote-on-text);
+  background: var(--tb-fx-emote-on);
+}
+:root[data-look='sticker'] body.ingame .emotes :is(.erow button, .chip) {
+  color: var(--tb-fx-emotes-text);
+  background: var(--tb-fx-emote-bg);
+  border-color: transparent;
+  box-shadow: var(--tb-shadow-flat);
+}
+
+/* ---------- Meldungen ---------- */
+:root[data-look='sticker'] body.ingame .ann {
+  color: var(--tb-fx-ann-text);
+  background: var(--tb-fx-ann-bg);
+  box-shadow:
+    inset 0 0 0 var(--tb-cut) var(--tb-fx-ann-line),
+    var(--tb-fx-ann-shadow);
+  rotate: calc(var(--tb-tilt) * -2deg);
+}
+:root[data-look='sticker'] body.ingame .ann-t {
+  font-family: var(--tb-display);
+  font-style: var(--tb-display-style);
+  font-weight: var(--tb-display-weight);
+  font-variation-settings: var(--tb-display-axes);
+  color: var(--tb-fx-ann-title);
+}
+:root[data-look='sticker'] body.ingame .ann-s {
+  color: var(--tb-fx-ann-soft);
+}
+:root[data-look='sticker'] body.ingame .ann.red .ann-t,
+:root[data-look='sticker'] body.ingame .ann .ann-t .r {
+  color: var(--tb-fx-ann-title);
+}
+:root[data-look='sticker'] body.ingame :is(.ann-s .tt, #fly .tauntlbl .tt) {
+  font-style: normal;
+}
+/* Sieg und Krone: die Spielfarbe mit Tinte, wie die Statuszeile am eigenen Zug (--tb-fx-gold-bg gilt nur Legacy) */
+:root[data-look='sticker'] body.ingame .ann.gold {
+  color: var(--tb-tag-turn-text);
+  background: var(--tb-gloss), var(--tb-accent);
+  box-shadow:
+    inset 0 0 0 var(--tb-cut) var(--tb-fx-gold-ring),
+    var(--tb-fx-ann-shadow);
+}
+:root[data-look='sticker'] body.ingame .ann.gold .ann-t {
+  color: var(--tb-tag-turn-text);
+}
+:root[data-look='sticker'] body.ingame .ann.gold :is(.ann-s, .ann-s .tt) {
+  color: var(--tb-fx-gold-soft);
+}
+:root[data-look='sticker'] body.ingame .ann.wood {
+  color: var(--tb-tag-knock-text);
+  background: var(--tb-fx-wood-bg);
+}
+:root[data-look='sticker'] body.ingame .ann.wood :is(.ann-s, .ann-s .tt) {
+  color: var(--tb-fx-wood-soft);
+}
+:root[data-look='sticker'] body.ingame .ann.sea {
+  background: var(--tb-fx-sea-bg);
+}
+:root[data-look='sticker'] body.ingame .ann.sea .ann-t {
+  color: var(--tb-fx-sea-title);
+}
+:root[data-look='sticker'] body.ingame .ann.brown {
+  background: var(--tb-fx-brown-bg);
+  box-shadow:
+    inset 0 0 0 var(--tb-cut) var(--tb-fx-ann-line),
+    var(--tb-fx-ann-shadow);
+}
+:root[data-look='sticker'] body.ingame .ann.brown :is(.ann-t, .ann-s, .ann-s .tt) {
+  color: var(--tb-fx-brown-text);
+}
+:root[data-look='sticker'] body.ingame .ann.brown .ann-t .r {
+  color: var(--tb-fx-brown-title);
+}
+/* Im Band ein schmalerer Stanzrand, der Innenabstand dort ist knapp */
+:root[data-look='sticker'] body.ingame #announce.band .ann {
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-fx-ann-line),
+    var(--tb-shadow-lift-sm);
+  rotate: calc(var(--tb-tilt) * -1deg);
+}
+:root[data-look='sticker'] body.ingame #announce.band .ann.gold {
+  box-shadow:
+    inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-fx-gold-ring),
+    var(--tb-shadow-lift-sm);
+}
+
+/* Kurze Hinweise, Grund und Sprüche am Tisch */
+:root[data-look='sticker'] body.ingame :is(.floatlbl, .nopelbl, .fieldlbl, .tauntlbl) {
+  text-shadow: none;
+}
+/* Grund: heller Sticker mit Tintenring statt Rot */
+:root[data-look='sticker'] body.ingame .nopelbl {
+  color: var(--tb-reject-text);
+  background: var(--tb-reject-bg);
+  box-shadow:
+    0 0 0 2px var(--tb-turn-line),
+    var(--tb-shadow-lift-sm);
+}
+:root[data-look='sticker'] body.ingame .tauntlbl {
+  box-shadow:
+    0 0 0 2px var(--tb-turn-line),
+    var(--tb-shadow-lift-sm);
+}
+:root[data-look='sticker'] body.ingame #fly .tauntlbl.combo .hint {
+  color: var(--tb-bubble-text);
+}
+:root[data-look='sticker'] body.ingame #fly .tauntlbl.combo .tt {
+  color: color-mix(in srgb, var(--tb-bubble-text) 78%, transparent);
+}
+:root[data-look='sticker'] body.ingame .bubble {
+  box-shadow: var(--tb-shadow-lift-sm);
+}
+
+/* ---------- Ergebnisblatt ---------- */
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet {
+  color: var(--tb-sheet-ink);
+  background-color: var(--tb-sheet-bg);
+  background-image: var(--tb-sheet-gloss);
+  border-color: transparent;
+  box-shadow: var(--tb-sheet-shadow);
+  scrollbar-color: color-mix(in srgb, var(--tb-sheet-ink) 30%, transparent) transparent;
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet :is(h2, .lead, h3, p) {
+  color: var(--tb-sheet-ink);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet h2 {
+  font-family: var(--tb-display);
+  font-style: var(--tb-display-style);
+  font-weight: var(--tb-display-weight);
+  font-variation-settings: var(--tb-display-axes);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet h2 .r {
+  color: inherit;
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .lead {
+  color: var(--tb-sheet-soft);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet :is(.taunt, .conseq) {
+  color: var(--tb-sheet-soft);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .taunt.good {
+  color: var(--tb-sheet-good-text);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .x {
+  color: var(--tb-head-text);
+  background: var(--tb-gloss), var(--tb-head-bg);
+  border-color: transparent;
+  box-shadow: var(--tb-edge), var(--tb-shadow-flat);
+  rotate: calc(var(--tb-tilt) * 2deg);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row {
+  color: var(--tb-sheet-ink);
+  background: var(--tb-sheet-row);
+  border-color: var(--tb-sheet-row-line);
+  box-shadow: var(--tb-shadow-flat);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.win {
+  background: var(--tb-sheet-win-bg);
+  border-color: transparent;
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.win .val {
+  color: var(--tb-sheet-win-text);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.lose {
+  color: var(--tb-sheet-lose-text);
+  background: var(--tb-sheet-lose-bg);
+  border-color: transparent;
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.lose :is(.who > span, .rcore, .conseq) {
+  color: inherit;
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.mine {
+  box-shadow:
+    inset 0 0 0 2px var(--tb-sheet-ink),
+    var(--tb-shadow-flat);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet :is(.row .who > span, .rcore, .foot .waittxt) {
+  color: var(--tb-sheet-soft);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet :is(.rpl, .rval, .row .val) {
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .rfoot {
+  background: var(--tb-board-foot);
+}
+/* Knöpfe auf dem schon angehobenen Blatt: kein zweiter Stanzrand, kaum Schatten */
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .btn.primary {
+  box-shadow: var(--tb-edge), var(--tb-shadow-flat);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .btn.ghost {
+  color: var(--tb-sheet-alt-text);
+  background: var(--tb-gloss), var(--tb-sheet-alt-bg);
+  border-color: transparent;
+  box-shadow: var(--tb-edge), var(--tb-shadow-flat);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .emotes {
+  background: none;
+  box-shadow: none;
+}
+
+/* ---------- Zeitlimit ---------- */
+:root[data-look='sticker'] body.ingame .opp > .clk::before {
+  background: var(--tb-turn-line);
+}
+:root[data-look='sticker'] body.ingame .opp > .clk.low::before {
+  background: var(--tb-lose);
+}
+:root[data-look='sticker'] body.ingame .clk.mine {
+  color: var(--tb-val-text);
+  border-color: transparent;
+  box-shadow: var(--tb-val-line), var(--tb-val-shadow);
+}
+:root[data-look='sticker'] body.ingame .me[data-urg] {
+  border-color: var(--tb-turn-line);
+}
+
+/* ---------- Kleine Etiketten am Tisch ---------- */
+:root[data-look='sticker'] body.ingame :is(.floatlbl, .fieldlbl) {
+  color: var(--tb-bubble-text);
+  background: var(--tb-bubble-bg);
+  box-shadow:
+    0 0 0 2px var(--tb-turn-line),
+    var(--tb-shadow-lift-sm);
+}
+:root[data-look='sticker'] body.ingame :is(.tosslbl, .duellbl, .emo.snd small) {
+  color: var(--tb-tag-text);
+}
+:root[data-look='sticker'] body.ingame .turnnote > span {
+  color: var(--tb-side-text);
+}
+
+/* ---------- Reaktionen: Kopf und Wurf-Chips ---------- */
+:root[data-look='sticker'] body.ingame :is(.ehead, .xbtn) {
+  color: var(--tb-fx-emotes-text);
+}
+:root[data-look='sticker'] body.ingame .emotes .etab.on {
+  border-color: transparent;
+}
+:root[data-look='sticker'] body.ingame .emotes .chip:hover {
+  border-color: var(--tb-turn-line);
+}
+:root[data-look='sticker'] body.ingame .erow.cool::after {
+  background: var(--tb-turn-line);
+}
+:root[data-look='sticker'] body.ingame .outrow .chip {
+  color: var(--tb-seat-text);
+  background: var(--tb-seat-bg);
+  box-shadow: var(--tb-edge), var(--tb-shadow-flat);
+}
+
+/* ---------- Seitenleiste am PC: Sonderkarten, Verlauf und Chat ---------- */
+:root[data-look='sticker'] body.ingame .side {
+  color: var(--tb-side-text);
+  scrollbar-color: color-mix(in srgb, var(--tb-side-text) 30%, transparent) transparent;
+}
+:root[data-look='sticker'] body.ingame :is(.legend-h, .side h3, .side h3 button) {
+  color: var(--tb-side-soft);
+}
+:root[data-look='sticker'] body.ingame .legend-h button {
+  color: var(--tb-side-text);
+  background: var(--tb-field-bg);
+  border-color: var(--tb-side-line);
+}
+:root[data-look='sticker'] body.ingame .legend {
+  border-color: var(--tb-side-line);
+}
+:root[data-look='sticker'] body.ingame .lg .t b {
+  color: var(--tb-side-text);
+}
+:root[data-look='sticker'] body.ingame .lg .t span {
+  color: var(--tb-side-soft);
+}
+:root[data-look='sticker'] body.ingame .lg .rk {
+  color: var(--st-ink);
+  box-shadow: var(--tb-card-shadow);
+}
+:root[data-look='sticker'] body.ingame .lg .rk.r {
+  color: var(--tb-suit-red);
+}
+:root[data-look='sticker'] body.ingame .lg .rk.e {
+  color: var(--tb-side-soft);
+  background: var(--tb-field-bg);
+  box-shadow: inset 0 0 0 1px var(--tb-side-line);
+}
+:root[data-look='sticker'] body.ingame .log .e.round {
+  color: var(--tb-side-text);
+  font-weight: 800;
+}
+:root[data-look='sticker'] body.ingame .log .e:is(.big, .chat) {
+  color: var(--tb-side-text);
+}
+:root[data-look='sticker'] body.ingame .log .e.chat {
+  background: var(--tb-field-bg);
+}
+:root[data-look='sticker'] body.ingame .log .e.chat b {
+  color: var(--tb-side-text);
+}
+:root[data-look='sticker'] body.ingame .log .cs {
+  color: var(--st-ink);
+  background: var(--tb-card-face);
+  box-shadow: inset 0 0 0 1px var(--tb-card-edge);
+}
+:root[data-look='sticker'] body.ingame .log .cs.r {
+  color: var(--card-red);
+}
+:root[data-look='sticker'] body.ingame .chatform .input {
+  color: var(--tb-side-text);
+  background: var(--tb-field-bg);
+  border-color: var(--tb-side-line);
+  caret-color: var(--tb-side-text);
+}
+:root[data-look='sticker'] body.ingame .chatform .input::placeholder {
+  color: var(--tb-side-soft);
+}

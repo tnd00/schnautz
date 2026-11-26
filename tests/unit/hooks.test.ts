@@ -1,18 +1,25 @@
 /*
- * Selektorvertrag (Plan 2.8 Abschnitt 8, abgleich.md 1.1): Die Bausteine am Tisch erzeugen aus Beispielmodellen je
- * Spiel jeden Selektor, den E2E, Flüge, Abläufe, Band und Mess-Skripte lesen. Bis Runde 3 sind die Modelle hier von
- * Hand gebaut, danach kommen sie über specOf aus den Spielen. #status (paintStatus), #emofab und #logfab stehen fest in
- * index.html und gehören nicht zu den Bausteinen.
+ * Selektorvertrag (Plan 2.8 Abschnitt 8, abgleich.md 1.1): Die Bausteine am Tisch erzeugen jeden Selektor, den E2E,
+ * Flüge, Abläufe, Band und Mess-Skripte lesen. Shithead ist umgestellt, seine Modelle kommen über specOf aus echten
+ * Spielständen. Durak, Cabo und Schnautz sind bis 4a von Hand gebaut. #status (paintStatus), #emofab und #logfab
+ * stehen fest in index.html und gehören nicht zu den Bausteinen.
  */
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { act } from '../../src/game/actions';
 import { rj } from '../../src/game/reject';
+import { addPlayer, newState } from '../../src/game/state';
+import type { State } from '../../src/game/types';
+import { viewFor } from '../../src/game/view';
+import { App } from '../../src/ui/app';
 import { cardHTML, livesHTML } from '../../src/ui/cards';
+import { seatOrder } from '../../src/ui/helpers';
 import { handHTML } from '../../src/ui/table/hand';
 import { meClass, meHTML } from '../../src/ui/table/me';
 import { centerHTML, deckCards } from '../../src/ui/table/pile';
 import { seatHTML } from '../../src/ui/table/seat';
+import { isOld, specOf } from '../../src/ui/table/spec';
 import type { CenterModel, MeModel, MeOut, SeatModel } from '../../src/ui/table/types';
-import { parseHTML, qsa } from './helpers';
+import { parseHTML, qsa, rngF } from './helpers';
 
 interface Models {
   opps: SeatModel[];
@@ -26,7 +33,8 @@ const tableHTML = (m: Models): string =>
   `<div class="opps" id="opps">${m.opps.map(seatHTML).join('')}</div>` +
   `<div class="center" id="center">${centerHTML(m.center)}</div>` +
   '<div class="status" id="status"></div>' +
-  `<div class="seat"><div class="${meClass(m.me)}" id="me" data-pid="p1">${meHTML(m.me)}</div></div></div>`;
+  `<div class="seat"><div class="${meClass(m.me)}" id="me" data-pid="p1"` +
+  `${'out' in m.me ? '' : ` data-st="${m.me.st.join(' ')}"`}>${meHTML(m.me)}</div></div></div>`;
 
 const seat = (o: Partial<SeatModel> & Pick<SeatModel, 'id' | 'body'>): SeatModel => ({
   name: 'Lena',
@@ -41,72 +49,61 @@ const seat = (o: Partial<SeatModel> & Pick<SeatModel, 'id' | 'body'>): SeatModel
   ...o,
 });
 
-const SH: Models = {
-  opps: [
-    seat({
-      id: 'p2',
-      cls: ['sh'],
-      st: ['turn'],
-      tag: { text: 'ist dran', kind: 'turn', think: true, cls: 'turn' },
-      body: `<div class="tcards"><div class="tslot">${cardHTML(null)}<div class="upc">${cardHTML('H7')}</div></div></div>`,
-      count: '<span class="ohand" title="Karten auf der Hand"><span class="hcount">5</span></span>',
-    }),
-    seat({ id: 'p3', cls: ['sh'], st: ['done'], tag: { text: 'Platz 1', kind: 'done', cls: 'done' }, body: '' }),
-  ],
-  center: {
-    cap: 'Stapel',
-    label: 'Tischmitte',
-    stacks: [
-      { k: 'deck', cls: 'deck', title: 'Nachziehstapel', body: deckCards(12), count: 12 },
-      { k: 'pile', cls: 'pile', title: '', body: cardHTML('SK'), cnt: { text: 'König oder höher' }, drop: 'pile' },
-      { k: 'counter', cls: 'burned', title: 'Verbrannte Karten', body: '<b>3</b>', cnt: { text: 'verbrannt' } },
-    ],
-  },
-  me: {
-    head: { marks: '', pill: '<span class="pill">3 Handkarten</span>' },
-    rows:
-      '<div class="shrow"><div class="tcards"><div class="tslot">' +
-      cardHTML(null, { key: 'down:0', act: 'shd', i: 0 }) +
-      `<div class="upc">${cardHTML('D9', { key: 'up:D9', act: 'shu', i: 0 })}</div></div></div>` +
-      handHTML({
-        kind: 'row',
-        cls: 'shhand',
-        label: 'Deine Hand, 3 Karten',
-        fit: true,
-        cards: [
-          { c: 'HA', i: 0, act: 'shh', sel: true, drag: 'hand' },
-          { c: 'S3', i: 1, act: 'shh', dim: true, why: rj('sh.noFit', { c: 'S3', top: 'SK' }) },
-          { c: 'C2', i: 2, act: 'shh' },
-        ],
-      }) +
-      '</div>',
-    bar: {
-      btns: [
-        { act: 'shplay', label: 'Ausspielen', intent: 'go', cls: 'primary', ok: true },
-        { act: 'shpickup', label: 'Aufnehmen (4)', intent: 'take', cls: 'ghost', ok: false, why: rj('sh.handFirst') },
-      ],
-    },
-    st: ['turn'],
-    cls: ['shme'],
-    say: 'Du bist dran',
-  },
-};
+/** Shithead zu dritt, ich bin h: Tauschrunde, auf Wunsch schon im Spiel mit h am Zug und offenem Stapel */
+function shTable(play: boolean, edit?: (st: State) => void): State {
+  const rng = rngF(7);
+  const st = newState('h', 'H');
+  addPlayer(st, 'a', 'Anna');
+  addPlayer(st, 'b', 'Bert');
+  act(st, 'h', { type: 'game', game: 'shithead' }, rng);
+  act(st, 'h', { type: 'start' }, rng);
+  if (play && st.sh) {
+    for (const id of ['h', 'a', 'b']) act(st, id, { type: 'shready' });
+    st.sh.win = null;
+    st.turn = 0;
+  }
+  edit?.(st);
+  return st;
+}
 
-const SH_SWAP: Models = {
-  ...SH,
-  me: {
-    head: null,
-    lead: '<div class="swhead"><b>Tauschrunde</b><span>Tippe eine Handkarte und eine Tischkarte an.</span></div>',
-    rows:
-      '<div class="swrow"><span class="swlbl">Auf der Hand</span>' +
-      handHTML({ kind: 'row', cls: 'shhand', label: 'Deine Hand', cards: [{ c: 'H2', i: 0, act: 'shh' }] }) +
-      '</div>',
-    bar: { btns: [{ act: 'shready', label: 'Bereit', intent: 'go', cls: 'primary', ok: true }] },
-    st: ['swapping', 'turn'],
-    cls: ['shme'],
-    say: '',
-  },
-};
+/** Modelle aus specOf, so wie renderTable sie für h zeichnet, mit Auswahl `ss` */
+function shModels(st: State, ss: typeof App.ss = { src: null, idx: [] }): Models {
+  const v = viewFor(st, 'h');
+  Object.assign(App, { me: 'h', view: v, role: 'host', ss, anim: {} });
+  const spec = specOf('shithead');
+  if (isOld(spec)) throw new Error('Shithead ist noch nicht umgestellt');
+  const center = spec.center(v);
+  const me = spec.me(v);
+  if (!center || !me) throw new Error('Shithead liefert keine Mitte oder keinen eigenen Platz');
+  return { opps: seatOrder(v).flatMap((p) => spec.seat(v, p) ?? []), center, me };
+}
+
+/** Am Zug mit zwei Assen und einer Fünf auf einem König, ein Ass gewählt. Anna hat keine Tischkarten mehr. */
+const shPlay = (): Models =>
+  shModels(
+    shTable(true, (st) => {
+      if (!st.sh) return;
+      st.sh.pile = ['SK'];
+      st.sh.P.h.hand = ['HA', 'C5', 'DA'];
+      st.sh.P.a.up = [];
+      st.sh.P.a.down = [];
+    }),
+    { src: 'hand', idx: [0] },
+  );
+
+/** Hand leer, erst die offenen, dann nur noch die verdeckten Tischkarten */
+const shUp = (): Models => shModels(shTable(true, (st) => st.sh && (st.sh.P.h.hand = [])));
+const shDown = (): Models =>
+  shModels(
+    shTable(true, (st) => {
+      if (!st.sh) return;
+      st.sh.P.h.hand = [];
+      st.sh.P.h.up = [];
+    }),
+  );
+
+/** Tauschrunde, Anna ist schon bereit */
+const shSwap = (): Models => shModels(shTable(false, (st) => act(st, 'a', { type: 'shready' })));
 
 const DK: Models = {
   opps: [
@@ -295,44 +292,68 @@ const COMMON = [
   '#table *',
 ];
 
-const CASES: [string, Models, string[]][] = [
+/** Name, Modelle, Selektoren, ob COMMON dazugehört (Teilstände wie „nur verdeckte Karten“ haben keine Knöpfe) */
+const CASES: [string, () => Models, string[], boolean?][] = [
   [
-    'Shithead',
-    SH,
+    'Shithead am Zug',
+    shPlay,
     [
-      '.shme .card[data-act=shd]',
       '.shme [data-act=shh][data-i]',
-      '.shme [data-act=shu][data-i]',
       '.shme .upc .card',
       '.shme .shhand .card',
       '.shme .shhand [data-act=shh].dim',
       '#me .shhand .card',
       '#me .tcards .upc .card',
       '.tcards',
+      '.tcards .tslot',
       '.shhand',
       '.ohand',
+      '#opps .opp .hcount',
+      '.opp.handonly .bighand .ohand .card',
+      '.opp.sh[data-act=aim]',
       '#center .pile',
       '#center .pile .card',
       '#center .burned',
+      '#center .burned b',
       '#center .deck',
       '#center .deck .card',
+      '#center .pcount',
       '#center .cap',
       '#center .cnt',
-      '.tag.done',
       '.mehead',
       '#me .mehead',
       '#me .mehead .nm',
+      '#me .mehead .pill',
       '#me [data-act=shplay]:not([disabled])',
+      '#me [data-act=shselall]',
+      '#me [data-act=shpickup]',
       '[data-drop=pile]',
       '[data-drag=hand]',
       '[data-st~=turn]',
       '#me [data-fk]',
+      '#me .tb-hand[data-fit]',
     ],
   ],
-  ['Shithead Tauschrunde', SH_SWAP, ['.swhead', '#me .swhead', '#me .swhead b', '.shme.swapping']],
+  ['Shithead offene Tischkarten', shUp, ['.shme [data-act=shu][data-i]', '[data-drag=up]', '.shme .tcards.focus']],
+  ['Shithead verdeckte Tischkarten', shDown, ['.shme .card[data-act=shd]', '[data-drag=down]'], false],
+  [
+    'Shithead Tauschrunde',
+    shSwap,
+    [
+      '.swhead',
+      '#me .swhead',
+      '#me .swhead b',
+      '.shme.swapping',
+      '.tag.done',
+      '.tag.turn .thinking',
+      '#me [data-act=shready]',
+      '.shme [data-act=shh][data-i][data-drop=hand]',
+      '.shme [data-act=shu][data-i][data-drop=up]',
+    ],
+  ],
   [
     'Durak',
-    DK,
+    () => DK,
     [
       '#me [data-act=dkh][data-i]',
       '#center .dkpair[data-i]',
@@ -353,7 +374,7 @@ const CASES: [string, Models, string[]][] = [
   ],
   [
     'Cabo',
-    CB,
+    () => CB,
     [
       '#me .cbslot[data-sid]',
       '#me .cbslot.seen',
@@ -377,7 +398,7 @@ const CASES: [string, Models, string[]][] = [
   ],
   [
     'Schnautz',
-    SZ,
+    () => SZ,
     [
       '#me [data-act=hand][data-i]',
       '#center [data-act=mid][data-i]',
@@ -390,18 +411,29 @@ const CASES: [string, Models, string[]][] = [
   ],
 ];
 
+afterEach(() => {
+  Object.assign(App, { me: '', view: null, role: null, ss: { src: null, idx: [] } });
+});
+
 describe('Selektorvertrag der Bausteine', () => {
-  for (const [name, m, sels] of CASES) {
+  for (const [name, models, sels, common = true] of CASES) {
     it(name, () => {
       // Der Tisch steht in #scr-game wie in index.html
-      const root = parseHTML(`<section class="game" id="scr-game">${tableHTML(m)}</section>`);
-      const missing = [...COMMON, ...sels].filter((s) => !qsa(root, s).length);
+      const root = parseHTML(`<section class="game" id="scr-game">${tableHTML(models())}</section>`);
+      const missing = [...(common ? COMMON : []), ...sels].filter((s) => !qsa(root, s).length);
       expect(missing).toEqual([]);
     });
   }
 
+  it('Shithead: Fremde verdeckte Karten tragen keinen Wert und keinen Fokus-Schlüssel', () => {
+    const root = parseHTML(tableHTML(shPlay()));
+    expect(qsa(root, '#opps .card.back[aria-label]')).toEqual([]);
+    expect(qsa(root, '#opps [data-fk]')).toEqual([]);
+    expect(qsa(root, '#center [data-fk]')).toEqual([]);
+  });
+
   it('die fünf Kinder von #table bleiben', () => {
-    const root = parseHTML(tableHTML(SH));
+    const root = parseHTML(tableHTML(shPlay()));
     expect(qsa(root, '#table > *').map((e) => e.attrs.id ?? e.attrs.class)).toEqual([
       'scorebar',
       'opps',
