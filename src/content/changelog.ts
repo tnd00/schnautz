@@ -59,7 +59,7 @@ export const CHANGELOG: readonly Release[] = [
           'Warten mehr als drei Leute, nennt die Statuszeile zwei Namen und zählt den Rest, etwa „Warte auf Lena, Tom und 5 weitere.“ So bleibt auch das Feld „Bereit!“ in der Shithead-Tauschrunde kurz.',
           'Bei Cabo wackelt beim Spionieren nur die angetippte eigene Karte und am Tisch steht, warum es nicht geht. Im Ergebnis bleibt die Punktzahl auch mit vielen Strafkarten in einer Zeile.',
           'Bei Cabo und Schnautz enden lange Namen in der Punkteleiste oben sauber mit Punkten, ab fünf Leuten blenden sie weich aus, statt mitten im Buchstaben abzubrechen.',
-          'Bei Shithead liegt der kleine Hinweis zu einer Bombe oder einem 4er nicht mehr auf der großen Meldung. Sobald sie kommt, blendet er aus.',
+          'Bei Shithead blendet der kleine Hinweis zu einer Bombe oder einem 4er aus, sobald eine große Meldung kommt.',
           'Regeln und Updates laden erst, wenn du sie öffnest. Dadurch startet die Seite schneller.',
         ],
       },
