@@ -7,12 +7,18 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
 import { rj } from '../../src/game/reject';
+import { REJECT_TEXT } from '../../src/content/texts/reject';
 import { addPlayer, newState } from '../../src/game/state';
 import type { State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
 import { cardHTML, livesHTML } from '../../src/ui/cards';
 import { seatOrder } from '../../src/ui/helpers';
+import { shBtnTap } from '../../src/ui/render/shithead';
+import { SEQ } from '../../src/ui/shithead/sequence';
+import { SH_TABLE } from '../../src/content/texts/table-sh';
+import { TABLE } from '../../src/content/texts/table';
+import { BAR } from '../../src/ui/table/bar';
 import { handHTML } from '../../src/ui/table/hand';
 import { meClass, meHTML } from '../../src/ui/table/me';
 import { centerHTML, deckCards } from '../../src/ui/table/pile';
@@ -455,5 +461,116 @@ describe('Selektorvertrag der Bausteine', () => {
     );
     expect(qsa(root, '#me .outmsg')).toHaveLength(1);
     expect(qsa(root, '#me [data-act=ffwd]')).toHaveLength(1);
+  });
+});
+
+describe('Shithead nach Runde 3', () => {
+  afterEach(() => {
+    App.zerHide = '';
+  });
+
+  it('Handkarten stehen als Wert auf der Unterkante, KI vor dem Namen', () => {
+    const m = shModels(shTable(true));
+    const html = m.opps.map(seatHTML).join('');
+    const vals = qsa(parseHTML(html), '.opp > .val.hcount[data-k=cards]');
+    expect(vals).toHaveLength(2);
+    expect(vals[0].attrs.title).toMatch(/^\d+ Handkarten?$/);
+    expect(qsa(parseHTML(html), '.ometa .hcount')).toHaveLength(0);
+  });
+
+  it('bis zur Enthüllung verraten Wert und Vorlesetext den Shithead nicht', () => {
+    const st = shTable(true, (s) => {
+      if (!s.sh) return;
+      s.phase = 'over';
+      s.sh.shithead = 'a';
+    });
+    App.zerHide = 'a';
+    const m = shModels(st);
+    // Der Wert bleibt unsichtbar stehen (.hold), damit der Tisch nicht springt
+    expect(m.opps.every((o) => /\bhold\b/.test(o.value))).toBe(true);
+    expect(m.opps.some((o) => /Handkarte/.test(o.say))).toBe(false);
+    App.zerHide = '';
+    expect(shModels(st).opps.every((o) => o.value !== '' && !/\bhold\b/.test(o.value))).toBe(true);
+  });
+
+  it('bis zur Enthüllung tragen Platz und Vorlesetext des neuen Shitheads weder 💩 noch Krone', () => {
+    const st = shTable(true, (s) => {
+      if (!s.sh) return;
+      s.phase = 'over';
+      s.sh.shithead = 'a';
+      s.reigns = { shithead: { win: 'b', lose: 'a', game: 'shithead' } };
+    });
+    App.zerHide = 'a';
+    const anna = shModels(st).opps.find((o) => o.id === 'a');
+    App.zerHide = '';
+    expect(anna?.marks).toBe('');
+    expect(anna?.say).not.toContain(SH_TABLE.reign);
+    expect(anna?.say).not.toContain(TABLE.crown);
+    // Nach der Enthüllung trägt sie ihn
+    const after = shModels(st).opps.find((o) => o.id === 'a');
+    expect(after?.marks).toContain('reign');
+    expect(after?.say).toContain(SH_TABLE.reign);
+  });
+
+  it('gesperrter Knopf nennt beim Tipp seinen Grund und schickt keinen Zug, während eines Ablaufs schweigt er', () => {
+    const st = shTable(true, (s) => {
+      if (!s.sh) return;
+      s.sh.pile = ['SK'];
+      s.sh.P.h.hand = ['HA', 'C5', 'DA'];
+    });
+    shModels(st);
+    const v = viewFor(st, 'h');
+    BAR.at = 0;
+    // Nichts gewählt: gesperrt gezeichnet nennt er den Grund, sonst bleibt es still, ein Zug geht nie raus
+    expect(shBtnTap(v, 'shplay', true)).toEqual(rj('any.pickCard'));
+    expect(shBtnTap(v, 'shplay', false)).toBe(false);
+    expect(shBtnTap(v, 'shpickup', false)).toBe(true);
+    SEQ.busy = true;
+    expect(shBtnTap(v, 'shplay', true)).toBe(false);
+    SEQ.busy = false;
+    // Die Fünf passt nicht auf den König
+    App.ss = { src: 'hand', idx: [1] };
+    expect(shBtnTap(v, 'shplay', true)).toEqual(rj('sh.noFit', { c: 'C5', top: 'SK' }));
+    App.ss = { src: 'hand', idx: [0] };
+    expect(shBtnTap(v, 'shplay', false)).toBe(true);
+    // 4er-Sperre: Ausspielen und „Für X spielen“ nennen sh.winLock
+    if (st.sh) st.sh.win = { r: 'K', by: [], id: 1, lock: true };
+    const w = viewFor(st, 'h');
+    expect(shBtnTap(w, 'shplay', true)).toEqual(rj('sh.winLock'));
+    expect(shBtnTap(w, 'skip', true)).toEqual(rj('sh.winLock'));
+    expect(shBtnTap(w, 'skip', false)).toBe(true);
+    SEQ.busy = true;
+    expect(shBtnTap(w, 'skip', true)).toBe(false);
+    SEQ.busy = false;
+    App.ss = { src: null, idx: [] };
+  });
+
+  it('gesperrte Knöpfe und ausgegraute Karten nennen ihren Grund statt disabled', () => {
+    const m = shModels(
+      shTable(true, (st) => {
+        if (!st.sh) return;
+        st.sh.pile = ['SK'];
+        st.sh.P.h.hand = ['HA', 'C5', 'DA'];
+      }),
+    );
+    const doc = parseHTML(meHTML(m.me));
+    expect(qsa(doc, '[disabled]')).toHaveLength(0);
+    const play = qsa(doc, '[data-act=shplay]')[0].attrs;
+    expect(play['aria-disabled']).toBe('true');
+    expect(play['aria-description']).toBe(REJECT_TEXT['any.pickCard']);
+    const five = qsa(doc, '[data-act=shh].dim')[0].attrs;
+    expect(five['aria-disabled']).toBe('true');
+    expect(five['aria-description']).toBeTruthy();
+    // Ausspielen und Aufnehmen bleiben an ihren Plätzen, „Alle wählen“ kommt dahinter
+    const sel = shModels(
+      shTable(true, (st) => {
+        if (!st.sh) return;
+        st.sh.pile = ['SK'];
+        st.sh.P.h.hand = ['HA', 'C5', 'DA'];
+      }),
+      { src: 'hand', idx: [0] },
+    );
+    const acts = qsa(parseHTML(meHTML(sel.me)), '.actions .btn').map((b) => b.attrs['data-act']);
+    expect(acts).toEqual(['shplay', 'shpickup', 'shselall']);
   });
 });

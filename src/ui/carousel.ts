@@ -48,7 +48,20 @@ const actorOf = (v: View): string | null =>
 
 const actorFor = (v: View): string | null => (CAR.who ?? actorOf)(v);
 
-const visible = (): number => (isMobile() ? 3 : 5);
+/**
+ * Schmaler darf eine Kachel am PC nicht werden, sonst ragen ihre Tischkarten in die Nachbarn (1024x768 zu acht, Restbefund
+ * 2.7). Dann stehen drei statt fünf in der Mitte.
+ */
+const MIN_W_DESKTOP = 120;
+
+/** Breite einer Kachel bei `vis` Kacheln in der Mitte und `W` Platz */
+const tileW = (W: number, vis: number, gap: number, peek: number): number => (W - (vis + 1) * gap - 2 * peek) / vis;
+
+/** Wie viele Gegner ganz in der Mitte stehen: am Handy drei, am PC fünf, wenn sie breit genug werden, sonst drei. */
+function visible(W = $('#opps').clientWidth): number {
+  if (isMobile()) return 3;
+  return tileW(W, 5, GAP.desktop, PEEK.desktop) >= MIN_W_DESKTOP ? 5 : 3;
+}
 
 /** Abstand auf dem Kreis, zwischen -n/2 und n/2. */
 function circ(d: number, n: number): number {
@@ -63,15 +76,15 @@ const boxesOf = (el: HTMLElement): HTMLElement[] =>
 function place(el: HTMLElement, off: number, animate: boolean): void {
   const boxes = boxesOf(el);
   const n = boxes.length;
-  const vis = visible();
+  const W = el.clientWidth;
+  const vis = visible(W);
   const cs = getComputedStyle(el);
   const pt = parseFloat(cs.paddingTop) || 0;
   const pb = parseFloat(cs.paddingBottom) || 0;
-  const W = el.clientWidth;
   const m = isMobile();
   const gap = m ? GAP.mobile : GAP.desktop;
   const peek = m ? PEEK.mobile : PEEK.desktop;
-  const w = Math.max(60, (W - (vis + 1) * gap - 2 * peek) / vis);
+  const w = Math.max(60, tileW(W, vis, gap, peek));
   CAR.step = w + gap;
   const x0 = W / 2 - w / 2;
   // Mitte, Nachbarn und die angeschnittenen am Rand, alles weiter weg bleibt unsichtbar

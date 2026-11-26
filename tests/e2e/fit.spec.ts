@@ -92,14 +92,61 @@ async function resize(page: Page, s: string): Promise<void> {
   await page.waitForTimeout(350);
 }
 
+/**
+ * Überlappen sich benachbarte sichtbare Gegnerkacheln? fitFindings sieht das nicht, weil Tischkarten über eine zu
+ * schmale Kachel hinausragen, ohne dass etwas scrollt (Karussell 1024x768 zu acht, Restbefund 2.7). Gemessen wird je
+ * Kachel die Fläche aller sichtbaren Teile, beschnitten auf #opps und das Fenster.
+ */
+async function oppFindings(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const host = document.querySelector('#opps');
+    if (!host || !host.getClientRects().length) return [];
+    const H = host.getBoundingClientRect();
+    const lim = { l: Math.max(0, H.left), r: Math.min(window.innerWidth, H.right) };
+    const seen = (el: Element) => {
+      const cs = getComputedStyle(el);
+      return el.getClientRects().length > 0 && cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05;
+    };
+    const boxes = [...host.querySelectorAll<HTMLElement>(':scope > .opp')].filter(seen).flatMap((t) => {
+      let l = Infinity;
+      let r = -Infinity;
+      let top = Infinity;
+      let bot = -Infinity;
+      for (const el of [t, ...t.querySelectorAll('*')]) {
+        if (!seen(el)) continue;
+        const b = el.getBoundingClientRect();
+        if (!b.width || !b.height) continue;
+        l = Math.min(l, b.left);
+        r = Math.max(r, b.right);
+        top = Math.min(top, b.top);
+        bot = Math.max(bot, b.bottom);
+      }
+      l = Math.max(l, lim.l);
+      r = Math.min(r, lim.r);
+      return r > l ? [{ id: t.dataset.pid ?? '?', l, r, top, bot }] : [];
+    });
+    boxes.sort((a, b) => a.l - b.l);
+    const out: string[] = [];
+    for (let i = 1; i < boxes.length; i++) {
+      const a = boxes[i - 1];
+      const b = boxes[i];
+      const over = a.r - b.l;
+      if (over > 1 && a.bot > b.top && b.bot > a.top)
+        out.push(`Kacheln ${a.id}/${b.id} überlappen ${over.toFixed(1)}px`);
+    }
+    return out;
+  });
+}
+
 async function check(page: Page, where: string, keys: string[]): Promise<void> {
+  const all = async () => [...(await fitFindings(page, keys)), ...(await oppFindings(page))];
   // Unter Last braucht das Einpassen nach dem Größenwechsel manchmal länger als 350 ms (Seite noch in der alten Höhe)
   try {
-    await expect.poll(() => fitFindings(page, keys), { timeout: 3000 }).toEqual([]);
+    await expect.poll(all, { timeout: 3000 }).toEqual([]);
   } catch {
     // Bleibt der Befund, meldet ihn die weiche Prüfung darunter mit Ort
   }
-  expect.soft(await fitFindings(page, keys), where).toEqual([]);
+  expect.soft(await all(), where).toEqual([]);
 }
 
 /**

@@ -91,7 +91,7 @@
   }
   .sb-w {
     padding: 0 5px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .sb-p .coaster {
     width: 10px;
@@ -108,8 +108,30 @@
     gap: 6px;
     /* Auf hohen Handys etwas Luft zur Kopfzeile, auf kurzen bleibt es eng */
     padding-top: clamp(8px, calc(100dvh * 0.07 - 36px), 26px);
-    /* Platz für die Beschriftung, die oben aus dem Stapelkasten ragt */
+    /* Platz für die Beschriftung, die oben aus dem Stapelkasten ragt, und den Wert auf der Unterkante der Kacheln */
     margin-bottom: 6px;
+  }
+  .opps:has(> .opp > .val) {
+    margin-bottom: 12px;
+  }
+  .opp > .val {
+    bottom: -8px;
+  }
+  /* Der Wert ragt halb in die Kachel, die Namenszeile bleibt darüber frei */
+  .opp:has(> .val) {
+    padding-bottom: 10px;
+  }
+  /* Auf der Ecke über der Kachelkante, die Tischkarten darunter bleiben frei */
+  .opp > .rmark {
+    top: -10px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+  .opp .ometa .botb {
+    flex: none;
+    padding: 0 3px;
   }
   .opp,
   .opp.sh {
@@ -138,8 +160,9 @@
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
-    font-size: 9.5px;
-    padding: 2px 7px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
     z-index: 2;
   }
   .opp .ometa {
@@ -172,7 +195,7 @@
     line-height: 1;
   }
   .opp .ometa .marks .botb.sq {
-    font-size: 7.5px;
+    font-size: 12px;
   }
   .opp .ometa .marks.two > * {
     animation: markSwap 2.6s ease-in-out infinite;
@@ -203,7 +226,7 @@
     inset: 2.5px;
   }
   .opp .swim {
-    font-size: 11px;
+    font-size: 12px;
   }
   .opp .tcards {
     --tw: calc(var(--u) * 7.4);
@@ -225,14 +248,14 @@
     min-height: calc(var(--tw) * 1.4 + 8px);
   }
   .bhn {
-    font-size: 9px;
+    font-size: 12px;
   }
   .bhn b {
     font-size: 22px;
   }
   .hcount {
     margin-left: 0;
-    font-size: 11px;
+    font-size: 12px;
     gap: 2px;
     padding: 1px 6px 1px 7px;
   }
@@ -249,7 +272,7 @@
   }
   .center .cnt {
     bottom: -25px;
-    font-size: 11.5px;
+    font-size: 12px;
   }
   .pile .cnt {
     bottom: -30px;
@@ -434,7 +457,7 @@
     flex-wrap: wrap;
     align-content: center;
     justify-content: center;
-    gap: 16px 8px;
+    gap: 22px 8px;
     margin-bottom: 8px;
   }
   .me.swapping .actions .btn {
@@ -529,7 +552,7 @@
     font-size: 20px;
   }
   .erow.e-snd button small {
-    font-size: 10.5px;
+    font-size: 12px;
   }
   /* Im Ergebnisfenster steht das Reaktionsfenster fest über den Knöpfen */
   .paper .emotes.oemotes .erow:not(.e-snd) button {
@@ -549,7 +572,7 @@
     padding: 0 1px;
   }
   .paper .emotes.oemotes .erow.e-snd button small {
-    font-size: 9.5px;
+    font-size: 12px;
     letter-spacing: -0.01em;
   }
   /* Am Handy kein kleines 🍅 über der Punktzahl, ein Tipp auf die Zeile reicht */
@@ -637,7 +660,7 @@
     padding: 1px 5px;
   }
   body.ingame .scorebar .sb-n {
-    font-size: 11px;
+    font-size: 12px;
   }
   .opps {
     padding-top: 6px;
@@ -646,6 +669,9 @@
   .opp.sh {
     padding: 10px 4px 4px;
     gap: 2px;
+  }
+  .opp:has(> .val) {
+    padding-bottom: 9px;
   }
   .center {
     padding: 16px 10px 30px;
@@ -718,7 +744,28 @@
   .opps.car .hcount {
     gap: 1px;
     padding: 1px 5px;
-    font-size: 10.5px;
+    font-size: 12px;
+  }
+}
+
+/* Am PC richten sich die Tischkarten im Karussell nach der Kachel, damit nichts in die Nachbarn ragt */
+@media (min-width: 961px) {
+  .opps.car .opp {
+    container-type: inline-size;
+    padding-inline: 6px;
+  }
+  .opps.car .opp .tcards {
+    --tw: min(44px, calc((100cqw - 12px) / 3));
+    gap: 4px;
+  }
+  .opps.car .opp .ometa {
+    max-width: 100%;
+    min-width: 0;
+  }
+  /* Namen brechen um statt abgeschnitten zu werden (CLAUDE.md: nichts abschneiden) */
+  .opps.car .opp .nm {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -763,13 +810,13 @@
     gap: 1px;
     padding: 3px 8px 4px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .bighand .bhn b {
     font-size: 17px;
   }
   .bighand .bht {
-    font-size: 9.5px;
+    font-size: 12px;
   }
 }
 
@@ -802,7 +849,7 @@
 @media (max-width: 960px) {
   .opp .tcards .tnone {
     height: calc(var(--tw) * 1.4 + 8px);
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
@@ -850,7 +897,7 @@
     display: none;
   }
   body.ingame .scorebar.many .sb-n {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   /*

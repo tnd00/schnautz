@@ -65,6 +65,8 @@
   --m: var(--card-m-C);
 }
 
+/* --cw ist als Länge registriert (cards.css), daher rechnet cqw im Karussell gegen die Kachel, nicht die Karte */
+
 /* Vorderseite: weißes Vinyl, Innenlinie in Periwinkle */
 :where(:root[data-look='sticker']) .card {
   container: card / inline-size;

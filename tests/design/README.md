@@ -51,6 +51,9 @@ node tests/design/sweep.mjs --serve --roles=host,guest --shots --out=/tmp/schnau
 # Härtefall acht Plätze und Namen mit 16 Zeichen, nur Handy
 node tests/design/sweep.mjs --serve --seats=8 --long --sizes=phone
 
+# Krone und Verlierer-Zeichen an KI-Plätzen (wie die Fixture sh-reign-4), vier Plätze
+node tests/design/sweep.mjs --serve --games=shithead --seats=4 --reign --sizes=390x844,360x640
+
 # Nur Zustände Lobby, eigener Zug und offenes Fenster bei Durak
 node tests/design/sweep.mjs --serve --games=durak --states=lobby,turn,modal
 
@@ -94,7 +97,7 @@ Der Dev-Server lädt die Seite neu, sobald sich eine Quelldatei ändert. Wer wä
 
 ## Feste Spielstände und Bildvergleich
 
-`fixtures.mjs` spielt am Dev-Server echte Tische bis zu einem Zustand und legt ab, was der Gastgeber in `localStorage['schnautz:host']` speichern würde. Die KIs stehen dabei (`BOTS.hold`), gezogen wird sofort im Gastgeber wie beim Zeitraffer. Die Stände liegen in `fixtures/<kürzel>-<zustand>-<plätze>.json`, je Spiel Lobby, eigener Zug, Warten, Gast am Zug, Rundenende (Cabo, Schnautz), Partieende, Tauschrunde (Shithead) und der Härtefall acht Plätze mit Namen aus 16 Zeichen. Neu erzeugen nur, wenn sich das Format des Spielstands ändert, danach braucht der Bildvergleich neue Vorlagen.
+`fixtures.mjs` spielt am Dev-Server echte Tische bis zu einem Zustand und legt ab, was der Gastgeber in `localStorage['schnautz:host']` speichern würde. Die KIs stehen dabei (`BOTS.hold`), gezogen wird sofort im Gastgeber wie beim Zeitraffer. Die Stände liegen in `fixtures/<kürzel>-<zustand>-<plätze>.json`, je Spiel Lobby, eigener Zug, Warten, Gast am Zug, Rundenende (Cabo, Schnautz), Partieende, Tauschrunde (Shithead) und der Härtefall acht Plätze mit Namen aus 16 Zeichen. Neu erzeugen nur, wenn sich das Format des Spielstands ändert, danach braucht der Bildvergleich neue Vorlagen. `sh-reign-4` ist von Hand aus `sh-turn-4` abgeleitet: Uschi trägt die Krone, Gitti ist amtierender Shithead (zweimal), damit Eckaufkleber und KI-Zeichen am selben Platz im Bild sind. Wer `sh-turn-4` neu erzeugt, leitet ihn wieder ab.
 
 ```sh
 node tests/design/fixtures.mjs --serve --port=5311 --peer=9311

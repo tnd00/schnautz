@@ -88,14 +88,26 @@ const PIPS: Readonly<Record<string, readonly Pip[]>> = {
 export const CARD_RE = /^[CSHD](2|3|4|5|6|7|8|9|10|B|D|K|A)(:2)?$/;
 
 const isRed = (s: Suit | null) => s === 'H' || s === 'D';
-export const cardName = (c: Card): string => `${SUIT_NAME[suitOf(c)]} ${RANK_NAME[rankOf(c)]}`;
+/**
+ * Name einer Karte, mit dem Wert so, wie er in der Ecke steht (WCAG 2.5.3, Sprachsteuerung): „Karo 4“, bei Bildern
+ * und Ass dazu das Wort, „Karo B, Bube“. Die Farbe steht vorn, daran erkennt der Sticker-Look sie (cards-vinyl.css).
+ */
+export const cardName = (c: Card): string => {
+  const r = rankOf(c);
+  const word = Number.isNaN(Number(r)) ? `, ${RANK_NAME[r]}` : '';
+  return `${SUIT_NAME[suitOf(c)]} ${r}${word}`;
+};
 
-/** Vorderseite ohne Hülle: Ecken und Augen. `--x`/`--y` tragen die Augenlage im Raster 0 bis 100 (Kartenset Vinyl). */
+/**
+ * Vorderseite ohne Hülle: Ecken und Augen. `--x`/`--y` tragen die Augenlage im Raster 0 bis 100 (Kartenset Vinyl).
+ * Den Wert trägt nur die obere Ecke als Text, Kopie unten und Bild zeichnet CSS aus `data-t` (cards.css). So steht der
+ * sichtbare Wert genau einmal im Text und der Name der Karte enthält ihn (WCAG 2.5.3).
+ */
 function faceHTML(c: Card): string {
   const s = suitOf(c);
   const r = rankOf(c);
   const sym = SUIT_SYM[s];
-  const ix = `<span class="ix"><span>${r}</span><i>${sym}</i></span><span class="ix br"><span>${r}</span><i>${sym}</i></span>`;
+  const ix = `<span class="ix"><span>${r}</span><i>${sym}</i></span><span class="ix br"><span data-t="${r}"></span><i>${sym}</i></span>`;
   const pips = PIPS[r];
   if (pips)
     return (
@@ -108,7 +120,7 @@ function faceHTML(c: Card): string {
         .join('')
     );
   if (r === 'A') return `${ix}<div class="ace"><b>${sym}</b></div>`;
-  return `${ix}<div class="face"><i>${sym}</i><b>${r}</b><i>${sym}</i></div>`;
+  return `${ix}<div class="face"><i>${sym}</i><b data-t="${r}"></b><i>${sym}</i></div>`;
 }
 
 /**

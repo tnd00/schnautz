@@ -33,8 +33,9 @@
 :root[data-look='sticker'] body.ingame :focus-visible {
   outline-color: var(--tb-focus);
 }
-:root[data-look='sticker'] body.ingame :is(.btn.primary, .tag, .fab[aria-pressed='true']):focus-visible {
-  outline-color: var(--tb-focus-on-dark);
+/* Als Variable am Element, damit es auch gegen body.ingame #table :focus-visible (table.css) gilt */
+:root[data-look='sticker'] body.ingame :is(.btn.primary, .tag, .fab[aria-pressed='true'], .emotes .etab.on) {
+  --tb-focus: var(--tb-focus-on-dark);
 }
 
 /* ---------- Kopfzeile ---------- */
@@ -132,6 +133,16 @@
 :root[data-look='sticker'] body.ingame .botb {
   color: var(--tb-bot-text);
   background: var(--tb-bot-bg);
+}
+/* Wert auf der Unterkante und Eckaufkleber: Farbe kommt aus den --tb-val-*, hier nur Schrift und Neigung */
+:root[data-look='sticker'] body.ingame .opp > .val {
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+:root[data-look='sticker'] body.ingame .opp > .rmark {
+  rotate: calc(var(--tb-tilt) * 3deg);
 }
 
 /* Etiketten: Tinte mit weißem Rand, am Zug in Spielfarbe */
@@ -274,10 +285,19 @@
     inset 0 0 0 var(--tb-cut) var(--tb-btn-line),
     var(--tb-btn-shadow);
 }
-:root[data-look='sticker'] body.ingame :is(.btn[disabled], .me .actions .btn[aria-disabled='true']) {
+:root[data-look='sticker']
+  body.ingame
+  :is(.btn[disabled], .me .actions .btn[aria-disabled='true'], #status .btn[aria-disabled='true']) {
   opacity: var(--tb-btn-off);
   filter: none;
   box-shadow: var(--tb-edge);
+}
+/* Wie in Legacy behält der gesperrte Hauptknopf Stanzrand und Schatten, nur blasser. Gesperrt bleibt er antippbar
+ * und nennt seinen Grund (aria-disabled) */
+:root[data-look='sticker'] body.ingame .me .actions .btn.primary[aria-disabled='true'] {
+  box-shadow:
+    inset 0 0 0 var(--tb-cut) var(--tb-btn-go-line),
+    var(--tb-btn-shadow);
 }
 :root[data-look='sticker'] body.ingame .btn.pulse {
   animation: none;
@@ -323,6 +343,12 @@
   box-shadow:
     inset 0 0 0 calc(var(--tb-cut) - 1px) var(--tb-fx-emotes-line),
     var(--tb-shadow-lift);
+}
+/* Am PC als Pille um die runden Knöpfe, den Innenabstand gibt table.css (#emotes) */
+@media (min-width: 961px) {
+  :root[data-look='sticker'] body.ingame #emotes {
+    background: var(--tb-fx-emotes-bg);
+  }
 }
 :root[data-look='sticker'] body.ingame .emotes .etab {
   color: var(--tb-fx-emotes-soft);
@@ -502,6 +528,11 @@
 }
 :root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.lose :is(.who > span, .rcore, .conseq) {
   color: inherit;
+}
+/* „+n“ hinter den Restkarten auf Tinte so hell wie die Schrift der Zeile */
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.lose .more {
+  color: inherit;
+  font-weight: 800;
 }
 :root[data-look='sticker'] body.ingame #overlay .paper.sheet .row.mine {
   box-shadow:

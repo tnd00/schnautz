@@ -3,6 +3,7 @@
  *
  *   node tests/design/sweep.mjs [--games=shithead,durak,cabo,schnautz] [--roles=host,guest]
  *     [--states=lobby,swap,turn,menu,modal,round,over] [--sizes=all|phone|desktop|390x844,...] [--seats=8] [--long]
+ *     [--reign]
  *     [--look=sticker,legacy] [--theme=light,dark] [--shots] [--out=DIR] [--port=5173] [--peer=9000] [--serve]
  *
  * Pro Spiel, Rolle und Gerät (Handy oder PC) entsteht ein Tisch. Gemessen wird beim Gastgeber oder beim Gast, die
@@ -50,6 +51,8 @@ const states = arg('states', 'lobby,swap,turn,menu,modal,round,over').split(',')
 const sizes = sizeList(arg('sizes', 'all'));
 const seats = Number(arg('seats', '8'));
 const long = flag('long');
+/** Härtefall wie die Fixture sh-reign-4: Krone und Verlierer-Zeichen an zwei KI-Plätzen */
+const reign = flag('reign');
 
 const ROUND = { cabo: 'cb-round', schnautz: 'sz-round' };
 const OVER = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-win' };
@@ -160,6 +163,16 @@ async function run(browser, game, role, group, vari) {
         }
       });
     await startGame(host);
+    if (reign)
+      await host.evaluate((g) => {
+        const s = window.__schnautz;
+        const [win, lose] = s.H.st.players.filter((p) => p.bot);
+        s.H.st.reigns = { ...(s.H.st.reigns ?? {}), [g]: { win: win.id, lose: lose.id, game: g } };
+        lose.shc = 2;
+        lose.dkc = 2;
+        s.H.st.n++;
+        s.hostCommit();
+      }, game);
     await sleep(1200);
     if (game === 'shithead' && states.includes('swap')) {
       await poll(async () => (await view(page))?.phase === 'swap', { what: 'Tauschrunde' });

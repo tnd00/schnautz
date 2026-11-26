@@ -11,7 +11,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* Nur seitlich kappen: Oben und unten darf die 44-px-Tippfläche der Knöpfe (table.css) über die Zeile ragen */
   overflow: hidden;
+  overflow: clip visible;
 }
 .status.sline .main {
   line-height: 1.2;
@@ -51,11 +53,25 @@
   flex-wrap: nowrap;
   gap: 6px;
 }
+/* Über den Nachbarn, damit die 44-px-Tippfläche oben und unten nicht unter Hauptzeile oder eigenem Platz liegt */
+.status.sline.hasquick {
+  position: relative;
+  z-index: 1;
+}
+.status.sline .btn {
+  z-index: 1;
+}
 .status.sline .quick .btn {
   min-height: 38px;
   font-size: 15px;
   padding: 0 16px;
   box-shadow: none;
+}
+/* Gesperrt gezeichnet (etwa „Für X spielen“ in der 4er-Sperre bei Shithead): blass wie früher, antippbar mit Grund */
+#status .btn[aria-disabled='true'] {
+  opacity: var(--tb-btn-off);
+  cursor: not-allowed;
+  filter: saturate(0.4);
 }
 /* Lange Namen kürzen statt umbrechen, die Hauptzeile bleibt stehen */
 .status.sline .quick .btn {

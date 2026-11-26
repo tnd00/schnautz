@@ -22,6 +22,8 @@ export const RANK_NAME: Readonly<Record<Rank, string>> = {
   A: 'Ass',
 };
 
+const handWord = (n: number): string => (n === 1 ? 'Handkarte' : 'Handkarten');
+
 export const TABLE = {
   /** Liste der Gegnerkacheln */
   opps: 'Leute am Tisch',
@@ -41,4 +43,22 @@ export const TABLE = {
   aim: (name: string) => `Auf ${name} werfen`,
   /** Leerer Stapel */
   empty: 'leer',
+  /** KI-Zeichen am Namen */
+  bot: 'KI-Platz',
+  /**
+   * Kurze Etiketten an der Kachel, in allen vier Spielen dieselben Wörter. Der volle Satz steht im Vorlesetext des
+   * Platzes.
+   */
+  tag: {
+    turn: 'ist dran',
+    out: 'gegangen',
+    place: (n: number) => `Platz ${n}`,
+    ready: 'bereit ✓',
+  },
+  /** Krone oder Verlierer-Zeichen am Platz, für den Vorleser */
+  crown: 'trägt die Krone',
+  /** Wort zur Zahl der Handkarten */
+  handWord,
+  /** Wert am Platz: Zahl der Handkarten */
+  cards: (n: number) => `${n} ${handWord(n)}`,
 } as const;

@@ -2,7 +2,8 @@
  * Gemeinsames Zeichnen des Tisches (Plan 2.8 Abschnitt 8, geruest.md 3.3): Fokus halten, Teile aus den Modellen
  * schreiben, Karussell, Uhren und Würfe nachziehen, Ziehen auffrischen. Ein `OldTable` zeichnet wie heute selbst.
  *
- * Stand Runde 3a: Shithead ist ein `NewTable`, Durak, Cabo und Schnautz zeichnen noch selbst.
+ * API fest seit Runde 3: Modelle (types.ts), Spec (spec.ts) und Bausteine ändern sich nur noch mit Begründung.
+ * Shithead ist ein `NewTable`, Durak, Cabo und Schnautz zeichnen bis 4a noch selbst.
  */
 import type { View } from '../../game/types';
 import { holdFocus, restoreFocus } from '../a11y/focus';

@@ -67,11 +67,16 @@ export interface SeatModel {
   id: string;
   /** Klartext */
   name: string;
-  /** Eckaufkleber (Krone, 💩, 🤡) als fertiges HTML aus marksHTML, leer ohne */
-  marks: string;
   /**
-   * Tinten-Sticker auf der Unterkante: Handkarten, Punkte oder Leben. HTML, leer heißt kein Sticker. Runde 3 füllt ihn
-   * für Shithead, 4b für die übrigen Spiele, bis dahin bleibt er leer und das Bild unverändert.
+   * Eckaufkleber (Krone, 💩, 🤡) als fertiges HTML, etwa reignHTML. seatHTML klebt ihn als `.rmark` auf die obere
+   * rechte Ecke, leer ohne. Bis zur Enthüllung (App.zerHide) bleibt er leer, auch im Satz `say`.
+   */
+  marks: string;
+  /** KI-Platz: Zeichen „KI“ vor dem Namen */
+  bot?: boolean;
+  /**
+   * Tinten-Sticker auf der Unterkante: Handkarten, Punkte oder Leben als fertiges HTML aus `valueHTML`, leer heißt
+   * kein Sticker. Shithead füllt ihn seit Runde 3, 4b die übrigen Spiele. Bis zur Enthüllung (App.zerHide) leer.
    */
   value: string;
   /** Slot Zähler wie heute: shcHTML, dkcHTML, Cabo-Punkte, livesHTML */
@@ -249,8 +254,8 @@ export interface BarButton {
   why?: Reject | null;
   pulse?: boolean;
   /**
-   * Übergang, bis Shithead (3b) und Durak (Runde 4) ihre Knöpfe umstellen: gesperrt heißt echtes `disabled` wie in 2.7
-   * statt aria-disabled, damit Legacy gleich aussieht. Der Grund steht trotzdem in aria-description.
+   * Übergang, bis Durak (4a) seine Knöpfe umstellt: gesperrt heißt echtes `disabled` wie in 2.7 statt aria-disabled,
+   * damit Legacy gleich aussieht. Der Grund steht trotzdem in aria-description. Shithead nutzt es seit 3b nicht mehr.
    */
   hard?: boolean;
   /** Schalter (Schnappen), aria-pressed */
@@ -265,6 +270,11 @@ export interface BarModel {
   extra?: string;
   /** 'botsrow' */
   cls?: string;
+  /**
+   * Feste Zahl an Knopfplätzen: Fehlende füllt ein unsichtbarer Platzhalter, damit die Knöpfe davor nicht rutschen,
+   * wenn hinten einer dazukommt (Shithead „Alle n wählen“).
+   */
+  slots?: number;
 }
 
 /**

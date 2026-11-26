@@ -7,11 +7,12 @@ import { rj } from '../../src/game/reject';
 import { REJECT_TEXT } from '../../src/content/texts/reject';
 import { TABLE } from '../../src/content/texts/table';
 import { cardHTML } from '../../src/ui/cards';
-import { BAR, BAR_GUARD_MS, barGuard, barHTML, twoLabel } from '../../src/ui/table/bar';
+import { BAR, barGuard, barHTML, twoLabel } from '../../src/ui/table/bar';
+import { BAR_GUARD_MS } from '../../src/ui/table/consts';
 import { handHTML } from '../../src/ui/table/hand';
 import { meClass, meHTML, meLabel } from '../../src/ui/table/me';
 import { cardsMini, centerHTML, deckCards, stackHTML } from '../../src/ui/table/pile';
-import { fanHTML, numHTML, seatHTML, tagHTML } from '../../src/ui/table/seat';
+import { fanHTML, numHTML, seatHTML, tagHTML, valueHTML } from '../../src/ui/table/seat';
 import type { BarModel, HandModel, SeatModel } from '../../src/ui/table/types';
 import { parseHTML, qsa } from './helpers';
 
@@ -71,6 +72,22 @@ describe('Platz', () => {
     expect(qsa(parseHTML(h), '.ometa > .tb-count > .shc')).toHaveLength(1);
     expect(qsa(parseHTML(h), '.opp > .tb-body > .tcards')).toHaveLength(1);
     expect(qsa(parseHTML(h), '.opp > .tag')).toHaveLength(1);
+  });
+  it('Eckaufkleber, KI-Zeichen und Wert auf der Unterkante', () => {
+    const h = seatHTML({
+      ...SEAT,
+      marks: '<span class="reign">👑</span>',
+      bot: true,
+      value: valueHTML({ k: 'cards', html: '5', title: '5 Handkarten', cls: 'hcount' }),
+    });
+    expect(one(h, '.opp > .rmark')['aria-hidden']).toBe('true');
+    one(h, '.opp > .rmark .reign');
+    one(h, '.ometa > .botb');
+    expect(h.indexOf('class="botb"')).toBeLessThan(h.indexOf('class="nm"'));
+    const v = one(h, '.opp > .val.hcount');
+    expect(v['data-k']).toBe('cards');
+    expect(v.title).toBe('5 Handkarten');
+    expect(qsa(parseHTML(seatHTML(SEAT)), '.rmark, .botb, .val')).toHaveLength(0);
   });
   it('Ziel einer Fähigkeit ist kein Wurfziel, Rolle steht in data-role', () => {
     const a = one(seatHTML({ ...SEAT, st: ['target'], role: 'def', tag: null }), '.opp');
@@ -210,6 +227,16 @@ describe('Knopfleiste', () => {
     barHTML({ ...B, btns: B.btns.map((b) => ({ ...b, ok: false })) });
     // Nur gesperrt, die Knöpfe stehen an denselben Plätzen: kein Wechsel
     expect(barGuard()).toBe(false);
+  });
+  it('ein Knopf, der hinten dazukommt, sperrt die vorderen nicht', () => {
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    barHTML({ btns: [B.btns[0]] });
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    barHTML(B);
+    expect(barGuard(B.btns[0].act)).toBe(false);
+    expect(barGuard(B.btns[1].act)).toBe(true);
+    barHTML({ btns: [B.btns[1], B.btns[0]] });
+    expect(barGuard(B.btns[0].act)).toBe(true);
   });
 });
 

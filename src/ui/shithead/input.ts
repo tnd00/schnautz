@@ -27,14 +27,17 @@ export function shDimWhy(v: View, ref: ShCardRef): ReturnType<typeof shWhyNot> {
 
 /**
  * Tipp auf eine eigene Karte vor der Auswahl. `true` heißt: Die Karte ist ausgegraut, der Grund steht schon am
- * Tisch und die Auswahl bleibt, wie sie war.
+ * Tisch (oder schweigt während SEQ.busy) und die Auswahl bleibt, wie sie war.
  */
 export function shWhyTap(kind: 'h' | 'u', i: number): boolean {
   const v = App.view;
   if (!v) return false;
   const ref: ShCardRef = { src: kind === 'h' ? 'hand' : 'up', i };
+  const el = $opt(cardSel(ref));
+  // Während eines Ablaufs zeigt der Tisch noch den alten Stand: kein Grund, aber eine graue Karte wählt sich auch nicht
+  if (SEQ.busy) return el?.getAttribute('aria-disabled') === 'true';
   const why = shDimWhy(v, ref);
-  if (!why || !$opt(cardSel(ref))) return false;
+  if (!why || !el) return false;
   noteTap('shplay', [cardSel(ref)]);
   showReject(why, 'shplay');
   return true;

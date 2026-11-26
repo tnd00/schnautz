@@ -5,14 +5,12 @@
  */
 import { TABLE } from '../../content/texts/table';
 import { esc } from '../dom';
+import { BAR_GUARD_MS } from './consts';
 import { whyText } from './hand';
 import type { BarButton, BarModel } from './types';
 
-/** So lange nach einem Wechsel der Knopfzeile gilt ein Tipp als gemeint für den vorigen Knopf */
-export const BAR_GUARD_MS = 400;
-
-/** Zuletzt gezeichnete Knopfzeile und wann sie sich geändert hat */
-export const BAR = { sig: '', at: 0 };
+/** Zuletzt gezeichnete Knopfzeile, die davor und wann sie sich geändert hat */
+export const BAR = { sig: '', prev: '', at: 0 };
 
 /** Zwei Fassungen einer Beschriftung, die kurze steht, wo der Platz knapp ist (CSS .blong und .bshort) */
 export const twoLabel = (long: string, short: string): string =>
@@ -32,18 +30,28 @@ export function btnHTML(b: BarButton): string {
   );
 }
 
+/** Freier Knopfplatz: hält die Breite, ist aber weder sichtbar noch fokussierbar noch für den Vorleser da */
+const SLOT = '<span class="btn bslot" aria-hidden="true"></span>';
+
 /** Knopfleiste als HTML, setzt `BAR` bei einem Wechsel der Knöpfe. */
 export function barHTML(b: BarModel | null): string {
   if (!b) return '';
   const sig = b.btns.map((x) => x.act).join(',');
-  if (sig !== BAR.sig) Object.assign(BAR, { sig, at: Date.now() });
+  if (sig !== BAR.sig) Object.assign(BAR, { prev: BAR.sig, sig, at: Date.now() });
   return (
-    `<div class="actions${b.cls ? ` ${b.cls}` : ''}" role="group" aria-label="${TABLE.bar}">` +
-    `${b.btns.map(btnHTML).join('')}${b.extra ?? ''}</div>`
+    `<div class="actions${b.cls ? ` ${b.cls}` : ''}${b.slots ? ' slots' : ''}" role="group" aria-label="${TABLE.bar}">` +
+    `${b.btns.map(btnHTML).join('')}${SLOT.repeat(Math.max(0, (b.slots ?? 0) - b.btns.length))}${b.extra ?? ''}</div>`
   );
 }
 
-/** true, wenn der Tipp wohl dem vorigen Knopf galt */
-export function barGuard(): boolean {
-  return Date.now() - BAR.at < BAR_GUARD_MS;
+/**
+ * true, wenn der Tipp wohl dem vorigen Knopf galt: Die Zeile hat sich gerade geändert und an der Stelle von `act`
+ * stand vorher ein anderer Knopf oder keiner. Kommt nur hinten einer dazu (Shithead „Alle n wählen“), bleibt der
+ * Tipp gültig. Ohne `act` zählt jede Änderung.
+ */
+export function barGuard(act?: string): boolean {
+  if (Date.now() - BAR.at >= BAR_GUARD_MS) return false;
+  if (!act) return true;
+  const i = BAR.sig.split(',').indexOf(act);
+  return i < 0 || BAR.prev.split(',')[i] !== act;
 }

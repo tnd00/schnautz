@@ -41,6 +41,15 @@
   height: 10px;
 }
 
+/* Jede Karte ist unten ein Container. Ohne Registrierung erbten Rang und Farbe ein --cw wie
+ * min(44px, (100cqw - 12px) / 3) als Text und rechneten cqw gegen die Karte selbst (winzige Zeichen im Karussell am PC
+ * und in den Kacheln der Tauschrunde). Als Länge registriert steht --cw schon am Ort der Angabe fest, in beiden Looks. */
+@property --cw {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 96px;
+}
+
 /* cards */
 .card {
   --cw: 96px;
@@ -96,6 +105,10 @@
   font-size: 0.82em;
   margin-top: 0.08em;
   font-family: var(--ui);
+}
+/* Wert unten und im Bild nur gezeichnet, der Text steht einmal oben (faceHTML in src/ui/cards.ts) */
+.card [data-t]::before {
+  content: attr(data-t);
 }
 .card .ix.br {
   top: auto;

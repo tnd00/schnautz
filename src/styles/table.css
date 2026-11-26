@@ -85,6 +85,46 @@
 .opp.out {
   opacity: 0.5;
 }
+/* Wert auf der Unterkante (SeatModel.value): ein Tinten-Sticker mit Zahl und Zeichen, halb über dem Rand */
+.opp > .val {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  white-space: nowrap;
+  line-height: 1.2;
+  color: var(--tb-val-text);
+  background: var(--tb-val-bg);
+  box-shadow: var(--tb-val-line), var(--tb-val-shadow);
+}
+/* Bis zur Enthüllung des Verlierers: Wert und Kartenzahl unsichtbar, halten aber ihren Platz */
+.hold {
+  visibility: hidden;
+}
+/* Eckaufkleber (SeatModel.marks): Krone oder amtierender Verlierer auf der Ecke rechts oben, über den Tischkarten */
+.opp > .rmark {
+  position: absolute;
+  top: -11px;
+  right: -10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+  background: var(--tb-val-bg);
+  box-shadow: var(--tb-val-line), var(--tb-val-shadow);
+}
+.opp > .rmark .reign {
+  font-size: inherit;
+}
 .opp.offline .nm::after {
   content: ' · offline';
   color: var(--tb-offline-text);
@@ -92,7 +132,7 @@
   font-size: 12px;
 }
 .tag {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -206,7 +246,7 @@
   right: 0;
   bottom: -22px;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tb-muted);
   letter-spacing: 0.06em;
 }
@@ -218,7 +258,7 @@
   transform: translateX(-50%);
   background: var(--felt);
   padding: 0 10px;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--tb-muted);
@@ -348,6 +388,23 @@
 .actions .btn {
   min-width: 104px;
 }
+/* Freier Knopfplatz (BarModel.slots): so groß wie ein Knopf, aber unsichtbar */
+.actions .bslot {
+  visibility: hidden;
+}
+/* Feste Knopfplätze: alle gleich breit, damit kein Knopf rutscht, wenn sich eine Beschriftung ändert oder hinten einer
+ * dazukommt. Lange Beschriftungen brechen dafür um */
+.me .actions.slots > :is(.btn, .bslot) {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+@media (min-width: 961px) {
+  .me .actions.slots > :is(.btn, .bslot) {
+    flex: 0 0 150px;
+  }
+}
 .btn.small {
   min-height: 34px;
   padding: 0 12px;
@@ -446,7 +503,7 @@
 }
 .log .e.chat b {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--brass-hi);
   font-weight: 700;
 }
@@ -476,6 +533,15 @@
 .chatform .btn {
   min-height: 42px;
   padding: 0 14px;
+}
+/* Reaktionsleiste am PC: Innenabstand und Rundung für eine Pille (Sticker-Look). Der negative Rand hält den Platz im
+ * Fluss wie ohne Abstand, Legacy ohne Fläche sieht gleich aus */
+@media (min-width: 961px) {
+  #emotes {
+    padding: 6px;
+    margin: -6px;
+    border-radius: 999px;
+  }
 }
 /* Runde Knöpfe am eigenen Platz (mobil): Reaktionen links, Verlauf und Chat rechts */
 .fab {
@@ -512,7 +578,7 @@
   border-radius: 999px;
   background: var(--red);
   color: var(--tb-light);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -562,7 +628,7 @@
   align-items: center;
   gap: 3px;
   flex: none;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   color: var(--cream);
@@ -575,4 +641,25 @@
   width: 16px;
   height: 10px;
   color: var(--tb-sea-hi);
+}
+
+/* ---------- Gemeinsame Bausteine am Tisch (Plan 2.8 Runde 3) ----------
+ * Fokusring: Abstand zum Rand, damit er nicht wie ein zweiter Rahmen wirkt, und die fokussierte Karte liegt oben,
+ * damit überlappte Nachbarn ihn nicht verdecken. Farbe aus --tb-focus, der Sticker-Look färbt nach. */
+body.ingame #table :focus-visible {
+  outline: 2px solid var(--tb-focus);
+  outline-offset: 3px;
+}
+body.ingame #table .card:focus-visible {
+  z-index: 6;
+}
+/* Tippfläche mindestens 44 px: Wo ein Knopf sichtbar kleiner ist, vergrößert ihn eine unsichtbare Fläche */
+/* Ohne Gewicht, damit eine eigene Position (etwa die runden Knöpfe) gewinnt */
+:where(body.ingame) :where(.actions .btn, .btn.small, #status .btn, .top .iconbtn) {
+  position: relative;
+}
+body.ingame :is(#table .actions .btn, #table .btn.small, #status .btn, .fab, .top .iconbtn)::before {
+  content: '';
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2));
 }

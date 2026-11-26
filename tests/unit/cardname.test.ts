@@ -21,10 +21,26 @@ const card = (html: string) => {
 describe('Kartennamen', () => {
   it('kommen aus dem Katalog, in alter und neuer Form gleich', () => {
     for (const c of ALL) {
-      const want = `${SUIT_NAME[c[0] as Suit]} ${RANK_NAME[c.replace(':2', '').slice(1) as Rank]}`;
+      const r = c.replace(':2', '').slice(1) as Rank;
+      const want = `${SUIT_NAME[c[0] as Suit]} ${r}${/\d/.test(r) ? '' : `, ${RANK_NAME[r]}`}`;
       expect(cardName(c)).toBe(want);
       expect(card(cardHTML(c))['aria-label']).toBe(want);
       expect(card(cardHTML(c, { key: `hand:${c}` }))['aria-label']).toBe(want);
+    }
+  });
+
+  it('nennen den Wert so, wie er in der Ecke steht, und tragen ihn dort nur einmal als Text (WCAG 2.5.3)', () => {
+    expect(cardName('D4')).toBe('Karo 4');
+    expect(cardName('H10:2')).toBe('Herz 10');
+    expect(cardName('CB')).toBe('Kreuz B, Bube');
+    expect(cardName('SA')).toBe('Pik A, Ass');
+    for (const c of ['D4', 'CB', 'SA'] as Card[]) {
+      // Sichtbarer Text ohne Farbzeichen: nur der Wert oben links, Kopie unten und Bild kommen aus data-t
+      const text = cardHTML(c, { key: 'k' })
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/[♠♥♦♣]/g, ' ')
+        .trim();
+      expect(text).toBe(c.slice(1));
     }
   });
 
@@ -37,9 +53,9 @@ describe('Kartennamen', () => {
   });
 
   it('hängt Trumpf und Punkte an offene Karten', () => {
-    expect(card(cardHTML('H10', { key: 'k', trump: true }))['aria-label']).toBe(`Herz Zehn${TABLE.trump}`);
-    expect(card(cardHTML('SD', { key: 'k', value: 12 }))['aria-label']).toBe('Pik Dame, 12 Punkte');
-    expect(card(cardHTML('CA', { key: 'k', value: 1 }))['aria-label']).toBe('Kreuz Ass, 1 Punkt');
+    expect(card(cardHTML('H10', { key: 'k', trump: true }))['aria-label']).toBe(`Herz 10${TABLE.trump}`);
+    expect(card(cardHTML('SD', { key: 'k', value: 12 }))['aria-label']).toBe('Pik D, Dame, 12 Punkte');
+    expect(card(cardHTML('CA', { key: 'k', value: 1 }))['aria-label']).toBe('Kreuz A, Ass, 1 Punkt');
   });
 
   it('fremde verdeckte Karten tragen nie einen Wert', () => {

@@ -67,5 +67,6 @@ export function aimAttrs(p: Player | null | undefined, row = false): string {
   const v = App.view;
   if (!p || !v || p.id === App.me || !v.players.some((q) => q.id === App.me)) return '';
   const name = esc(p.name);
-  return ` data-act="aim"${row ? ` role="button" tabindex="0" aria-label="Auf ${name} werfen"` : ` title="Auf ${name} werfen"`}`;
+  // Als Zeile heißt der Knopf wie sein sichtbarer Text (WCAG 2.5.3), was er tut, sagt die Beschreibung
+  return ` data-act="aim"${row ? ` role="button" tabindex="0" aria-description="Auf ${name} werfen"` : ` title="Auf ${name} werfen"`}`;
 }

@@ -42,7 +42,8 @@ import { openGameSettings, resetRulesFor } from './render/gamesettings';
 import { renderLog } from './render/log';
 import { FFWD_ON_HTML } from './render/result';
 import { renderGame } from './render/schnautz';
-import { layoutSwapOpps, renderSh, shMine, shSrc } from './render/shithead';
+import { layoutSwapOpps, renderSh, shBtnTap, shMine, shSrc } from './render/shithead';
+import { barGuard } from './table/bar';
 import { renderTurnNote } from './render/turnnote';
 import { openBetModal, renderBetModal } from './render/bets';
 import { inviteHTML } from './render/invite';
@@ -103,6 +104,18 @@ function shTap(kind: 'h' | 'u', i: number): void {
   }
   App.anim = {};
   renderSh(v);
+}
+
+/**
+ * Shithead: Knopf vor der Aktion (shBtnTap). Ein gesperrter Knopf nennt seinen Grund aus der Spiellogik, ohne einen
+ * Zug als Probe zu schicken. true heißt: weiter mit der Aktion.
+ */
+function shBtnOk(v: View | null, act: 'shplay' | 'shpickup' | 'skip', t: HTMLElement): boolean {
+  const r = shBtnTap(v, act, t.getAttribute('aria-disabled') === 'true');
+  if (typeof r === 'boolean') return r;
+  noteTap(act, [`${act === 'skip' ? '#status' : '#me'} [data-act="${act}"]`]);
+  showReject(r, act);
+  return false;
 }
 
 /** Shithead: alle Karten mit dem gewählten Wert markieren. */
@@ -295,7 +308,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       break;
     case 'shplay': {
       const { src, idx } = App.ss;
-      if (App.busy || !src || !idx.length) break;
+      if (!shBtnOk(v, 'shplay', t) || !src || !idx.length) break;
       App.busy = true;
       sfx('card');
       grabRects(src, idx);
@@ -325,10 +338,10 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       break;
     }
     case 'shselall':
-      shSelectAll();
+      if (!barGuard('shselall')) shSelectAll();
       break;
     case 'shpickup':
-      if (App.busy) break;
+      if (!shBtnOk(v, 'shpickup', t)) break;
       App.busy = true;
       doAct({ type: 'shpickup' });
       break;
@@ -490,6 +503,8 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
     case 'force':
     case 'skip':
     case 'start':
+      // Gesperrt gezeichnet (Shithead „Für X spielen“ in der 4er-Sperre): Grund aus dem Spiel statt Zug
+      if (a === 'skip' ? !shBtnOk(v, a, t) : t.getAttribute('aria-disabled') === 'true') break;
       doAct({ type: a });
       break;
     case 'lives':
@@ -920,8 +935,8 @@ function tableKey(e: KeyboardEvent, t: HTMLElement): boolean {
   const n = items[Math.max(0, Math.min(items.length - 1, items.indexOf(t) + step))];
   if (!n || n === t) return false;
   e.preventDefault();
-  // Neue Hand: eine Tabulatorstelle, die mit dem Fokus wandert
-  if (g.classList.contains('tb-hand')) {
+  // Neue Hand und eigene Tischkarten: eine Tabulatorstelle, die mit dem Fokus wandert
+  if (g.classList.contains('tb-hand') || (g.classList.contains('tcards') && g.closest('#me'))) {
     t.tabIndex = -1;
     n.tabIndex = 0;
   }

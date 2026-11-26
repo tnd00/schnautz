@@ -1,7 +1,16 @@
-/* Shithead Tisch */
+/* Shithead Tisch. Die Kachel trägt wie am Handy das Etikett auf der Oberkante und den Wert auf der Unterkante */
 .opp.sh {
   min-width: 150px;
   gap: 6px;
+  padding-top: 16px;
+}
+.opp.sh .tag {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 2;
 }
 .ohand {
   display: inline-flex;
@@ -43,7 +52,7 @@
   flex-direction: column;
   align-items: center;
   line-height: 1;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--tb-accent);
@@ -138,7 +147,7 @@
   z-index: 3;
   background: var(--tb-num-bg);
   color: var(--tb-num-text);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   min-width: 22px;
   height: 22px;
@@ -169,7 +178,7 @@
   align-items: center;
   gap: 1px;
   color: var(--tb-muted);
-  font-size: 11px;
+  font-size: 12px;
   min-width: 52px;
 }
 .center .burned .cnt {
@@ -177,7 +186,7 @@
   transform: none;
   background: none;
   padding: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 .burned .flame {
@@ -274,4 +283,10 @@
 }
 .shme {
   gap: 10px;
+}
+
+/* Gesperrte Knöpfe nennen seit 2.8 ihren Grund (aria-disabled statt disabled) und behalten dabei ihren Schatten wie
+ * früher (Aufnehmen ist gesperrt immer ghost ohne Schatten). Die allgemeine Regel in base.css nimmt ihn für Schnautz und Cabo weg, der Sticker-Look setzt eigene. */
+.shme .actions .btn.primary[aria-disabled='true'] {
+  box-shadow: var(--tb-btn-shadow);
 }
