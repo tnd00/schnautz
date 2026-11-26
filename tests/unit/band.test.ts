@@ -19,6 +19,7 @@ import {
   stageRoom,
   stageTop,
   waitsForBig,
+  yieldToBig,
 } from '../../src/ui/band';
 
 /*
@@ -580,6 +581,43 @@ describe('Kleine Meldungen im Band (Grund, Hinweis, Automatisches)', () => {
         if (top > Math.round(g.guard)) expect(top + p.h).toBeLessThanOrEqual(Math.max(g.lane.bottom, head - 3) + 0.5);
       });
     }
+  });
+});
+
+describe('Große Meldung in der Spielfläche', () => {
+  /*
+   * Gemessen bei Shithead mit 8 Plätzen, nicht am Zug, eine KI wirft außer der Reihe eine Bombe ein: „… wirft eine Bombe
+   * ein“ steht an der Stapelkante, dann kommt „Bombe!“ (left, top, right, bottom)
+   */
+  const box = (l: number, t: number, r: number, b: number) => ({ left: l, top: t, right: r, bottom: b });
+  const pill390 = box(93.6, 241, 296.4, 263.3);
+  const pill360 = box(81, 162, 279, 184.3);
+
+  it('blendet eine kleine Meldung aus, die sie schneidet (zweizeiliger Spruch, 390x844 und 360x640)', () => {
+    expect(yieldToBig([box(8, 225, 382, 376.9)], [pill390])).toEqual([0]);
+    // 360x640 ragt die kleine nur oben heraus
+    expect(yieldToBig([box(8, 178.6, 352, 268.4)], [pill360])).toEqual([0]);
+  });
+
+  it('lässt eine kleine Meldung stehen, die sie nicht schneidet (einzeiliger Spruch, 390x844)', () => {
+    expect(yieldToBig([box(20.9, 298.2, 369.1, 429.8)], [box(97.1, 241, 292.9, 263.3)])).toEqual([]);
+  });
+
+  it('zählt Berühren nicht, einen Bruchteil eines Pixels schon', () => {
+    expect(yieldToBig([box(8, 263.3, 382, 376.9)], [pill390])).toEqual([]);
+    expect(yieldToBig([box(8, 263, 382, 376.9)], [pill390])).toEqual([0]);
+    // Daneben auf gleicher Höhe zählt nicht
+    expect(yieldToBig([box(300, 225, 382, 376.9)], [pill390])).toEqual([]);
+    expect(yieldToBig([box(296.4, 225, 382, 376.9)], [pill390])).toEqual([]);
+  });
+
+  it('nennt nur die kleinen Meldungen, die eine der großen schneidet, in ihrer Reihenfolge', () => {
+    const below = box(93.6, 380, 296.4, 402.3);
+    // Ragt unten ein Stück in die große hinein
+    const edge = box(120, 370, 270, 392.3);
+    expect(yieldToBig([box(8, 225, 382, 376.9)], [below, pill390, pill360, edge])).toEqual([1, 3]);
+    expect(yieldToBig([], [pill390])).toEqual([]);
+    expect(yieldToBig([box(8, 225, 382, 376.9), box(8, 390, 382, 420)], [below])).toEqual([0]);
   });
 });
 

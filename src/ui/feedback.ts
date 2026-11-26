@@ -27,11 +27,13 @@ import {
   parkedWaits,
   pillStack,
   slotOf,
+  type Rect,
   type Span,
   STAGE_DROP,
   stageRoom,
   stageTop,
   waitsForBig,
+  yieldToBig,
 } from './band';
 
 const ms = (x: number | undefined, d: number) => x || d;
@@ -278,6 +280,12 @@ function showMessage(el: HTMLElement, mode: Mode, life: Life): void {
   }, life.ms);
 }
 
+/** Kleine Meldung kurz ausblenden, dann weg (verdrängt im Band oder unter einer neuen großen Meldung) */
+function fade(o: HTMLElement): void {
+  o.classList.add('out');
+  setTimeout(() => o.remove(), 320);
+}
+
 /** Grund und Automatisches, die gerade im Band stehen (verdrängtes Automatisches wartet darauf) */
 const urgentLive = (): number => bandPills().filter((o) => rankOf(o) > 0).length;
 
@@ -368,8 +376,7 @@ function positionMessage(el: HTMLElement, mode: Mode, fresh = false): void {
         park(old);
         continue;
       }
-      old.classList.add('out');
-      setTimeout(() => old.remove(), 320);
+      fade(old);
     }
     // Die große Meldung im Band weicht der neuen kleinen und lässt dafür eher ihren Spruch weg. Bliebe nicht einmal
     // ihr ganzer Titel oder schnitte sie eine Zeile der Statuszeile halb an, schließt sie, wenn gerade ein Grund oder
@@ -491,12 +498,15 @@ function placeStage(el: HTMLElement, band: { g: BandGeo; left: number; width: nu
 /**
  * Legt die Ebene der großen Meldungen genau über die Spielfläche. Ist es dort eng, wird die Meldung kompakter.
  * Bin ich am Zug oder in der Tauschrunde (oder ist die Spielfläche zu klein), steht sie im Band (placeStage).
- * Wechselt die Lage, während eine Meldung steht, blendet sie sich nicht noch einmal ein (Klasse `still`).
+ * Wechselt die Lage, während eine Meldung steht, blendet sie sich nicht noch einmal ein (Klasse `still`). Eine neue
+ * große Meldung in der Spielfläche blendet kleine aus, die sie schneidet (fadeUnder).
  */
 function placeInField(el: HTMLElement | null): void {
   if (!el) return;
   ensureResize();
   const was = el.classList.contains('band') ? 'band' : el.classList.contains('field') ? 'field' : '';
+  // Gerade erst eingehängt (annNext), noch nie gesetzt
+  const fresh = [...el.querySelectorAll<HTMLElement>('.ann:not(.out)')].some((a) => !a.dataset.shown);
   const band = bandNow();
   if (band) {
     const same = was === 'band';
@@ -536,12 +546,39 @@ function placeInField(el: HTMLElement | null): void {
         (a) => y0 + a.offsetTop + a.offsetHeight > line.top - 2,
       );
     if (f && low && above >= FIELD_BIG && above < f.height) put({ ...f, height: above });
+    // Eine neue große Meldung hat Vorrang: Kleine an der Stapelkante, die sie schneidet, blenden aus. Sonst stünde
+    // etwa „… wirft eine Bombe ein“ auf ihrem Zeichen, sobald sie über die Statuszeile rückt
+    if (fresh) fadeUnder(el);
   }
   const now = el.classList.contains('band') ? 'band' : el.classList.contains('field') ? 'field' : '';
   for (const a of el.querySelectorAll<HTMLElement>('.ann')) {
     if (a.dataset.shown && was !== now) a.classList.add('still');
     a.dataset.shown = '1';
   }
+}
+
+/**
+ * Kleine Meldungen in der Spielfläche (`cap`), die eine große Meldung in der Ebene `layer` schneidet, blenden aus
+ * (src/ui/band.ts, yieldToBig). Beide aus der gesetzten Lage ohne Transform, denn beide springen gerade erst auf. Was
+ * über die Ebene hinausragt, schneidet sie ab und zählt nicht.
+ */
+function fadeUnder(layer: HTMLElement): void {
+  const box = layer.getBoundingClientRect();
+  const bigs: Rect[] = [...layer.querySelectorAll<HTMLElement>('.ann:not(.out)')].map((a) => ({
+    left: Math.max(box.left, box.left + a.offsetLeft),
+    top: Math.max(box.top, box.top + a.offsetTop),
+    right: Math.min(box.right, box.left + a.offsetLeft + a.offsetWidth),
+    bottom: Math.min(box.bottom, box.top + a.offsetTop + a.offsetHeight),
+  }));
+  const pills = [...document.querySelectorAll<HTMLElement>('#fly .mid:not(.band):not(.out)')].filter(
+    (o) => o.dataset.mode === 'cap' && o.style.top !== '-999px',
+  );
+  // Kleine Meldungen stehen mittig auf ihrer gesetzten Lage (translateX(-50%))
+  const rects = pills.map((o): Rect => {
+    const x = parseFloat(o.style.left) || 0;
+    return { left: x - o.offsetWidth / 2, right: x + o.offsetWidth / 2, ...restBox(o) };
+  });
+  for (const i of yieldToBig(bigs, rects)) fade(pills[i]);
 }
 
 /** Größenwechsel richtet laufende Meldungen neu aus. Erst beim ersten Gebrauch angemeldet, nicht beim Laden. */

@@ -18,6 +18,8 @@
  * - Nie über den Gegnern. Am eigenen Zug bleibt der Stapel frei, außer das Reaktionsfenster oder Knöpfe in der
  *   Statuszeile (4er, Bombe, Vorspulen, „Für … spielen“) lassen sonst keinen Platz. Diese Knöpfe deckt keine Meldung,
  *   denn der 4er-Knopf steht nur 2 Sekunden (stageRoom).
+ * In der Spielfläche (nicht am Zug) hat eine neue große Meldung Vorrang: Kleine Meldungen an der Stapelkante, die sie
+ * schneidet, blenden aus (yieldToBig).
  */
 
 /** Senkrechter Abschnitt in px (Bildschirmkoordinaten) */
@@ -421,6 +423,25 @@ function coverLine(
   const d = top - lt;
   const moved = out.map((t) => (t === null ? null : t + d));
   return moved.every((t) => t === null || t >= ceil) ? moved : out;
+}
+
+/** Rechteck in px (Bildschirmkoordinaten) */
+export interface Rect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * Welche kleinen Meldungen in der Spielfläche weichen einer neuen großen Meldung? Jede, deren Rechteck eine Karte der
+ * großen (`bigs`) schneidet, auch nur um einen Bruchteil eines Pixels. Berühren reicht nicht. Sie blenden aus wie ein
+ * verdrängter Hinweis im Band, die Lage der großen bleibt (src/ui/feedback.ts, placeInField). Indizes wie `pills`.
+ */
+export function yieldToBig(bigs: readonly Rect[], pills: readonly Rect[]): number[] {
+  const cuts = (a: Rect, b: Rect): boolean =>
+    Math.min(a.right, b.right) > Math.max(a.left, b.left) && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
+  return pills.flatMap((p, i) => (bigs.some((b) => cuts(b, p)) ? [i] : []));
 }
 
 /**

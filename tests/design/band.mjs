@@ -4,7 +4,8 @@
  * aus dem Topf, 8 Plätze, Gegner „Lena“ und Namen mit 16 Zeichen, als Gastgeber und als Gast.
  *
  *   node tests/design/band.mjs --serve [--games=shithead,durak,cabo,schnautz] [--roles=host,guest]
- *     [--sizes=360x640,375x548,390x844,1280x860] [--checks=swap,pair,big,reason,spy,emoturn,still,emo,playfor,seat]
+ *     [--sizes=360x640,375x548,390x844,1280x860]
+ *     [--checks=swap,pair,big,reason,spy,emoturn,still,under,emo,playfor,seat]
  *     [--shots]
  *
  * Prüfungen (je Zeile ein Urteil, Befunde stehen in band.json):
@@ -21,6 +22,9 @@
  *           Weicht Automatisches dem Grund, muss es danach erscheinen („ok, gewichen und nachgeholt“)
  *   spy     Cabo beim Spionieren: Tipp auf eine eigene Karte, der Grund deckt weder Haupt- noch Unterzeile
  *   still   große Meldung im Band, dann Zugwechsel: sie blendet sich nicht noch einmal ein (Durak: Passen oder Aufnehmen)
+ *   under   nicht am Zug steht eine kleine Meldung an der Stapelkante, dann kommt eine große (Shithead: Bombe außer der
+ *           Reihe mit dem längsten Spruch, „wirft 4er rein“ und danach vier voll): Die kleine schneidet die große
+ *           nicht, sie blendet aus („ok, kleine ausgeblendet“)
  *   emoturn am eigenen Zug mit offenem Reaktionsfenster (Handy): nie über Gegnern oder Fenster, der Stapel darf weichen,
  *           seine Regelzeile wird dann ganz oder gar nicht gedeckt
  *   emo     nicht am Zug, Reaktionsfenster offen: Meldungen nie über den Gegnern oder dem Fenster
@@ -63,7 +67,7 @@ import {
 const games = arg('games', 'shithead,durak,cabo,schnautz').split(',');
 const roles = arg('roles', 'host,guest').split(',');
 const sizes = sizeList(arg('sizes', '360x640,375x548,390x844,1280x860'));
-const checks = arg('checks', 'swap,pair,big,reason,spy,emoturn,still,emo,playfor,seat').split(',');
+const checks = arg('checks', 'swap,pair,big,reason,spy,emoturn,still,under,emo,playfor,seat').split(',');
 const LONG = 'Wolfgang-Amadeu0';
 const OVER = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-win' };
 const ROUND = { cabo: 'cb-round', schnautz: 'sz-round' };
@@ -744,6 +748,101 @@ async function checkSwap(page, meta) {
   await clear(page);
 }
 
+/**
+ * Nicht am Zug: Eine kleine Meldung steht schon an der Stapelkante, dann kommt eine große. Bei Shithead eine Bombe
+ * außer der Reihe mit dem längsten Spruch des Topfs und dem Namen mit 16 Zeichen (die Meldung rückt dann über die
+ * Statuszeile, src/ui/feedback.ts, placeInField) und „wirft 4er rein“, danach macht jemand die vier voll. In den
+ * anderen Spielen ein Hinweis und danach die große Meldung des Spiels. Die kleine darf die große nicht schneiden, sie
+ * blendet aus (src/ui/band.ts, yieldToBig, „ok, kleine ausgeblendet“). Dieselbe Reihenfolge wie im Shithead-Ablauf, nicht
+ * wie im Effektweg ohne Ablauf (dort kommt die große zuerst).
+ */
+async function checkUnder(page, meta, game) {
+  // Spruch mit den meisten Zeichen samt langem Namen: Lognummer dafür (wie checkPair)
+  const longest = (cat) =>
+    page.evaluate(async (cat) => {
+      const M = await window.__bandMods();
+      const v = window.__schnautz.App.view;
+      const name = v.players.find((p) => p.id === window.__ids.LONG)?.name;
+      let best = [90000, ''];
+      for (let n = 90000; n < 90400; n++) {
+        const t = M.tauntUi.taunt(cat, { name }, n);
+        if (t.length > best[1].length) best = [n, t];
+      }
+      return best[0];
+    }, cat);
+  const cases =
+    game === 'shithead'
+      ? [
+          [
+            'bombe',
+            [{ k: 'shbomb', p: 'LONG', cards: ['H9'], src: 'hand', out: true }],
+            [{ k: 'shburn', p: 'LONG', four: true, cut: true, n: await longest('bombOther') }],
+            ['Bombe', 'wirft eine Bombe ein'],
+          ],
+          [
+            '4er',
+            [{ k: 'shthrow', p: 'LENA', cards: ['H4'] }],
+            [{ k: 'shburn', p: 'LONG', four: true, cut: false, n: await longest('fourOther') }],
+            ['Bombe', 'wirft 4er rein'],
+          ],
+        ]
+      : [['hinweis', null, ...BIGS[game][0].slice(1, 2), [BIGS[game][0][3][0], 'tauscht eine Karte']]];
+  for (const [name, small, big, [bigNeed, smallNeed]] of cases) {
+    await clear(page);
+    if (small) await fx(page, game, small);
+    else
+      await page.evaluate(async () => {
+        const { feedback } = await window.__bandMods();
+        feedback.beginBatch([]);
+        feedback.emit({ level: 'small' }, { pid: window.__ids.LENA, text: 'tauscht eine Karte', delay: 0 });
+      });
+    await sleep(400);
+    const pill = await page.evaluate((t) => {
+      const el = [...document.querySelectorAll('#fly .mid:not(.out)')].find((o) => o.textContent.includes(t));
+      return el ? { band: el.classList.contains('band'), mode: el.dataset.mode } : null;
+    }, smallNeed);
+    if (!pill) {
+      rows.push({ ...meta, check: `under ${name}`, verdict: 'info, keine kleine Meldung zu sehen' });
+      continue;
+    }
+    await fx(page, game, big, BIGS[game][0][2]);
+    // Blendet die kleine aus? Kurz nach dem Erscheinen der großen nachsehen, ausgeblendet ist sie nach 0,32 s weg
+    await sleep(150);
+    const hid = await page.evaluate(
+      (t) => !![...document.querySelectorAll('#fly .mid.out')].find((o) => o.textContent.includes(t)),
+      smallNeed,
+    );
+    // Die große springt 0,45 s auf, dann steht sie. Schneidet eine sichtbare kleine sie dann noch?
+    await sleep(350);
+    const res = await page.evaluate((t) => {
+      const a = document.querySelector('#announce .ann:not(.out)');
+      if (!a) return { missing: true };
+      const el = [...document.querySelectorAll('#fly .mid:not(.out)')].find((o) => o.textContent.includes(t));
+      const r = a.getBoundingClientRect();
+      const q = el?.getBoundingClientRect();
+      const y = q ? Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) : 0;
+      const x = q ? Math.min(r.right, q.right) - Math.max(r.left, q.left) : 0;
+      return { layer: document.querySelector('#announce')?.className ?? '', cut: x > 1 && y > 1 ? Math.round(y) : 0 };
+    }, smallNeed);
+    const o = await inspect(page, '#announce .ann:not(.out)', ['#fly .mid:not(.out)', '#opps .opp', '#me .card']);
+    const j = res.missing ? 'große fehlt' : judge(o, { need: [bigNeed], edge: false });
+    const bad = [j.startsWith('ok') ? '' : j, res.cut ? `kleine schneidet große ${res.cut}px` : '']
+      .filter(Boolean)
+      .join('; ');
+    await record(
+      page,
+      { ...meta, check: `under ${name} (${pill.band ? 'Band' : 'Spielfläche'} ${res.layer ?? ''})` },
+      o,
+      {
+        verdict: bad || (hid ? 'ok, kleine ausgeblendet' : 'ok'),
+        data: { pill, res, hid },
+      },
+    );
+    await shot(page, `band-${meta.game}-${meta.role}-under-${name}-${meta.size}`);
+  }
+  await clear(page);
+}
+
 /** Nicht am Zug, Reaktionsfenster offen: nie über Gegnern oder Fenster. */
 async function checkEmo(page, meta, tag = 'emo') {
   await clear(page);
@@ -996,7 +1095,7 @@ async function run(browser, game, role, group) {
       await clear(page);
     }
     await hold(false);
-    if (checks.includes('emo') || (checks.includes('playfor') && role === 'host')) {
+    if (checks.includes('emo') || checks.includes('under') || (checks.includes('playfor') && role === 'host')) {
       // Nicht am Zug: notfalls den eigenen Zug abgeben, dann die KIs anhalten
       await hold(true);
       for (let k = 0; k < 6 && (await myMove()); k++) {
@@ -1009,6 +1108,7 @@ async function run(browser, game, role, group) {
         const meta = { game, role, size, pid };
         if (await myMove()) rows.push({ ...meta, check: 'emo', verdict: 'noch am Zug' });
         else {
+          if (checks.includes('under')) await checkUnder(page, meta, game);
           if (checks.includes('emo')) await checkEmo(page, meta);
           if (checks.includes('playfor') && role === 'host') await checkPlayFor(page, meta);
         }

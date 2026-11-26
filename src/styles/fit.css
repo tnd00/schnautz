@@ -935,4 +935,47 @@
   body.ingame .scorebar.many .sb-n {
     font-size: 11px;
   }
+
+  /*
+   * Lange Namen enden sauber statt mitten im Buchstaben. Als Block greift die Ellipse (im flexiblen Kasten aus
+   * feedback.css nicht). Rand und Gegenrand lassen der wackelnden Krone Luft, ohne Platz zu kosten.
+   */
+  body.ingame .scorebar .sb-n {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 2px 0 2px 2px;
+    margin: -2px 0 -2px -2px;
+  }
+  body.ingame .scorebar .sb-n .reign {
+    margin-right: 3px;
+  }
+  /*
+   * Ab fünf Leuten (.many): schmalere Pillen. Der Abstand zur Zahl ist zum größten Teil Innenabstand des Namens
+   * (--fade). Ein langer Name läuft dort hinein und blendet weich aus, statt für Punkte Platz abzugeben. Kurze Namen
+   * sehen davon nichts.
+   */
+  body.ingame .scorebar.many {
+    gap: 3px;
+  }
+  body.ingame .scorebar.many .sb-p {
+    gap: 2px;
+    padding-inline: 4px;
+  }
+  body.ingame .scorebar.many .sb-n {
+    --fade: 5px;
+    padding-right: var(--fade);
+  }
+  /* Neben „raus“ bliebe für die Krone zu wenig Platz, ihre Pille bekommt deshalb vorab die Breite der Krone */
+  body.ingame .scorebar.many .sb-p.out:has(.reign) {
+    flex-basis: 22px;
+  }
+  @supports (mask-image: linear-gradient(#000, #000)) or (-webkit-mask-image: linear-gradient(#000, #000)) {
+    body.ingame .scorebar.many .sb-n {
+      text-overflow: clip;
+      -webkit-mask-image: linear-gradient(to left, transparent, #000 var(--fade));
+      mask-image: linear-gradient(to left, transparent, #000 var(--fade));
+    }
+  }
 }

@@ -11,7 +11,7 @@ export interface Release {
 export const CHANGELOG: readonly Release[] = [
   {
     v: '2.7',
-    date: '2026-11-25',
+    date: '2026-11-26',
     title: 'Klare Worte',
     groups: [
       {
@@ -23,7 +23,7 @@ export const CHANGELOG: readonly Release[] = [
           'Nach dem Neuladen geht es am Tisch ohne Tippen zurück an deinen Platz.',
           'Dein Tisch läuft immer nur in einem Tab. Öffnest du ihn ein zweites Mal, fragt die Seite „Hierher holen?“ und der alte Tab gibt ab.',
           'In der Lobby nimmt der Gastgeber auch Leute vom Platz, die gerade offline sind.',
-          'Geht ein Zug nicht, wackelt die angetippte Karte und der Grund steht direkt am Tisch statt in einer Meldung am Rand. Ausgegraute Karten und Knöpfe lassen sich antippen und sagen, warum sie gerade nicht gehen. Das gilt in allen vier Spielen, auch für Gäste.',
+          'Geht ein Zug nicht, wackelt die angetippte Karte und der Grund steht direkt am Tisch statt in einer Meldung am Rand. Ausgegraute Karten lassen sich in allen vier Spielen antippen und sagen, warum sie gerade nicht gehen, bei Schnautz und Cabo auch die Knöpfe. Das gilt auch für Gäste.',
           'Die Statuszeile sieht in allen vier Spielen gleich aus. Sie sagt immer, wer dran ist und was jetzt zu tun ist. Ihre Höhe bleibt gleich, damit Stapel und Karten nicht springen.',
           'Das Ergebnisblatt ist in allen vier Spielen gleich aufgebaut. Oben steht mit Karten, um wen es geht, also der Shithead, der Durak, wer Cabo gerufen hat oder bei Schnautz ein Leben verliert. Darunter folgen deine eigene Zeile und alle anderen. Zu acht passt es am Handy ohne Scrollen und auch lange Namen stehen ganz da.',
           'Kommen, Gehen, Zurückkommen und Übernahmen erscheinen auch am Tisch, etwa „Lena setzt sich an Uschis Platz.“ Läuft bei anderen die Zeit ab, steht kurz „⏰ Zeit um, die KI spielt einmal für Lena.“ da.',
@@ -58,6 +58,8 @@ export const CHANGELOG: readonly Release[] = [
           'Die Tippzeile im Ergebnis ist kürzer und nennt bei mehreren richtigen Tipps nur die Zahl.',
           'Warten mehr als drei Leute, nennt die Statuszeile zwei Namen und zählt den Rest, etwa „Warte auf Lena, Tom und 5 weitere.“ So bleibt auch das Feld „Bereit!“ in der Shithead-Tauschrunde kurz.',
           'Bei Cabo wackelt beim Spionieren nur die angetippte eigene Karte und am Tisch steht, warum es nicht geht. Im Ergebnis bleibt die Punktzahl auch mit vielen Strafkarten in einer Zeile.',
+          'Bei Cabo und Schnautz enden lange Namen in der Punkteleiste oben sauber mit Punkten, ab fünf Leuten blenden sie weich aus, statt mitten im Buchstaben abzubrechen.',
+          'Bei Shithead liegt der kleine Hinweis zu einer Bombe oder einem 4er nicht mehr auf der großen Meldung. Sobald sie kommt, blendet er aus.',
           'Regeln und Updates laden erst, wenn du sie öffnest. Dadurch startet die Seite schneller.',
         ],
       },

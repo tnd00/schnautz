@@ -365,8 +365,11 @@ test('ausgegraute Karte antippen: Grund am Tisch, die Auswahl bleibt leer', asyn
   await expect(host.locator('#fly .nopelbl')).toHaveText('Die Karte passt nicht auf den Stapel.');
   await expect(host.locator('.shme .shhand .card.sel')).toHaveCount(0);
   await expect(host.locator('#toasts .toast')).toHaveCount(0);
-  // Die passende Karte lässt sich wie immer wählen und legen
-  await host.click(`.shme .shhand [data-act=shh][data-i="${1 - i5}"]`, { position: { x: 8, y: 18 } });
+  // Die passende Karte lässt sich wie immer wählen und legen. Vorher die Maus wegnehmen: Am PC wächst die Karte unter
+  // der Maus (hover) und deckt den Rand der Nachbarkarte, Playwright prüft das Ziel vor dem Bewegen der Maus
+  // und in die Mitte der Karte tippen, die kein Nachbar überdeckt
+  await host.mouse.move(1, 1);
+  await host.click(`.shme .shhand [data-act=shh][data-i="${1 - i5}"]`);
   await expect(host.locator('.shme .shhand .card.sel')).toHaveCount(1);
   // Die 10 verbrennt zwei Karten im Ablauf: Unter zehn Karten ist das ein Hinweis, keine große Ansage
   await host.click('[data-act=shplay]');
