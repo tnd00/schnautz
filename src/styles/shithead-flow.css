@@ -525,6 +525,7 @@
 /* 0s statt 0.01ms: Sonst bekommt jedes Element ohne eigenen Übergang (transition-property all) für jede
  * Eigenschaft einen Übergang und zeigt einen Frame lang den alten Wert. fitLobby und Karussell messen dann die
  * vorige Größe. */
+:where(html.calm),
 :where(html.calm) * {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;

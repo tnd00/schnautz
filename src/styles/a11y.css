@@ -2,7 +2,10 @@
 
 /* Nur für den Vorleser da (src/ui/a11y/say.ts), steht außerhalb von #app */
 #sr-say {
-  position: absolute;
+  /* Oben links festgesetzt: an seiner Stelle im Fluss hinter #app machte es die Seite 1 px höher als das Fenster */
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;

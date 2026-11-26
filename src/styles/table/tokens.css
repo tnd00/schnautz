@@ -72,11 +72,8 @@
     0 0 34px color-mix(in srgb, var(--brass-hi) 30%, transparent); /* Leuchten eigener Platz am Zug */
 
   /* Mitte */
-  --tb-zone-bg: radial-gradient(
-    in srgb,
-    rgba(255, 255, 255, 0.05),
-    color-mix(in srgb, var(--tb-shade) 12%, transparent)
-  ); /* Fläche der Mitte */
+  /* Wörtlich wie in 2.7: ein color-mix()-Stopp rechnet selbst mit „in srgb“ um eine Stufe anders */
+  --tb-zone-bg: radial-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)); /* Fläche der Mitte */
   --tb-zone-line: color-mix(in srgb, var(--cream) 7%, transparent); /* Rand der Mitte */
   --tb-zone-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cream) 7%, transparent); /* Innenschatten der Mitte, geschätzt */
   --tb-zone-radius: 22px; /* Rundung der Mitte */
