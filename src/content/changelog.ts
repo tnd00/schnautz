@@ -55,7 +55,7 @@ export const CHANGELOG: readonly Release[] = [
           'Lädt Legacy oder Sticker dunkel gerade nicht, bleibt der Tisch beim alten Stand und ein Hinweis sagt es dir.',
           'Die Karten zeigen J, Q, K und A in den Ecken, auch im Verlauf.',
           'Beim Ziehen leuchtet weiter nur das Ziel, loslassen darfst du aber großzügig daneben. Gibt es nur ein Ziel, zählt die ganze Tischmitte. Bei Durak sitzen die Flächen mittig auf den Karten. Die Farbzeichen im Ziehbild sind keine Vierecke mehr.',
-          'In der Lobby liegen Code und Plätze flach mit klarem Rand statt Schatten und doppelter Kante. Als Gastgeber siehst du unter den Spielen nicht mehr, was du selbst umgestellt hast.',
+          'In der Lobby steht der Code in einem klaren Rahmen, die Plätze sind ruhige weiße Kacheln ohne doppelte Kante. Als Gastgeber siehst du unter den Spielen nicht mehr, was du selbst umgestellt hast.',
           'Hinter dem grünen Punkt steht kurz, wie viele Plätze noch frei sind. Die Verbindung klappst du bei Bedarf auf.',
           'Am Ende einer Partie steht für alle, die fordern dürfen, was Revanche heißt: ein Duell gegen den Sieger, die nächste Partie entscheidet. Am Handy heißt der andere Knopf jetzt „Nochmal“.',
         ],
