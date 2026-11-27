@@ -414,6 +414,8 @@ body.ingame {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  /* Doppeltipp zoomt nicht mehr (User 27.11.2026), Zoomen mit zwei Fingern bleibt für alle, die es brauchen */
+  touch-action: manipulation;
 }
 body.ingame :is(input, textarea) {
   -webkit-user-select: text;
