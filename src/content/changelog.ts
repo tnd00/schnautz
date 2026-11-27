@@ -42,7 +42,7 @@ export const CHANGELOG: readonly Release[] = [
           'Bei Durak trägt der Trumpf in deiner Hand einen Stern, die Farbe allein reicht nicht mehr.',
           'Bei Schnautz steht die Runde in der Tischmitte. Am Rundenende zeigt eine Plakette am Platz, wer ein Leben verliert, wer schwimmt und wer raus ist.',
           'Am Handy liegt das Menü für Reaktionen, Klänge und Würfe genau über deinem Platz. Ein Tipp auf einen Gegner öffnet eine Reihe zum Werfen.',
-          'Bei Durak heißt es jetzt „gepasst“, wenn jemand nichts mehr nachlegt, und „Platz für 4 Karten“ statt „passen dazu“.',
+          'Bei Durak heißt es jetzt „gepasst“, wenn jemand nichts mehr nachlegt. Statt „passen dazu“ steht „Platz für 4 Karten“ am Tisch.',
           'Bei Cabo bricht „Eintauschen“ nicht mehr in zwei Zeilen um.',
           'Am Handy zeigt ein 📴 vor dem Namen, wer offline ist.',
           'Bei Schnautz trägt die beste Hand einer Runde 🏅, die Krone bleibt für Sieger.',
