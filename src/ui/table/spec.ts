@@ -50,21 +50,3 @@ export function specOf(game: GameKind): TableSpec {
       return unreachable(game);
   }
 }
-
-/**
- * Übergang bis 4b (Plan 2.8 Nachtrag nach Runde 0, Punkt 7): Ob die Punkteleiste oben noch erscheint. Shithead und
- * Durak zeigen alles in den Kacheln, bei Cabo und Schnautz trägt die Leiste Punkte und Leben, bis 4b sie in
- * `SeatModel.value` holt. Danach fällt diese Weiche weg.
- */
-export function scorebarOf(game: GameKind): boolean {
-  switch (game) {
-    case 'shithead':
-    case 'durak':
-      return false;
-    case 'cabo':
-    case 'schnautz':
-      return true;
-    default:
-      return unreachable(game);
-  }
-}

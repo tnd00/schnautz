@@ -54,7 +54,7 @@ describe('Codeliste', () => {
   it('hat jeden Code genau einmal, alle in einer der acht Gruppen', () => {
     expect(new Set(REJECT_CODES).size).toBe(REJECT_CODES.length);
     for (const e of REJECT_CODES) expect(e).toMatch(/^(?:any|seat|net|sh|dk|cb|sz|bet)\.[a-z][A-Za-z]+$/);
-    expect(REJECT_CODES.length).toBe(87);
+    expect(REJECT_CODES.length).toBe(89);
   });
 
   it('erkennt Codes und Ablehnungen', () => {

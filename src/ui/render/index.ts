@@ -7,7 +7,6 @@ import { renderEmotes } from './emotes';
 import { renderLegend } from './legend';
 import { renderLobby } from './lobby';
 import { renderLog } from './log';
-import { renderScore } from './scorebar';
 import { clearSwapGrid } from './shithead';
 import { renderTurnNote } from './turnnote';
 import { markTosses } from '../toss';
@@ -16,7 +15,7 @@ import { realignFeedback } from '../feedback';
 import { GAME_NAME, GAMES } from '../../game/games';
 import { renderResult } from './result';
 import { renderTable } from '../table/index';
-import { scorebarOf, specOf } from '../table/spec';
+import { specOf } from '../table/spec';
 import { peelChosen } from '../peel';
 
 /** Zeichnet alles neu, was zur aktuellen Ansicht gehört. */
@@ -28,7 +27,6 @@ export function render(): void {
   $('#menu-lobby').hidden = !(App.role === 'host' && v.phase !== 'lobby');
   $('#menu-leave').textContent = App.role === 'host' ? 'Tisch auflösen' : 'Tisch verlassen';
   const spec = specOf(v.game);
-  const sb = scorebarOf(v.game);
   if (v.phase === 'lobby') {
     showScreen('lobby');
     renderLobby(v);
@@ -49,8 +47,6 @@ export function render(): void {
   // Spielfarbe --g für den Sticker-Look am Tisch, auch für Fenster und Ergebnisblatt über dem Tisch
   GAMES.forEach((g) => document.body.classList.toggle(`g-${g}`, v.phase !== 'lobby' && g === v.game));
   if (v.phase !== 'lobby') {
-    $('#scorebar').hidden = !sb;
-    if (sb) renderScore(v);
     renderLegend(v);
     renderEmotes();
   }

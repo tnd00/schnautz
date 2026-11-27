@@ -423,7 +423,9 @@ export function dkBtnState(v: View, act: DkBtn): { ok: boolean; why: Reject | nu
       if (App.me !== D.def) return { ok: false, why: rj('dk.notDefender', { p: D.def }) };
       if (D.take) return { ok: false, why: rj('dk.taking') };
       if (!sel.length) return { ok: false, why: rj('any.pickCard') };
-      return { ok: false, why: sel.length === 1 && !dkTargets(v, sel[0]).length ? rj('dk.noTarget') : null };
+      if (sel.length > 1) return { ok: false, why: rj('dk.oneCard') };
+      // Eine Karte, die mehrere Angriffe schlagen kann: erst den Angriff antippen
+      return { ok: false, why: dkTargets(v, sel[0]).length ? rj('dk.pickPair') : rj('dk.noTarget') };
     case 'dktake':
       return OK;
     default:

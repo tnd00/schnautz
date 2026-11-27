@@ -73,6 +73,8 @@ export const REJECT_CODES = [
   'dk.leadFirst',
   'dk.openCards',
   'dk.noTarget',
+  'dk.pickPair',
+  'dk.oneCard',
   // Cabo
   'cb.peekOver',
   'cb.pickTwo',

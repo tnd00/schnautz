@@ -481,10 +481,6 @@
     transform: rotate(10deg);
   }
 }
-.sb-p.shamed {
-  border-color: var(--tb-shame-line);
-  background: var(--tb-shame-bg);
-}
 .paper .taunt {
   margin: -4px 0 14px;
   padding-left: 22px;

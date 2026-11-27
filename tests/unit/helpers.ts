@@ -131,6 +131,8 @@ export const REJECT_SAMPLES: Readonly<Record<RejectCode, RejectArgs | undefined>
   'dk.leadFirst': undefined,
   'dk.openCards': { p: 'p1' },
   'dk.noTarget': undefined,
+  'dk.pickPair': undefined,
+  'dk.oneCard': undefined,
   'cb.peekOver': undefined,
   'cb.pickTwo': { n: 2 },
   'cb.peeking': undefined,

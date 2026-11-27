@@ -629,27 +629,6 @@
   }
 }
 
-/* Leben kompakt für die Leiste am Handy, am PC stehen die Bierdeckel einzeln */
-.sb-lc {
-  display: none;
-  align-items: center;
-  gap: 3px;
-  flex: none;
-  font-size: 12px;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  color: var(--cream);
-}
-.sb-lc .coaster {
-  width: 10px;
-  height: 10px;
-}
-.sb-lc svg {
-  width: 16px;
-  height: 10px;
-  color: var(--tb-sea-hi);
-}
-
 /* ---------- Gemeinsame Bausteine am Tisch (Plan 2.8 Runde 3) ----------
  * Fokusring: Abstand zum Rand, damit er nicht wie ein zweiter Rahmen wirkt, und die fokussierte Karte liegt oben,
  * damit überlappte Nachbarn ihn nicht verdecken. Farbe aus --tb-focus, der Sticker-Look färbt nach. */

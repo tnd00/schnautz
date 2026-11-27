@@ -109,7 +109,7 @@
   grid-template-columns: 0 minmax(0, 1fr) auto auto;
   padding-left: 2px;
 }
-/* Leben kurz wie in der Punkteleiste: ein Deckel und die Zahl */
+/* Leben kurz: ein Deckel und die Zahl */
 #overlay .paper.result.rs .row.rr .lives.lc {
   gap: 2px;
   font-weight: 750;

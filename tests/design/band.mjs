@@ -625,7 +625,7 @@ async function checkSpy(page, host, meta) {
     what: 'Spionieren',
   }).catch(() => false);
   await sleep(600);
-  if (ok) await page.locator('#me .cbslot[data-act=cbm]').first().click();
+  if (ok) await page.locator('#me .cbslot[data-act=cbm]').first().click({ force: true }); // trägt ab 4b aria-disabled mit Grund
   await sleep(300);
   const o = await inspect(page, '#fly .nopelbl:not(.out)', [...TURN_OBST, '#status .main', '#status .sub']);
   await record(page, { ...meta, check: 'spy reason' }, o, { verdict: ok ? undefined : 'nicht beim Spionieren' });

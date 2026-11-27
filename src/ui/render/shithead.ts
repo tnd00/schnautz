@@ -225,7 +225,7 @@ function shSeat(v: View, p: Player): SeatModel | null {
         k: 'cards',
         html: `${hn}${HAND_ICON}`,
         title: hide ? '' : TABLE.cards(hn),
-        cls: `hcount${hn ? '' : ' zero'}${hide ? ' hold' : ''}`,
+        cls: `${hn ? '' : 'zero'}${hide ? ' hold' : ''}`.trim(),
       });
   const ohand = revealed ? `<span class="ohand" title="Karten auf der Hand">${revealed}</span>` : '';
   return {

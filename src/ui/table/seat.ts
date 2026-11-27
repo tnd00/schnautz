@@ -46,10 +46,11 @@ export function seatHTML(m: SeatModel): string {
 
 /**
  * Wert einer Person als Tinten-Sticker (`SeatModel.value`, auch am eigenen Platz): Zahl und Zeichen oder Wort als
- * fertiges HTML, `title` als Klartext. `k` sagt der Haut, was es ist (cards, points, lives). `cls` für alte Haken.
+ * fertiges HTML, `title` als Klartext. `k` sagt der Haut, was es ist (cards, points, lives). Die Pille trägt der
+ * Baustein selbst (Klasse hcount, gleich in allen vier Spielen), `cls` nur für Zustände wie zero oder hold.
  */
 export function valueHTML(o: { k: 'cards' | 'points' | 'lives'; html: string; title: string; cls?: string }): string {
-  return `<span class="val${o.cls ? ` ${o.cls}` : ''}" data-k="${o.k}" title="${esc(o.title)}">${o.html}</span>`;
+  return `<span class="val hcount${o.cls ? ` ${o.cls}` : ''}" data-k="${o.k}" title="${esc(o.title)}">${o.html}</span>`;
 }
 
 /**

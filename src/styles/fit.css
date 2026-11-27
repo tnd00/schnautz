@@ -50,57 +50,6 @@
     margin-top: auto;
   }
 
-  /* Punkteleiste in einer Zeile */
-  .scorebar {
-    flex: none;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 5px;
-    padding: 0 0 2px;
-  }
-  .sb-meta {
-    display: none;
-  }
-  .sb-p {
-    flex: 0 1 auto;
-    min-width: 0;
-    padding: 3px 8px;
-    gap: 5px;
-    border-radius: 11px;
-  }
-  .sb-n {
-    min-width: 0;
-    font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .sb-n .botb {
-    display: none;
-  }
-  /* Die Bierdeckel stehen schon an jedem Platz, hier zählen Name und Siege */
-  .scorebar .lives {
-    display: none;
-  }
-  .sb-c {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--cream);
-  }
-  .sb-l {
-    display: none;
-  }
-  .sb-w {
-    padding: 0 5px;
-    font-size: 12px;
-  }
-  .sb-p .coaster {
-    width: 10px;
-    height: 10px;
-  }
-  .sb-p .coaster::after {
-    inset: 2.5px;
-  }
-
   /* Gegner nebeneinander in einer Zeile */
   .opps {
     flex: none;
@@ -655,13 +604,6 @@
   body.ingame .iconbtn:not(.rulesbtn) {
     width: 34px;
   }
-  /* Kurze Handys: Die kompakte Leiste bleibt, nur noch flacher */
-  body.ingame .scorebar .sb-p {
-    padding: 1px 5px;
-  }
-  body.ingame .scorebar .sb-n {
-    font-size: 12px;
-  }
   .opps {
     padding-top: 6px;
   }
@@ -853,93 +795,13 @@
   }
 }
 
-/*
- * Schnautz am Handy: Die Leiste oben passt immer in eine Zeile. Alle teilen sich die Breite, jeder Eintrag zeigt
- * einen gekürzten Namen und die Leben als Bierdeckel mit Zahl (.sb-lc), auch mit acht Leuten.
- */
+/* Schnautz am Handy */
 @media (max-width: 960px) {
-  body.ingame .scorebar {
-    justify-content: stretch;
-    gap: 4px;
-  }
-  body.ingame .scorebar .sb-p {
-    flex: 1 1 0;
-    min-width: 0;
-    justify-content: center;
-    gap: 4px;
-    padding: 3px 5px;
-  }
-  body.ingame .scorebar .sb-p .lives,
-  body.ingame .scorebar .sb-p .swim,
-  body.ingame .scorebar .sb-p .outt,
-  body.ingame .scorebar .sb-p .botb,
-  body.ingame .scorebar .sb-w {
-    display: none;
-  }
-  body.ingame .scorebar .sb-lc {
-    display: inline-flex;
-  }
-  body.ingame .scorebar .sb-p.out {
-    opacity: 0.45;
-  }
   /* „schwimmt“ steht nur am eigenen Platz ausgeschrieben, sonst reicht das Zeichen */
   body.ingame .swim .swt {
     display: none;
   }
   body.ingame #me .swim .swt {
     display: inline;
-  }
-  /* Die eigenen Leben stehen am eigenen Platz, bei vielen Leuten reicht die Zahl */
-  body.ingame .scorebar .sb-p.mine {
-    display: none;
-  }
-  body.ingame .scorebar.many .sb-lc .coaster {
-    display: none;
-  }
-  body.ingame .scorebar.many .sb-n {
-    font-size: 12px;
-  }
-
-  /*
-   * Lange Namen enden sauber statt mitten im Buchstaben. Als Block greift die Ellipse (im flexiblen Kasten aus
-   * feedback.css nicht). Rand und Gegenrand lassen der wackelnden Krone Luft, ohne Platz zu kosten.
-   */
-  body.ingame .scorebar .sb-n {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 2px 0 2px 2px;
-    margin: -2px 0 -2px -2px;
-  }
-  body.ingame .scorebar .sb-n .reign {
-    margin-right: 3px;
-  }
-  /*
-   * Ab fünf Leuten (.many): schmalere Pillen. Der Abstand zur Zahl ist zum größten Teil Innenabstand des Namens
-   * (--fade). Ein langer Name läuft dort hinein und blendet weich aus, statt für Punkte Platz abzugeben. Kurze Namen
-   * sehen davon nichts.
-   */
-  body.ingame .scorebar.many {
-    gap: 3px;
-  }
-  body.ingame .scorebar.many .sb-p {
-    gap: 2px;
-    padding-inline: 4px;
-  }
-  body.ingame .scorebar.many .sb-n {
-    --fade: 5px;
-    padding-right: var(--fade);
-  }
-  /* Neben „raus“ bliebe für die Krone zu wenig Platz, ihre Pille bekommt deshalb vorab die Breite der Krone */
-  body.ingame .scorebar.many .sb-p.out:has(.reign) {
-    flex-basis: 22px;
-  }
-  @supports (mask-image: linear-gradient(#000, #000)) or (-webkit-mask-image: linear-gradient(#000, #000)) {
-    body.ingame .scorebar.many .sb-n {
-      text-overflow: clip;
-      -webkit-mask-image: linear-gradient(to left, transparent, #000 var(--fade));
-      mask-image: linear-gradient(to left, transparent, #000 var(--fade));
-    }
   }
 }

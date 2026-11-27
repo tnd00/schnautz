@@ -106,6 +106,8 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
   'dk.leadFirst': 'Du musst zuerst angreifen.',
   'dk.openCards': 'Erst muss alles geschlagen sein.',
   'dk.noTarget': 'Diese Karte schlägt keinen offenen Angriff.',
+  'dk.pickPair': 'Tippe den Angriff an, den du schlagen willst.',
+  'dk.oneCard': 'Schlagen geht mit genau einer Karte.',
   'cb.peekOver': 'Ansehen geht nur zu Beginn der Runde.',
   'cb.pickTwo': (f) => (f.num('n') === 1 ? 'Wähle eine deiner Karten.' : 'Wähle zwei deiner Karten.'),
   'cb.peeking': 'Erst sehen sich alle ihre zwei Karten an.',
