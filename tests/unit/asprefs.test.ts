@@ -11,6 +11,7 @@ const FULL: Prefs = {
   theme: 'dark',
   calm: 'on',
   drag: false,
+  zones: true,
   haptic: false,
   volume: 0.3,
   turnTone: 'always',

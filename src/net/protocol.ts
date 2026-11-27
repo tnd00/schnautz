@@ -94,14 +94,16 @@ export function asSavedGuest(x: unknown): SavedGuest | null {
 export interface Prefs {
   /** Tisch im Sticker-Look oder im Legacy-Design */
   look: 'sticker' | 'legacy';
-  /** Kartendeck in beiden Looks: Vinyl oder das klassische aus cards.css */
-  deck: 'vinyl' | 'classic';
-  /** wirkt nur unter Sticker, der Schalter steht in 2.8 nur im Dev-Menü */
+  /** Kartendeck in beiden Looks, unabhängig vom Design: Vinyl, Vinyl dunkel oder das klassische aus cards.css */
+  deck: 'vinyl' | 'vinyl-dark' | 'classic';
+  /** wirkt nur unter Sticker, gewählt als „Sticker dunkel“ im Bogen „Design“ */
   theme: 'light' | 'dark';
   /** Ruhig: auto folgt prefers-reduced-motion */
   calm: 'auto' | 'on' | 'off';
   /** Karten ziehen */
   drag: boolean;
+  /** Trefferflächen beim Ziehen sichtbar machen, Standard aus */
+  zones: boolean;
   /** Vibration, nur angezeigt, wenn navigator.vibrate existiert */
   haptic: boolean;
   /** Lautstärke von 0 bis 1 */
@@ -117,6 +119,7 @@ export const PREFS_DEFAULT: Readonly<Prefs> = {
   theme: 'light',
   calm: 'auto',
   drag: true,
+  zones: false,
   haptic: true,
   volume: 1,
   turnTone: 'away',
@@ -137,10 +140,11 @@ export function asPrefs(x: unknown): Prefs {
   const vol = o.volume;
   return {
     look: oneOf(o.look, ['sticker', 'legacy'], d.look),
-    deck: oneOf(o.deck, ['vinyl', 'classic'], d.deck),
+    deck: oneOf(o.deck, ['vinyl', 'vinyl-dark', 'classic'], d.deck),
     theme: oneOf(o.theme, ['light', 'dark'], d.theme),
     calm: oneOf(o.calm, ['auto', 'on', 'off'], d.calm),
     drag: boolOr(o.drag, d.drag),
+    zones: boolOr(o.zones, d.zones),
     haptic: boolOr(o.haptic, d.haptic),
     volume: typeof vol === 'number' && Number.isFinite(vol) ? Math.min(1, Math.max(0, vol)) : d.volume,
     turnTone: oneOf(o.turnTone, ['always', 'away', 'off'], d.turnTone),
