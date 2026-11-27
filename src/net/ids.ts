@@ -1,4 +1,5 @@
 import type { PeerOptions } from 'peerjs';
+import { iceServers } from './ice';
 
 /** Alle Tische teilen sich den öffentlichen PeerJS-Server, daher ein eigenes Präfix. */
 export const PREFIX = 'schnautz-tisch-v1-';
@@ -42,6 +43,9 @@ export function peerOptions(): PeerOptions {
     o.path = q.get('peerpath') || '/';
     o.secure = q.get('peersecure') === '1';
   }
+  // Eigener TURN-Zugang (src/net/ice.ts), Google-STUN bleibt vorn wie im PeerJS-Standard
+  const turn = iceServers();
+  if (turn) o.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, ...turn] };
   if (q.get('noice')) o.config = { iceServers: [] };
   return o;
 }

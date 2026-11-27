@@ -12,6 +12,7 @@ import { viewFor } from './game/view';
 import { BOTS } from './net/bots';
 import { G } from './net/guest';
 import { H, hostCommit, initHostTabs } from './net/host';
+import { loadIce } from './net/ice';
 import { cleanCode } from './net/ids';
 import { App } from './ui/app';
 import { applyView } from './ui/apply';
@@ -66,6 +67,8 @@ window.addEventListener('vite:preloadError', (e) => {
 });
 
 initEvents();
+// TURN-Zugang im Hintergrund holen, bevor jemand einen Tisch aufmacht oder beitritt
+loadIce();
 initHostTabs();
 initBackMark();
 renderSoundBtn();
