@@ -360,7 +360,6 @@ export async function measure(page, extra = []) {
       '#me',
       '#me .actions',
       '#emotes',
-      '#status',
       '#modal .paper',
       '#overlay .result',
       '#overlay .result .rfoot',
@@ -422,12 +421,12 @@ export async function measure(page, extra = []) {
       if (r.left < t.right - 1 && t.left < r.right - 1 && r.top < t.bottom - 1 && t.top < r.bottom - 1)
         marks.push(`${who} liegt auf dem Etikett`);
     });
-    // Tippfläche: Knöpfe der Knopfreihe und der Statuszeile nehmen 44 x 44 px an (table.css ::before), gemessen
+    // Tippfläche: Knöpfe der Knopfreihe nehmen 44 x 44 px an (table.css ::before), gemessen
     // mit elementFromPoint je 1 px innerhalb der Kanten der vergrößerten Fläche. Nur am Handy (Touch): Am PC verkleinert
     // fitDesktop den Tisch, dort zählt die Maus und WCAG 2.5.8 verlangt 24 px
     const taps = [];
     if (W <= 960)
-      document.querySelectorAll('#table .actions .btn, #status .btn').forEach((b) => {
+      document.querySelectorAll('#table .actions .btn').forEach((b) => {
         if (!b.getClientRects().length || getComputedStyle(b).visibility === 'hidden') return;
         const r = b.getBoundingClientRect();
         const cx = r.left + r.width / 2;

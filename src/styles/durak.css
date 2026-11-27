@@ -104,6 +104,10 @@
 .dktable > .cnt {
   bottom: -27px;
 }
+/* Bito so breit wie Stapel samt Trumpf: Dann steht der Angriff und seine Zeile darunter genau in der Mitte */
+#table[data-game='durak'] .burned {
+  min-width: calc(clamp(70px, 18vw, 96px) * 1.42);
+}
 
 /* Rollen an den Kacheln */
 .opp.dk.def {
@@ -147,15 +151,6 @@
   color: var(--tb-muted);
 }
 
-/* Eigene Hand: Trümpfe mit Stern unter dem Wert, der Streifen bleibt beim Überlappen sichtbar (Farbe nie allein) */
-.dkhand .trm {
-  position: absolute;
-  top: calc(var(--cw) * 0.4);
-  left: calc(var(--cw) * 0.05);
-  font: normal 700 12px/1 var(--ui);
-  color: var(--tb-trump-mark);
-}
-
 @media (max-width: 520px) {
   /* Kurze Knopfbeschriftung, damit drei Knöpfe nebeneinander passen */
   .dkme .actions .blong {
@@ -177,13 +172,13 @@
     margin-left: calc(var(--tw) * -0.72);
   }
   #table[data-game='durak'] .center {
-    --pw: calc(var(--u) * 11.5);
+    --pw: calc(var(--u) * 13);
     gap: calc(var(--u) * 3);
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
   #table[data-game='durak'] .deck {
-    --mw: calc(var(--u) * 14);
+    --mw: calc(var(--u) * 15.5);
   }
   .dktable {
     gap: 6px 6px;
@@ -193,7 +188,7 @@
     bottom: -25px;
   }
   #table[data-game='durak'] .burned {
-    min-width: 36px;
+    min-width: calc(var(--u) * 22);
   }
 }
 

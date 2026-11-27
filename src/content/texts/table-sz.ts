@@ -5,15 +5,31 @@
 import { TABLE } from './table';
 
 const cards = (n: number): string => `${n} ${n === 1 ? 'Karte' : 'Karten'}`;
+const zug = (n: number): string => (n === 1 ? 'noch ein Zug' : `noch ${n} Züge`);
 
 export const SZ_TABLE = {
   /** Leben als Wort für Wert, Vorleser und Hinweis */
   lives: (p: { out: boolean; lives: number }): string =>
     p.out ? 'raus' : p.lives === 0 ? 'schwimmt' : `${p.lives} Leben`,
-  /** Etiketten an der Kachel, `knock` kurz mit Zeichen wie früher in der Punkteleiste, der Vorleser sagt `knockSay` */
-  tag: { turn: TABLE.tag.turn, deal: 'gibt', knock: '✊ geklopft', knockSay: 'hat geklopft' },
+  /**
+   * Etiketten an der Kachel. Am Klopfer steht mit Zeichen, wie viele Züge bis zum Aufdecken bleiben (`knock`), der
+   * Vorleser sagt `knockSay`
+   */
+  tag: {
+    turn: TABLE.tag.turn,
+    deal: 'gibt',
+    knock: (n: number): string => `✊ ${zug(n)}`,
+    knockSay: (n: number): string => `hat geklopft, ${zug(n)}`,
+  },
   /** Etiketten am eigenen Platz */
-  me: { knock: '✊ geklopft', knockSay: 'geklopft', deal: 'du gibst' },
+  me: {
+    knock: (n: number): string => `✊ ${zug(n)}`,
+    knockSay: (n: number): string => `geklopft, ${zug(n)}`,
+    deal: 'du gibst',
+  },
+  /** Unter der Mitte, solange geschoben wird, ohne Klopfen. Beim Überfahren `passedAll` */
+  passed: (n: number, of: number): string => `${n} von ${of} geschoben`,
+  passedAll: 'Schieben alle, kommen neue Karten.',
   /**
    * Plakette am Rundenende, damit Sieg und Verlust nicht nur am Rahmen hängen (Zeichen wie im Ergebnisblatt). `say`
    * ist der Klartext für Vorleser und Hinweis.

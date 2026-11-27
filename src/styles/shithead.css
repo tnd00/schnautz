@@ -263,7 +263,7 @@
   margin-top: calc(var(--hw) * -0.74);
 }
 @media (hover: hover) {
-  .shhand .card:hover {
+  .shhand .card:not(.dim):hover {
     --ty: -26px;
     --sc: 1.24;
     z-index: 9;

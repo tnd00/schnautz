@@ -74,7 +74,7 @@ function legendDurak(rules: Rules): LegendItem[] {
   const R = rules.dk ?? DEFAULT_RULES.dk;
   const it: LegendItem[] = [
     [
-      '★',
+      'T',
       'Trumpf',
       'Die Farbe der Karte unter dem Stapel sticht alles. Gegen Trumpf hilft nur ein höherer Trumpf.',
       'e',

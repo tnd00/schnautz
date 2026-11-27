@@ -302,7 +302,7 @@ test('nur noch KIs: Vorspulen spielt die Partie zügig und ganz normal zu Ende',
   );
 
   await test.step('Neue Partie fragt nach, Abbrechen lässt die Partie weiterlaufen', async () => {
-    const restart = host.locator('.status [data-act=restart]');
+    const restart = host.locator('#me [data-act=restart]');
     await expect(restart).toBeVisible();
     await restart.click();
     await expect(host.locator('#modal h2')).toContainText('Partie ohne Shithead beenden?');
@@ -339,8 +339,8 @@ test('nur noch KIs: Vorspulen spielt die Partie zügig und ganz normal zu Ende',
 
   await test.step('Vorspulen bis zum Ende', async () => {
     const t0 = Date.now();
-    await host.click('.status [data-act=ffwd]');
-    await expect(host.locator('.status .botsonly', { hasText: 'Die KIs spielen es aus.' })).toBeVisible();
+    await host.click('#me [data-act=ffwd]');
+    await expect(host.locator('#me .botsonly', { hasText: 'Die KIs spielen es aus.' })).toBeVisible();
     await expect.poll(() => host.evaluate(() => window.__schnautz?.BOTS.fast ?? null)).not.toBeNull();
     await waitForPhase(host, ['over'], 120_000);
     console.log('Vorspulen bis zum Ende', Math.round((Date.now() - t0) / 1000), 's');

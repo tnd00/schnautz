@@ -1,16 +1,15 @@
 /*
- * Statuszeile über dem eigenen Platz, gemeinsam für alle Spiele (Stufe 2.7 „Klare Worte“).
- * Jedes Spiel liefert seinen Status als Daten (`shStatus`, `dkStatus`, `cbStatus`, `szStatus`), `renderStatus`
- * schreibt ihn über `paintStatus` immer mit Haupt- und Unterzeile, damit die Zeile ihre Höhe behält. Ohne DOM bis
- * auf `paintStatus`, damit Vitest die Sätze prüfen kann. Die Spiele importieren von hier nur Funktionen, der Kreis
- * ist deshalb harmlos.
+ * Status am Tisch als Daten, gemeinsam für alle Spiele (Stufe 2.7 „Klare Worte“). Die sichtbare Statuszeile gibt es
+ * seit 2.8 nicht mehr: Wer dran ist, zeigt der Rahmen, renderTable (src/ui/table/index.ts) gibt die Hauptzeile an den
+ * Vorleser (sayStatus) und die Knöpfe (`quick`) in die Knopfleiste. Jedes Spiel liefert seinen Status
+ * (`shStatus`, `dkStatus`, `cbStatus`, `szStatus`) ohne DOM, damit Vitest die Sätze prüfen kann. Die Spiele
+ * importieren von hier nur Funktionen, der Kreis ist deshalb harmlos.
  */
 import { unreachable } from '../game/games';
 import type { View } from '../game/types';
 import { STATUS, turnOf, waitLine } from '../content/texts/status';
-import { sayStatus } from './a11y/say';
 import { App } from './app';
-import { $, esc } from './dom';
+import { esc } from './dom';
 import { nameOf, pById } from './helpers';
 import { cbStatus } from './render/cabo';
 import { dkStatus } from './render/durak';
@@ -22,10 +21,10 @@ export type StatusTone = 'calm' | 'turn' | 'alert' | 'knock' | 'over';
 export interface Status {
   /** HTML, maskiert */
   main: string;
-  /** HTML, darf leer sein, die Zeile bleibt trotzdem gleich hoch */
+  /** HTML, darf leer sein */
   sub: string;
   tone: StatusTone;
-  /** Knöpfe (4er, Bombe, Vorspulen, Für X spielen), stehen statt der Unterzeile */
+  /** Knöpfe außer der Reihe (4er, Bombe, Vorspulen, Für X spielen), stehen hinten in der Knopfleiste */
   quick?: string;
 }
 
@@ -68,19 +67,4 @@ export function statusOf(v: View): Status {
     default:
       return unreachable(v.game);
   }
-}
-
-/** Schreibt #status für alle Spiele in derselben Form. */
-export function renderStatus(v: View): void {
-  paintStatus(statusOf(v));
-}
-
-/** Schreibt einen fertigen Status nach #status, Klasse tone-<x>. renderTable ruft das mit spec.status(v). */
-export function paintStatus(s: Status): void {
-  const el = $('#status');
-  el.className = `status sline tone-${s.tone}${s.quick ? ' hasquick' : ''}`;
-  el.innerHTML =
-    `<div class="main">${s.main}</div>` +
-    (s.quick ? `<div class="quick">${s.quick}</div>` : `<div class="sub">${s.sub}</div>`);
-  sayStatus(s);
 }

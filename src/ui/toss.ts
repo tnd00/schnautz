@@ -35,6 +35,8 @@ export const TOSS = {
   back: null as Timer | null,
   /** Für wen die kleine Wurfleiste offen ist */
   pick: null as string | null,
+  /** Frame, in dem die Wurfleiste ihrer Kachel im Karussell nachrückt */
+  follow: 0,
 };
 
 export const TOSS_TEXT: Readonly<
@@ -387,7 +389,7 @@ export function sendToss(item: TossItem, to: string, send: (item: TossItem, to: 
   send(item, to);
 }
 
-/** Eine Reihe Würfe für eine Kachel (über der Statuszeile) oder eine Ergebniszeile, ein Tipp wirft sofort. */
+/** Eine Reihe Würfe unter einer Kachel oder Ergebniszeile, ein Tipp wirft sofort. */
 export function openPick(pid: string): void {
   const a = tossAnchor(pid);
   if (!a || pid === App.me) {
@@ -411,7 +413,7 @@ export function openPick(pid: string): void {
   placePick();
 }
 
-/** Reihe über der Statuszeile oder unter ihrem Ziel halten, am Bildschirmrand eingeklemmt. */
+/** Reihe unter ihrem Ziel halten (ohne Platz darunter darüber), am Bildschirmrand eingeklemmt. */
 export function placePick(): void {
   const el = $opt('#tosspick');
   if (!el || !TOSS.pick) return;
@@ -421,26 +423,31 @@ export function placePick(): void {
     return;
   }
   el.querySelectorAll('button').forEach((b) => (b.disabled = App.tossBlock));
-  // Am Tisch liegt die Reihe auf der Statuszeile (Form C), im Ergebnisfenster unter ihrer Zeile. Stehen dort Knöpfe
-  // (4er, Bombe, Vorspulen), rückt sie darüber, damit nichts Zeitkritisches verdeckt ist
-  const stEl = $opt('#overlay .modal') ? null : $opt('#status');
-  const st = stEl?.getBoundingClientRect();
-  const r = st?.height ? st : a.el.getBoundingClientRect();
+  // Direkt unter der Kachel oder Ergebniszeile, so bleibt die nächste Kachel daneben frei zum Weitertippen
+  const r = a.el.getBoundingClientRect();
   const w = el.offsetWidth || 190;
   const h = el.offsetHeight || 48;
   const x = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), window.innerWidth - w - 8);
-  let y = !st?.height
-    ? r.bottom + 6
-    : stEl?.classList.contains('hasquick')
-      ? Math.max(8, r.top - h - 6)
-      : r.top + (r.height - h) / 2;
+  // Unter allem, was an der Kachel hängt (die Pille mit der Handkartenzahl ragt unten heraus), nicht nur unter dem Rand
+  let bottom = r.bottom;
+  for (const c of a.el.querySelectorAll<HTMLElement>('*:not(.tossmark)'))
+    bottom = Math.max(bottom, c.getBoundingClientRect().bottom);
+  let y = bottom + 6;
   if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
   el.style.left = `${x}px`;
   el.style.top = `${y}px`;
+  // Im Karussell gleitet die Kachel beim Zugwechsel oder Wischen weg, die Reihe folgt ihr bis zum Schließen
+  if (a.el.closest('.opps.car') && !TOSS.follow)
+    TOSS.follow = requestAnimationFrame(() => {
+      TOSS.follow = 0;
+      placePick();
+    });
 }
 
 export function closePick(): void {
   TOSS.pick = null;
+  cancelAnimationFrame(TOSS.follow);
+  TOSS.follow = 0;
   $opt('#tosspick')?.remove();
 }
 

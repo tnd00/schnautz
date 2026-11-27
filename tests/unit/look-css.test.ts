@@ -179,8 +179,8 @@ describe('Token-Blöcke', () => {
     expect(tbNames(parsed.dark.get(DARK) ?? [])).toEqual(legacy);
   });
 
-  it('setzen an .g-<spiel> nur Namen aus dem Wortschatz, die fünf Spielfarben in beiden Sticker-Blöcken', () => {
-    const five = ['--tb-accent', '--tb-brand-bg', '--tb-sheet-win-bg', '--tb-status-turn-bg', '--tb-tag-turn-bg'];
+  it('setzen an .g-<spiel> nur Namen aus dem Wortschatz, die vier Spielfarben in beiden Sticker-Blöcken', () => {
+    const five = ['--tb-accent', '--tb-brand-bg', '--tb-sheet-win-bg', '--tb-tag-turn-bg'];
     const st = tbNames(parsed.sticker.get(`${STICKER_G} ${GAME_IS}`) ?? []);
     const dk = tbNames(parsed.dark.get(`${DARK} ${GAME_IS}`) ?? []);
     expect(st).toEqual(five);

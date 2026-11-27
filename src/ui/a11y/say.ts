@@ -155,7 +155,7 @@ export function sayBatch(n: number): void {
   coreBatch(CORE, n);
 }
 
-/** Aus paintStatus: nur bei geänderter Hauptzeile, entprellt, ohne Ticker. */
+/** Aus renderTable: nur bei geänderter Hauptzeile, entprellt, ohne Ticker. */
 export function sayStatus(s: Status): void {
   coreDraw(CORE, App.seenN);
   if (statusT) clearTimeout(statusT);

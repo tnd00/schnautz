@@ -272,6 +272,11 @@ export interface BarModel {
    * wenn hinten einer dazukommt (Shithead „Alle n wählen“).
    */
   slots?: number;
+  /**
+   * Stelle des freien Platzes, Standard hinten. Steht dort nichts, nehmen Knöpfe außer der Reihe (`quick`) ihn ein
+   * (Shithead: „Alle n wählen“, 4er und Bombe in der Mitte, Aufnehmen bleibt rechts).
+   */
+  hole?: number;
 }
 
 /**

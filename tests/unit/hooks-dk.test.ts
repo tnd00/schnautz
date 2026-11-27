@@ -103,6 +103,22 @@ describe('Durak auf den Bausteinen', () => {
     expect(sel('#me [data-act=dkpass]:not([aria-disabled])')).toHaveLength(1);
   });
 
+  it('die eigene Rolle steht als Etikett am eigenen Platz, in der Du-Form', () => {
+    const { st } = table(3);
+    // Text des Etiketts im Kopf des eigenen Platzes
+    const tag = (me: string): string => {
+      const { m } = draw(st, me);
+      return /<span class="tag[^>]*>([^<]*)/.exec('out' in m ? '' : (m.head?.tags ?? ''))?.[1] ?? '';
+    };
+    expect(tag('h')).toBe('greifst an');
+    expect(tag('a')).toBe('verteidigst');
+    expect(act(st, 'h', { type: 'dkattack', idx: [0] })).toBeNull();
+    expect(act(st, 'a', { type: 'dkdefend', a: 0, i: 0 })).toBeNull();
+    expect(tag('h')).toBe('darfst nachlegen');
+    expect(act(st, 'h', { type: 'dkpass' })).toBeNull();
+    expect(tag('h')).toBe('gepasst ✓');
+  });
+
   it('Knopfgründe kommen aus der Spiellogik, ohne Probezug', () => {
     const { st, D } = table(3, true);
     App.me = 'h';
@@ -159,12 +175,12 @@ describe('Durak auf den Bausteinen', () => {
     }
   });
 
-  it('Trumpf trägt ein Zeichen, Karten beim Warten nennen ihren Grund ohne Grau', () => {
+  it('Trumpf ohne Stern, Karten beim Warten nennen ihren Grund ohne Grau', () => {
     const { st } = table(4);
     // c wartet: Der Tisch ist leer und h greift an, H7 ist Trumpf
     const { sel } = draw(st, 'c');
-    expect(sel('#me .dkhand .card.trumpc .trm')).toHaveLength(1);
-    expect(sel('#me .dkhand .card:not(.trumpc) .trm')).toEqual([]);
+    expect(sel('#me .dkhand .card.trumpc')).toHaveLength(1);
+    expect(sel('#me .dkhand .trm')).toEqual([]);
     expect(sel('#me [data-act=dkh][aria-disabled=true][aria-description]')).toHaveLength(3);
     expect(sel('#me .dkhand .card.dim, #me .dkhand .card.pick')).toEqual([]);
   });

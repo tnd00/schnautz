@@ -13,8 +13,7 @@
   white-space: nowrap;
 }
 
-/* Fokus nach Abläufen (Titel des Ergebnisblatts, Statuszeile danach): gelesen wird er, ein Ring wäre nur Lärm */
-#overlay .paper.result .rhead h2:focus,
-#status[tabindex='-1']:focus {
+/* Fokus nach Abläufen (Titel des Ergebnisblatts): gelesen wird er, ein Ring wäre nur Lärm */
+#overlay .paper.result .rhead h2:focus {
   outline: none;
 }

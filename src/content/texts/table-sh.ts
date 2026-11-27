@@ -51,6 +51,8 @@ export const SH_TABLE = {
   hand: (n: number): string => `Deine Hand, ${cards(n, 'Karte', 'Karten')}`,
   /** Verdeckte eigene Tischkarte, wenn sie dran ist */
   down: (i: number): string => `Verdeckte Karte ${i + 1}`,
+  /** Am Stapel, solange ich 4er oder eine Bombe reinwerfen kann */
+  throwIn: 'Reinwerfen!',
   /** Tischmitte mit dem Regelhinweis zum Stapel */
   center: (n: number, info: string): string => `Tischmitte, ${cards(n, 'Karte', 'Karten')} auf dem Stapel. ${info}`,
 } as const;

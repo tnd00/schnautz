@@ -168,6 +168,22 @@
     transform: scaleX(0);
   }
 }
+/* Offen in der Reihe (von der Ablage, daneben gegriffen): kleines Etikett, anders als die kurze 👁️-Einblendung */
+.cbup {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--tb-tag-text);
+  background: var(--tb-tag-bg);
+  pointer-events: none;
+}
 .cbeye {
   position: absolute;
   right: -6px;
@@ -355,7 +371,7 @@
 
 @media (max-width: 960px) {
   #table[data-game='cabo'] .center {
-    --mw: calc(var(--u) * 15);
+    --mw: calc(var(--u) * 20);
     gap: calc(var(--u) * 3.5);
     padding-left: 8px;
     padding-right: 8px;

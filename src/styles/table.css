@@ -89,7 +89,7 @@
 .opp > .val {
   position: absolute;
   left: 50%;
-  bottom: -9px;
+  bottom: -12px;
   transform: translateX(-50%);
   z-index: 2;
   display: inline-flex;
@@ -106,11 +106,12 @@
 .hold {
   visibility: hidden;
 }
-/* Eckaufkleber (SeatModel.marks): Krone oder amtierender Verlierer auf der Ecke rechts oben, über den Tischkarten */
+/* Eckaufkleber (SeatModel.marks): Krone oder amtierender Verlierer in der Ecke rechts oben, über den Tischkarten.
+ * Bleibt in der eigenen Kachel, sonst ragt er auf den Nachbarn */
 .opp > .rmark {
   position: absolute;
-  top: -11px;
-  right: -10px;
+  top: 5px;
+  right: 5px;
   z-index: 2;
   display: grid;
   place-items: center;
@@ -266,30 +267,6 @@
   white-space: nowrap;
 }
 
-.status {
-  min-height: 48px;
-  text-align: center;
-  max-width: 560px;
-  padding: 0 10px;
-}
-.status .main {
-  font-family: var(--display);
-  font-size: clamp(18px, 2.4vw, 22px);
-  font-weight: 600;
-}
-.status .sub {
-  font-size: 13px;
-  color: var(--tb-muted);
-  margin-top: 2px;
-}
-.status.knocked .main {
-  color: var(--tb-knock-text);
-}
-.status .main em {
-  color: var(--brass-hi);
-  font-style: italic;
-}
-
 .seat {
   position: relative;
   width: 100%;
@@ -379,6 +356,10 @@
 }
 .hand .card.sel:nth-child(2) {
   --ty: -18px;
+}
+/* Unter der Hand Platz für ausgegraute Karten, die absinken (Vinyl), und den Fächer, sonst berühren sie die Knöpfe */
+#me:not(.swapping) :is(.shhand, .hand).tb-hand {
+  padding-bottom: 8px;
 }
 .actions {
   display: flex;
@@ -642,10 +623,10 @@ body.ingame #table .card:focus-visible {
 }
 /* Tippfläche mindestens 44 px: Wo ein Knopf sichtbar kleiner ist, vergrößert ihn eine unsichtbare Fläche */
 /* Ohne Gewicht, damit eine eigene Position (etwa die runden Knöpfe) gewinnt */
-:where(body.ingame) :where(.actions .btn, .btn.small, #status .btn, .top .iconbtn) {
+:where(body.ingame) :where(.actions .btn, .btn.small, .top .iconbtn) {
   position: relative;
 }
-body.ingame :is(#table .actions .btn, #table .btn.small, #status .btn, .fab, .top .iconbtn)::before {
+body.ingame :is(#table .actions .btn, #table .btn.small, .fab, .top .iconbtn)::before {
   content: '';
   position: absolute;
   inset: min(0px, calc((100% - 44px) / 2));

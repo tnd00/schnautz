@@ -33,16 +33,16 @@
   box-shadow: 0 0 0 2px var(--tb-turn-line);
 }
 :root[data-look='sticker'] body.ingame .tag.done {
-  color: var(--tb-status-soft);
+  color: var(--tb-text-soft);
   background: var(--tb-seat-bg);
 }
 
 /* Mehrere zugleich dran (Verteidigen und Nachlegen): jeder Ring nur 2 px, ein einzelner Zug behält den vollen Ring.
- * --tb-turn-ring ist bei Nacht die Spielfarbe wie --tb-turn-glow */
+ * Spielfarbe wie der volle Ring (--tb-accent) */
 :root[data-look='sticker'] body.ingame #opps:has(.opp.turn ~ .opp.turn) .opp.dk.turn {
   box-shadow:
     var(--tb-edge),
-    0 0 0 2px var(--tb-turn-ring),
+    0 0 0 2px var(--tb-accent),
     var(--tb-shadow-lift-sm);
 }
 
@@ -51,6 +51,6 @@
   box-shadow: var(--tb-card-shadow);
 }
 :root[data-look='sticker'] body.ingame .dkshow .more {
-  color: var(--tb-status-soft);
+  color: var(--tb-text-soft);
   font-weight: 800;
 }

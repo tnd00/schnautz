@@ -30,6 +30,11 @@ export const CB_TABLE = {
   theirs: (i: number, name: string): string => `${i + 1}. Karte von ${name}`,
   /** Anhang am Namen einer Karte, die niemand gerade sieht */
   hidden: ', verdeckt',
+  /** Zeichen und Anhang am Namen einer Karte, die offen in einer Reihe liegt (von der Ablage, daneben gegriffen) */
+  open: 'offen',
+  openSay: ', liegt offen',
+  /** Einmal je Partie, wenn ich von der Ablage nehme */
+  pileOpen: 'Karten von der Ablage liegen danach offen vor dir, alle haben sie gesehen.',
   /** Fremde gezogene Karte über der Reihe */
   held: 'Gezogene Karte',
   /** Stapel und Ablage, antippbar */

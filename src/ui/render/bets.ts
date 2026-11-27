@@ -70,7 +70,7 @@ export function openBetModal(v: View): void {
   App.betSel = null;
   App.betSeen = v.games;
   $('#modal').innerHTML =
-    '<div class="modal betm"><div class="paper sheet bets" role="dialog" aria-labelledby="bet-h">' +
+    `<div class="modal betm"><div class="paper sheet bets g-${v.game}" role="dialog" aria-labelledby="bet-h">` +
     '<button class="x" data-act="closemodal" aria-label="Schließen">×</button>' +
     `<h2 id="bet-h">Wer wird <span class="r">${LOSER_NAME[v.game]}</span>?</h2><div class="betbody"></div></div></div>`;
   renderBetModal(v);

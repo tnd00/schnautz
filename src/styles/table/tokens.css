@@ -141,18 +141,6 @@
   --tb-brand-text: var(--brass-hi); /* dito Schrift */
   --tb-brand-line: transparent; /* dito Stanzrand, geschätzt */
 
-  /* Statuszeile */
-  --tb-status-bg: transparent; /* Statuszeile */
-  --tb-status-text: var(--cream); /* dito Hauptzeile */
-  --tb-status-soft: #b4cbc0; /* dito Unterzeile */
-  --tb-status-shadow: none; /* dito Schatten */
-  --tb-status-turn-bg: transparent; /* Statuszeile, wenn ich gefragt bin */
-  --tb-status-turn-text: var(--brass-hi); /* dito Hauptzeile */
-  --tb-status-turn-soft: #b4cbc0; /* dito Unterzeile */
-  --tb-status-family: var(--serif); /* Familie der Hauptzeile */
-  --tb-status-style: italic; /* Schnitt */
-  --tb-status-weight: 700; /* Gewicht */
-
   /* Ziele für Tippen und Ziehen */
   --tb-target-ring:
     0 0 0 3px var(--brass-hi), 0 0 26px color-mix(in srgb, var(--brass-hi) 55%, transparent); /* Ziel unter dem Finger (Tippen und Ziehen) */

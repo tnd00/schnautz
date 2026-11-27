@@ -38,7 +38,7 @@ import { taunt } from '../taunts';
 import { twoLabel } from '../table/bar';
 import { fitHand, handHTML } from '../table/hand';
 import { cardsMini, deckCards } from '../table/pile';
-import { fanHTML, numHTML } from '../table/seat';
+import { fanHTML, numHTML, tagHTML } from '../table/seat';
 import type { NewTable } from '../table/spec';
 import type {
   BarButton,
@@ -99,7 +99,10 @@ export function dkTargets(v: View, c: Card): number[] {
 
 const suitHTML = (s: Suit): string => `<span class="suit ${s === 'H' || s === 'D' ? 'red' : ''}">${SUIT_SYM[s]}</span>`;
 
-/** Etikett an der Kachel: Rolle im Angriff, passt, Platz, am Ende der Durak, sonst die Zahl der Tipps */
+/**
+ * Etikett an der Kachel und am eigenen Platz: Rolle im Angriff, passt, Platz, am Ende der Durak, sonst die Zahl der
+ * Tipps. Am eigenen Platz in der Du-Form, er zeigt die Rolle statt der früheren Statuszeile.
+ */
 function dkTag(v: View, D: DkView, p: Player, waiting: readonly string[]): TagModel | null {
   if (v.phase === 'over') {
     // Bis zur Enthüllung verrät auch das Etikett den Durak nicht
@@ -108,16 +111,19 @@ function dkTag(v: View, D: DkView, p: Player, waiting: readonly string[]): TagMo
     return p.place ? { text: TABLE.tag.place(num(p.place)), kind: 'plain' } : null;
   }
   if (D.finished.includes(p.id)) return { text: TABLE.tag.place(num(p.place)), kind: 'plain' };
-  const think = waiting.includes(p.id);
+  const T = p.id === App.me ? DK_TABLE.meTag : DK_TABLE.tag;
+  // Am eigenen Platz ohne Denkpünktchen, wer dran ist, zeigt dort der Rahmen
+  const think = waiting.includes(p.id) && p.id !== App.me;
+  const on = waiting.includes(p.id);
   if (p.id === D.def) {
-    if (D.take) return { text: DK_TABLE.tag.take, kind: 'take', cls: 'take', think };
-    return { text: DK_TABLE.tag.def, kind: 'role', cls: think ? 'turn' : 'def', think };
+    if (D.take) return { text: T.take, kind: 'take', cls: 'take', think };
+    return { text: T.def, kind: 'role', cls: on ? 'turn' : 'def', think };
   }
-  if (p.id === D.att && !D.table.length) return { text: DK_TABLE.tag.att, kind: 'turn', cls: 'turn', think };
+  if (p.id === D.att && !D.table.length) return { text: T.att, kind: 'turn', cls: 'turn', think };
   // Hängt nur an der Passen-Liste, nie an Handkarten
-  if (D.table.length && D.done.includes(p.id)) return { text: DK_TABLE.tag.passed, kind: 'done', cls: 'done' };
-  if (D.table.length && think && dkCount(v, p.id)) return { text: DK_TABLE.tag.add, kind: 'turn', cls: 'turn', think };
-  if (p.id === D.att) return { text: DK_TABLE.tag.att, kind: 'role', cls: 'att' };
+  if (D.table.length && D.done.includes(p.id)) return { text: T.passed, kind: 'done', cls: 'done' };
+  if (D.table.length && on && dkCount(v, p.id)) return { text: T.add, kind: 'turn', cls: 'turn', think };
+  if (p.id === D.att) return { text: T.att, kind: 'role', cls: 'att' };
   const n = v.phase === 'play' ? shBetsOn(v, p.id).length : 0;
   return n ? { text: `🔮 ${n}`, kind: 'bet', cls: 'bet', title: SH_TABLE.tag.bets } : null;
 }
@@ -269,9 +275,8 @@ function sceneOf(v: View, D: DkView): { main: string; sub: string } {
 }
 
 /**
- * Status über dem eigenen Platz als Daten, ohne DOM, damit Vitest jede Lage prüfen kann. Mehrere können zugleich
- * dran sein (dkWaiting), die Zeile nennt sie zusammen. Eine Auswahl, die so nicht geht, erklärt die Unterzeile.
- * `renderStatus` (src/ui/status.ts) schreibt ihn.
+ * Status als Daten, ohne DOM, damit Vitest jede Lage prüfen kann. Mehrere können zugleich dran sein (dkWaiting), der
+ * Satz nennt sie zusammen. renderTable liest daraus Vorlesetext und Knöpfe (src/ui/status.ts).
  */
 export function dkStatus(v: View): Status {
   const D = v.dk;
@@ -470,7 +475,6 @@ function dkBar(v: View): BarModel {
 }
 
 /** Zeichen auf Trumpfkarten der eigenen Hand, unter dem Wert in der Ecke, die beim Überlappen frei bleibt */
-const TRUMP_MARK = '<i class="trm" aria-hidden="true">★</i>';
 
 /** Eigener Platz: Kopf, Hand, Knöpfe. Wer nicht mitspielt, bekommt einen Satz. */
 function dkMe(v: View): MeModel | MeOut | null {
@@ -502,18 +506,19 @@ function dkMe(v: View): MeModel | MeOut | null {
       why,
       cls: [acting && !why && 'pick', trump && 'trumpc', App.anim.deal && 'deal'].filter(Boolean).join(' '),
       delay: Number((0.3 + Math.min(i, 8) * 0.06).toFixed(2)),
-      // Trumpf nie nur als Farbe: Zeichen in der Ecke (gefuehl M9), den Namen trägt die Mitte („Trumpf Herz“)
-      ...(trump ? { extra: TRUMP_MARK, trump: true } : {}),
+      // Ohne Stern (User 27.11.2026), der Trumpf steht am Stapel. Vorgelesen wird „Trumpf“ weiter mit dem Namen
+      ...(trump ? { trump: true } : {}),
     };
   });
   const hn = hand.length;
   const doing = turn && (role === 'lead' || role === 'defend' || role === 'throw') ? role : null;
+  const tag = dkTag(v, D, me, v.phase === 'play' ? dkWaiting(v) : []);
   return {
     head: {
       marks: reignHTML(v, me.id),
       count: dkcHTML(me),
-      tags: done ? `<span class="tag">${TABLE.tag.place(num(me.place))}</span>` : '',
-      pill: `<span class="pill">${hn ? `${hn}${HAND_ICON}${TABLE.handWord(hn)}` : `${HAND_ICON}Hand leer`}</span>`,
+      tags: tag ? tagHTML(tag) : '',
+      pill: `<span class="pill">${hn ? `${hn}${HAND_ICON}<span class="hw">${TABLE.handWord(hn)}</span>` : `${HAND_ICON}Hand leer`}</span>`,
     },
     rows:
       '<div class="shrow">' +

@@ -21,6 +21,7 @@ import { CB_STATUS, cbHeld, cbLastSub, cbOtherDeck, cbOtherPile, cbOtherPower } 
 import { TABLE } from '../../content/texts/table';
 import { CB_TABLE } from '../../content/texts/table-cb';
 import { ceremonyOn } from '../ceremony';
+import { emit } from '../feedback';
 import { endMain, turnMain, waitSub, type Status } from '../status';
 import { twoLabel } from '../table/bar';
 import { whyText } from '../table/hand';
@@ -229,7 +230,9 @@ function slotHTML(v: View, owner: string, s: CbSlotView, o: SlotOpts = {}): stri
   const style = seen ? ` style="--cbms:${CB_REVEAL_MS}ms; --cbgone:${CB_REVEAL_MS - left}ms"` : '';
   // Gesperrt mit Grund wie in allen Spielen (aria-disabled), ausgegraut wird sie dabei nicht, nur nicht hervorgehoben
   const why = o.act && !pick && o.probe ? whyText(cbWhyNot(v, App.me, o.probe)) : null;
-  const name = `${o.name ?? ''}${c ? `: ${cardName(c)}${TABLE.points(cbVal(c))}` : CB_TABLE.hidden}`;
+  // Offen in der Reihe (von der Ablage, daneben gegriffen): ein Zeichen, damit es nicht wie kurz angesehen wirkt
+  const open = s.up && (v.phase === 'play' || v.phase === 'peek');
+  const name = `${o.name ?? ''}${c ? `: ${cardName(c)}${TABLE.points(cbVal(c))}` : CB_TABLE.hidden}${open ? CB_TABLE.openSay : ''}`;
   const attrs = o.act
     ? ` data-act="${o.act}" data-fk="cb:${esc(owner)}:${s.id}" role="button" tabindex="0"` +
       ` aria-pressed="${!!o.sel}" aria-label="${esc(name)}"` +
@@ -242,6 +245,7 @@ function slotHTML(v: View, owner: string, s: CbSlotView, o: SlotOpts = {}): stri
     card(c, App.anim.deal ? 'deal' : '') +
     (c ? valBadge(c) : '') +
     (seen ? '<span class="cbeye" aria-hidden="true">👁️</span>' : '') +
+    (open ? `<span class="cbup" aria-hidden="true">${CB_TABLE.open}</span>` : '') +
     '</div>'
   );
 }
@@ -412,8 +416,8 @@ function cbCenter(v: View): CenterModel | null {
 const plainName = (v: View, id: string | null): string => esc(nameOf(v, id));
 
 /**
- * Status über dem eigenen Platz als Daten: was ich tun soll oder worauf wir warten. Ohne DOM, damit Vitest jede
- * Phase prüfen kann. `renderStatus` (src/ui/status.ts) schreibt ihn.
+ * Status als Daten: was ich tun soll oder worauf wir warten. Ohne DOM, damit Vitest jede Phase prüfen kann.
+ * renderTable liest daraus Vorlesetext und Knöpfe (src/ui/status.ts), die Anweisungen kommen als Kurzhinweis (cbHint).
  */
 export function cbStatus(v: View): Status {
   const C = v.cb;
@@ -737,6 +741,55 @@ export function cbSheet(v: View): Sheet | null {
   };
 }
 
+/** Zuletzt gemeldete Lage und welche einmaligen Hinweise (je Partie) schon kamen */
+const HINT = { key: '', once: new Set<string>() };
+
+/**
+ * Was ich in dieser Lage tun soll, als Kurzhinweis statt der früheren Statuszeile. Ziehen und gezogene Karte kommen
+ * nur einmal je Partie, Fähigkeiten, letzter Zug und Schnappen bei jedem Wechsel. Ansehen erklärt schon die Ansage
+ * zum Austeilen, Ziehen erklären die Knöpfe.
+ */
+export function cbHintText(v: View, C: CbView, role: CbRole, snap: boolean): string | null {
+  const once = (k: string): boolean => {
+    const id = `${v.games}:${k}`;
+    if (HINT.once.has(id)) return false;
+    HINT.once.add(id);
+    return true;
+  };
+  if (snap) return CB_STATUS.snap;
+  switch (role) {
+    case 'draw':
+      return C.cabo
+        ? `${CB_STATUS.last} ${cbLastSub(C.left.filter((id) => id !== App.me).length, !!cbMine(v)?.length)}`
+        : null;
+    case 'hold': {
+      if (C.hold?.from === 'pile') return once('pile') ? CB_TABLE.pileOpen : null;
+      const pw = C.hold?.c ? cbPower(C.hold.c) : null;
+      return once('deck') ? (pw ? CB_STATUS.holdPower(POWER_LONG[pw]) : CB_STATUS.holdPlain) : null;
+    }
+    case 'ownpeek':
+      return CB_STATUS.ownpeekSub;
+    case 'spy':
+      return CB_STATUS.spySub;
+    case 'blind':
+      return CB_STATUS.blindSub;
+    default:
+      return null;
+  }
+}
+
+/** Meldet einen Lagewechsel einmal (renderTable ruft das nach jedem Zeichnen der Plätze) */
+function cbHint(v: View): void {
+  const C = v.cb;
+  const role = cbRole(v);
+  const snap = App.cs.snap && cbCanSnap(v);
+  const key = C && v.phase === 'play' ? `${v.games}:${num(v.round)}:${role}:${snap}:${C.hold?.from ?? ''}` : '';
+  if (key === HINT.key) return;
+  HINT.key = key;
+  const text = C && key ? cbHintText(v, C, role, snap) : null;
+  if (text) emit({ level: 'small' }, { text });
+}
+
 export const cbSpec: NewTable = {
   badge: false,
   actor: (v) => (v.phase === 'play' ? turnId(v) : null),
@@ -746,4 +799,5 @@ export const cbSpec: NewTable = {
   status: cbStatus,
   sheet: cbSheet,
   drag: true,
+  after: cbHint,
 };

@@ -13,6 +13,7 @@ const FULL: Prefs = {
   drag: false,
   zones: true,
   dragSame: false,
+  zoom: true,
   haptic: false,
   volume: 0.3,
   turnTone: 'always',

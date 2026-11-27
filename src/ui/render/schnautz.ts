@@ -30,6 +30,9 @@ const cl = (...xs: (string | false | null | undefined)[]): string => xs.filter(B
 
 const isLive = (v: View): boolean => v.phase === 'choose' || v.phase === 'play';
 
+/** Züge bis zum Aufdecken, nachdem jemand geklopft hat (Etikett am Klopfer) */
+const left = (v: View): number => Math.max(1, num(v.afterKnock));
+
 /** Wer gerade gefragt ist: beim Wählen der Geber, im Spiel wer dran ist */
 const actor = (v: View): string | null => (v.phase === 'choose' ? dealerId(v) : v.phase === 'play' ? turnId(v) : null);
 
@@ -67,7 +70,7 @@ function szTag(v: View, p: Player): TagModel | null {
   if (p.out || !isLive(v)) return null;
   const T = SZ_TABLE.tag;
   if (actor(v) === p.id) return { text: v.phase === 'play' ? T.turn : T.deal, kind: 'turn', cls: 'turn', think: true };
-  if (v.knocker === p.id) return { text: T.knock, kind: 'knock', cls: 'knock', title: T.knockSay };
+  if (v.knocker === p.id) return { text: T.knock(left(v)), kind: 'knock', cls: 'knock', title: T.knockSay(left(v)) };
   if (dealerId(v) === p.id) return { text: T.deal, kind: 'role' };
   return null;
 }
@@ -144,13 +147,21 @@ function szCenter(v: View): CenterModel {
           )
           .join('');
   const b = cardHTML(null, { key: '' });
+  // Wie viele schon geschoben haben, steht unter der Mitte, bis jemand klopft oder neue Karten kommen
+  const np = v.phase === 'play' && !v.knocker ? num(v.passes) : 0;
   return {
     cap: SZ_TABLE.cap(num(v.round), v.phase === 'choose'),
     label: SZ_TABLE.center(num(v.round), n),
     stacks: [
       // Immer drei Rücken, die Zahl sitzt als Plakette am Stapel wie bei Shithead
       { k: 'deck', cls: 'deck', title: SZ_TABLE.deck(n), body: b + b + b, count: n },
-      { k: 'middle', cls: 'middle', title: '', body: mid },
+      {
+        k: 'middle',
+        cls: 'middle',
+        title: np ? SZ_TABLE.passedAll : '',
+        body: mid,
+        cnt: np ? { text: SZ_TABLE.passed(np, activeList(v).length) } : undefined,
+      },
     ],
   };
 }
@@ -241,13 +252,13 @@ function szMe(v: View): MeModel {
   const tag: TagModel | null = !live
     ? pq
     : v.knocker === App.me
-      ? { text: M.knock, kind: 'knock', cls: 'knock', title: M.knockSay }
+      ? { text: M.knock(left(v)), kind: 'knock', cls: 'knock', title: M.knockSay(left(v)) }
       : dealer
         ? { text: M.deal, kind: 'role' }
         : null;
   const pill = hand
     ? `<span class="${cl('pill', hv.v >= 30.5 && 'hot', preview && 'pre')}">` +
-      (preview ? `${shortVal(hv)} <span class="to">→ ${preview}</span>` : valHTML(hv)) +
+      (preview ? `${shortVal(hv)} <span class="to">→ ${preview}</span>` : pillVal(hv)) +
       '</span>'
     : '';
   const why = live && !playing ? szWhyNot(v, App.me, 'swap') : null;
@@ -287,6 +298,13 @@ export function renderGame(v: View): void {
 }
 
 /** Kurzer Handwert für Pille und Knopf: Zahl mit Farbe, besondere Hände nur als Zahl. So bleibt die Breite fest. */
+/** Wert der eigenen Hand. Den Namen (· Schnautz) blendet fit.css am Handy neben einem Etikett aus (.hw) */
+function pillVal(hv: HandValue): string {
+  const full = valHTML(hv);
+  const k = shortVal(hv);
+  return k === full ? full : `<span class="hw">${full.replace(k, `</span>${k}<span class="hw">`)}</span>`;
+}
+
 function shortVal(hv: HandValue): string {
   if (hv.kind === 'normal') return valHTML(hv);
   if (hv.kind === 'none') return '';

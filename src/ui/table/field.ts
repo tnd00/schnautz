@@ -4,7 +4,7 @@
  */
 import { App } from '../app';
 
-export type Anchor = 'field' | 'pile' | 'status' | 'me' | 'seat';
+export type Anchor = 'field' | 'pile' | 'me' | 'seat';
 
 /** Element, an dem eine Meldung hängt. Bei 'seat' der Platz `pid`, der eigene ist #me. */
 export function anchorEl(a: Anchor, pid?: string): Element | null {
@@ -13,8 +13,6 @@ export function anchorEl(a: Anchor, pid?: string): Element | null {
       return document.getElementById('center');
     case 'pile':
       return document.querySelector('#center [data-k="pile"], #center .pile');
-    case 'status':
-      return document.getElementById('status');
     case 'me':
       return document.getElementById('me');
     case 'seat':

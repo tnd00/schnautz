@@ -146,18 +146,6 @@
   --tb-brand-text: var(--st-ink);
   --tb-brand-line: var(--sn-rim);
 
-  /* Statuszeile */
-  --tb-status-bg: var(--sn-paper);
-  --tb-status-text: var(--sn-text);
-  --tb-status-soft: var(--sn-soft);
-  --tb-status-shadow: var(--tb-edge), var(--sn-shadow-flat);
-  --tb-status-turn-bg: var(--sn-text); /* neutral, an .g-<spiel> die Spielfarbe */
-  --tb-status-turn-text: var(--st-ink);
-  --tb-status-turn-soft: var(--st-ink);
-  --tb-status-family: var(--ui);
-  --tb-status-style: normal;
-  --tb-status-weight: 800;
-
   /* Ziele für Tippen und Ziehen */
   --tb-target-ring: 0 0 0 3px var(--sn-text), 0 0 0 6px var(--sn-ink);
   --tb-target-soft: 0 0 0 2px color-mix(in srgb, var(--sn-text) 75%, transparent);
@@ -347,7 +335,6 @@
   --tb-accent: var(--g);
   --tb-tag-turn-bg: var(--g);
   --tb-brand-bg: var(--g);
-  --tb-status-turn-bg: var(--g);
   --tb-sheet-win-bg: color-mix(in srgb, var(--g) 16%, var(--sn-paper));
   --tb-turn-glow: var(--tb-edge), 0 0 0 3px var(--g), var(--sn-shadow-lift-sm);
   /* Bei Nacht ersetzt die Spielfarbe den hellen Ring (tokens.md), auf heller Karte trennt ihn innen die Tinte */

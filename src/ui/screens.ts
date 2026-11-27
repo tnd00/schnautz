@@ -32,7 +32,8 @@ export function showScreen(name: Screen): void {
   document.body.classList.toggle('inlobby', name === 'lobby');
   document.body.classList.toggle('onstart', name === 'start');
   if (name !== 'start') document.body.classList.remove('startform');
-  $('#btn-board').hidden = name !== 'game';
+  // Bestenliste oben in Lobby und am Tisch, zusätzlich im Menü ⋯ wie die Regeln (User 27.11.2026)
+  $('#btn-board').hidden = name !== 'lobby' && name !== 'game';
   document.body.classList.toggle('intable', name === 'lobby' || name === 'game');
   const inTable = name === 'lobby' || name === 'game';
   // Das Menü gibt es ab der Lobby, die Startseite hat keine Kopfzeile

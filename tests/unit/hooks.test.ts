@@ -1,7 +1,7 @@
 /*
  * Selektorvertrag (Plan 2.8 Abschnitt 8, abgleich.md 1.1): Die Bausteine am Tisch erzeugen jeden Selektor, den E2E,
  * Flüge, Abläufe, Band und Mess-Skripte lesen. Shithead kommt hier über specOf aus echten Spielständen, Durak, Cabo
- * und Schnautz ebenso in hooks-dk, hooks-cb und hooks-sz (die Modelle von Hand hier sind älter). #status (paintStatus),
+ * und Schnautz ebenso in hooks-dk, hooks-cb und hooks-sz (die Modelle von Hand hier sind älter).
  * #emofab und #logfab stehen fest in index.html und gehören nicht zu den Bausteinen.
  */
 import { afterEach, describe, expect, it } from 'vitest';
@@ -38,7 +38,6 @@ const tableHTML = (m: Models): string =>
   '<div class="table" id="table"><div class="scorebar" id="scorebar"></div>' +
   `<div class="opps" id="opps">${m.opps.map(seatHTML).join('')}</div>` +
   `<div class="center" id="center">${centerHTML(m.center)}</div>` +
-  '<div class="status" id="status"></div>' +
   `<div class="seat"><div class="${meClass(m.me)}" id="me" data-pid="p1"` +
   `${'out' in m.me ? '' : ` data-st="${m.me.st.join(' ')}"`}>${meHTML(m.me)}</div></div></div>`;
 
@@ -437,13 +436,12 @@ describe('Selektorvertrag der Bausteine', () => {
     expect(qsa(root, '#center [data-fk]')).toEqual([]);
   });
 
-  it('die fünf Kinder von #table bleiben', () => {
+  it('die vier Kinder von #table bleiben, eine Statuszeile gibt es nicht mehr', () => {
     const root = parseHTML(tableHTML(shPlay()));
     expect(qsa(root, '#table > *').map((e) => e.attrs.id ?? e.attrs.class)).toEqual([
       'scorebar',
       'opps',
       'center',
-      'status',
       'seat',
     ]);
   });
@@ -560,7 +558,7 @@ describe('Shithead nach Runde 3', () => {
     const five = qsa(doc, '[data-act=shh].dim')[0].attrs;
     expect(five['aria-disabled']).toBe('true');
     expect(five['aria-description']).toBeTruthy();
-    // Ausspielen und Aufnehmen bleiben an ihren Plätzen, „Alle wählen“ kommt dahinter
+    // „Alle wählen“ kommt in die Mitte, Aufnehmen bleibt rechts (User 27.11.2026)
     const sel = shModels(
       shTable(true, (st) => {
         if (!st.sh) return;
@@ -570,6 +568,6 @@ describe('Shithead nach Runde 3', () => {
       { src: 'hand', idx: [0] },
     );
     const acts = qsa(parseHTML(meHTML(sel.me)), '.actions .btn').map((b) => b.attrs['data-act']);
-    expect(acts).toEqual(['shplay', 'shpickup', 'shselall']);
+    expect(acts).toEqual(['shplay', 'shselall', 'shpickup']);
   });
 });

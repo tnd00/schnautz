@@ -37,10 +37,6 @@
     padding-top: 4px;
     padding-bottom: 6px;
   }
-  /* Haben schon welche geschoben, zählt der Stand mehr als der Tipp, sonst wird der Status dreizeilig */
-  #table[data-game='schnautz'] .status .sub:has(.np) .tip {
-    display: none;
-  }
 }
 
 @media (max-width: 960px) {

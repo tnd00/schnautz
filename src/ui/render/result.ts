@@ -396,13 +396,13 @@ let sheetOpen = false;
 const typing = (a: Element | null): boolean =>
   !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || (a as HTMLElement).isContentEditable);
 
-/** Blatt zu (nächste Runde, „Tisch ansehen“): Tisch wieder bedienbar, ein verlorener Fokus geht auf die Statuszeile. */
+/** Blatt zu (nächste Runde, „Tisch ansehen“): Tisch wieder bedienbar, ein verlorener Fokus geht auf den eigenen Platz. */
 function closeSheet(): void {
   if (!sheetOpen) return;
   sheetOpen = false;
   $('#table').inert = false;
   const a = document.activeElement;
-  const st = $opt('#status');
+  const st = $opt('#me');
   if (st && (!a || a === document.body)) {
     st.tabIndex = -1;
     st.focus({ preventScroll: true });

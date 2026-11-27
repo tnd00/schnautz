@@ -9,7 +9,7 @@ import { addPlayer, newState } from '../../src/game/state';
 import type { Action, CaboResult, Card, State, View } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
-import { cbSheet, cbStatus } from '../../src/ui/render/cabo';
+import { cbHintText, cbRole, cbSheet, cbStatus } from '../../src/ui/render/cabo';
 import type { Sheet } from '../../src/ui/render/result';
 import type { Status } from '../../src/ui/status';
 import { codeOf, rngF } from './helpers';
@@ -111,6 +111,28 @@ describe('Statuszeile Cabo', () => {
     );
     App.cs.ids = st.cb!.P[me].slice(0, 2).map((s) => s.id);
     expect(statusFor(st, me).text).toContain('Du tauschst 2 Karten auf einmal ein.');
+  });
+
+  it('Kurzhinweis statt Statuszeile: gezogene Karte einmal je Partie, Ablage nennt offene Karten, Fähigkeit jedes Mal', () => {
+    const st = play(5);
+    const me = turnOf(st);
+    App.me = me;
+    const hint = (): string | null => {
+      const v = viewFor(st, me);
+      return cbHintText(v, v.cb!, cbRole(v), false);
+    };
+    st.cb!.hold = { by: me, c: 'H3', from: 'deck' };
+    expect(hint()).toBe('Tausch sie gegen eine oder mehrere gleiche Karten ein oder leg sie ab.');
+    expect(hint()).toBeNull();
+    st.cb!.hold = { by: me, c: 'HK', from: 'pile' };
+    expect(hint()).toBe('Karten von der Ablage liegen danach offen vor dir, alle haben sie gesehen.');
+    expect(hint()).toBeNull();
+    st.cb!.hold = null;
+    st.cb!.power = { by: me, kind: 'spy', c: 'H9' };
+    expect(hint()).toBe('Tippe eine Karte von jemand anderem an. Nur du siehst sie.');
+    expect(hint()).toBe('Tippe eine Karte von jemand anderem an. Nur du siehst sie.');
+    st.cb!.power = null;
+    expect(hint()).toBeNull();
   });
 
   it('Fähigkeiten: Ansehen, Spionieren, Blindtausch', () => {

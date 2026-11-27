@@ -22,7 +22,7 @@ export interface NewTable {
   seat(v: View, p: Player): SeatModel | null;
   center(v: View): CenterModel | null;
   me(v: View): MeModel | MeOut | null;
-  /** aus src/ui/status.ts, renderTable ruft paintStatus(spec.status(v)), das meldet den Vorleser selbst */
+  /** aus src/ui/status.ts, renderTable liest daraus Vorlesetext (sayStatus) und Knöpfe außer der Reihe (quick) */
   status(v: View): Status;
   /** aus src/ui/render/result.ts, render() ruft renderResult(v, spec.sheet(v)) */
   sheet(v: View): Sheet | null;

@@ -32,14 +32,26 @@ export function btnHTML(b: BarButton): string {
 /** Freier Knopfplatz: hält die Breite, ist aber weder sichtbar noch fokussierbar noch für den Vorleser da */
 const SLOT = '<span class="btn bslot" aria-hidden="true"></span>';
 
-/** Knopfleiste als HTML, setzt `BAR` bei einem Wechsel der Knöpfe. */
-export function barHTML(b: BarModel | null): string {
-  if (!b) return '';
-  const sig = b.btns.map((x) => x.act).join(',');
+/**
+ * Knopfleiste als HTML, setzt `BAR` bei einem Wechsel der Knöpfe. `quick` sind die Knöpfe außer der Reihe aus dem
+ * Status (4er, Bombe, Vorspulen, „Für X spielen“, `Status.quick`). Sie stehen hinter den festen Plätzen, damit
+ * keiner davor rutscht, und machen auch ohne eigene Knöpfe eine Leiste auf.
+ */
+export function barHTML(b: BarModel | null, quick = ''): string {
+  if (!b && !quick) return '';
+  const m = b ?? { btns: [] };
+  const sig = m.btns.map((x) => x.act).join(',');
   if (sig !== BAR.sig) Object.assign(BAR, { prev: BAR.sig, sig, at: Date.now() });
+  const items = m.btns.map(btnHTML);
+  const free = Math.max(0, (m.slots ?? 0) - m.btns.length);
+  let rest = quick;
+  if (m.hole != null && free) {
+    items.splice(m.hole, 0, quick || SLOT.repeat(free));
+    rest = '';
+  } else items.push(SLOT.repeat(free));
   return (
-    `<div class="actions${b.cls ? ` ${b.cls}` : ''}${b.slots ? ' slots' : ''}" role="group" aria-label="${TABLE.bar}">` +
-    `${b.btns.map(btnHTML).join('')}${SLOT.repeat(Math.max(0, (b.slots ?? 0) - b.btns.length))}${b.extra ?? ''}</div>`
+    `<div class="actions${m.cls ? ` ${m.cls}` : ''}${m.slots ? ' slots' : ''}" role="group" aria-label="${TABLE.bar}">` +
+    `${items.join('')}${m.extra ?? ''}${rest}</div>`
   );
 }
 

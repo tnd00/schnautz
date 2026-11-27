@@ -36,4 +36,10 @@
   .me.swapping .swhead > span {
     font-size: 12px;
   }
+  /* Kurze Handys: eigene Karten etwas kleiner, damit die Gegner darüber ihre Tischkarten ganz zeigen */
+  .me.swapping .tcards,
+  .me.swapping .shhand {
+    --tw: calc(var(--u) * 15.5);
+    --hw: calc(var(--u) * 15.5);
+  }
 }

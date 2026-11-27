@@ -21,9 +21,6 @@ import {
   type BandGeo,
   type BandIn,
   bandGeo,
-  coverWidth,
-  cutsStatus,
-  FIELD_BIG,
   FIELD_MIN,
   firstFit,
   panelText,
@@ -77,13 +74,21 @@ function emotesBox(): Span | null {
 
 const emotesTop = (): number => emotesBox()?.top ?? Infinity;
 
+/** Oberkante des eigenen Platzes samt Uhr, die mittig über seinem Rand sitzt. Meldungen bleiben darüber. */
+function meTop(): number | null {
+  const me = shown('#me');
+  if (!me) return null;
+  const c = shown('#me > .clk.mine');
+  return c && c.top < me.top ? c.top - 4 : me.top;
+}
+
 /** Sitzt jemand am Tisch, mit eigenem Platz? Sonst gibt es weder Spielfläche noch Band. */
 const atTable = (): boolean => document.body.classList.contains('ingame') && !!$opt('#table') && !!shown('#me');
 
 /**
  * Unterkante der Gegner für Band und kleine Meldungen. Gekippte Kacheln (Sticker) und ihr Wert darunter ragen aus
  * #opps, sie zählen mit, sonst landen Meldungen ein paar Pixel auf ihnen. Die Spielfläche (fieldBox) misst weiter
- * nur #opps, sonst rückten große Meldungen dort in die Statuszeile.
+ * nur #opps.
  */
 function oppsBottom(): number | null {
   let bottom = shown('#opps')?.bottom ?? null;
@@ -106,10 +111,7 @@ export function fieldBox(): Box | null {
   if (!table || !opps || !me) return null;
   const t = table.getBoundingClientRect();
   const top = Math.max(t.top, opps.getBoundingClientRect().bottom) + 6;
-  let bottom = Math.min(t.bottom, me.getBoundingClientRect().top, emotesTop()) - 6;
-  // Knöpfe in der Statuszeile (4er, Bombe, Vorspulen) bleiben frei, solange darüber genug Spielfläche bleibt
-  const quick = shown('#status .quick');
-  if (quick && quick.top - 6 < bottom && quick.top - 6 - top >= FIELD_MIN) bottom = quick.top - 6;
+  const bottom = Math.min(t.bottom, meTop() ?? me.getBoundingClientRect().top, emotesTop()) - 6;
   return { left: t.left, top, width: t.width, height: Math.max(0, bottom - top) };
 }
 
@@ -129,22 +131,6 @@ function pileBottom(limit: number): number | null {
   return bottom;
 }
 
-/**
- * Statuszeile: Unterkante der Hauptzeile und des ganzen Texts (Unterzeile, Knöpfe). Knöpfe statt der Unterzeile
- * (`.quick`: 4er, Bombe, Vorspulen) zählen zur Hauptzeile, keine kleine Meldung legt sich darüber.
- */
-function statusLines(st: DOMRect): { top: number; main: number; text: number } | null {
-  const line = shown('#status .main');
-  if (!line) return null;
-  const main = Math.max(line.bottom, shown('#status .quick')?.bottom ?? 0);
-  let text = main;
-  for (const el of document.querySelectorAll<HTMLElement>('#status > *')) {
-    const r = el.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0) text = Math.max(text, r.bottom);
-  }
-  return { top: line.top, main, text: Math.min(text, st.bottom) };
-}
-
 /** Gemessene Kanten des Bands samt seiner Breite (so breit wie der eigene Platz). */
 function bandIn(): (BandIn & { left: number; width: number }) | null {
   const v = App.view;
@@ -153,7 +139,6 @@ function bandIn(): (BandIn & { left: number; width: number }) | null {
   if (!me) return null;
   const table = shown('#table');
   const swap = v.phase === 'swap';
-  const st = shown('#status');
   const head = shown('#me .swhead');
   // Erster Inhalt im eigenen Platz: Kopf mit Name oder die runden Knöpfe in den Ecken (am Handy)
   const firsts = ['#me .mehead', '#me .swhead', '#emofab', '#logfab']
@@ -163,17 +148,17 @@ function bandIn(): (BandIn & { left: number; width: number }) | null {
   // Bühne auf den Kopf am Platz, dort bleiben die runden Knöpfe in den Ecken (am Handy) frei
   const fl = swap ? shown('#emofab') : null;
   const fr = swap ? shown('#logfab') : null;
-  const x0 = Math.max(Math.min(st?.left ?? Infinity, me.left), fl ? fl.right + 6 : -Infinity);
-  const x1 = Math.min(Math.max(st?.right ?? -Infinity, me.right), fr ? fr.left - 6 : Infinity);
+  const x0 = Math.max(me.left, fl ? fl.right + 6 : -Infinity);
+  const x1 = Math.min(me.right, fr ? fr.left - 6 : Infinity);
+  // Steht die eigene Uhr über dem Rand, hängen kleine Meldungen über ihr
+  const top = meTop() ?? me.top;
   return {
     opps: Math.max(table?.top ?? 0, oppsBottom() ?? 0),
-    pile: swap || myMoveNow(v) ? pileBottom(me.top) : null,
-    me: me.top,
-    head: firsts.length ? Math.min(...firsts) : me.top,
-    deep: swap && head ? head.bottom : me.top,
+    pile: swap || myMoveNow(v) ? pileBottom(top) : null,
+    me: top,
+    head: Math.min(...firsts, top),
+    deep: swap && head ? head.bottom : top,
     emotes: emotesBox(),
-    status: st ? statusLines(st) : null,
-    quick: !!shown('#status .quick'),
     lines: [...document.querySelectorAll<HTMLElement>('#center .cnt')]
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0)
@@ -206,23 +191,6 @@ const bigInBand = (): boolean => !!$opt('#announce.band .ann:not(.out)');
 function restBox(el: HTMLElement): { top: number; bottom: number } {
   const top = parseFloat(el.style.top) || el.getBoundingClientRect().top;
   return { top, bottom: top + el.offsetHeight };
-}
-
-/** Rechtecke des Texts in Haupt- und Unterzeile der Statuszeile (nicht der ganzen Zeile) für coverWidth */
-function statusText(): DOMRect[] {
-  return [...document.querySelectorAll<HTMLElement>('#status .main, #status .sub')]
-    .map((el) => {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      return range.getBoundingClientRect();
-    })
-    .filter((r) => r.width > 0 && r.height > 0);
-}
-
-/** Knöpfe in der Statuszeile (4er, Bombe, Vorspulen): Die Bühne im Band deckt sie nie (stageRoom). */
-function keepBox(): Span | null {
-  const r = shown('#status .quick');
-  return r ? { top: r.top, bottom: r.bottom } : null;
 }
 
 /** Bühne im Band: Sprüche und Hinweis mit Spruch. Alles andere (Hinweis, Grund) ist eine kleine Meldung. */
@@ -357,15 +325,8 @@ function positionMessage(el: HTMLElement, mode: Mode, fresh = false): void {
     if (onStage(el)) {
       el.style.removeProperty('min-width');
       const pills = bandPills().map(restBox);
-      let h = el.offsetHeight;
-      let top = stageTop(band.g, h, stageRoom(band.g, pills, h, keepBox()), pills);
-      // Deckt sie Zeilen der Statuszeile, dann mindestens so breit wie diese, sonst ragen links und rechts Reste hervor
-      const wide = coverWidth(band.left + band.width / 2, statusText(), top, h);
-      if (wide > el.offsetWidth) {
-        el.style.minWidth = `${Math.round(Math.min(wide, band.width - 8))}px`;
-        h = el.offsetHeight;
-        top = stageTop(band.g, h, stageRoom(band.g, pills, h, keepBox()), pills);
-      }
+      const h = el.offsetHeight;
+      const top = stageTop(band.g, h, stageRoom(band.g, pills, h), pills);
       el.style.top = `${Math.round(top)}px`;
       return;
     }
@@ -396,8 +357,7 @@ function positionMessage(el: HTMLElement, mode: Mode, fresh = false): void {
       fade(old);
     }
     // Die große Meldung im Band weicht der neuen kleinen und lässt dafür eher ihren Spruch weg. Bliebe nicht einmal
-    // ihr ganzer Titel oder schnitte sie eine Zeile der Statuszeile halb an, schließt sie, wenn gerade ein Grund oder
-    // Automatisches kommt (nie die Zeremonie)
+    // ihr ganzer Titel, schließt sie, wenn gerade ein Grund oder Automatisches kommt (nie die Zeremonie)
     const ann = $opt('#announce.band');
     if (ann?.querySelector('.ann:not(.out)') && !placeStage(ann, band) && fresh && rankOf(el) > 0 && !ANN.cur?.cls)
       skipAnnouncement();
@@ -414,8 +374,12 @@ function positionMessage(el: HTMLElement, mode: Mode, fresh = false): void {
   let top = mode === 'cap' && cap ? Math.max(opps, cap.bottom - h) : area.top + Math.max(0, (area.height - h) / 2);
   const taken = [...document.querySelectorAll<HTMLElement>('#fly .mid')]
     .filter((o) => o !== el && !o.classList.contains('out') && o.style.top !== '-999px')
-    .map(restBox)
-    .sort((p, q) => p.top - q.top);
+    .map(restBox);
+  // Der Ring des 4er-Fensters am Stapel bleibt frei, wenn die Meldung über ihn reichen würde
+  const ring = shown('#wincd');
+  const x = area.left + area.width / 2;
+  if (ring && ring.left < x + el.offsetWidth / 2 && ring.right > x - el.offsetWidth / 2) taken.push(ring);
+  taken.sort((p, q) => p.top - q.top);
   for (const o of taken) if (top < o.bottom + 4 && top + h > o.top - 4) top = o.bottom + 4;
   // Ist das Reaktionsfenster offen, rückt die Meldung darüber
   const limit = emotesTop() - 6;
@@ -452,8 +416,7 @@ function fitAnn(a: HTMLElement, avail: number): number {
 
 /**
  * Große Meldung im Band: so breit wie der eigene Platz, Lage nach stageTop, nie über den Stapel hinaus. Gibt zurück,
- * ob sie sauber steht: ganzer Titel (nicht `d-t2`), passt in ihren Platz, liegt unter keiner kleinen Meldung und
- * schneidet keine Zeile der Statuszeile halb an (cutsStatus).
+ * ob sie sauber steht: ganzer Titel (nicht `d-t2`), passt in ihren Platz und liegt unter keiner kleinen Meldung.
  */
 function placeStage(el: HTMLElement, band: { g: BandGeo; left: number; width: number }): boolean {
   const { g } = band;
@@ -474,33 +437,23 @@ function placeStage(el: HTMLElement, band: { g: BandGeo; left: number; width: nu
       a.classList.remove(...STAGE_DROP.filter(Boolean));
       full = Math.max(full, a.offsetHeight);
     }
-    const room = stageRoom(g, pills, full, keepBox());
+    const room = stageRoom(g, pills, full);
     const avail = Math.max(0, room.bottom - room.top);
     let h = 0;
     for (const a of anns) h = Math.max(h, fitAnn(a, avail));
     return { room, avail, h, top: stageTop(g, h, room, pills) };
   };
   for (const a of anns) a.style.removeProperty('min-width');
-  let lo = lay();
-  // Deckt sie Zeilen der Statuszeile, dann mindestens so breit wie deren Text, sonst ragen seitlich Reste hervor.
-  // Breiter wird sie dabei nie höher, ein zweiter Durchgang reicht
-  const wide = coverWidth(band.left + band.width / 2, statusText(), lo.top, lo.h);
-  if (anns.some((a) => a.offsetWidth < wide)) {
-    for (const a of anns) a.style.minWidth = `${Math.round(Math.min(wide, band.width - 8))}px`;
-    lo = lay();
-  }
-  const { room, avail, h, top } = lo;
+  const { room, avail, h, top } = lay();
   const whole =
     h <= avail + 1 &&
     !anns.some((a) => a.classList.contains('d-t2')) &&
-    !pills.some((p) => p.top < top + h - 1 && p.bottom > top + 1) &&
-    !cutsStatus(g, top, h, pills);
+    !pills.some((p) => p.top < top + h - 1 && p.bottom > top + 1);
   const next = { left: band.left, top, width: band.width, height: Math.min(h, room.bottom - top) };
-  // Nur verschieben, wenn sich die Lage spürbar ändert, sonst flackert es bei jedem Zeichnen
-  // Die alte Lage bleibt aber nur, wenn sie keine Zeile der Statuszeile anschneidet und die neue Meldung darunter
-  // ganz Platz hat. Die Höhe kommt immer von der neuen Meldung, sonst schneidet die alte Ebene sie unten ab
-  const keep =
-    prev.top && !movedEnough(prev, next) && !cutsStatus(g, prev.top, h, pills) && prev.top + h <= room.bottom + 0.5;
+  // Nur verschieben, wenn sich die Lage spürbar ändert, sonst flackert es bei jedem Zeichnen. Die alte Lage bleibt
+  // aber nur, wenn die neue Meldung darunter ganz Platz hat. Die Höhe kommt immer von der neuen Meldung, sonst
+  // schneidet die alte Ebene sie unten ab
+  const keep = prev.top && !movedEnough(prev, next) && prev.top + h <= room.bottom + 0.5;
   const box = keep ? { ...prev, height: h } : next;
   Object.assign(el.style, {
     left: `${Math.round(box.left)}px`,
@@ -552,21 +505,9 @@ function placeInField(el: HTMLElement | null): void {
       }
     };
     put(f);
-    // Reicht eine große Meldung in die Statuszeile hinein (Schnautz am PC, kurze Handys), rückt die Fläche über die
-    // Statuszeile, solange dort Platz für eine kompakte bleibt. Sonst schaute unter ihr eine halbe Hauptzeile hervor
-    const line = shown('#status .main');
-    const above = f && line ? line.top - 6 - f.top : 0;
-    const y0 = parseFloat(el.style.top) || 0;
-    const anns = [...el.querySelectorAll<HTMLElement>('.ann:not(.out)')];
-    const low = !!line && anns.some((a) => y0 + a.offsetTop + a.offsetHeight > line.top - 2);
-    if (f && low && above > 0 && above < f.height) {
-      put({ ...f, height: above });
-      // Unter FIELD_BIG nur, wenn die kompakte Fassung dort ganz hineinpasst (gemessen)
-      if (above < FIELD_BIG && anns.some((a) => a.offsetHeight > above)) put(f);
-    }
     // Eine neue große Meldung hat Vorrang: Kleine an der Stapelkante, die sie schneidet, blenden aus. Sonst stünde
-    // etwa „… wirft eine Bombe ein“ auf ihrem Zeichen, sobald sie über die Statuszeile rückt. Das gilt auch, wenn sie
-    // erst beim nächsten Zeichnen dorthin rückt
+    // etwa „… wirft eine Bombe ein“ auf ihrem Zeichen. Das gilt auch, wenn sie erst beim nächsten Zeichnen dorthin
+    // rückt
     if (fresh || el.style.top !== top0) fadeUnder(el);
   }
   const now = el.classList.contains('band') ? 'band' : el.classList.contains('field') ? 'field' : '';
@@ -828,7 +769,7 @@ function labelText(pid: string | undefined, text: string, mineText?: string): st
 
 /**
  * Kurzer Hinweis, wer gerade was getan hat ("Heinzi nimmt 5 Karten"). Er erscheint in der Spielfläche,
- * damit er keinen Gegner verdeckt, bin ich am Zug im Band unter der Statuszeile. Mehrere stehen untereinander.
+ * damit er keinen Gegner verdeckt, bin ich am Zug im Band über dem eigenen Platz. Mehrere stehen untereinander.
  * `mineText` ist die Form für einen selbst ("Du nimmst 5 Karten"). Still, den Ton entscheidet `emit`.
  * `urgent` (Automatisches) wartet nicht auf eine große Meldung im Band und liegt über ihr.
  */
@@ -1032,15 +973,11 @@ export function realignFeedback(): void {
   const was = live.map((el) => ({ box: boxOfStyle(el), band: el.classList.contains('band') }));
   // Der Reihe nach neu setzen, älteste zuerst, damit die Stapel dieselbe Ordnung behalten
   for (const el of live) el.style.top = '-999px';
-  // Die Bühne bleibt nur dort, wo sie keine Zeile der Statuszeile anschneidet (was kleine Meldungen decken, zählt mit)
-  const band = bandNow();
-  const cuts = (el: HTMLElement, top: number): boolean =>
-    !!band && onStage(el) && cutsStatus(band.g, top, el.offsetHeight, bandPills(el).map(restBox));
   live.forEach((el, i) => {
     positionMessage(el, el.dataset.mode as 'cap' | 'center');
     const now = boxOfStyle(el);
     const old = was[i];
-    if (old.band === el.classList.contains('band') && !movedEnough(old.box, now) && !cuts(el, old.box.top)) {
+    if (old.band === el.classList.contains('band') && !movedEnough(old.box, now)) {
       el.style.left = `${old.box.left}px`;
       el.style.top = `${old.box.top}px`;
     }
@@ -1069,7 +1006,7 @@ function rejectTargets(act: string | null): HTMLElement[] {
     const els = TAP.sel.map((q) => $opt(q)).filter((x): x is HTMLElement => !!x);
     if (els.length) return els;
   }
-  const btn = act ? $opt(`#me [data-act="${act}"], #status [data-act="${act}"], #center [data-act="${act}"]`) : null;
+  const btn = act ? $opt(`#me [data-act="${act}"], #center [data-act="${act}"]`) : null;
   if (btn) return [btn];
   const me = $opt('#me');
   return me ? [me] : [];

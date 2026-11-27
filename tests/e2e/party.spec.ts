@@ -106,16 +106,16 @@ test('Werfen und Soundboard zwischen Host und Gast', async ({ browser }) => {
     await guest.evaluate(() => document.querySelector('#me .card')?.setAttribute('data-keep', '1'));
     await host.click(`.opp[data-pid="${guestId}"]`);
     await expect(host.locator('#tosspick')).toBeVisible();
-    // Form C: Die Reihe liegt auf der Statuszeile (nach dem Einblenden gemessen). Stehen dort Knöpfe wie 4er oder
-    // Bombe im 4er-Fenster, rückt sie darüber, damit sie nichts Zeitkritisches verdeckt
+    // Die Reihe steht direkt unter der angetippten Kachel samt Pille (nach dem Einblenden gemessen), die Nachbarn
+    // bleiben frei und an der Kachel überdeckt sie nichts
     const off = () =>
-      host.evaluate(() => {
+      host.evaluate((id) => {
         const p = document.querySelector('#tosspick')!.getBoundingClientRect();
-        const st = document.querySelector('#status')!;
-        const r = st.getBoundingClientRect();
-        if (st.classList.contains('hasquick')) return p.bottom <= r.top + 1 ? 0 : Math.round(p.bottom - r.top);
-        return Math.round(Math.abs(p.top + p.height / 2 - (r.top + r.height / 2)));
-      });
+        const t = document.querySelector(`.opp[data-pid="${id}"]`)!;
+        let b = t.getBoundingClientRect().bottom;
+        for (const c of t.querySelectorAll('*:not(.tossmark)')) b = Math.max(b, c.getBoundingClientRect().bottom);
+        return Math.round(Math.abs(p.top - b - 6));
+      }, guestId);
     await expect.poll(off).toBeLessThan(2);
     await host.click('#tosspick [data-item=crown]');
     await expect(host.locator('#tosspick')).toHaveCount(0);

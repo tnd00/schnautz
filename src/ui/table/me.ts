@@ -9,14 +9,14 @@ import type { MeModel, MeOut } from './types';
 
 export const isOut = (m: MeModel | MeOut): m is MeOut => 'out' in m;
 
-/** Inhalt von #me */
-export function meHTML(m: MeModel | MeOut): string {
-  if (isOut(m)) return `<div class="outmsg">${esc(m.out)}</div>${barHTML(m.bar ?? null)}`;
+/** Inhalt von #me. `quick`: Knöpfe außer der Reihe aus dem Status, sie stehen hinten in der Knopfleiste */
+export function meHTML(m: MeModel | MeOut, quick = ''): string {
+  if (isOut(m)) return `<div class="outmsg">${esc(m.out)}</div>${barHTML(m.bar ?? null, quick)}`;
   const h = m.head;
   const head = h
     ? `<div class="mehead">${h.marks}<span class="nm">Du</span>${h.count ?? ''}${h.tags ?? ''}${h.pill ?? ''}</div>`
     : '';
-  return `${m.lead ?? ''}${head}${m.rows}${barHTML(m.bar)}`;
+  return `${m.lead ?? ''}${head}${m.rows}${barHTML(m.bar, quick)}`;
 }
 
 /** Klassen von #me: me, die alten Klassen des Spiels und die Zustände turn, looking und swapping wie heute */

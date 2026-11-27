@@ -76,7 +76,7 @@
   border-color: transparent;
   box-shadow: var(--tb-edge), var(--tb-shadow-flat);
 }
-:root[data-look='sticker'] body.ingame .wincd b {
+:root[data-look='sticker'] body.ingame .pile .wincd b {
   color: var(--tb-tag-text);
   background: var(--tb-clock-bg);
 }
@@ -121,8 +121,8 @@
   font-weight: 800;
 }
 
-/* 4er-Fenster: Ring der Uhr in Tinte, Etikett „4er“ wie die anderen Etiketten */
-:root[data-look='sticker'] body.ingame .wincd {
+/* 4er-Fenster: Ring um den Stapel in Tinte, Etikett „4er“ wie die anderen Etiketten */
+:root[data-look='sticker'] body.ingame .pile .wincd::before {
   background: conic-gradient(
     in srgb,
     var(--tb-turn-line) calc(var(--p, 1) * 360deg),

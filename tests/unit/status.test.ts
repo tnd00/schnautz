@@ -12,7 +12,7 @@ import type { State, View } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
 import { App } from '../../src/ui/app';
 import { renderSheet, sheetWaits, waitsFor } from '../../src/ui/render/result';
-import { shPileInfo, shSheet } from '../../src/ui/render/shithead';
+import { shPileInfo, shSheet, shSpec } from '../../src/ui/render/shithead';
 import { shDimWhy } from '../../src/ui/shithead/input';
 import { statusOf, type Status } from '../../src/ui/status';
 import { waitForms, waitLine } from '../../src/content/texts/status';
@@ -55,6 +55,9 @@ afterEach(() => {
 });
 
 const noFour = (cs: string[]): string[] => cs.filter((c) => rankOf(c) !== '4');
+
+/** Ablagestapel in der Tischmitte */
+const pileOf = (v: View) => shSpec.center(v)!.stacks.find((x) => x.k === 'pile')!;
 
 describe('Statuszeile Shithead', () => {
   it('liefert für alle vier Spiele eine Statuszeile mit Hauptzeile', () => {
@@ -196,13 +199,14 @@ describe('Statuszeile Shithead', () => {
     expect(text).not.toMatch(/Du ist/);
   });
 
-  it('4er-Sperre: Gleich bist du dran mit Uhr', () => {
+  it('4er-Sperre: Gleich bist du dran, die Uhr läuft als Ring um den Stapel', () => {
     const st = play(table());
     const me = turnOf(st);
     st.sh!.win = { r: '4', by: [], id: 1, lock: true };
-    const { s, text } = statusFor(st, me);
+    const { s, text, v } = statusFor(st, me);
     expect(s.tone).toBe('alert');
-    expect(s.main).toContain('id="wincd"');
+    expect(s.main).not.toContain('wincd');
+    expect(pileOf(v).body).toContain('id="wincd"');
     expect(text).toContain('Gleich bist du dran.');
     expect(text).toContain('Neuer Stapel, alle dürfen jetzt ihre 4er reinwerfen, du auch.');
   });
@@ -226,9 +230,14 @@ describe('Statuszeile Shithead', () => {
     const S = st.sh!;
     S.P[other].hand = ['C4', ...noFour(S.P[other].hand)];
     S.win = { r: '4', by: [], id: 1, lock: false };
-    const { s } = statusFor(st, other);
+    const { s, v } = statusFor(st, other);
     expect(s.quick).toContain('data-act="shthrow"');
     expect(s.tone).toBe('alert');
+    // Am Stapel steht es auch, ohne Sperre ohne Ring
+    const pile = pileOf(v);
+    expect(pile.cnt?.text).toBe('Reinwerfen!');
+    expect(pile.can).toBe(true);
+    expect(pile.body).not.toContain('wincd');
   });
 
   it('Person am Zug offline: der 4er-Knopf bleibt für den Gastgeber', () => {

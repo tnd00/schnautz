@@ -204,6 +204,14 @@ describe('Knopfleiste', () => {
     expect(one(h, '[data-act=cbsnap]')['aria-pressed']).toBe('false');
     expect(barHTML(null)).toBe('');
   });
+  it('Knöpfe außer der Reihe stehen hinter den festen Plätzen, auch ohne eigene Knöpfe', () => {
+    const q = '<button class="btn throw" data-act="shthrow">4 reinwerfen</button>';
+    expect(qsa(parseHTML(barHTML(null, q)), '.actions[role=group] [data-act=shthrow]')).toHaveLength(1);
+    const kids = qsa(parseHTML(barHTML({ ...B, slots: 4 }, q)), '.actions > *').map(
+      (e) => e.attrs['data-act'] ?? 'slot',
+    );
+    expect(kids).toEqual(['shplay', 'shpickup', 'cbsnap', 'slot', 'shthrow']);
+  });
   it('zwei Fassungen einer Beschriftung', () => {
     expect(twoLabel('Weiterschieben', 'Schieben')).toBe(
       '<span class="blong">Weiterschieben</span><span class="bshort">Schieben</span>',

@@ -61,7 +61,7 @@ import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
 import { dkButton, dkTapHand, dkTapTable } from './durak/input';
 import { cbButton, cbTapMine, cbTapOpp } from './cabo/input';
 import { openDesign } from './look';
-import { openPrefs } from './prefs';
+import { openPrefs, prefs } from './prefs';
 import { dragCancel } from './table/drag';
 import { dragOn } from './table/index';
 
@@ -113,7 +113,7 @@ function shTap(kind: 'h' | 'u', i: number): void {
 function shBtnOk(v: View | null, act: 'shplay' | 'shpickup' | 'skip', t: HTMLElement): boolean {
   const r = shBtnTap(v, act, t.getAttribute('aria-disabled') === 'true');
   if (typeof r === 'boolean') return r;
-  noteTap(act, [`${act === 'skip' ? '#status' : '#me'} [data-act="${act}"]`]);
+  noteTap(act, [`#me [data-act="${act}"]`]);
   showReject(r, act);
   return false;
 }
@@ -325,7 +325,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       sfx('card');
       const ti = shCanThrow(v, App.me);
       if (ti) grabRects(ti.src, ti.idx);
-      noteTap('shthrow', ['#status [data-act="shthrow"]']);
+      noteTap('shthrow', ['#me [data-act="shthrow"]']);
       doAct({ type: 'shthrow' });
       break;
     }
@@ -333,7 +333,7 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
       if (!v || !quickLock()) break;
       const bm = shCanBomb(v, App.me);
       if (bm) grabRects(bm.src, bm.idx);
-      noteTap('shbomb', ['#status [data-act="shbomb"]']);
+      noteTap('shbomb', ['#me [data-act="shbomb"]']);
       doAct({ type: 'shbomb' });
       break;
     }
@@ -979,6 +979,11 @@ export function initEvents(): void {
     }
   });
   // Jeder Tipp schaltet den Ton frei, auch im Karussell, das den Zeiger festhält
+  // Am Tisch zoomen zwei Finger nur, wenn es in „Bedienung“ an ist (User 27.11.2026), sonst überall. gesturestart gibt es
+  // nur in Safari
+  const noZoom = (e: Event) => prefs().zoom || !document.body.classList.contains('ingame') || e.preventDefault();
+  document.addEventListener('gesturestart', noZoom);
+  document.addEventListener('touchmove', (e) => e.touches.length > 1 && noZoom(e), { passive: false });
   document.addEventListener('pointerup', unlockAudio, { capture: true, passive: true });
   // iPhones werten erst touchend oder click als echten Tipp, der Ton freischalten darf
   document.addEventListener('touchend', unlockAudio, { capture: true, passive: true });
@@ -1016,8 +1021,8 @@ export function initEvents(): void {
     )
       closePick();
     const t = target.closest<HTMLElement>('[data-act]');
-    // Während der Zeremonie überspringt ein Tipp auf Tischmitte oder Status sie
-    if (!t && ceremonyOn() && target.closest('#center, #status')) skipAnnouncement();
+    // Während der Zeremonie überspringt ein Tipp auf die Tischmitte sie
+    if (!t && ceremonyOn() && target.closest('#center')) skipAnnouncement();
     if (t?.dataset.act) onAction(t.dataset.act, t);
   });
   document.addEventListener('keydown', (e) => {

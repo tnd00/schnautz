@@ -328,19 +328,19 @@ body.peeking #emotes {
  * Formular und Menü, auch wenn er über dem Tisch aufgeht.
  * Gerüst und Fokus kommen aus src/ui/dialog.ts (.dlg mit festem Kopf und eigenem Scrollbereich).
  * Jede Regel hängt an #modal und schlägt so die Filz-Regeln (.paper.sheet in shithead-flow.css) unabhängig
- * von der Reihenfolge. Ausgenommen sind nur Tipps (.betm, .bets), die zum Spiel gehören. Das Dev-Menü (.devm)
+ * von der Reihenfolge. Auch das Tippfenster (.betm, .bets) ist ein Sticker-Bogen (User 27.11.2026). Das Dev-Menü (.devm)
  * ist ein normaler Bogen, sein Inhalt steht in dev.css.
  * Ergebnisfenster am Tisch (#overlay) bleiben unverändert.
  * ========================================================================== */
 
-#modal > .modal:not(.betm) {
+#modal > .modal {
   padding: 24px;
   background: var(--st-dim);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 /* Der Bogen ist Trägerpapier wie Formular und Menü am Handy: Felder und Nebenknöpfe darauf sind weiß */
-#modal .paper.sheet:not(.bets) {
+#modal .paper.sheet {
   --display: var(--ui);
   --st-field: var(--st-paper);
   width: min(600px, 100%);
@@ -365,21 +365,21 @@ body.peeking #emotes {
 #modal > .modal > .paper:focus-visible {
   outline: none;
 }
-#modal .paper.sheet:not(.bets) :focus-visible {
+#modal .paper.sheet :focus-visible {
   outline: 3px solid var(--st-ink);
   outline-offset: 3px;
 }
-#modal .paper.sheet:not(.bets) ::selection {
+#modal .paper.sheet ::selection {
   background: var(--st-ink);
   color: var(--st-paper);
 }
-#modal .paper.sheet:not(.bets) input {
+#modal .paper.sheet input {
   caret-color: var(--st-ground);
 }
-#modal .paper.sheet:not(.bets) ::-webkit-scrollbar {
+#modal .paper.sheet ::-webkit-scrollbar {
   width: 10px;
 }
-#modal .paper.sheet:not(.bets) ::-webkit-scrollbar-thumb {
+#modal .paper.sheet ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 99px;
   background: rgba(26, 24, 48, 0.3) padding-box;
@@ -442,7 +442,7 @@ body.peeking #emotes {
 #modal .dlg-x {
   position: static;
 }
-#modal .paper.sheet:not(.bets) .x {
+#modal .paper.sheet .x {
   display: grid;
   place-items: center;
   flex: none;
@@ -466,7 +466,7 @@ body.peeking #emotes {
     scale var(--st-lift-ms) var(--st-ease);
   -webkit-tap-highlight-color: transparent;
 }
-#modal .paper.sheet:not(.bets) .x svg {
+#modal .paper.sheet .x svg {
   width: 20px;
   height: 20px;
   fill: none;
@@ -475,17 +475,17 @@ body.peeking #emotes {
   stroke-linecap: round;
 }
 @media (hover: hover) {
-  #modal .paper.sheet:not(.bets) .x:hover {
+  #modal .paper.sheet .x:hover {
     background: var(--st-ink);
     color: var(--st-paper);
   }
 }
-#modal .paper.sheet:not(.bets) .x:active {
+#modal .paper.sheet .x:active {
   scale: 0.92;
 }
 /* Werkzeug im Kopf links neben dem Kreuz (Zurücksetzen): dieselbe runde Form, ohne Neigung */
 /* Dunkle Hauptknöpfe im Fenster: violetter Fokusring statt eines zweiten schwarzen Rands */
-#modal .paper.sheet:not(.bets) .st-btn.st-primary:focus-visible {
+#modal .paper.sheet .st-btn.st-primary:focus-visible {
   outline-color: var(--st-ground);
   outline-offset: 2px;
 }
@@ -536,7 +536,7 @@ body.peeking #emotes {
   cursor: default;
 }
 /* Zurücksetzen sitzt rechts direkt neben dem Kreuz */
-#modal .paper.sheet:not(.bets) .dlg-tool + .x {
+#modal .paper.sheet .dlg-tool + .x {
   margin-left: 0;
 }
 #modal .paper.sheet .dlg-body:focus-visible {
@@ -553,10 +553,10 @@ body.peeking #emotes {
 }
 
 /* Grundtext im Bogen */
-#modal .paper.sheet:not(.bets) :is(h2, h3, p, .lead) {
+#modal .paper.sheet :is(h2, h3, p, .lead) {
   padding-left: 0;
 }
-#modal .paper.sheet:not(.bets) .lead {
+#modal .paper.sheet .lead {
   max-width: none;
   margin: 0 0 18px;
   color: var(--st-ink-soft);
@@ -564,7 +564,7 @@ body.peeking #emotes {
   line-height: 1.5;
   text-align: left;
 }
-#modal .paper.sheet:not(.bets) .botb {
+#modal .paper.sheet .botb {
   display: inline-grid;
   place-items: center;
   min-height: 20px;
@@ -579,7 +579,7 @@ body.peeking #emotes {
 }
 
 /* ---------- Knöpfe im Bogen: Hauptknopf in Tinte, Nebenknopf in Weiß (wie .st-btn) ---------- */
-#modal .paper.sheet:not(.bets) .btn {
+#modal .paper.sheet .btn {
   min-height: 56px;
   padding: 0 20px;
   border: 6px solid var(--st-paper);
@@ -593,24 +593,24 @@ body.peeking #emotes {
     translate var(--st-lift-ms) var(--st-ease),
     box-shadow var(--st-lift-ms) var(--st-ease);
 }
-#modal .paper.sheet:not(.bets) .btn.primary {
+#modal .paper.sheet .btn.primary {
   background: var(--st-ink);
   background-clip: padding-box;
   color: var(--st-paper);
 }
 @media (hover: hover) {
-  #modal .paper.sheet:not(.bets) .btn:hover {
+  #modal .paper.sheet .btn:hover {
     translate: 0 -2px;
     box-shadow: var(--st-shadow-lift);
   }
 }
-#modal .paper.sheet:not(.bets) .btn:active {
+#modal .paper.sheet .btn:active {
   translate: 0 -4px;
   box-shadow: var(--st-shadow-lift);
 }
 
 /* ---------- Bogen ohne festen Kopf: Rückfragen (events.ts). Das Fenster Tisch (render/netinfo.ts) hat einen ---------- */
-#modal .paper.sheet:not(.dlg, .bets) {
+#modal .paper.sheet:not(.dlg) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-content: start;
@@ -618,10 +618,10 @@ body.peeking #emotes {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-#modal .paper.sheet:not(.dlg, .bets) > * {
+#modal .paper.sheet:not(.dlg) > * {
   grid-column: 1 / -1;
 }
-#modal .paper.sheet:not(.dlg, .bets) > h2 {
+#modal .paper.sheet:not(.dlg) > h2 {
   grid-column: 1;
   grid-row: 1;
   align-self: center;
@@ -637,7 +637,7 @@ body.peeking #emotes {
   letter-spacing: -0.02em;
   text-align: left;
 }
-#modal .paper.sheet:not(.dlg, .bets) > .x {
+#modal .paper.sheet:not(.dlg) > .x {
   position: sticky;
   top: 0;
   grid-column: 2;
@@ -654,7 +654,7 @@ body.peeking #emotes {
   letter-spacing: -0.015em;
   text-wrap: balance;
 }
-#modal .paper.sheet:not(.bets) .foot {
+#modal .paper.sheet .foot {
   gap: 10px;
   padding-top: 8px;
 }
@@ -675,8 +675,8 @@ body.peeking #emotes {
   font-size: 14.5px;
 }
 #modal .netinfo .nrow span,
-#modal .paper.sheet:not(.bets) .npeople li span,
-#modal .paper.sheet:not(.bets) .nnote {
+#modal .paper.sheet .npeople li span,
+#modal .paper.sheet .nnote {
   color: var(--st-ink-soft);
 }
 #modal .netinfo .nrow b {
@@ -1199,11 +1199,11 @@ body.peeking #emotes {
 
 /* ---------- Handy: der Bogen kommt von unten, nur sein Inhalt scrollt ---------- */
 @media (max-width: 640px) {
-  #modal > .modal:not(.betm) {
+  #modal > .modal {
     place-items: end center;
     padding: max(28px, env(safe-area-inset-top)) 0 0;
   }
-  #modal .paper.sheet:not(.bets) {
+  #modal .paper.sheet {
     width: 100%;
     max-height: calc(100dvh - max(28px, env(safe-area-inset-top)));
     padding-bottom: max(20px, env(safe-area-inset-bottom));
@@ -1231,7 +1231,7 @@ body.peeking #emotes {
   #modal .dlg-body {
     padding: 16px 20px max(24px, calc(env(safe-area-inset-bottom) + 12px));
   }
-  #modal .paper.sheet:not(.dlg, .bets) {
+  #modal .paper.sheet:not(.dlg) {
     padding: 20px 20px max(20px, env(safe-area-inset-bottom));
   }
   /* Bestenliste: Name oben, Zahlen darunter genau unter ihren Überschriften */
@@ -1258,10 +1258,10 @@ body.peeking #emotes {
   }
 }
 @media (max-height: 600px) and (max-width: 640px) {
-  #modal > .modal:not(.betm) {
+  #modal > .modal {
     padding-top: max(12px, env(safe-area-inset-top));
   }
-  #modal .paper.sheet:not(.bets) {
+  #modal .paper.sheet {
     max-height: calc(100dvh - max(12px, env(safe-area-inset-top)));
   }
   #modal .dlg-title {
@@ -1272,7 +1272,7 @@ body.peeking #emotes {
   }
 }
 
-:where(html.calm) #modal .paper.sheet:not(.bets) {
+:where(html.calm) #modal .paper.sheet {
   animation: fade 0.2s;
 }
 
@@ -1281,12 +1281,12 @@ body.peeking #emotes {
 }
 
 :where(html.calm) #modal .rtab,
-:where(html.calm) #modal .paper.sheet:not(.bets) .btn {
+:where(html.calm) #modal .paper.sheet .btn {
   transition: box-shadow var(--st-lift-ms) linear;
 }
 
 :where(html.calm) #modal .rtab:is(:hover, :active),
-:where(html.calm) #modal .paper.sheet:not(.bets) .btn:is(:hover, :active) {
+:where(html.calm) #modal .paper.sheet .btn:is(:hover, :active) {
   translate: none;
 }
 
@@ -1352,6 +1352,42 @@ body:not(.ingame) #updbar :focus-visible {
 /* Beim Wechsel des Inhalts (anderer Regel-Reiter) fliegt das Fenster nicht neu ein. Steht am Ende und ist
  * spezifischer als jede Einblendung oben, auch die vom Handy und die für reduzierte Bewegung. */
 #modal > .modal.swap,
-#modal > .modal.swap > .paper.sheet:not(.bets) {
+#modal > .modal.swap > .paper.sheet {
   animation: none;
+}
+
+/* Tippfenster als Sticker-Bogen: Wahlkarten weiß auf dem Trägerpapier, gewählt mit Umriss in der
+ * Farbe des Spiels */
+#modal .paper.bets .betc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  box-shadow:
+    0 0 0 1.5px rgba(26, 24, 48, 0.08),
+    0 1px 2px rgba(26, 24, 48, 0.22);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+#modal .paper.bets .betc .bn {
+  max-width: 100%;
+  font: 750 15px/1.2 var(--ui);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#modal .paper.bets .betc .bs {
+  font-size: 12.5px;
+  color: var(--st-ink-soft);
+}
+#modal .paper.bets .betc.sel {
+  box-shadow:
+    0 0 0 3px var(--g, var(--st-ink)),
+    0 1px 2px rgba(26, 24, 48, 0.22);
 }

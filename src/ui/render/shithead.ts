@@ -273,6 +273,15 @@ function shCenter(v: View): CenterModel | null {
   }
   if (!pile.length) pileHTML = '<div class="emptyslot">leer</div>';
   const info = shPileInfo(v, pile);
+  // 4er-Fenster: Ein Ring um den Stapel zählt die Sperre für alle herunter (Ticker in src/ui/shithead/window.ts).
+  // Wer 4er oder eine Bombe hat, liest „Reinwerfen!“ am Stapel, der Knopf dazu steht in der Knopfleiste. Während
+  // eines Ablaufs noch nicht
+  const lock = !ov && v.phase === 'play' && !!S.win?.lock;
+  const wl = lock ? winLeft() : 0;
+  const ring = lock
+    ? `<span class="wincd" id="wincd" style="--p:${Math.min(1, wl / SH_WIN_MS).toFixed(3)}"><b>${winSecs(wl)}</b></span>`
+    : '';
+  const quick = ov ? null : shQuick(v);
   return {
     cap: 'Stapel',
     label: SH_TABLE.center(pile.length, info),
@@ -288,10 +297,13 @@ function shCenter(v: View): CenterModel | null {
         k: 'pile',
         cls: 'pile',
         title: '',
-        body: pileHTML,
-        cnt: { text: info, warn: shNeed({ rules: v.rules, sh: { pile } }).k === 'max' },
+        body: pileHTML + ring,
+        cnt: quick
+          ? { text: SH_TABLE.throwIn, warn: true }
+          : { text: info, warn: shNeed({ rules: v.rules, sh: { pile } }).k === 'max' },
         count: pile.length > 5 ? pile.length : undefined,
         drop: 'pile',
+        can: !!quick,
       },
       {
         k: 'counter',
@@ -316,20 +328,27 @@ function throwBtn(v: View): string {
   return `<button class="btn throw pulse" data-act="shthrow">${label}</button>`;
 }
 
+/** Was ich gerade außer der Reihe reinwerfen kann: 4er ins offene Fenster oder eine Bombe, sonst null. */
+export function shQuick(v: View): 'shthrow' | 'shbomb' | null {
+  const S = v.sh;
+  if (v.game !== 'shithead' || v.phase !== 'play' || !S || !shMine(v)) return null;
+  if (S.win) return shCanThrow(v, App.me) ? 'shthrow' : null;
+  return shCanBomb(v, App.me) ? 'shbomb' : null;
+}
+
 /** Knopf für eine schnelle Aktion außer der Reihe: 4er reinwerfen oder Bombe einwerfen. */
 export function quickHTML(v: View): string {
-  const S = v.sh;
-  if (v.game !== 'shithead' || v.phase !== 'play' || !S || !shMine(v)) return '';
-  if (S.win) return throwBtn(v);
-  const bm = shCanBomb(v, App.me);
+  const q = shQuick(v);
+  if (q === 'shthrow') return throwBtn(v);
+  const bm = q && shCanBomb(v, App.me);
   if (!bm) return '';
   const what = `${bm.idx.length > 1 ? `${bm.idx.length}× ` : ''}${esc(shRankLabel(bm.r))}`;
   return `<button class="btn bomb pulse" data-act="shbomb">💣 Bombe! ${what} einwerfen</button>`;
 }
 
 /**
- * Status über dem eigenen Platz als Daten: wer dran ist, neuer Stapel mit 4er-Knopf, Bombe-Knopf. Ohne DOM, damit
- * Vitest jede Phase prüfen kann. renderTable schreibt ihn über paintStatus (src/ui/status.ts).
+ * Status als Daten: wer dran ist, neuer Stapel mit 4er-Knopf, Bombe-Knopf. Ohne DOM, damit Vitest jede Phase prüfen
+ * kann. renderTable liest daraus den Satz für den Vorleser und die Knöpfe für die Knopfleiste (src/ui/status.ts).
  */
 export function shStatus(v: View): Status {
   const S = v.sh;
@@ -363,12 +382,8 @@ export function shStatus(v: View): Status {
     if (onlyBotsPlaying(v)) quick = botsOnlyHTML(v, true);
   }
   if (myTurn(v) && S.win?.lock) {
-    const wl = winLeft();
-    st = {
-      main: `<em>${STATUS.soon}</em><span class="wincd" id="wincd" style="--p:${Math.min(1, wl / SH_WIN_MS).toFixed(3)}"><b>${winSecs(wl)}</b></span>`,
-      sub: SH_STATUS.winMine,
-      tone: 'alert',
-    };
+    // Die Restzeit zeigt der Ring am Stapel (shCenter)
+    st = { main: `<em>${STATUS.soon}</em>`, sub: SH_STATUS.winMine, tone: 'alert' };
   } else if (myTurn(v)) {
     const sub =
       src === 'down' ? SH_STATUS.blindSub : !canAny ? SH_STATUS.noFit : src === 'up' ? SH_STATUS.upNow : SH_STATUS.pick;
@@ -476,9 +491,10 @@ export function shBtnTap(v: View | null, act: 'shplay' | 'shpickup' | 'skip', sh
 }
 
 /**
- * Knöpfe am eigenen Platz im Spiel. Feste Plätze: Ausspielen und Aufnehmen stehen im ganzen eigenen Zug an derselben
- * Stelle und sind nur gesperrt (aria-disabled mit Grund), „Alle n wählen“ kommt bei Bedarf auf den dritten Platz, der
- * sonst frei bleibt. Wer fertig ist, bekommt den Tipp-Knopf.
+ * Knöpfe am eigenen Platz im Spiel. Feste Plätze: Ausspielen links und Aufnehmen rechts stehen im ganzen eigenen Zug
+ * an derselben Stelle und sind nur gesperrt (aria-disabled mit Grund). „Alle n wählen“ (oder 4er und Bombe) kommt bei
+ * Bedarf auf den mittleren Platz, der sonst frei bleibt, damit niemand dort aus Versehen aufnimmt. Wer fertig ist,
+ * bekommt den Tipp-Knopf.
  */
 function shBar(v: View, mine: OwnCards, src: Source | null, canAny: boolean): BarModel {
   const S = v.sh;
@@ -513,13 +529,14 @@ function shBar(v: View, mine: OwnCards, src: Source | null, canAny: boolean): Ba
         why: pickWhy,
       },
     ];
-    if (selRank) {
+    // Den mittleren Platz nimmt sonst der 4er- oder Bombe-Knopf aus dem Status (shQuick, barHTML setzt ihn dorthin)
+    if (selRank && !shQuick(v)) {
       const sameN = arr.filter((c) => rankOf(c) === selRank).length;
       if (sameN > selIdx.length)
-        btns.push({ act: 'shselall', label: `Alle ${sameN} wählen`, intent: 'alt', cls: 'ghost', ok: true });
+        btns.splice(1, 0, { act: 'shselall', label: `Alle ${sameN} wählen`, intent: 'alt', cls: 'ghost', ok: true });
     }
-    // Der dritte Platz bleibt frei, bis „Alle n wählen“ kommt, sonst rutschen Ausspielen und Aufnehmen
-    return { btns, slots: 3 };
+    // Der mittlere Platz bleibt frei, bis „Alle n wählen“ kommt, sonst rutschen Ausspielen und Aufnehmen
+    return { btns, slots: 3, hole: 1 };
   }
   return { btns: [], extra: S?.finished.includes(App.me) ? betActionHTML(v) : '' };
 }
@@ -562,7 +579,9 @@ function shMe(v: View): MeModel | MeOut | null {
     `<div class="shrow${focus ? ' focus' : ''}">${shTableHTML(v, mine, true, focus)}` +
     (hand.length ? handHTML({ kind: 'row', cls: 'shhand', label: SH_TABLE.hand(hand.length), cards, fit: true }) : '') +
     '</div>';
-  const pill = hand.length ? `${hand.length}${HAND_ICON}${TABLE.handWord(hand.length)}` : `${HAND_ICON}Hand leer`;
+  const pill = hand.length
+    ? `${hand.length}${HAND_ICON}<span class="hw">${TABLE.handWord(hand.length)}</span>`
+    : `${HAND_ICON}Hand leer`;
   // Bis zur Enthüllung verrät auch der eigene Wert nicht, wer übrig blieb. Unsichtbar hält er Platz (.hold)
   const hide = v.phase === 'over' && !!App.zerHide;
   return {

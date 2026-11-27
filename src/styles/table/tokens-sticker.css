@@ -133,18 +133,6 @@
   --tb-brand-text: var(--st-ink);
   --tb-brand-line: var(--st-paper);
 
-  /* Statuszeile */
-  --tb-status-bg: var(--st-paper);
-  --tb-status-text: var(--st-ink);
-  --tb-status-soft: var(--st-ink-soft);
-  --tb-status-shadow: var(--tb-edge), var(--tb-shadow-flat);
-  --tb-status-turn-bg: var(--st-paper); /* neutral, an .g-<spiel> die Spielfarbe */
-  --tb-status-turn-text: var(--st-ink);
-  --tb-status-turn-soft: var(--st-ink);
-  --tb-status-family: var(--ui);
-  --tb-status-style: normal;
-  --tb-status-weight: 800;
-
   /* Ziele für Tippen und Ziehen */
   --tb-target-ring: 0 0 0 3px var(--st-ink), 0 0 0 6px var(--st-paper);
   --tb-target-soft: 0 0 0 2px var(--st-ink);
@@ -334,6 +322,5 @@
   --tb-accent: var(--g);
   --tb-tag-turn-bg: var(--g);
   --tb-brand-bg: var(--g);
-  --tb-status-turn-bg: var(--g);
   --tb-sheet-win-bg: color-mix(in srgb, var(--g) 34%, var(--st-paper));
 }

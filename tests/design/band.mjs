@@ -184,7 +184,7 @@ function initPage() {
       return parts.length > 1 ? 0 : parts.reduce((n, [t, u]) => n + u - t, 0);
     };
     const part = [];
-    for (const sel of ['#status .main', '#status .sub', '#center .cnt'])
+    for (const sel of ['#center .cnt'])
       for (const q of document.querySelectorAll(sel)) {
         const b = vis(q);
         if (!b) continue;
@@ -192,23 +192,12 @@ function initPage() {
         const bb = em && em.top > bt && em.top < b.bottom ? em.top : b.bottom;
         const y = Math.min(r.bottom, bb) - Math.max(r.top, bt);
         const x = Math.min(r.right, b.right) - Math.max(r.left, b.left);
-        // Von der Unterzeile dürfen ihre Unterlängen frei bleiben (4 px, src/ui/band.ts, DESC)
-        const left = sel === '#status .sub' ? 4 : 3;
-        if (x > 2 && y > 3 && coveredIn(b, bt, bb) < bb - bt - left)
+        if (x > 2 && y > 3 && coveredIn(b, bt, bb) < bb - bt - 3)
           part.push(`${sel} ${Math.round(y)}/${Math.round(bb - bt)}px`);
       }
     // Kanten der Umgebung (oben, unten) zum Nachrechnen in band.json
     const geo = {};
-    for (const q of [
-      '#opps',
-      '#center',
-      '#center .cnt',
-      '#status .main',
-      '#status .sub',
-      '#status .quick',
-      '#emotes',
-      '#me',
-    ])
+    for (const q of ['#opps', '#center', '#center .cnt', '#emotes', '#me'])
       for (const [k, e] of [...document.querySelectorAll(q)].entries()) {
         const b = vis(e);
         if (b) geo[k ? `${q} ${k}` : q] = [R(b.top), R(b.bottom)];
@@ -224,8 +213,6 @@ function initPage() {
       clip,
       drop,
       meEdge,
-      // Knöpfe statt der Unterzeile (4er, Bombe): Ihnen weicht notfalls der Stapel (src/ui/band.ts, stageRoom)
-      quick: !!document.querySelector('#status .quick') && !!vis(document.querySelector('#status .quick')),
     };
   };
 }
@@ -320,7 +307,6 @@ const TURN_OBST = [
   '#me .actions',
   '#emofab',
   '#logfab',
-  '#status .quick',
 ];
 /** So weit darf eine kleine Meldung höchstens auf den Rand des eigenen Platzes */
 const ME_EDGE = 8;
@@ -504,8 +490,7 @@ async function reason(page, game) {
 }
 
 async function checkReason(page, meta, game) {
-  const keepSub = game === 'shithead';
-  const pillObst = [...TURN_OBST, '#status .main', ...(keepSub ? ['#status .sub'] : [])];
+  const pillObst = TURN_OBST;
   // Grund allein
   await clear(page);
   const via0 = await reason(page, game);
@@ -515,7 +500,7 @@ async function checkReason(page, meta, game) {
   await shot(page, `band-${meta.game}-${meta.role}-reason-${meta.size}`);
   // Automatisches und Grund, jeweils während eine große Meldung steht, dann beide zusammen
   const [, entries, prevDk] = BIGS[game][0];
-  const autoObst = [...TURN_OBST, '#status .main'];
+  const autoObst = TURN_OBST;
   /** Liegen kleine und große Meldung übereinander? */
   const overlap = (o, big) => {
     if (!o?.rect || !big?.rect) return '';
@@ -630,7 +615,7 @@ async function checkSpy(page, host, meta) {
   await sleep(600);
   if (ok) await page.locator('#me .cbslot[data-act=cbm]').first().click({ force: true }); // trägt ab 4b aria-disabled mit Grund
   await sleep(300);
-  const o = await inspect(page, '#fly .nopelbl:not(.out)', [...TURN_OBST, '#status .main', '#status .sub']);
+  const o = await inspect(page, '#fly .nopelbl:not(.out)', TURN_OBST);
   await record(page, { ...meta, check: 'spy reason' }, o, { verdict: ok ? undefined : 'nicht beim Spionieren' });
   await shot(page, `band-cabo-${meta.role}-spy-${meta.size}`);
   await power(false);
@@ -882,8 +867,7 @@ async function checkEmo(page, meta, tag = 'emo') {
   await record(page, { ...meta, check: `${tag} big (${cls || 'ohne Lage'})` }, o, {
     verdict: closed ? 'ok, große geschlossen' : cls ? undefined : 'Ansage ohne Spielfläche und Band (Rückfall oben)',
   });
-  // Am eigenen Zug bleibt auch die Hauptzeile der Statuszeile frei
-  const p = await inspect(page, '#fly .fieldlbl:not(.out)', tag === 'emoturn' ? [...obst, '#status .main'] : obst);
+  const p = await inspect(page, '#fly .fieldlbl:not(.out)', obst);
   // Muss sie über den Stapel, deckt sie die Regelzeile dort ganz oder gar nicht
   const cut = (p?.part ?? []).filter((x) => x.startsWith('#center'));
   const pj = judge(p);
@@ -897,7 +881,7 @@ async function checkEmo(page, meta, tag = 'emo') {
 
 /**
  * Gastgeber, nicht am Zug: Alle KIs werden kurz zu Menschen ohne Verbindung, dann wartet die Partie auf jemanden,
- * der offline ist, und in der Statuszeile steht „Für … spielen“. Große und kleine Meldung decken den Knopf nicht, mit
+ * der offline ist, und in der Knopfleiste steht „Für … spielen“. Große und kleine Meldung decken den Knopf nicht, mit
  * und ohne Reaktionsfenster (am Handy steht die Meldung mit offenem Fenster im Band).
  */
 async function checkPlayFor(page, meta) {
@@ -915,13 +899,13 @@ async function checkPlayFor(page, meta) {
     return was;
   });
   try {
-    const shown = await poll(() => page.evaluate(() => !!document.querySelector('#status .quick [data-act=skip]')), {
+    const shown = await poll(() => page.evaluate(() => !!document.querySelector('#me [data-act=skip]')), {
       timeout: 6000,
       what: 'Für … spielen',
     }).catch(() => false);
     if (!shown) {
       // Etwa bei Durak, wenn die Partie auch auf mich wartet: Dann bleibt meine Zeile stehen, nichts zu prüfen
-      rows.push({ ...meta, check: 'playfor', verdict: 'info, kein „Für … spielen“ in der Statuszeile' });
+      rows.push({ ...meta, check: 'playfor', verdict: 'info, kein „Für … spielen“ in der Knopfleiste' });
       return;
     }
     const fab = page.locator('#emofab');
@@ -943,7 +927,7 @@ async function checkPlayFor(page, meta) {
         );
       });
       await sleep(500);
-      const obst = ['#opps .opp', '#emotes', '#me .card', '#status .quick'];
+      const obst = ['#opps .opp', '#emotes', '#me .card', '#me .actions'];
       const cls = await page.evaluate(() => document.querySelector('#announce')?.className ?? '');
       const tag = `playfor${emo ? ' emo' : ''}`;
       const o = await inspect(page, '#announce .ann:not(.out)', obst);

@@ -183,7 +183,7 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
         const res = {
           pick: document.querySelectorAll('#me .dkhand .pick[data-act=dkh]').length,
           go: document.querySelectorAll(`#me [data-act=dkgo]${live}`).length,
-          sub: document.querySelector('#status .sub')?.textContent ?? '',
+          tag: document.querySelector('#me .mehead .tag')?.textContent ?? '',
           why: null as string | null,
         };
         const dim = document.querySelector<HTMLElement>('#me .dkhand .card.dim[data-act=dkh]');
@@ -198,8 +198,8 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
     if (passed) {
       passedSeen++;
       expect(passed).toMatchObject({ pick: 0, go: 0 });
-      expect(passed.sub).toMatch(/^Du hast gepasst\./);
-      expect(passed.sub).not.toContain('trotzdem');
+      // Die Rolle steht als Etikett am eigenen Platz
+      expect(passed.tag).toBe('gepasst ✓');
       if (passed.why != null) {
         whySeen++;
         expect(passed.why).toMatch(/^Du hast gepasst\./);

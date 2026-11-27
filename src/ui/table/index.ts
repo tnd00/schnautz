@@ -14,7 +14,7 @@ import { markClocks } from '../clock';
 import { $, $opt, isMobile } from '../dom';
 import { prefs } from '../prefs';
 import { SEQ } from '../shithead/sequence';
-import { paintStatus } from '../status';
+import { sayStatus } from '../a11y/say';
 import { markTosses } from '../toss';
 import { TABLE } from '../../content/texts/table';
 import { dragRefresh, initDrag } from './drag';
@@ -24,7 +24,7 @@ import { centerHTML } from './pile';
 import { specOf } from './spec';
 
 /** Teile des Tisches, die einzeln neu gezeichnet werden können */
-export type Part = 'opps' | 'center' | 'status' | 'me';
+export type Part = 'opps' | 'center' | 'me';
 
 export interface RenderOpts {
   /**
@@ -32,11 +32,11 @@ export interface RenderOpts {
    * Würfe neu zu setzen, so wie früher renderShCenter.
    */
   parts?: readonly Part[];
-  /** Ansicht für Gegner, Status und Karussell während einer Sequenz (Kino 36). Standard v, noch nutzt es niemand */
+  /** Ansicht für Gegner, Vorlesen und Karussell während einer Sequenz (Kino 36). Standard v, noch nutzt es niemand */
   hold?: View;
 }
 
-const ALL: readonly Part[] = ['opps', 'center', 'status', 'me'];
+const ALL: readonly Part[] = ['opps', 'center', 'me'];
 
 /** Rolle und Name einer Zone setzen, ohne Namen beides weg */
 function zone(el: HTMLElement, role: string | null, label = ''): void {
@@ -73,15 +73,16 @@ export function renderTable(v: View, o: RenderOpts = {}): void {
     zone(el, 'group', m?.label);
     el.innerHTML = m ? centerHTML(m) : '';
   }
-  // paintStatus meldet einen Wechsel selbst an den Vorleser (sayStatus)
-  if (parts.includes('status')) paintStatus(spec.status(hv));
   if (parts.includes('me')) {
+    // Die Statuszeile gibt es nicht mehr: Ihr Satz geht nur an den Vorleser, ihre Knöpfe in die Knopfleiste
+    const st = spec.status(hv);
+    sayStatus(st);
     const m = spec.me(v);
     me.className = m ? meClass(m) : 'me';
     me.dataset.pid = App.me;
     me.dataset.st = m && !('out' in m) ? m.st.join(' ') : '';
     zone(me, 'group', m ? meLabel(m) : '');
-    me.innerHTML = m ? meHTML(m) : '';
+    me.innerHTML = m ? meHTML(m, st.quick) : '';
   }
   // Plätze neu geschrieben: Hand einpassen, Karussell, Uhren und Würfe wieder an ihre Kacheln
   if (parts.includes('opps') || parts.includes('me')) {

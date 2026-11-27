@@ -13,7 +13,7 @@ export interface FocusMark {
 }
 
 /** Zonen von innen nach außen, die erste passende gilt */
-const ZONES = ['#opps', '#center', '#status', '#me', '#overlay', '#table'];
+const ZONES = ['#opps', '#center', '#me', '#overlay', '#table'];
 const KEYED = '[data-fk], [data-act]';
 
 function keyOf(el: HTMLElement): string {

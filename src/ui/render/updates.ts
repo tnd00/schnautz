@@ -13,11 +13,14 @@ function dateOf(iso: string): string {
   return isNaN(d.getTime()) ? '' : DATE.format(d);
 }
 
+/** Version als Sprungziel, Punkte gehen in Ids nicht gut */
+const relId = (v: string): string => v.replace(/\W/g, '-');
+
 export function updatesHTML(): string {
   const now = CHANGELOG[0]?.v ?? APP_VERSION;
   const rel = CHANGELOG.map(
     (r, i) =>
-      `<section class="rsec rel${i === 0 ? ' now' : ''}">` +
+      `<section class="rsec rel${i === 0 ? ' now' : ''}" id="rel-${relId(r.v)}">` +
       `<div class="relh"><span class="relv st-num${i === 0 ? ' st-ink' : ''}">${esc(r.v)}</span><h3>${esc(r.title)}</h3>` +
       `<span class="reld">${i === 0 ? '<b class="relnow">Aktuell</b> · ' : ''}${esc(dateOf(r.date))}</span></div>` +
       r.groups
@@ -28,8 +31,16 @@ export function updatesHTML(): string {
         .join('') +
       '</section>',
   ).join('');
+  // Pillen wie bei den Regeln, das Springen und Markieren macht src/ui/dialog.ts für jedes [data-jump]
+  const jumps =
+    '<nav class="rjump" aria-label="Springe zu Version">' +
+    CHANGELOG.map((r) => `<button type="button" class="rj" data-jump="rel-${relId(r.v)}">${esc(r.v)}</button>`).join(
+      '',
+    ) +
+    '</nav>';
   return sheetHTML({
     kind: 'updates',
+    head: jumps,
     title: 'Updates',
     badge: `<span class="dlg-ver st-num st-ink st-r4"><span class="sr">Aktuelle Version </span>${esc(now)}</span>`,
     body:

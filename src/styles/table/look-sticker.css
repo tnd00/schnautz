@@ -109,11 +109,14 @@
 :root[data-look='sticker'] body.ingame .opp:nth-child(3n) {
   rotate: calc(var(--tb-tilt) * -0.4deg);
 }
-/* Am Zug: Tintenring um die Kachel (bei Nacht in Spielfarbe), Etikett in Spielfarbe, kein Glühen */
+/* Am Zug: Ring in Spielfarbe um die Kachel, Etikett in Spielfarbe, kein Glühen */
 :root[data-look='sticker'] body.ingame .opp.turn {
   background: var(--tb-gloss), var(--tb-seat-bg);
-  border-color: var(--tb-turn-line);
-  box-shadow: var(--tb-turn-glow);
+  border-color: var(--tb-accent);
+  box-shadow:
+    var(--tb-edge),
+    0 0 0 3px var(--tb-accent),
+    var(--tb-shadow-lift-sm);
   animation: var(--tb-turn-anim);
 }
 :root[data-look='sticker'] body.ingame .opp .nm {
@@ -193,48 +196,20 @@
   font-weight: 700;
 }
 
-/* ---------- Statuszeile ---------- */
-:root[data-look='sticker'] body.ingame .status {
-  color: var(--tb-status-text);
-  background: var(--tb-gloss), var(--tb-status-bg);
-  border-radius: 18px;
-  box-shadow: var(--tb-status-shadow);
-  rotate: calc(var(--tb-tilt) * -0.4deg);
-}
-:root[data-look='sticker'] body.ingame .status .main {
-  font-family: var(--tb-status-family);
-  font-style: var(--tb-status-style);
-  font-weight: var(--tb-status-weight);
-}
-:root[data-look='sticker'] body.ingame .status .main em {
-  color: inherit;
-  font-style: normal;
-}
-:root[data-look='sticker'] body.ingame .status .sub {
-  color: var(--tb-status-soft);
-  font-weight: 600;
-}
-:root[data-look='sticker'] body.ingame .status.tone-turn {
-  color: var(--tb-status-turn-text);
-  background: var(--tb-gloss), var(--tb-status-turn-bg);
-}
-:root[data-look='sticker'] body.ingame .status.tone-turn .sub {
-  color: var(--tb-status-turn-soft);
-}
-:root[data-look='sticker'] body.ingame .status:is(.knocked, .tone-knock) .main {
-  color: var(--tb-knock-text);
-}
-
 /* ---------- Eigener Platz ---------- */
 :root[data-look='sticker'] body.ingame .me {
   background: var(--tb-me-bg);
   border-color: var(--tb-me-line);
 }
+/* Am Zug derselbe Ring in Spielfarbe wie an Gegnern am Zug, in den letzten Sekunden pulsiert er */
 :root[data-look='sticker'] body.ingame .me.turn {
   background: var(--tb-me-bg);
-  border-color: var(--tb-me-line);
-  box-shadow: var(--tb-me-turn);
+  border-color: var(--tb-accent);
+  box-shadow: 0 0 0 3px var(--tb-accent);
   animation: var(--tb-turn-anim);
+}
+:root[data-look='sticker'] body.ingame .me.turn:is([data-urg='2'], [data-urg='3']) {
+  animation: meRing 1s ease-in-out infinite;
 }
 :root[data-look='sticker'] body.ingame .me .nm {
   font-family: var(--tb-name-family);
@@ -288,9 +263,7 @@
     inset 0 0 0 var(--tb-cut) var(--tb-btn-line),
     var(--tb-btn-shadow);
 }
-:root[data-look='sticker']
-  body.ingame
-  :is(.btn[disabled], .me .actions .btn[aria-disabled='true'], #status .btn[aria-disabled='true']) {
+:root[data-look='sticker'] body.ingame :is(.btn[disabled], .me .actions .btn[aria-disabled='true']) {
   opacity: var(--tb-btn-off);
   filter: none;
   box-shadow: var(--tb-edge);
@@ -582,7 +555,7 @@
   box-shadow: var(--tb-val-line), var(--tb-val-shadow);
 }
 :root[data-look='sticker'] body.ingame .me[data-urg] {
-  border-color: var(--tb-turn-line);
+  border-color: var(--tb-accent);
 }
 
 /* ---------- Kleine Etiketten am Tisch ---------- */

@@ -445,7 +445,8 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
     S.hostCommit();
     return st.cb!.t;
   });
-  await expect(host.locator('#status .main')).toContainText('Spionieren!');
+  // Spionieren: fremde Karten werden Ziele
+  await expect(host.locator('#opps .opp.aimable')).not.toHaveCount(0);
   await host.waitForTimeout(450);
   const own = host.locator('#me .cbslot[data-act=cbm][aria-disabled=true]').first();
   await own.click({ force: true });
@@ -464,7 +465,7 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
     st.cb!.t += 1;
     S.hostCommit();
   }, me);
-  await expect(host.locator('#status .main')).toContainText('ist dran.');
+  await expect(host.locator('#opps .opp.turn')).toHaveCount(1);
   await host.locator('#me .cbslot[data-act=cbm][aria-disabled=true]').first().click({ force: true });
   await expect(host.locator('#fly .nopelbl')).toContainText('nicht dran');
   expect(errors.list).toEqual([]);

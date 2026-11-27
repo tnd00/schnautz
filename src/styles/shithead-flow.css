@@ -114,38 +114,56 @@
   right: auto;
   left: -9px;
 }
-.wincd {
-  display: inline-grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
+/* 4er-Fenster: Ring an der Ecke rechts oben, bündig mit der Oberkante des Stapels, zählt die Sperre herunter (shCenter,
+ * Ticker in src/ui/shithead/window.ts). Meldungen in der Spielfläche weichen ihm aus (positionMessage) */
+.pile .wincd {
+  position: absolute;
+  top: 0;
+  right: -15px;
+  z-index: 4;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  margin-left: 12px;
-  vertical-align: middle;
+  pointer-events: none;
+}
+.pile .wincd::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: inherit;
   background: conic-gradient(
     in srgb,
     var(--brass-hi) calc(var(--p, 1) * 360deg),
-    color-mix(in srgb, var(--tb-light) 12%, transparent) 0
+    color-mix(in srgb, var(--tb-light) 14%, transparent) 0
   );
+  mask:
+    linear-gradient(var(--tb-shade) 0 0) content-box exclude,
+    linear-gradient(var(--tb-shade) 0 0);
 }
-.wincd b {
+.pile .wincd b {
+  position: absolute;
+  inset: 3px;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
   border-radius: 50%;
   background: var(--tb-clock-bg);
-  font-family: var(--display);
-  font-size: 19px;
-  font-style: normal;
+  font-size: 14px;
   color: var(--cream);
 }
-.status .quick {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
+/* Wer reinwerfen kann, liest „Reinwerfen!“ am Stapel, der Knopf steht in der Knopfleiste */
+.pile.can .cnt {
+  font-size: 14px;
+  font-weight: 800;
+  animation: winPop 0.8s ease-in-out infinite alternate;
+}
+@keyframes winPop {
+  to {
+    scale: 1.08;
+  }
+}
+:where(html.calm) .pile.can .cnt {
+  animation: none;
 }
 .btn.big {
   min-height: 54px;
@@ -555,8 +573,7 @@
 }
 
 /* Tauschrunde: eigene Karten groß, das leere Spielfeld wird noch nicht gebraucht */
-.table.swap .center,
-.table.swap .status {
+.table.swap .center {
   display: none;
 }
 .me.swapping {
@@ -1077,11 +1094,12 @@ body:not(.intable) .menu .t-only {
 }
 
 /* Zeitlimit: Balken bei Gegnern, kleine Uhr am eigenen Platz (src/ui/clock.ts) */
+/* Oben in der Kachel, unten hängt der Wert (Pille) über den Rand */
 .opp > .clk {
   position: absolute;
   left: 14px;
   right: 14px;
-  bottom: 4px;
+  top: 4px;
   height: 3px;
   border-radius: 2px;
   overflow: hidden;
@@ -1100,9 +1118,11 @@ body:not(.intable) .menu .t-only {
 .opp > .clk.low::before {
   background: var(--tb-lose);
 }
+/* Mittig auf der Oberkante des Platzes, fast ganz darüber, damit die Pille im Kopf frei bleibt. Meldungen hängen
+ * über ihr (bandIn in src/ui/feedback.ts) */
 .clk.mine {
   position: absolute;
-  top: -13px;
+  bottom: calc(100% - 1px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 9;
@@ -1169,6 +1189,16 @@ body:not(.intable) .menu .t-only {
 :where(html.calm) .me.turn,
 :where(html.calm) .me[data-urg] {
   animation: none;
+}
+/* Sticker: Der Ring am eigenen Platz pulsiert dezent (look-sticker.css), mit „Bewegung reduzieren“ wird er kräftiger */
+@keyframes meRing {
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--tb-accent) 40%, transparent);
+  }
+}
+:where(html.calm) #me.turn:is([data-urg='2'], [data-urg='3']) {
+  animation: none;
+  box-shadow: 0 0 0 5px var(--tb-accent);
 }
 
 /* Sprüche und Hinweise mittig in der Spielfläche (fixedLabel) */
@@ -1355,36 +1385,6 @@ body:not(.intable) .menu .t-only {
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
   margin: 12px 0 14px;
-}
-.paper.bets .betc {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
-  background: color-mix(in srgb, var(--tb-shade) 22%, transparent);
-  color: var(--cream);
-  text-align: left;
-  cursor: pointer;
-  min-width: 0;
-}
-.paper.bets .betc .bn {
-  max-width: 100%;
-  font: 700 15px/1.2 var(--ui);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.paper.bets .betc .bs {
-  font-size: 12.5px;
-  color: var(--tb-muted);
-}
-.paper.bets .betc.sel {
-  border-color: var(--tb-bet-line);
-  background: color-mix(in srgb, var(--tb-bet) 22%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tb-bet-line) 35%, transparent);
 }
 .paper.bets .foot {
   justify-content: flex-end;

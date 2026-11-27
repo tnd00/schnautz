@@ -26,7 +26,7 @@ function segRow(key: 'calm' | 'turnTone', label: string, sub: string, opts: Opts
 }
 
 function switchRow(
-  key: 'drag' | 'zones' | 'dragSame' | 'haptic',
+  key: 'drag' | 'zones' | 'dragSame' | 'zoom' | 'haptic',
   label: string,
   sub: string,
   on: boolean,
@@ -65,6 +65,7 @@ function bodyHTML(p: Prefs): string {
         switchRow('dragSame', T.dragSame, T.dragSameSub, p.dragSame, !p.drag) +
         switchRow('zones', T.zones, T.zonesSub, p.zones, !p.drag)
       : '') +
+    switchRow('zoom', T.zoom, T.zoomSub, p.zoom) +
     (canVibrate() ? switchRow('haptic', T.haptic, T.hapticSub, p.haptic) : '') +
     volumeRow(p.volume) +
     segRow('turnTone', T.turnTone, T.turnToneSub, T.turnToneOpts, p.turnTone) +
@@ -95,7 +96,8 @@ function wire(paper: HTMLElement): void {
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
     const key = t.dataset.pref;
-    if (key === 'drag' || key === 'zones' || key === 'dragSame' || key === 'haptic') setPref(key, t.checked);
+    if (key === 'drag' || key === 'zones' || key === 'dragSame' || key === 'zoom' || key === 'haptic')
+      setPref(key, t.checked);
     // Mitziehen und Trefferflächen gibt es nur mit Ziehen
     if (key === 'drag')
       for (const k of ['dragSame', 'zones'])

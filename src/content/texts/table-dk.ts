@@ -18,6 +18,8 @@ export const DK_TABLE = {
   reign: 'amtierender Durak',
   /** Etiketten, die es nur bei Durak gibt */
   tag: { take: 'nimmt auf', def: 'verteidigt', att: 'greift an', passed: 'gepasst ✓', add: 'legt nach?' },
+  /** Dieselben Etiketten am eigenen Platz, hinter „Du“ */
+  meTag: { take: 'nimmst auf', def: 'verteidigst', att: 'greifst an', passed: 'gepasst ✓', add: 'darfst nachlegen' },
   /** Fächer an der Kachel: Wort unter der Zahl und Hinweis beim Überfahren */
   fan: (n: number): { word: string; title: string } => {
     const word = n === 1 ? 'Karte' : 'Karten';

@@ -95,18 +95,19 @@ describe('Schnautz auf den Bausteinen', () => {
     st.round = 3;
     st.players[2].lives = 0;
     st.knocker = 'b';
+    st.afterKnock = 2;
     const { opps, sel } = draw(st);
     expect(sel('.opp[data-pid=a] > .rmark .reign')).toHaveLength(1);
     expect(sel('.opp[data-pid=b] > .rmark')).toHaveLength(0);
     expect(sel('.opp[data-pid=a] .ometa .botb')).toHaveLength(1);
     expect(sel('.opp .tb-count > *')).toHaveLength(0);
     expect(sel('.opp[data-pid=a] > .val.hcount[data-k=lives] .lives .coaster')).toHaveLength(3);
-    // Wer schwimmt, zeigt Zeichen und Wort, wer geklopft hat, trägt ✊ am Etikett
+    // Wer schwimmt, zeigt Zeichen und Wort, wer geklopft hat, trägt ✊ und die Züge bis zum Aufdecken am Etikett
     expect(sel('.opp[data-pid=b] > .val .swim .swt')).toHaveLength(1);
     const [a, b] = opps;
-    expect(b.tag?.text).toBe('✊ geklopft');
+    expect(b.tag?.text).toBe('✊ noch 2 Züge');
     expect(a.say).toBe('KI, trägt die Krone, 3 Leben');
-    expect(b.say).toBe('schwimmt, hat geklopft');
+    expect(b.say).toBe('schwimmt, hat geklopft, noch 2 Züge');
     expect(specOf('schnautz').center(viewFor(st, 'h'))?.cap).toBe('Runde 3');
   });
 
