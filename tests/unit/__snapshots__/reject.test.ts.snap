@@ -62,7 +62,7 @@ exports[`Katalog > zeigt jeden Wortlaut im Schnappschuss, die Sätze für Gäste
   "dk.passedTake": "Du hast gepasst. In diesen Angriff legst du nichts mehr nach.",
   "dk.pickPair": "Tippe den Angriff an, den du schlagen willst.",
   "dk.rankNotOnTable": "Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.",
-  "dk.room": "Es passen nur noch 2 Karten in diesen Angriff.",
+  "dk.room": "In diesen Angriff dürfen nur noch 2 Karten.",
   "dk.tableEmpty": "Noch liegt nichts auf dem Tisch.",
   "dk.taking": "Du nimmst schon auf.",
   "dk.transferLate": "Weiterschieben geht nur, bevor du etwas geschlagen hast.",

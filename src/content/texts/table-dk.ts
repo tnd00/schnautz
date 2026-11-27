@@ -17,7 +17,7 @@ export const DK_TABLE = {
   /** Amtierender Durak am Platz, für den Vorleser */
   reign: 'amtierender Durak',
   /** Etiketten, die es nur bei Durak gibt */
-  tag: { take: 'nimmt auf', def: 'verteidigt', att: 'greift an', passed: 'passt ✓', add: 'legt nach?' },
+  tag: { take: 'nimmt auf', def: 'verteidigt', att: 'greift an', passed: 'gepasst ✓', add: 'legt nach?' },
   /** Fächer an der Kachel: Wort unter der Zahl und Hinweis beim Überfahren */
   fan: (n: number): { word: string; title: string } => {
     const word = n === 1 ? 'Karte' : 'Karten';

@@ -27,7 +27,7 @@ export const DK_STATUS = {
   mayAdd: (names: string, n: number): string => `${names} ${n === 1 ? 'darf' : 'dürfen'} nachlegen`,
   meMayAdd: 'du darfst nachlegen',
   meMayAddMain: 'Du darfst nachlegen.',
-  throwOpen: 'Passende Werte darfst du schon nachlegen.',
+  throwOpen: 'Werte vom Tisch darfst du schon nachlegen.',
   throwFree: 'Nachlegen darfst du Werte, die schon liegen. Sonst tippe Passen.',
   passedTake: 'Du hast gepasst. Die anderen dürfen noch etwas obendrauf legen.',
   passed: (def: string): string => `Du hast gepasst. Das gilt, bis ein neuer Wert liegt oder ${def} aufnimmt.`,

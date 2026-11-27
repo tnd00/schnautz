@@ -204,7 +204,7 @@ function dkCenter(v: View): CenterModel | null {
       : D.take
         ? `${W(v, D.def)}${vb(D.def, ' nimmst', ' nimmt')} auf · ${room ? `noch ${room} dazu` : 'voll'}`
         : room
-          ? `noch ${room} ${room === 1 ? 'Karte passt' : 'Karten passen'} dazu`
+          ? `Platz für ${room} ${room === 1 ? 'Karte' : 'Karten'}`
           : 'voll';
   const empty = over ? '<div class="emptyslot">Vorbei</div>' : '<div class="emptyslot">Hier wird angegriffen</div>';
   return {

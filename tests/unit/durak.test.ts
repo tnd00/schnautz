@@ -260,7 +260,7 @@ describe('Durak: Angreifen, Schlagen, Aufnehmen', () => {
     D.discard += 4;
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1, 2] })).toEqual({ e: 'dk.room', a: { n: 2 } });
     expect(act(st, 'h', { type: 'dkattack', idx: [0, 1] })).toBeNull();
-    expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [0] }))).toBe('In diesen Angriff passt nichts mehr.');
+    expect(msgOf(act(st, 'p2', { type: 'dkattack', idx: [0] }))).toBe('Dieser Angriff ist voll.');
   });
 });
 

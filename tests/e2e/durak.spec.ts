@@ -225,12 +225,12 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
         }
       }
     }
-    // Der Knopf heißt Passen, gedrückt Gepasst ✓, das Etikett am Platz passt ✓
+    // Der Knopf heißt Passen, gedrückt Gepasst ✓, das Etikett am Platz gepasst ✓
     const labels = await p.locator('[data-act=dkpass]').allTextContents();
     labels.forEach((t) => expect(['Passen', 'Gepasst ✓']).toContain(t.trim()));
     passBtn += labels.length;
     const tags = await p.locator('.tag.done').allTextContents();
-    tags.forEach((t) => expect(t.trim()).toBe('passt ✓'));
+    tags.forEach((t) => expect(t.trim()).toBe('gepasst ✓'));
   });
   expect(passBtn).toBeGreaterThan(0);
   expect(passedSeen).toBeGreaterThan(0);

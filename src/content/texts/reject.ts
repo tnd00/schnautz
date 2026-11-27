@@ -88,10 +88,8 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
   'dk.room': (f) => {
     const n = f.num('n');
     if (n == null) return null;
-    if (n <= 0) return 'In diesen Angriff passt nichts mehr.';
-    return n === 1
-      ? 'Es passt nur noch eine Karte in diesen Angriff.'
-      : `Es passen nur noch ${n} Karten in diesen Angriff.`;
+    if (n <= 0) return 'Dieser Angriff ist voll.';
+    return n === 1 ? 'In diesen Angriff darf nur noch eine Karte.' : `In diesen Angriff dürfen nur noch ${n} Karten.`;
   },
   'dk.transferOff': 'Weiterschieben ist an diesem Tisch aus.',
   'dk.notDefender': 'Das kann nur, wer verteidigt.',

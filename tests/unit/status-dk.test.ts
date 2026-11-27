@@ -100,10 +100,10 @@ describe('Statuszeile Durak', () => {
     const { st, D } = table();
     D.table = [{ a: 'C7', by: 'h' }];
     const h = statusFor(st, 'h');
-    expect(h.text).toBe('Lena verteidigt, Tom darf nachlegen. | Passende Werte darfst du schon nachlegen.');
+    expect(h.text).toBe('Lena verteidigt, Tom darf nachlegen. | Werte vom Tisch darfst du schon nachlegen.');
     expect(h.s.tone).toBe('calm');
     expect(statusFor(st, 'b').text).toBe(
-      'Lena verteidigt, Tina darf nachlegen. | Passende Werte darfst du schon nachlegen.',
+      'Lena verteidigt, Tina darf nachlegen. | Werte vom Tisch darfst du schon nachlegen.',
     );
   });
 
@@ -170,7 +170,7 @@ describe('Statuszeile Durak', () => {
     rename('a', 'Lena Langername1');
     rename('b', 'Tom Langername12');
     D.table = [{ a: 'C7', by: 'h' }];
-    expect(statusFor(st, 'b').text).toBe('Lena Langername1 verteidigt. | Passende Werte darfst du schon nachlegen.');
+    expect(statusFor(st, 'b').text).toBe('Lena Langername1 verteidigt. | Werte vom Tisch darfst du schon nachlegen.');
     D.take = true;
     expect(statusFor(st, 'h').text).toMatch(/^Du darfst nachlegen\. \| /);
     // Uschi hat gerade keine Karten und schaut zu: Wer nachlegen darf, steht in der Unterzeile

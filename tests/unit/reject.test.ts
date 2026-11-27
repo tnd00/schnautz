@@ -121,9 +121,9 @@ describe('Katalog', () => {
   });
 
   it('kennt die Mehrzahl', () => {
-    expect(rejectText(rj('dk.room', { n: 0 }), ctxFor('h'))).toBe('In diesen Angriff passt nichts mehr.');
-    expect(rejectText(rj('dk.room', { n: 1 }), ctxFor('h'))).toBe('Es passt nur noch eine Karte in diesen Angriff.');
-    expect(rejectText(rj('dk.room', { n: 4 }), ctxFor('h'))).toBe('Es passen nur noch 4 Karten in diesen Angriff.');
+    expect(rejectText(rj('dk.room', { n: 0 }), ctxFor('h'))).toBe('Dieser Angriff ist voll.');
+    expect(rejectText(rj('dk.room', { n: 1 }), ctxFor('h'))).toBe('In diesen Angriff darf nur noch eine Karte.');
+    expect(rejectText(rj('dk.room', { n: 4 }), ctxFor('h'))).toBe('In diesen Angriff dürfen nur noch 4 Karten.');
     expect(rejectText(rj('seat.tooFew', { min: 3 }), ctxFor('h'))).toBe('Ihr braucht mindestens 3 Leute am Tisch.');
     expect(rejectText(rj('cb.pickTwo', { n: 1 }), ctxFor('h'))).toBe('Wähle eine deiner Karten.');
   });
@@ -140,7 +140,7 @@ describe('Katalog', () => {
   });
 
   it('schreibt fürs Protokoll Text und Code', () => {
-    expect(rejectLog(rj('dk.room', { n: 2 }))).toBe('Es passen nur noch 2 Karten in diesen Angriff. [dk.room n=2]');
+    expect(rejectLog(rj('dk.room', { n: 2 }))).toBe('In diesen Angriff dürfen nur noch 2 Karten. [dk.room n=2]');
     expect(rejectLog(null)).toBe('');
   });
 

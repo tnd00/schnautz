@@ -40,7 +40,7 @@ export const WORD = {
   pass: 'passen',
   passButton: 'Passen',
   passedButton: 'Gepasst ✓',
-  passTag: 'passt ✓',
+  passTag: 'gepasst ✓',
   /** Durak: Ausruf und Ablagestapel */
   bito: 'Bito',
   bitoPile: 'Bito-Stapel',

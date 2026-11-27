@@ -139,7 +139,7 @@ const DK: Models = {
         body:
           `<div class="dkpair open" data-i="0" data-act="dkt" role="button" tabindex="0">${cardHTML('S9', 'dka')}</div>` +
           `<div class="dkpair beaten" data-i="1">${cardHTML('C7', 'dka')}${cardHTML('C9', 'dkd')}</div>`,
-        cnt: { text: 'noch 3 Karten passen dazu' },
+        cnt: { text: 'Platz für 3 Karten' },
       },
       { k: 'counter', cls: 'burned dkbito', title: '', body: '<b>6</b>', cnt: { text: 'Bito' } },
     ],

@@ -80,7 +80,7 @@ describe('Durak: Ablehnungen als Codes', () => {
     D.P.p1 = ['S7:2', 'D7:2', 'H8', 'HA', 'SD', 'D10'];
     const r = dkTransferError(st, 'p1', ['S7:2', 'D7:2']);
     expect(r).toEqual({ e: 'dk.room', a: { n: 1 } });
-    expect(msgOf(r)).toBe('Es passt nur noch eine Karte in diesen Angriff.');
+    expect(msgOf(r)).toBe('In diesen Angriff darf nur noch eine Karte.');
   });
 
   it('Angriff und Verteidigung tragen nur offene Karten und Platz-IDs', () => {
