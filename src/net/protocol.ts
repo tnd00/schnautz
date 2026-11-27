@@ -104,6 +104,8 @@ export interface Prefs {
   drag: boolean;
   /** Trefferflächen beim Ziehen sichtbar machen, Standard aus */
   zones: boolean;
+  /** Shithead: eine ungewählte Karte zieht alle gleichen der Reihe mit */
+  dragSame: boolean;
   /** Vibration, nur angezeigt, wenn navigator.vibrate existiert */
   haptic: boolean;
   /** Lautstärke von 0 bis 1 */
@@ -120,6 +122,7 @@ export const PREFS_DEFAULT: Readonly<Prefs> = {
   calm: 'auto',
   drag: true,
   zones: false,
+  dragSame: true,
   haptic: true,
   volume: 1,
   turnTone: 'away',
@@ -145,6 +148,7 @@ export function asPrefs(x: unknown): Prefs {
     calm: oneOf(o.calm, ['auto', 'on', 'off'], d.calm),
     drag: boolOr(o.drag, d.drag),
     zones: boolOr(o.zones, d.zones),
+    dragSame: boolOr(o.dragSame, d.dragSame),
     haptic: boolOr(o.haptic, d.haptic),
     volume: typeof vol === 'number' && Number.isFinite(vol) ? Math.min(1, Math.max(0, vol)) : d.volume,
     turnTone: oneOf(o.turnTone, ['always', 'away', 'off'], d.turnTone),

@@ -12,6 +12,7 @@ const FULL: Prefs = {
   calm: 'on',
   drag: false,
   zones: true,
+  dragSame: false,
   haptic: false,
   volume: 0.3,
   turnTone: 'always',

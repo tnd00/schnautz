@@ -25,9 +25,15 @@ function segRow(key: 'calm' | 'turnTone', label: string, sub: string, opts: Opts
   );
 }
 
-function switchRow(key: 'drag' | 'zones' | 'haptic', label: string, sub: string, on: boolean, hide = false): string {
+function switchRow(
+  key: 'drag' | 'zones' | 'dragSame' | 'haptic',
+  label: string,
+  sub: string,
+  on: boolean,
+  hide = false,
+): string {
   return (
-    `<label class="rrow${key === 'zones' ? ' rsub' : ''}"${hide ? ' hidden' : ''}><span class="rl"><span class="rt">${label}</span><small>${sub}</small></span>` +
+    `<label class="rrow${key === 'zones' || key === 'dragSame' ? ' rsub' : ''}"${hide ? ' hidden' : ''}><span class="rl"><span class="rt">${label}</span><small>${sub}</small></span>` +
     `<input type="checkbox" class="switch" data-pref="${key}"${on ? ' checked' : ''}></label>`
   );
 }
@@ -55,7 +61,9 @@ function bodyHTML(p: Prefs): string {
     `<p class="lead">${T.lead}</p><div class="rlist">` +
     segRow('calm', T.calm, T.calmSub, T.calmOpts, p.calm) +
     (canDrag()
-      ? switchRow('drag', T.drag, T.dragSub, p.drag) + switchRow('zones', T.zones, T.zonesSub, p.zones, !p.drag)
+      ? switchRow('drag', T.drag, T.dragSub, p.drag) +
+        switchRow('dragSame', T.dragSame, T.dragSameSub, p.dragSame, !p.drag) +
+        switchRow('zones', T.zones, T.zonesSub, p.zones, !p.drag)
       : '') +
     (canVibrate() ? switchRow('haptic', T.haptic, T.hapticSub, p.haptic) : '') +
     volumeRow(p.volume) +
@@ -87,10 +95,11 @@ function wire(paper: HTMLElement): void {
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
     const key = t.dataset.pref;
-    if (key === 'drag' || key === 'zones' || key === 'haptic') setPref(key, t.checked);
-    // Trefferflächen gibt es nur mit Ziehen
+    if (key === 'drag' || key === 'zones' || key === 'dragSame' || key === 'haptic') setPref(key, t.checked);
+    // Mitziehen und Trefferflächen gibt es nur mit Ziehen
     if (key === 'drag')
-      paper.querySelector<HTMLElement>('[data-pref="zones"]')?.closest('label')?.toggleAttribute('hidden', !t.checked);
+      for (const k of ['dragSame', 'zones'])
+        paper.querySelector<HTMLElement>(`[data-pref="${k}"]`)?.closest('label')?.toggleAttribute('hidden', !t.checked);
     // Zum Hören, wie laut es jetzt ist
     if (key === 'volume') void sfx('pop');
   });

@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
 import { rankOf } from '../../src/game/cards';
 import { canDrag, dropOf, dropsFor, type DragKey, type DropKey } from '../../src/game/drop';
+import { shSameAs } from '../../src/game/drop/shithead';
 import { addPlayer, newState } from '../../src/game/state';
 import type { Card, State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
@@ -232,5 +233,15 @@ describe('Shithead ziehen: gemeinsame Prüfungen über Zufallspartien', () => {
     expect(late.length).toBeGreaterThan(0);
     const c = late.map(({ st, me }) => ({ st, me, srcs: srcsOf(st, me) }));
     expect(dropProblems(c, TAP)).toEqual([]);
+  });
+});
+
+describe('shSameAs', () => {
+  it('nimmt alle gleichen Werts mit, die gezogene zuerst, auch aus Deck 2', () => {
+    expect(shSameAs(['H5', 'S9', 'C5', null, 'D5:2'], 2)).toEqual([2, 0, 4]);
+  });
+  it('ohne gleiche nur die gezogene, ohne Karte nichts', () => {
+    expect(shSameAs(['H5', 'S9'], 1)).toEqual([1]);
+    expect(shSameAs(['H5', null], 1)).toEqual([]);
   });
 });

@@ -14,6 +14,8 @@ export const PREFS_TEXT = {
   dragSub: 'Karten mit dem Finger auf den Stapel schieben, Tippen geht immer',
   zones: 'Trefferflächen anzeigen',
   zonesSub: 'Zeigt beim Ziehen, wo Loslassen zählt',
+  dragSame: 'Gleiche Karten mitziehen',
+  dragSameSub: 'Bei Shithead kommen beim Ziehen ohne Wahl alle gleichen Karten mit',
   haptic: 'Vibration',
   hapticSub: 'Kurz brummen, wenn dir etwas passiert',
   volume: 'Lautstärke',

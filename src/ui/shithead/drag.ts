@@ -1,13 +1,16 @@
 /*
  * Shithead ziehen, Adapter für den Motor (src/ui/table/drag-motor.ts, lädt mit ihm nach). Quellen sind die eigenen
- * Hand-, offenen und verdeckten Tischkarten mit data-drag, eine gewählte Karte nimmt alle gewählten mit. Ziele sind der
+ * Hand-, offenen und verdeckten Tischkarten mit data-drag, eine gewählte Karte nimmt alle gewählten mit, eine
+ * ungewählte mit dem Schalter „Gleiche Karten mitziehen“ alle gleichen Werts. Ziele sind der
  * Stapel und in der Tauschrunde die Karten der anderen Reihe. Abgeschickt wird wie beim Tippen in src/ui/events.ts.
  */
 import type { DropKey } from '../../game/drop';
+import { shSameAs } from '../../game/drop/shithead';
 import type { Action, View } from '../../game/types';
 import { doAct } from '../../net/dispatch';
 import { App } from '../app';
 import { noteTap } from '../feedback';
+import { prefs } from '../prefs';
 import { shMine } from '../render/shithead';
 import { sfx } from '../sound';
 import { dragLanded, type DragAdapter } from '../table/drag';
@@ -28,7 +31,7 @@ export const adapter: DragAdapter = {
     // Gewählte Karte: alle gewählten (gleicher Wert), sonst nur sie, die Auswahl bleibt
     const ss = App.ss;
     const all = v.phase === 'play' && ss.src === from && ss.idx.includes(i) && ss.idx.every((k) => arr[k]);
-    const idx = all ? ss.idx : [i];
+    const idx = all ? ss.idx : v.phase === 'play' && prefs().dragSame ? shSameAs(arr, i) : [i];
     const els = idx.flatMap((k) => document.querySelector<HTMLElement>(cardSel(from, k)) ?? []);
     // Fehlt eine der gewählten im DOM, ist es kein Ziehen (wie bei den anderen Adaptern)
     return els.length === idx.length ? { key: { g: 'shithead', from, cards: idx.map((k) => arr[k]) }, els } : null;

@@ -83,3 +83,10 @@ export function shDropsFor(v: View, me: string, src: ShDragKey): DropKey[] {
 export function shCanDrag(v: View, me: string, src: ShDragKey): boolean {
   return shDropsFor(v, me, src).length > 0;
 }
+
+/** Ziehen ohne Wahl mit „Gleiche Karten mitziehen“: alle Karten gleichen Werts der Reihe, die gezogene zuerst */
+export const shSameAs = (arr: readonly (Card | null | undefined)[], i: number): number[] => {
+  const c = arr[i];
+  if (!c) return [];
+  return [i, ...arr.flatMap((o, k) => (k !== i && o && rankOf(o) === rankOf(c) ? [k] : []))];
+};

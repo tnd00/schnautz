@@ -22,6 +22,8 @@ export const CHANGELOG: readonly Release[] = [
           'Unter „Design“ gibt es auch Sticker dunkel, für die Runde nach Mitternacht.',
           'Im Menü ⋯ gibt es „Bedienung“. Dort stellst du Ruhig (weniger Bewegung), die Lautstärke, den Ton bei deinem Zug und am Android-Handy die Vibration ein.',
           '„Trefferflächen anzeigen“ unter „Bedienung“ zeigt dir beim Ziehen gestrichelt, wo Loslassen zählt.',
+          'Bei Shithead nimmt eine Karte, die du ziehst, ohne sie zu wählen, alle gleichen mit. Wählst du selbst, zählt nur deine Wahl. Unter „Bedienung“ lässt sich das abschalten.',
+          'Am Tisch markiert ein Ziehen oder langes Drücken keinen Text mehr.',
           'Beim Laden steht ein kleiner Ladebildschirm mit Logo statt einer halb fertigen Seite. Lädst du am Tisch neu, wartest du hinter demselben Bildschirm und landest direkt an deinem Platz.',
           'Gibt es eine neue Version, lädt die Seite von selbst neu, sobald gerade nichts passiert. Danach sitzt du wieder an deinem Platz. So spielen alle am Tisch immer mit derselben Version.',
         ],
