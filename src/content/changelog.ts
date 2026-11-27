@@ -55,6 +55,19 @@ export const CHANGELOG: readonly Release[] = [
     ],
   },
   {
+    v: '2.7.1',
+    date: '2026-11-27',
+    title: 'Wieder verbunden',
+    groups: [
+      {
+        h: 'Besser',
+        items: [
+          'Wenn zwei Handys nicht direkt zueinander finden, etwa mit iCloud Privat-Relay oder über mobile Daten, läuft die Verbindung jetzt über einen eigenen Umweg. Der alte, kostenlose Umweg war abgeschaltet worden.',
+        ],
+      },
+    ],
+  },
+  {
     v: '2.7',
     date: '2026-11-26',
     title: 'Klare Worte',
