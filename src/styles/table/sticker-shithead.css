@@ -10,17 +10,12 @@
   box-shadow: var(--tb-val-line), var(--tb-val-shadow);
 }
 
-/* Mitte: Zahl am Nachziehstapel als Tinten-Sticker, verbrannte Karten als heller Zahl-Sticker */
+/* Mitte: Zahl am Nachziehstapel als Tinten-Sticker, verbrannte Karten (und Bito bei Durak, .burned.dkbito) ebenso */
 :root[data-look='sticker'] body.ingame .pcount {
   color: var(--tb-num-ink-text);
   background: var(--tb-num-ink-bg);
   box-shadow: var(--tb-val-line), var(--tb-num-shadow);
   rotate: calc(var(--tb-tilt) * -2deg);
-}
-:root[data-look='sticker'] body.ingame .emptyslot {
-  color: var(--tb-text);
-  border-color: var(--tb-slot-line);
-  font-weight: 700;
 }
 :root[data-look='sticker'] body.ingame .burned {
   color: var(--tb-text);
@@ -29,10 +24,15 @@
   filter: none;
 }
 :root[data-look='sticker'] body.ingame .burned b {
-  color: var(--tb-text);
+  color: var(--tb-num-ink-text);
+  background: var(--tb-num-ink-bg);
+  border-radius: 999px;
+  box-shadow: var(--tb-val-line), var(--tb-num-shadow);
   font-family: var(--tb-name-family);
   font-style: var(--tb-name-style);
   font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  rotate: calc(var(--tb-tilt) * 2deg);
 }
 :root[data-look='sticker'] body.ingame .center .burned .cnt {
   color: var(--tb-text);

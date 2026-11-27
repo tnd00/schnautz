@@ -189,6 +189,14 @@
   font-weight: 800;
   box-shadow: var(--tb-cnt-shadow);
 }
+/* Leere Plätze in der Mitte (Stapel „leer“, Cabo „gezogen“, Durak-Stapel und Angriffsfeld) als Mulde, damit die helle
+ * Schrift auf der Matte AA-Kontrast hat */
+:root[data-look='sticker'] body.ingame .emptyslot {
+  color: var(--tb-text);
+  background: color-mix(in srgb, var(--tb-shade) 30%, transparent);
+  border-color: var(--tb-slot-line);
+  font-weight: 700;
+}
 
 /* ---------- Statuszeile ---------- */
 :root[data-look='sticker'] body.ingame .status {

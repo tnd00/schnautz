@@ -73,6 +73,7 @@
   --tb-seat-radius: 16px;
   --tb-turn-line: var(--sn-text);
   --tb-turn-glow: var(--tb-edge), 0 0 0 3px var(--sn-text), var(--sn-shadow-lift-sm);
+  --tb-turn-ring: var(--sn-text);
   --tb-me-bg: transparent;
   --tb-me-line: transparent;
   --tb-me-turn: none;
@@ -235,14 +236,15 @@
   --tb-bubble-bg: var(--sn-paper); /* Sprechblase und Spruch-Etikett */
   --tb-bubble-text: var(--sn-text); /* dito Schrift */
   --tb-card-edge: color-mix(in srgb, var(--sn-ink) 40%, transparent); /* Kante kleiner und angehobener Karten */
+  --tb-card-open-line: color-mix(in srgb, var(--st-ink) 35%, transparent); /* Cabo: Karte offen für alle, Rand */
   --tb-card-face: var(--st-paper); /* Kartensticker in der Legende */
-  --tb-trump-mark: var(--brass-lo); /* Trumpfstern auf den eigenen Durak-Karten (Kartenvorderseite) */
+  --tb-trump-mark: var(--st-ink); /* Trumpfstern auf den eigenen Durak-Karten, Tinte wie in der Legende */
   --tb-clock-bg: var(--sn-ink); /* Countdown des 4er-Fensters */
   --tb-log-text: var(--sn-text); /* Einträge im Verlauf */
   --tb-side-solid: var(--sn-sheet); /* Seitenleiste als Bogen am Handy */
   --tb-hand-pill-bg: var(--sn-ink); /* Pille mit der Zahl der Handkarten */
-  --tb-mark-bg: var(--sn-ink); /* Wertmarke an Cabo-Karten, geschätzt, Prüfung mit Runde 4 */
-  --tb-mark-zero: #2fbf71; /* dito bei null, geschätzt, Prüfung mit Runde 4 */
+  --tb-mark-bg: var(--sn-ink); /* Wertmarke an Cabo-Karten (Schrift --tb-val-text) */
+  --tb-mark-zero: var(--st-cabo); /* dito bei null, Limette mit Tinte (--tb-on-accent) */
   --tb-swap-bg: var(--tb-zone-bg); /* eigener Platz in der Tauschrunde, helle Matte wie die Mitte */
   --tb-board-bg: none; /* dunkles Tuch für Regeln, Bestenliste und Ergebnis */
   --tb-board-foot: linear-gradient(
@@ -261,17 +263,17 @@
   --tb-sheet-good-text: var(--sn-text); /* guter Spruch auf Papier */
   --tb-fx-glow: #ffd65a; /* Leuchten der geworfenen Krone (Grundfarbe für color-mix), wie Legacy */
   --tb-fx-glow-hi: #ffe478; /* dito Funkeln, wie Legacy */
-  --tb-crown: var(--sn-text); /* Ring der Krönung bei Cabo, geschätzt, Prüfung mit Runde 4 */
-  --tb-crown-dim: rgba(6, 5, 30, 0.62); /* dito Schleier, geschätzt, Prüfung mit Runde 4 */
-  --tb-crown-hi: var(--sn-text); /* dito Leuchten, geschätzt, Prüfung mit Runde 4 */
-  --tb-snap: var(--sn-text); /* Schnappen bei Cabo (Grundfarbe für color-mix), geschätzt, Prüfung mit Runde 4 */
+  --tb-crown: var(--st-cabo); /* Ring der Krönung bei Cabo, Limette mit Tintenkante */
+  --tb-crown-dim: rgba(6, 5, 30, 0.62); /* dito Schleier */
+  --tb-crown-hi: var(--st-cabo); /* dito Umriss im Puls */
+  --tb-crown-glow: 0 0 0 3px var(--tb-on-accent), inset 0 0 0 2px var(--tb-on-accent); /* dito Tintenkante */
+  --tb-crown-glow-hi:
+    0 0 0 3px var(--tb-on-accent), 0 0 0 9px color-mix(in srgb, var(--tb-crown-hi) 45%, transparent),
+    inset 0 0 0 2px var(--tb-on-accent); /* dito im Puls, Umriss statt Leuchten */
+  --tb-snap: var(--st-cabo); /* Schnappen bei Cabo (Grundfarbe für color-mix), Ring in Limette */
   /* Holz, Braun und Schande */
-  --tb-fx-wood-bg: var(--sn-ink); /* Meldung aus Holz (Schrift --tb-tag-knock-text), geschätzt, Prüfung mit Runde 4 */
-  --tb-fx-wood-soft: color-mix(
-    in srgb,
-    var(--sn-text) 82%,
-    transparent
-  ); /* dito Unterzeile, geschätzt, Prüfung mit Runde 4 */
+  --tb-fx-wood-bg: var(--sn-ink); /* Meldung „geklopft“ als Tinten-Etikett (Schrift --tb-tag-knock-text) */
+  --tb-fx-wood-soft: color-mix(in srgb, var(--sn-text) 82%, transparent); /* dito Unterzeile */
   --tb-knock-text: var(--sn-text); /* geklopft in der Statuszeile, Spruch auf Holz */
   --tb-fx-taunt: color-mix(
     in srgb,
@@ -289,12 +291,12 @@
   --tb-zer-ring: var(--sn-text); /* dito Ring */
   --tb-zer-glow: 0 0 0 4px var(--sn-rim); /* dito Leuchten */
   --tb-zer-glow-hi: 0 0 0 6px var(--sn-rim); /* dito Leuchten im Puls */
-  --tb-coaster-new: var(--sn-text); /* eben verlorenes Leben, geschätzt, Prüfung mit Runde 4 */
-  --tb-coaster-new-line: var(--sn-ink); /* dito Rand, geschätzt, Prüfung mit Runde 4 */
+  --tb-coaster-new: var(--st-schnautz); /* eben verlorenes Leben, Punkt in Spielfarbe */
+  --tb-coaster-new-line: var(--sn-text); /* dito Rand, hell wie --tb-ink */
   /* Rot, Feuer und Knöpfe der Abläufe */
   --tb-lose-soft: var(--sn-soft); /* Verlust auf dunklem Tuch, Uhr knapp */
   --tb-lose-text: var(--sn-soft); /* Spruch und Folge auf dunklem Tuch */
-  --tb-tag-def-text: var(--sn-text); /* Etikett „verteidigt“ bei Durak, Schrift, geschätzt, Prüfung mit Runde 4 */
+  --tb-tag-def-text: var(--sn-text); /* Etikett „verteidigt“ bei Durak, Schrift auf dem Indigo-Sticker */
   --tb-fx-burn: rgba(255, 120, 30, 0.8); /* Glut beim Verbrennen, wie Legacy */
   --tb-fx-flame: #ffb35c; /* Zahl neben der Flamme, wie Legacy */
   --tb-btn-bomb-bg: var(--sn-ink); /* Knopf Bombe (Schrift --tb-light) */
@@ -309,9 +311,9 @@
   --tb-bet: #8f70d6; /* Tipp (Grundfarbe für color-mix), wie Legacy */
   --tb-bet-text: var(--sn-text); /* dito Schrift */
   --tb-bet-line: var(--sn-text); /* gewählter Tipp, Rand */
-  --tb-fx-sea-bg: var(--sn-paper); /* Meldung Schwimmen, geschätzt, Prüfung mit Runde 4 */
-  --tb-fx-sea-title: #9fc2ff; /* dito großes Wort, geschätzt, Prüfung mit Runde 4 */
-  --tb-sea-text: #9fc2ff; /* Schwimmen auf Papier, geschätzt, Prüfung mit Runde 4 */
+  --tb-fx-sea-bg: var(--sn-paper); /* Meldung Schwimmen */
+  --tb-fx-sea-title: #9fc2ff; /* dito großes Wort */
+  --tb-sea-text: #9fc2ff; /* Schwimmen auf Papier, AA auf Blatt und Zeile */
   --tb-sea-hi: #9fc2ff; /* Schwimmen in der Punkteleiste, geschätzt, Prüfung mit Runde 4 */
   --tb-fx-tomato: #e0362b; /* Tomate (Grundfarbe für color-mix), wie Legacy */
   --tb-fx-tomato-mark: radial-gradient(
@@ -344,4 +346,8 @@
   --tb-status-turn-bg: var(--g);
   --tb-sheet-win-bg: color-mix(in srgb, var(--g) 16%, var(--sn-paper));
   --tb-turn-glow: var(--tb-edge), 0 0 0 3px var(--g), var(--sn-shadow-lift-sm);
+  /* Bei Nacht ersetzt die Spielfarbe den hellen Ring (tokens.md), auf heller Karte trennt ihn innen die Tinte */
+  --tb-turn-ring: var(--g);
+  --tb-target-ring: 0 0 0 3px var(--sn-ink), 0 0 0 6px var(--g);
+  --tb-target-soft: 0 0 0 2px var(--g);
 }

@@ -417,11 +417,12 @@ test('ausgegraute Karte antippen: Grund am Tisch, die Auswahl bleibt leer', asyn
   await waitForPhase(host, ['play']);
   // Gastgeber am Zug, oben eine hohe Karte, auf der Hand eine niedrigere (passt nicht) und eine 10.
   // Die Karten sucht der Test hier mit rankOf aus, im Browser werden sie nur umgelegt
+  // Alle Karten am Tisch, damit es immer eine 10 gibt (sonst kann sie ganz bei anderen liegen), danach gleich verteilt
   const pool = await host.evaluate(() => {
     const s = window.__schnautz;
     const S = s?.H.st?.sh;
     if (!s || !S) throw new Error('kein Shithead');
-    return [...S.deck, ...S.pile, ...S.P[s.App.me].hand];
+    return [...S.deck, ...S.pile, ...Object.values(S.P).flatMap((P) => [...P.hand, ...P.up, ...P.down])];
   });
   const take = (ok: (r: string) => boolean): string => {
     const c = pool.find((x) => ok(rankOf(x)));
@@ -438,9 +439,15 @@ test('ausgegraute Karte antippen: Grund am Tisch, die Auswahl bleibt leer', asyn
       const st = s?.H.st;
       const S = st?.sh;
       if (!s || !st || !S) throw new Error('kein Shithead');
-      S.deck.splice(0, S.deck.length, ...rest);
       S.pile.splice(0, S.pile.length, top);
-      S.P[s.App.me].hand.splice(0, S.P[s.App.me].hand.length, low, free);
+      for (const [id, P] of Object.entries(S.P)) {
+        for (const k of ['hand', 'up', 'down'] as const) {
+          const n = id === s.App.me && k === 'hand' ? 0 : P[k].length;
+          P[k].splice(0, P[k].length, ...rest.splice(0, n));
+        }
+      }
+      S.P[s.App.me].hand.push(low, free);
+      S.deck.splice(0, S.deck.length, ...rest);
       S.win = null;
       st.turn = st.players.findIndex((p) => p.id === s.App.me);
       st.n++;

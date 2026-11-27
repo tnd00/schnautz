@@ -1,0 +1,136 @@
+/*
+ * Eigenheiten von Cabo im Sticker-Look (Plan 2.8 Runde 4c). Lädt nur über looks/sticker.css, das Gemeinsame aller
+ * Tische steht in table/look-sticker.css. Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße.
+ *
+ * Bedeutung der Ringe, ohne Glühen: Limette (die Spielfarbe) heißt „das kannst du jetzt nehmen“ (Stapel, Ablage,
+ * deine gezogene Karte, Schnappen), Blau heißt „nur du siehst sie gerade“ (Ansehen, Spionieren), Tinte heißt wählbar
+ * oder gewählt (wie bei den anderen Spielen). Auf weißen Kacheln steht nie Limette, dort trägt Tinte.
+ */
+
+/* Mitte: Beschriftung bleibt Tinte auf Weiß, Limette hätte darauf keinen Kontrast */
+:root[data-look='sticker'] body.ingame #table[data-game='cabo'] .center .cap b {
+  color: inherit;
+}
+
+/*
+ * Ringe an Karten: Jeder Zustand setzt nur --cb-ring, zwei Regeln zeichnen ihn, bei Rückseiten samt weißem Rand der
+ * Vinyl-Rückseite (sonst ginge er unter dem Ring verloren).
+ */
+:root[data-look='sticker'] body.ingame :is(.cbdeck.can > .card:last-of-type, .cbpile.can > .card:not(.under)),
+:root[data-look='sticker'] body.ingame .cbhold.on .card {
+  --cb-ring: 0 0 0 3px var(--tb-accent), var(--tb-shadow-lift-sm);
+}
+:root[data-look='sticker'] body.ingame .cbslot.pick > .card {
+  --cb-ring: var(--tb-target-soft), var(--tb-shadow-flat);
+}
+:root[data-look='sticker'] body.ingame .cbslot.sel > .card {
+  --cb-ring: var(--tb-card-sel);
+}
+/* Nur ich sehe sie gerade: blauer Ring mit Tintenkante, der Balken darüber ebenso */
+:root[data-look='sticker'] body.ingame .cbslot.seen > .card {
+  --cb-ring: 0 0 0 3px var(--tb-sea), 0 0 0 4.5px var(--tb-on-accent), var(--tb-shadow-lift-sm);
+}
+/* Eigene Reihe beim Schnappen: Ring in Spielfarbe */
+:root[data-look='sticker'] body.ingame .cbrow.snapping .cbslot > .card {
+  --cb-ring: 0 0 0 3px var(--tb-snap), var(--tb-shadow-lift-sm);
+}
+/* Gezogene Karte über einer Gegnerreihe: Tintenring, Limette hätte auf der weißen Kachel keinen Kontrast */
+:root[data-look='sticker'] body.ingame .cbheld .card {
+  --cb-ring: 0 0 0 2px var(--tb-turn-line), var(--tb-shadow-lift-sm);
+}
+:root[data-look='sticker']
+  body.ingame
+  :is(
+    .cbdeck.can > .card:last-of-type,
+    .cbpile.can > .card:not(.under),
+    .cbhold.on .card,
+    .cbslot:is(.pick, .sel, .seen) > .card,
+    .cbrow.snapping .cbslot > .card,
+    .cbheld .card
+  ) {
+  box-shadow: var(--cb-ring);
+}
+:root[data-look='sticker']
+  body.ingame
+  :is(
+    .cbdeck.can > .card:last-of-type,
+    .cbpile.can > .card:not(.under),
+    .cbhold.on .card,
+    .cbslot:is(.pick, .sel, .seen) > .card,
+    .cbrow.snapping .cbslot > .card,
+    .cbheld .card
+  ).back {
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.05) var(--card-back-rim),
+    var(--cb-ring);
+}
+:root[data-look='sticker'] body.ingame .cbpile .card.under {
+  rotate: calc(var(--tb-tilt) * -3deg);
+}
+/* Fähigkeit wartet (Spionieren, Blindtausch): leerer Platz als Mulde wie die anderen (look-sticker.css), das Zeichen
+ * trägt die Bedeutung */
+:root[data-look='sticker'] body.ingame .cbhold .cbpow {
+  border-color: var(--tb-slot-line);
+}
+
+/* Wertmarke als Tinten-Sticker mit Rand, der rote König (0) in Spielfarbe mit Tinte */
+:root[data-look='sticker'] body.ingame .cbv {
+  color: var(--tb-val-text);
+  background: var(--tb-mark-bg);
+  box-shadow: var(--tb-val-line), var(--tb-val-shadow);
+  font-family: var(--tb-name-family);
+  font-style: var(--tb-name-style);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+:root[data-look='sticker'] body.ingame .cbv.zero {
+  color: var(--tb-on-accent);
+  background: var(--tb-mark-zero);
+}
+
+/* Offen für alle: feine Tintenkante auf der hellen Vorderseite */
+:root[data-look='sticker'] body.ingame .cbslot.up > .card {
+  outline-color: var(--tb-card-open-line);
+}
+:root[data-look='sticker'] body.ingame .cbslot.seen::after {
+  background: var(--tb-sea);
+  box-shadow: 0 0 0 1.5px var(--tb-on-accent);
+}
+
+/* Gegner: gezogene Karte über der Reihe höchstens 3 Grad schief, Tintenring statt Spielfarbe auf der weißen Kachel */
+:root[data-look='sticker'] body.ingame .cbheld {
+  rotate: calc(var(--tb-tilt) * 3deg);
+}
+/* Cabo gerufen: kein Leuchten, das Etikett sagt es wie „hat geklopft“ bei Schnautz */
+:root[data-look='sticker'] body.ingame .opp.cb.called:not(.turn) {
+  border-color: var(--tb-seat-line);
+  box-shadow: var(--tb-seat-shadow);
+}
+:root[data-look='sticker'] body.ingame .tag.cabo {
+  color: var(--tb-tag-knock-text);
+  background: var(--tb-tag-knock-bg);
+}
+/* König am Partieende: Spielfarbe mit Tinte wie die Siegesmeldung */
+:root[data-look='sticker'] body.ingame .tag.king {
+  color: var(--tb-tag-turn-text);
+  background: var(--tb-tag-turn-bg);
+}
+
+/* Ergebnisblatt: „Cabo-König!“ im Titel bleibt in der Schrift des Titels wie bei Shithead */
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet h2 .g {
+  color: inherit;
+}
+
+/* Krönung: Ring in Limette mit Tintenkante, pulsiert als Umriss statt als Leuchten. zerPulse (feedback.css) liest
+ * --tb-zer-*, hier zeigen sie auf die Krönungs-Tokens */
+:root[data-look='sticker'] #zer.crown {
+  --tb-zer-dim: var(--tb-crown-dim);
+  --tb-zer-glow: var(--tb-crown-glow);
+  --tb-zer-glow-hi: var(--tb-crown-glow-hi);
+}
+:root[data-look='sticker'] #zer.crown .zer-ring {
+  border-color: var(--tb-crown);
+  box-shadow:
+    0 0 0 200vmax var(--tb-zer-dim),
+    var(--tb-zer-glow);
+  animation-name: zerIn, zerPulse;
+}

@@ -70,10 +70,11 @@
   .opp:has(> .val) {
     padding-bottom: 10px;
   }
-  /* Am Handy sind die Kacheln so schmal, dass lange Etiketten („noch einmal“) über die ganze Oberkante reichen. Der
-   * Eckaufkleber sitzt deshalb unter dem Etikett auf der rechten Kante, immer an derselben Stelle */
+  /* Am Handy sind die Kacheln so schmal, dass lange Etiketten („noch einmal“, „🏅 beste Hand“) über die ganze
+   * Oberkante reichen. Der Eckaufkleber sitzt deshalb unter dem Etikett auf der rechten Kante, immer an derselben
+   * Stelle, mit Luft für beide Stanzränder (je 2,5 px im Sticker-Look) */
   .opp > .rmark {
-    top: 14px;
+    top: 17px;
     right: -7px;
     width: 20px;
     height: 20px;
@@ -104,9 +105,10 @@
     font-size: 12px;
     flex: none;
   }
+  /* Wie .opp.sh .tag in shithead.css, damit das Etikett in allen vier Spielen gleich hoch sitzt */
   .opp .tag {
     position: absolute;
-    top: -8px;
+    top: -10px;
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;

@@ -198,6 +198,8 @@
   font-family: var(--display);
   font-size: 20px;
   color: var(--tb-text);
+  /* Luft für den Zahl-Sticker im Sticker-Look, ohne Fläche in Legacy unsichtbar (schmaler als min-width) */
+  padding: 0 6px;
 }
 .shhand {
   display: flex;

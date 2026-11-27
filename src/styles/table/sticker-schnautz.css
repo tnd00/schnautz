@@ -1,0 +1,64 @@
+/*
+ * Eigenheiten von Schnautz im Sticker-Look (Plan 2.8 Runde 4c). Lädt nur über looks/sticker.css, das Gemeinsame
+ * aller Tische steht in table/look-sticker.css. Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße.
+ */
+
+/* Leben: Punkte in Spielfarbe statt Messing-Deckel, verlorene als Ring. Auf freiem Grund mit Tintenrand
+ * (bei Nacht hell), damit Mandarine sich vom Periwinkle abhebt */
+:root[data-look='sticker'] body.ingame .coaster {
+  background: var(--tb-accent);
+  box-shadow: inset 0 0 0 2px var(--tb-ink);
+}
+:root[data-look='sticker'] body.ingame .coaster::after {
+  content: none;
+}
+:root[data-look='sticker'] body.ingame .coaster.lost {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tb-text) 50%, transparent);
+}
+/* Im Wert-Sticker (Tinte) ohne Rand, verloren als heller Ring */
+:root[data-look='sticker'] body.ingame .val .coaster {
+  box-shadow: none;
+}
+:root[data-look='sticker'] body.ingame .val .coaster.lost {
+  box-shadow: inset 0 0 0 1.5px var(--tb-val-soft);
+}
+/* Auf dem Ergebnisblatt mit Rand in der Schrift des Blatts */
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .coaster {
+  box-shadow: inset 0 0 0 2px var(--tb-sheet-ink);
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .coaster.lost {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tb-sheet-ink) 32%, transparent);
+}
+:root[data-look='sticker'] body.ingame .coaster.justlost::before {
+  box-shadow: inset 0 0 0 2px var(--tb-coaster-new-line);
+}
+
+/* Schwimmt: Wellen in der Schrift des Untergrunds, auf dem Blatt in Wasserblau */
+:root[data-look='sticker'] body.ingame .swim {
+  color: var(--tb-text);
+  font-weight: 700;
+}
+:root[data-look='sticker'] body.ingame .val .swim {
+  color: inherit;
+}
+:root[data-look='sticker'] body.ingame #overlay .paper.sheet .swim {
+  color: var(--tb-sea-text);
+}
+
+/* Vorschau beim Tauschen: der neue Wert in Spielfarbe auf dem Tinten-Sticker */
+:root[data-look='sticker'] body.ingame .pill.pre .to {
+  color: var(--tb-accent);
+}
+
+/* Plakette „beste Hand“ am Rundenende in Spielfarbe wie die Zeile im Blatt, Verluste bleiben Etiketten */
+:root[data-look='sticker'] body.ingame #table[data-game='schnautz'] .tag[data-k='king'] {
+  color: var(--tb-tag-turn-text);
+  background: var(--tb-tag-turn-bg);
+}
+
+/* Countdown zur nächsten Runde: Ziffern springen nicht */
+:root[data-look='sticker'] body.ingame .nextcd {
+  font-variant-numeric: tabular-nums lining-nums;
+}

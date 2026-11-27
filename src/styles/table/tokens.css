@@ -64,6 +64,7 @@
   --tb-turn-line: var(--brass-hi); /* Rand am Zug */
   --tb-turn-glow:
     inset 0 0 0 1.5px var(--brass-hi), 0 0 22px color-mix(in srgb, var(--brass-hi) 35%, transparent); /* Ring und Hub am Zug */
+  --tb-turn-ring: var(--brass-hi); /* schmaler Ring, wenn mehrere zugleich dran sind (Durak), Legacy liest es nicht */
   --tb-me-bg: transparent; /* Fläche eigener Platz, geschätzt */
   --tb-me-line: color-mix(in srgb, var(--brass-hi) 45%, transparent); /* Rand eigener Platz */
   --tb-me-turn:
@@ -245,6 +246,11 @@
   --tb-bubble-bg: #fbf6e8; /* Sprechblase und Spruch-Etikett */
   --tb-bubble-text: #2a241b; /* dito Schrift */
   --tb-card-edge: rgba(70, 45, 10, 0.25); /* Kante kleiner und angehobener Karten */
+  --tb-card-open-line: color-mix(
+    in srgb,
+    var(--tb-text) 55%,
+    transparent
+  ); /* Cabo: Karte offen für alle, Rand (Legacy liest es nicht, Wert wie cabo.css) */
   --tb-card-face: linear-gradient(155deg, #fffdf6, #efe3c8); /* Kartensticker in der Legende */
   --tb-trump-mark: var(--brass-lo); /* Trumpfstern auf den eigenen Durak-Karten (Kartenvorderseite) */
   --tb-clock-bg: #123526; /* Countdown des 4er-Fensters */
@@ -276,6 +282,11 @@
   --tb-crown: #e8b64c; /* Ring der Krönung bei Cabo */
   --tb-crown-dim: rgba(10, 8, 2, 0.78); /* dito Schleier */
   --tb-crown-hi: #ffe496; /* dito Leuchten */
+  --tb-crown-glow:
+    0 0 40px 8px color-mix(in srgb, var(--tb-accent) 90%, transparent),
+    inset 0 0 28px color-mix(in srgb, var(--tb-accent) 60%, transparent); /* dito Ring, Legacy liest es nicht (cabo.css) */
+  --tb-crown-glow-hi:
+    0 0 60px 14px var(--tb-crown-hi), inset 0 0 36px color-mix(in srgb, var(--tb-accent) 80%, transparent); /* dito im Puls, Legacy liest es nicht */
   --tb-snap: #f0b33a; /* Schnappen bei Cabo (Grundfarbe für color-mix) */
   /* Holz, Braun und Schande */
   --tb-fx-wood-bg: linear-gradient(180deg, #9a5a34, #5f2f18); /* Meldung aus Holz (Schrift --tb-tag-knock-text) */

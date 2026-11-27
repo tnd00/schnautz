@@ -1,0 +1,56 @@
+/*
+ * Eigenheiten von Durak im Sticker-Look (Plan 2.8 Runde 4c). Lädt nur über looks/sticker.css, das Gemeinsame aller
+ * Tische steht in table/look-sticker.css, Stapelzahl, leere Hand und Zähler (verbrannt wie Bito) in table/sticker-shithead.css.
+ * Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße. Kein Rot außer auf Karten und im Farbzeichen.
+ */
+
+/* Beschriftung der Mitte: das Farbzeichen des Trumpfs in Kartenrot, wie auf der Karte (Legacy nimmt dort Rot) */
+:root[data-look='sticker'] #table[data-game='durak'] .center .cap .suit.red {
+  color: var(--tb-suit-red);
+}
+
+/* Stapel: der quer liegende Trumpf mit derselben Kante wie jede Karte */
+:root[data-look='sticker'] body.ingame .dktrump .card {
+  box-shadow: var(--tb-card-shadow);
+}
+
+/* Angriffe: offene mit feinem Tintenumriss, schlagbare mit dem Zielring, die gewählte wie eine gewählte Karte */
+:root[data-look='sticker'] body.ingame .dkpair.open .dka {
+  box-shadow: var(--tb-target-soft), var(--tb-card-shadow);
+}
+:root[data-look='sticker'] body.ingame .dkpair.target .dka {
+  box-shadow: var(--tb-target-ring), var(--tb-card-shadow);
+}
+:root[data-look='sticker'] body.ingame .dkpair.chosen .dka {
+  box-shadow: var(--tb-card-sel);
+}
+
+/* Etiketten der Rollen: „greift an“ und „nimmt auf“ bleiben Tinte, „verteidigt“ ist ein heller Sticker mit
+ * Tintenumriss (Umriss statt Füllung), „passt“ tritt als heller Zettel mit weicher Schrift zurück */
+:root[data-look='sticker'] body.ingame .tag.def {
+  color: var(--tb-tag-def-text);
+  background: var(--tb-seat-bg);
+  box-shadow: 0 0 0 2px var(--tb-turn-line);
+}
+:root[data-look='sticker'] body.ingame .tag.done {
+  color: var(--tb-status-soft);
+  background: var(--tb-seat-bg);
+}
+
+/* Mehrere zugleich dran (Verteidigen und Nachlegen): jeder Ring nur 2 px, ein einzelner Zug behält den vollen Ring.
+ * --tb-turn-ring ist bei Nacht die Spielfarbe wie --tb-turn-glow */
+:root[data-look='sticker'] body.ingame #opps:has(.opp.turn ~ .opp.turn) .opp.dk.turn {
+  box-shadow:
+    var(--tb-edge),
+    0 0 0 2px var(--tb-turn-ring),
+    var(--tb-shadow-lift-sm);
+}
+
+/* Ende: die offenen Karten des Durak in seiner Kachel */
+:root[data-look='sticker'] body.ingame .dkshow .card {
+  box-shadow: var(--tb-card-shadow);
+}
+:root[data-look='sticker'] body.ingame .dkshow .more {
+  color: var(--tb-status-soft);
+  font-weight: 800;
+}
