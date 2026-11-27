@@ -49,7 +49,7 @@ export const CHANGELOG: readonly Release[] = [
           'Bei Schnautz tauschst du mit einer Geste Hand gegen Mitte. Bei Shithead ziehst du Karten auf den Stapel und in der Tauschrunde auf deine Tischkarten.',
           'Wer bei Cabo zu spät schnappt, verliert nur das Rennen und bekommt keine Strafkarte.',
           'Am kleinen Handy liegen Meldungen nicht mehr auf den Werten unter den Gegnern oder auf deinem Platz. Große Meldungen rücken über die Statuszeile, statt sie anzuschneiden.',
-          'Lädt Legacy gerade nicht, bleibt der Tisch Sticker und ein Hinweis sagt es dir.',
+          'Lädt Legacy oder Sticker dunkel gerade nicht, bleibt der Tisch beim alten Stand und ein Hinweis sagt es dir.',
         ],
       },
     ],

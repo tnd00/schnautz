@@ -324,3 +324,26 @@ test('Design: lädt das Legacy-Stück nicht, bleibt Sticker gewählt und ein Toa
   await expect(html).toHaveAttribute('data-look', 'sticker');
   expect(await page.evaluate(() => localStorage.getItem('schnautz:design'))).not.toBe('"legacy"');
 });
+
+test('Design: lädt das dunkle Stück nicht, bleibt Sticker hell ohne Neuladen und ein Toast sagt es', async ({
+  browser,
+}) => {
+  const ctx = await desktop(browser);
+  await seed(ctx, {});
+  await ctx.route(/\/assets\/dark-[^/]*\.(?:css|js)$/, (r) => r.abort());
+  const page = await ctx.newPage();
+  const html = page.locator('html');
+  await botTable(page);
+  // Ein Neuladen würde diese Marke löschen
+  await page.evaluate(() => ((window as unknown as { mark?: number }).mark = 1));
+  await page.click('#btn-menu');
+  await page.click('#menu-design');
+  const radio = (v: string) => page.locator(`#modal [role=radio][data-dsg=look][data-v=${v}]`);
+  await radio('dark').click();
+  await expect(page.locator('#toasts .toast')).toContainText('Sticker dunkel will gerade nicht laden');
+  await expect(radio('sticker')).toHaveAttribute('aria-checked', 'true');
+  await expect(radio('dark')).toHaveAttribute('aria-checked', 'false');
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  expect(await page.evaluate(() => localStorage.getItem('schnautz:theme'))).not.toBe('"dark"');
+  expect(await page.evaluate(() => (window as unknown as { mark?: number }).mark)).toBe(1);
+});

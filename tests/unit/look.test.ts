@@ -131,12 +131,29 @@ describe('look', () => {
     const { html } = fakeDom(store);
     expect(await look.setLook('legacy')).toBe(false);
     expect(store['schnautz:design']).toBeUndefined();
-    expect(look.legacyLoading()).toBe(false);
+    expect(look.lookLoading()).toBe(false);
     // Auch beim Start mit gespeichertem Legacy steht der Tisch dann in Sticker statt ohne Farben
     store['schnautz:design'] = '"legacy"';
     look.applyLook();
     await vi.waitFor(() => expect(html.dataset).toMatchObject({ look: 'sticker', theme: 'light' }));
     vi.doUnmock('../../src/styles/looks/legacy.css');
+  });
+
+  it('bleibt hell, wenn das dunkle Stück nicht lädt', async () => {
+    vi.resetModules();
+    vi.doMock('../../src/styles/looks/dark.css', () => {
+      throw new Error('offline');
+    });
+    const look = await import('../../src/ui/look');
+    const store: Record<string, string> = {};
+    const { html } = fakeDom(store);
+    expect(await look.setLook('dark')).toBe(false);
+    expect(store['schnautz:theme']).toBeUndefined();
+    expect(look.lookLoading()).toBe(false);
+    store['schnautz:theme'] = '"dark"';
+    look.applyLook();
+    await vi.waitFor(() => expect(html.dataset).toMatchObject({ look: 'sticker', theme: 'light' }));
+    vi.doUnmock('../../src/styles/looks/dark.css');
   });
 
   it('gibt Limette als Funken nur der Cabo-Krone', () => {

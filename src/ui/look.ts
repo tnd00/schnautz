@@ -39,8 +39,28 @@ let legacyOk = false;
 /** Neueste Wahl im Bogen: Eine ältere, deren Stück erst später ankommt, gilt nicht mehr */
 let pick = 0;
 
-/** Lädt das Legacy-Stück gerade? Dann lädt ein Fehler die Seite nicht neu (vite:preloadError in main.ts) */
-export const legacyLoading = (): boolean => !!legacy && !legacyOk;
+let darkBusy = false;
+
+/** Lädt das Legacy- oder das dunkle Stück gerade? Dann lädt ein Fehler die Seite nicht neu (vite:preloadError in main.ts) */
+export const lookLoading = (): boolean => (!!legacy && !legacyOk) || darkBusy;
+
+/**
+ * Dunkles Stück laden. Ein Fehler landet im Protokoll und ergibt false, der nächste Versuch lädt neu. Promise.all
+ * steht mit Absicht dazwischen: Ein direkt an import() gehängtes then zieht Vite in die Ladefunktion, dann erreicht der
+ * Ladefehler den Fehlerzweig nie.
+ */
+function loadDark(): Promise<boolean> {
+  darkBusy = true;
+  return Promise.all([import('../styles/looks/dark.css')])
+    .then(
+      () => true,
+      (e: unknown) => {
+        dlog('warn', `Dunkles Design nicht geladen: ${String(e)}`);
+        return false;
+      },
+    )
+    .finally(() => (darkBusy = false));
+}
 
 /**
  * Legacy-Stück höchstens einmal laden, samt kursiver Fraunces (höchstens 300 ms, sonst springen die Namen kurz in
@@ -73,7 +93,8 @@ export function applyLook(): void {
   h.dataset.deck = p.deck;
   if (p.look === 'sticker') {
     h.dataset.theme = p.theme;
-    if (p.theme === 'dark') void import('../styles/looks/dark.css');
+    // Fehlt das dunkle Stück, steht der Tisch in dieser Sitzung hell statt halb dunkel
+    if (p.theme === 'dark') void loadDark().then((ok) => ok || (h.dataset.theme = 'light'));
   } else {
     delete h.dataset.theme;
     const ready = (): void => h.classList.add('look-ready');
@@ -100,13 +121,12 @@ function redraw(): void {
 
 /**
  * Speichert die Wahl aus dem Bogen. Legacy gilt und wird gespeichert, erst wenn sein Stück da ist, so springt der Tisch
- * nur einmal. Lädt es nicht, bleibt alles beim Alten und das Ergebnis ist false (der Bogen meldet es). Sticker und
- * Sticker dunkel setzen auch das Thema, das dunkle Stück wird vorher geladen (fehlt es, bleibt der Tisch hell).
+ * nur einmal. Lädt es nicht, bleibt alles beim Alten und das Ergebnis ist false (der Bogen meldet es). Sticker dunkel
+ * ebenso mit seinem Stück. Sticker und Sticker dunkel setzen auch das Thema.
  */
 export async function setLook(d: Design): Promise<boolean> {
   const n = ++pick;
-  const ok = d !== 'legacy' || (await loadLegacy());
-  if (d === 'dark') await import('../styles/looks/dark.css').catch(() => {});
+  const ok = d === 'legacy' ? await loadLegacy() : d === 'dark' ? await loadDark() : true;
   if (ok && n === pick) {
     setPref('look', d === 'legacy' ? 'legacy' : 'sticker');
     if (d !== 'legacy') setPref('theme', d === 'dark' ? 'dark' : 'light');

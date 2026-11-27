@@ -26,7 +26,7 @@ import { initStart } from './ui/start';
 import { initBackMark, initUpdateCheck, reloadApp, showUpdate, takeBackMark, updateText } from './ui/update';
 import { LS, SS } from './ui/storage';
 import { initDevLog } from './ui/devlog';
-import { applyLook, legacyLoading } from './ui/look';
+import { applyLook, lookLoading } from './ui/look';
 import { applyCalm } from './ui/prefs';
 import './ui/dialog'; // Fenster: Rolle, Fokus und Rückweg, richtet sich beim Laden selbst ein
 
@@ -60,8 +60,8 @@ applyCalm();
  */
 window.addEventListener('vite:preloadError', (e) => {
   // Nur stilles Vorladen von Regeln oder Updates: nichts tun, beim Öffnen wird neu versucht (src/ui/lazy.ts). Das
-  // Legacy-Design meldet seinen Fehler selbst und bleibt bei Sticker (src/ui/look.ts)
-  if (lazyQuiet() || legacyLoading()) return;
+  // Legacy- und das dunkle Design melden ihren Fehler selbst und bleiben beim alten Stand (src/ui/look.ts)
+  if (lazyQuiet() || lookLoading()) return;
   const last = SS.get<number>('preloadAt', 0);
   if (Date.now() - last < 60_000) {
     showUpdate(updateText(), true);

@@ -12,7 +12,7 @@ import { cardHTML } from '../cards';
 import { sheetHTML } from '../dialog';
 import { $opt } from '../dom';
 import { toast } from '../feedback';
-import { designOf, legacyLoading, setDeck, setLook, type Deck, type Design } from '../look';
+import { designOf, lookLoading, setDeck, setLook, type Deck, type Design } from '../look';
 import { prefs, type Prefs } from '../prefs';
 
 type Key = 'look' | 'deck';
@@ -60,12 +60,15 @@ function mark(btn: HTMLElement): void {
   }
 }
 
-/** Eine Wahl treffen und anwenden. Lädt Legacy nicht, springt die Markierung zurück und ein Toast sagt es. */
+/**
+ * Eine Wahl treffen und anwenden. Lädt Legacy oder Sticker dunkel nicht, springt die Markierung zurück und ein Toast
+ * sagt es.
+ */
 function choose(btn: HTMLElement): void {
   const v = btn.dataset.v;
   mark(btn);
-  // Lädt Legacy noch, zählt auch die Wahl des gespeicherten Looks: Sie hebt die Legacy-Wahl auf
-  if (btn.dataset.dsg === 'look' && (v !== designOf(prefs()) || legacyLoading()))
+  // Lädt ein Stück noch, zählt auch die Wahl des gespeicherten Designs: Sie hebt die ladende Wahl auf
+  if (btn.dataset.dsg === 'look' && (v !== designOf(prefs()) || lookLoading()))
     void setLook(v as Design).then((ok) => {
       if (ok) return;
       const back = btn.parentElement?.querySelector<HTMLElement>(`[data-v="${designOf(prefs())}"]`);
@@ -73,7 +76,7 @@ function choose(btn: HTMLElement): void {
         mark(back);
         if (document.activeElement === btn) back.focus();
       }
-      toast(T.legacyFail);
+      toast(v === 'dark' ? T.darkFail : T.legacyFail);
     });
   else if (btn.dataset.dsg === 'deck' && v !== prefs().deck) setDeck(v as Deck);
 }

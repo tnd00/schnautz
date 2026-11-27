@@ -15,4 +15,5 @@ export const DESIGN_TEXT = {
     ['classic', 'Klassisch', 'Das gute alte Blatt mit Bildkarten.'],
   ],
   legacyFail: 'Legacy will gerade nicht laden. Der Tisch bleibt Sticker, probier es gleich nochmal.',
+  darkFail: 'Sticker dunkel will gerade nicht laden. Der Tisch bleibt, wie er ist, probier es gleich nochmal.',
 } as const;
