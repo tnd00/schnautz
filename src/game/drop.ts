@@ -28,8 +28,13 @@ export type DragKey =
   | { g: 'durak'; cards: Card[] }
   /** Cabo: eigene Plätze, bei Auswahl alle gewählten */
   | { g: 'cabo'; from: 'slot'; ids: number[] }
-  /** Cabo: meine gezogene Karte, die Ablage oder der Stapel */
-  | { g: 'cabo'; from: 'hold' | 'pile' | 'deck' }
+  /**
+   * Cabo: meine gezogene Karte. `sel` sind die gewählten eigenen Plätze, nur wenn welche gewählt sind: Landet die Karte
+   * auf einem davon, tauscht sie alle gewählten (ziehen.md 4.1), sonst nur den Platz unter dem Finger.
+   */
+  | { g: 'cabo'; from: 'hold'; sel?: number[] }
+  /** Cabo: die Ablage oder der Stapel */
+  | { g: 'cabo'; from: 'pile' | 'deck' }
   /** Schnautz: Handkarte oder Mittelkarte */
   | { g: 'schnautz'; from: 'hand' | 'mid'; i: number };
 
@@ -58,6 +63,7 @@ export type DropKey =
 export const DROP_SAY_CODES = [
   // Shithead
   'sh.play',
+  'sh.blind',
   'sh.swap',
   // Durak
   'dk.attack',

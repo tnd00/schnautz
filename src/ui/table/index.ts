@@ -91,11 +91,12 @@ export function renderTable(v: View, o: RenderOpts = {}): void {
     markTosses();
   }
   restoreFocus(fm);
-  if (dragOn(v)) {
-    if (!dragInit) initDrag();
+  if (dragOn(v) && !dragInit) {
+    initDrag();
     dragInit = true;
-    dragRefresh(v);
   }
+  // Auch mit Schalter aus: der Motor nimmt dann Griff-Zeiger und touch-action wieder weg
+  if (dragInit) dragRefresh(v);
 }
 
 /**

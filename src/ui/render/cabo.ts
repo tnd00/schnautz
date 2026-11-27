@@ -99,6 +99,15 @@ export function cbCanSnap(v: View): boolean {
   return !!v.rules.cb?.snap && !!C?.pile.length && !!cbMine(v)?.length && (role === 'wait' || role === 'draw');
 }
 
+/**
+ * Lassen sich eigene Plätze einzeln ziehen? Wie cbCanDrag in src/game/drop/cabo.ts, ohne die Regeln ins Einstiegsstück
+ * zu holen. drop-cabo.test.ts prüft, dass beide gleich bleiben.
+ */
+export function cbSlotsDrag(v: View): boolean {
+  const role = cbRole(v);
+  return role === 'hold' || role === 'blind' || cbCanSnap(v);
+}
+
 /** Knöpfe am eigenen Platz, Stapel und Ablage */
 export type CbBtn = 'cbdeck' | 'cbpile' | 'cbcabo' | 'cbswap' | 'cbdiscard' | 'cbblind' | 'cbskip' | 'cbsnapmode';
 
@@ -170,9 +179,28 @@ const overlap = (n: number, room: number): number => (n <= room ? 0 : (room - 1)
  */
 const valBadge = (c: Card): string => `<span class="cbv${cbVal(c) === 0 ? ' zero' : ''}" data-v="${cbVal(c)}"></span>`;
 
-/** Eine Karte ohne eigene Rolle, die Rolle trägt der Platz drumherum. Offen nennt sie ihren Wert („Pik 7, 7 Punkte“) */
-const card = (c: Card | null | undefined, cls = '', mute = false): string =>
-  cardHTML(c ?? null, { key: '', cls, mute, value: c ? cbVal(c) : undefined });
+/**
+ * Eine Karte ohne eigene Rolle, die Rolle trägt der Platz drumherum. Offen nennt sie ihren Wert („Pik 7, 7 Punkte“).
+ * `dd` sind Quelle und Ziel fürs Ziehen (src/ui/cabo/drag.ts).
+ */
+const card = (
+  c: Card | null | undefined,
+  cls = '',
+  mute = false,
+  dd: { drag?: 'pile' | 'hold' | 'deck' | false; drop?: 'pile' | 'hold' } = {},
+): string =>
+  cardHTML(c ?? null, {
+    key: '',
+    cls,
+    mute,
+    value: c ? cbVal(c) : undefined,
+    drag: dd.drag || undefined,
+    drop: dd.drop,
+  });
+
+/** Leeres Feld in der Mitte, als Ziel fürs Ziehen */
+const emptySlot = (text: string, drop?: 'pile' | 'hold', cls = ''): string =>
+  `<div class="emptyslot${cls}"${drop ? ` data-drop="${drop}"` : ''}>${text}</div>`;
 
 interface SlotOpts {
   act?: string;
@@ -183,6 +211,8 @@ interface SlotOpts {
   name?: string;
   /** Zug, an dem eine antippbare, aber nicht wählbare Karte ihren Grund prüft (cbProbe), geht nie raus */
   probe?: Action | null;
+  /** Eigener Platz, der sich gerade ziehen lässt (Regeln in src/game/drop/cabo.ts) */
+  drag?: boolean;
 }
 
 /**
@@ -201,12 +231,14 @@ function slotHTML(v: View, owner: string, s: CbSlotView, o: SlotOpts = {}): stri
   const why = o.act && !pick && o.probe ? whyText(cbWhyNot(v, App.me, o.probe)) : null;
   const name = `${o.name ?? ''}${c ? `: ${cardName(c)}${TABLE.points(cbVal(c))}` : CB_TABLE.hidden}`;
   const attrs = o.act
-    ? ` data-act="${o.act}" data-o="${esc(owner)}" data-fk="cb:${esc(owner)}:${s.id}" role="button" tabindex="0"` +
+    ? ` data-act="${o.act}" data-fk="cb:${esc(owner)}:${s.id}" role="button" tabindex="0"` +
       ` aria-pressed="${!!o.sel}" aria-label="${esc(name)}"` +
       (why ? ` aria-disabled="true" aria-description="${esc(why)}"` : '')
     : '';
+  // Jeder Platz ist Ziel fürs Ziehen, eigene sind dazu Quelle, wenn gerade etwas mit ihnen geht
+  const dd = ` data-o="${esc(owner)}" data-drop="slot"${o.drag ? ' data-drag="slot"' : ''}`;
   return (
-    `<div class="${cls}" data-sid="${s.id}"${attrs}${style}>` +
+    `<div class="${cls}" data-sid="${s.id}"${dd}${attrs}${style}>` +
     card(c, App.anim.deal ? 'deal' : '') +
     (c ? valBadge(c) : '') +
     (seen ? '<span class="cbeye" aria-hidden="true">👁️</span>' : '') +
@@ -289,6 +321,12 @@ function cbSeat(v: View, p: Player): SeatModel | null {
   };
 }
 
+/** Stapel wie deckCards, aber jeder Rücken ist Quelle fürs Ziehen, wenn ich ziehen darf */
+function deckBacks(n: number): string {
+  const back = card(null, '', false, { drag: 'deck' });
+  return back + (n > 1 ? back : '') + (n > 2 ? back : '');
+}
+
 /** Tischmitte: Stapel, gezogene Karte, Ablage und darüber, was gerade los ist. */
 function cbCenter(v: View): CenterModel | null {
   const C = v.cb;
@@ -306,16 +344,18 @@ function cbCenter(v: View): CenterModel | null {
   const pileTap = pileAct || (live ? (role === 'hold' ? 'cbdiscard' : 'cbpile') : '');
   const pile = top
     ? // Untere Karte ohne sichtbaren Text, sonst stünde ihr Wert im Knopf „Von der Ablage nehmen“ (WCAG 2.5.3)
-      (under ? card(under, 'under', true) : '') + card(top, App.anim.pilePop ? 'pop' : '') + valBadge(top)
-    : `<div class="emptyslot">${TABLE.empty}</div>`;
+      (under ? card(under, 'under', true) : '') +
+      card(top, App.anim.pilePop ? 'pop' : '', false, { drag: canPile && 'pile', drop: 'pile' }) +
+      valBadge(top)
+    : emptySlot(TABLE.empty, 'pile');
   // Die Namen von Stapel und Ablage enthalten, was sichtbar darauf steht (WCAG 2.5.3)
   const pileSay = top ? `, ${cardName(top)}${TABLE.points(cbVal(top))}` : `, ${TABLE.empty}`;
   // Meine gezogene Karte liegt groß in der Mitte, fremde schweben über der Reihe der Person
   const mineHeld = C.hold?.by === App.me && C.hold.c;
-  let hold = '<div class="emptyslot">gezogen</div>';
+  let hold = emptySlot('gezogen', 'hold');
   let holdCnt = '';
   if (mineHeld && C.hold?.c) {
-    hold = card(C.hold.c, 'held') + valBadge(C.hold.c);
+    hold = card(C.hold.c, 'held', false, { drag: role === 'hold' && 'hold', drop: 'hold' }) + valBadge(C.hold.c);
     const pw = C.hold.from === 'deck' ? cbPower(C.hold.c) : null;
     // Am Handy bleibt nur das Zeichen der Fähigkeit, wie im Knopf „Ablegen 🔀“
     holdCnt = pw
@@ -323,7 +363,7 @@ function cbCenter(v: View): CenterModel | null {
       : 'Deine Karte';
   } else if (C.power) {
     // Die Karte liegt schon auf der Ablage, hier steht nur, was sie gerade erlaubt
-    hold = `<div class="emptyslot cbpow">${POWER_ICON[C.power.kind]}</div>`;
+    hold = emptySlot(POWER_ICON[C.power.kind], undefined, ' cbpow');
     if (C.power.by === App.me) holdCnt = POWER_NAME[C.power.kind];
   }
   let cap = `Runde ${num(v.round)} · bis ${num(v.rules.cb?.target ?? 100)} Punkte`;
@@ -341,7 +381,9 @@ function cbCenter(v: View): CenterModel | null {
         k: 'deck',
         cls: 'deck cbdeck',
         title: 'Stapel',
-        body: deckCards(dn) + (dn ? numHTML(dn, { cls: 'pcount', title: CB_TABLE.deckCount }) : ''),
+        body:
+          (deckAct ? deckBacks(dn) : deckCards(dn)) +
+          (dn ? numHTML(dn, { cls: 'pcount', title: CB_TABLE.deckCount }) : ''),
         can: deckAct,
         act: live || deckAct ? { act: 'cbdeck', label: CB_TABLE.deckSay(dn) } : undefined,
       },
@@ -537,6 +579,7 @@ function cbMe(v: View): MeModel | MeOut | null {
   if (role === 'look') st.push('looking');
   if (snap) st.push('snapping');
   const n = cbShownPoints(v, me);
+  const canDragSlot = cbSlotsDrag(v);
   const slots = row.map((s, i) =>
     slotHTML(v, App.me, s, {
       act: tappable ? 'cbm' : '',
@@ -544,6 +587,7 @@ function cbMe(v: View): MeModel | MeOut | null {
       sel: sel.has(s.id),
       name: CB_TABLE.mine(i),
       probe: pickable ? null : cbProbe(v, s.id),
+      drag: canDragSlot,
     }),
   );
   return {
@@ -701,5 +745,5 @@ export const cbSpec: NewTable = {
   me: cbMe,
   status: cbStatus,
   sheet: cbSheet,
-  drag: null,
+  drag: true,
 };

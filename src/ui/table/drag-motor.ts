@@ -6,7 +6,10 @@
  * Geist blendet dann nur aus.
  *
  * Gestartet wird nie in #opps (Karussell-Wischen) und nie, solange tableBusy() gilt. Nach einem Ziehen verschluckt ein
- * Wächter 400 ms lang Zeiger-Klicks, Tastatur-Klicks gehen immer durch.
+ * Wächter 400 ms lang Zeiger-Klicks am Tisch (dort liegen alle Quellen), Tastatur-Klicks und Tipps außerhalb gehen
+ * immer durch.
+ *
+ * Die Adapter der Spiele kommen per import.meta.glob mit in dieses Stück (Muster oben in ./drag.ts).
  */
 import '../../styles/table/drag.css';
 import { DRAG_SR, dragLabel, type DragCtx } from '../../content/texts/drag';
@@ -32,7 +35,7 @@ import type { Timer } from '../dom';
 import { fixedLabel, shakeEl } from '../feedback';
 import { calm, prefs } from '../prefs';
 import { closePick } from '../toss';
-import type { DragAdapter, DragMotor } from './drag';
+import type { DragAdapter, DragMotor, Landed } from './drag';
 import {
   catchRadius,
   ghostAt,
@@ -55,6 +58,10 @@ const FADE_MS = 120;
 const GUARD_MS = 400;
 /** So lange liegt ein abgelegter Geist ohne Antwort, passend zur Sperre in doAct */
 const WAIT_MS = 2500;
+/** Finger ruht so lange, dann fragt der Motor adapter.rest (Cabo: Karussell am Rand drehen, ziehen.md 4.1) */
+const REST_MS = 600;
+/** So weit darf der ruhende Finger zittern */
+const REST_SLOP = 8;
 /** Höchstens so oft sagt der Vorleser ein neues Ziel an */
 const SAY_GAP_MS = 600;
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
@@ -77,6 +84,8 @@ interface Pending {
   ghost: HTMLElement;
   /** Höchster Logeintrag beim Abwurf */
   n: number;
+  /** Typ der geschickten Aktion: Nur eine Ablehnung dazu holt den Geist zurück */
+  act: string;
   t: Timer;
 }
 
@@ -112,19 +121,29 @@ const D = {
   okSeen: false,
   /** Ende des letzten echten Ziehens, für den Klick-Wächter */
   endAt: 0,
+  /** Zuletzt angesagtes Ziel samt Gültigkeit, damit ein Neuzeichnen es nicht noch einmal vorliest */
+  said: '',
+  /** Ruhender Finger: Stelle und Zeitgeber für adapter.rest */
+  rx: 0,
+  ry: 0,
+  restT: 0 as Timer | 0,
 };
 
+/** Adapter je Spiel, Schlüssel wie '../cabo/drag.ts' */
+const ADAPTERS = import.meta.glob<{ adapter: DragAdapter }>('../{shithead,durak,cabo,schnautz}/drag.ts', {
+  eager: true,
+});
+
 let pend: Pending | null = null;
-let landed: { t: number; rects: DOMRect[] } | null = null;
+let landed: (Landed & { t: number }) | null = null;
 
 const html = (): HTMLElement => document.documentElement;
 const table = (): HTMLElement | null => document.getElementById('table');
 
-/** Adapter des Spiels, solange es auf dem Gerüst steht */
+/** Adapter des Spiels, wenn seine Spec Ziehen einschaltet (drag: true) */
 function adapterOf(v: View | null): DragAdapter | null {
-  if (!v) return null;
-  const s = specOf(v.game);
-  return s.drag;
+  if (!v || !specOf(v.game).drag) return null;
+  return ADAPTERS[`../${v.game}/drag.ts`]?.adapter ?? null;
 }
 
 const dctx = (v: View): DragCtx => ({
@@ -138,6 +157,9 @@ const boxOf = (el: Element): Box => {
 };
 
 const maxLog = (v: View): number => v.log.reduce((m, e) => Math.max(m, e.n), 0);
+
+/** Zeigt die Ansicht schon einen eigenen Zug nach dem Abwurf? */
+const ownAfter = (v: View, n: number): boolean => v.log.some((e) => e.n > n && e.p === v.me);
 
 /** Quelle zum Schlüssel im aktuellen DOM, nie aus #opps */
 function findSource(v: View, ad: DragAdapter, key: DragKey): { key: DragKey; els: HTMLElement[] } | null {
@@ -261,8 +283,10 @@ function setOver(i: number, v: View): void {
     haptic('small');
   }
   // shortcut: wer schneller als 600 ms wechselt, hört das letzte Ziel nicht, reicht für die Tipp-Wege daneben
-  if (Date.now() - D.sayAt >= SAY_GAP_MS) {
+  const tag = JSON.stringify([z.key, z.res.ok]);
+  if (tag !== D.said && Date.now() - D.sayAt >= SAY_GAP_MS) {
     D.sayAt = Date.now();
+    D.said = tag;
     say(text);
   }
 }
@@ -315,7 +339,9 @@ function begin(v: View): boolean {
   } catch {
     // Zeiger schon weg, dann endet es mit dem nächsten Ereignis
   }
+  // Wurfleiste und Reaktionsfenster zu (ziehen.md 5.6), am Handy verhindert tableBusy() den Start ohnehin
   closePick();
+  document.body.classList.remove('emoopen');
   CAR.hold = Infinity;
   const g = document.createElement('div');
   g.className = 'tb-ghost';
@@ -330,6 +356,8 @@ function begin(v: View): boolean {
   D.lastX = D.x;
   measure(v);
   landed = null;
+  D.said = '';
+  armRest();
   haptic('small');
   const face = ad.face?.(key, v);
   say(DRAG_SR.lift(face ? cardName(face) : grab.getAttribute('aria-label') || DRAG_SR.card, D.els.length), 'mine');
@@ -341,8 +369,11 @@ function begin(v: View): boolean {
 function finish(): void {
   if (D.raf) cancelAnimationFrame(D.raf);
   D.raf = 0;
+  clearTimeout(D.restT);
+  D.restT = 0;
   if (D.on) D.endAt = Date.now();
   clearZones();
+  if (D.on) D.ad?.end?.();
   html().classList.remove('tb-dragging');
   try {
     if (D.id !== -1) table()?.releasePointerCapture(D.id);
@@ -400,6 +431,7 @@ function drop(v: View, z: Zone & { res: { ok: true } }): void {
   const [mx, my] = [to.x - D.gx, to.y - D.gy];
   landed = {
     t: Date.now(),
+    key,
     rects: [...g.querySelectorAll('.tb-ghost-c')].map((c) => {
       const r = c.getBoundingClientRect();
       return new DOMRect(r.left + mx, r.top + my, r.width, r.height);
@@ -420,7 +452,7 @@ function drop(v: View, z: Zone & { res: { ok: true } }): void {
     });
   }
   g.style.transform = at;
-  pend = { key, ad, ghost: g, n: maxLog(v), t: setTimeout(back, WAIT_MS) };
+  pend = { key, ad, ghost: g, n: maxLog(v), act: z.res.a.type, t: setTimeout(back, WAIT_MS) };
   say(dragLabel(z.res.say, dctx(v)), 'mine');
   finish();
   ad.commit(v, z.res.a);
@@ -478,7 +510,25 @@ function onMove(e: PointerEvent): void {
     if (!v || !begin(v)) return finish();
   }
   e.preventDefault();
+  if (Math.hypot(D.x - D.rx, D.y - D.ry) > REST_SLOP) armRest();
   schedule();
+}
+
+/** Ruhenden Finger neu messen: nach REST_MS ohne nennenswerte Bewegung fragt der Motor den Adapter */
+function armRest(): void {
+  clearTimeout(D.restT);
+  D.rx = D.x;
+  D.ry = D.y;
+  D.restT = D.ad?.rest ? setTimeout(onRest, REST_MS) : 0;
+}
+
+function onRest(): void {
+  const v = App.view;
+  if (!D.on || !v || !D.ad?.rest) return;
+  D.ad.rest(D.x, D.y, v);
+  remeasure();
+  schedule();
+  D.restT = setTimeout(onRest, REST_MS);
 }
 
 function onUp(e: PointerEvent): void {
@@ -510,7 +560,7 @@ function refresh(v: View): void {
   html().classList.toggle('tb-drag', !!ad && prefs().drag && v.phase !== 'lobby');
   if (pend) {
     const src = findSource(v, pend.ad, pend.key);
-    if (!src || !canDrag(v, v.me, pend.key) || maxLog(v) > pend.n) resolve();
+    if (!src || !canDrag(v, v.me, pend.key) || ownAfter(v, pend.n)) resolve();
     else for (const el of src.els) el.classList.add('tb-dragsrc');
   }
   if (D.id === -1) return;
@@ -538,16 +588,25 @@ function refresh(v: View): void {
   frame();
 }
 
-function cancel(why: 'cancel' | 'view' | 'reject'): void {
-  if (why === 'reject' && pend) return back();
+function cancel(why: 'cancel' | 'view' | 'reject', act?: string | null): void {
+  // Ablehnung holt nur den abgelegten Geist zurück und nur, wenn sie zu seinem Zug gehört, ein laufendes Ziehen bleibt
+  if (why === 'reject') {
+    if (pend && act === pend.act) back();
+    return;
+  }
   if (D.id === -1) return;
   if (!D.on) return finish();
   abort();
 }
 
-/** Klick-Wächter in der Capture-Phase: Zeiger-Klicks direkt nach einem Ziehen schalten keine Auswahl um */
+/**
+ * Klick-Wächter in der Capture-Phase: Zeiger-Klicks direkt nach einem Ziehen schalten am Tisch keine Auswahl um. Alle
+ * Quellen liegen in #table, auch der Klick nach dem Loslassen (der Zeiger hängt an #table). Was außerhalb liegt
+ * (Menü, Verlauf am PC, Fenster), nimmt den Tipp sofort an.
+ */
 function guard(e: MouseEvent): void {
-  if (e.detail > 0 && Date.now() - D.endAt < GUARD_MS) {
+  const t = table();
+  if (e.detail > 0 && Date.now() - D.endAt < GUARD_MS && t && e.target instanceof Node && t.contains(e.target)) {
     e.preventDefault();
     e.stopPropagation();
   }
@@ -581,7 +640,7 @@ export function startMotor(): DragMotor {
   started = {
     refresh,
     cancel,
-    landed: () => (landed && Date.now() - landed.t < WAIT_MS ? landed.rects : null),
+    landed: () => (landed && Date.now() - landed.t < WAIT_MS ? { key: landed.key, rects: landed.rects } : null),
   };
   return started;
 }

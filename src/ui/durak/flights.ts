@@ -8,6 +8,7 @@ import { flyG, type Rect } from '../animations';
 import { App } from '../app';
 import { $opt, reduceMotion } from '../dom';
 import { panelFor } from '../feedback';
+import { dragLanded } from '../table/drag';
 import { dkCount } from '../../game/durak';
 
 export interface DkSnap {
@@ -49,6 +50,8 @@ export function dkFlights(prev: View, v: View, snap: DkSnap | null, fresh: LogEn
   if (!P || !D || !snap || reduceMotion() || prev.games !== v.games) return;
   const w = cardW();
   const mine = App.playRects && Date.now() - App.playRects.t < 6000 ? App.playRects : null;
+  // Nach einem Abwurf gleiten die eigenen Karten von der Abwurfstelle ohne Bogen an ihren Platz
+  const glide = !!mine && dragLanded()?.rects === mine.rects;
   let own = 0;
   // Neue Karten auf dem Tisch
   D.table.forEach((p, i) => {
@@ -57,8 +60,10 @@ export function dkFlights(prev: View, v: View, snap: DkSnap | null, fresh: LogEn
       if (snap.cards.has(c)) return;
       const to = pair?.querySelector<HTMLElement>(sel);
       if (!to) return;
-      const from = by === App.me && mine?.rects[own] ? mine.rects[own++] : seatRect(by, w);
-      flyG(from, to.getBoundingClientRect(), c, {
+      const r = by === App.me ? mine?.rects[own] : undefined;
+      if (r) own++;
+      flyG(r ?? seatRect(by, w), to.getBoundingClientRect(), c, {
+        ...(r && glide ? { from: r } : {}),
         w: to.offsetWidth,
         hideEl: to,
         dur: 420,

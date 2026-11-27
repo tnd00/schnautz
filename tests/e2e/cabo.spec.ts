@@ -2,9 +2,23 @@
  * Cabo im Browser: allein gegen KIs bis zum Ende, zwei echte Browser gegeneinander (fremde Karten bleiben geheim,
  * dazu axe am PC und am Handy) und ein voller Tisch am Handy. Geklickt wird über die Oberfläche wie ein Mensch.
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Page } from '@playwright/test';
 import type { View } from '../../src/game/types';
 import { axeCheck } from './axe';
+import {
+  DRAG_TAG,
+  DROP_OK,
+  GHOST,
+  GHOST_LABEL,
+  drag,
+  dragIdle,
+  dragReady,
+  dragTable,
+  grab,
+  setDragPref,
+  tap,
+  tapAfterDrag,
+} from './drag';
 import {
   quickBots,
   fitFindings,
@@ -172,6 +186,7 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
   await waitForPhase(guest, ['peek'], 20_000);
   let checked = 0;
   let told = false;
+  let dragged = false;
   // Geprüfte Lagen für axe, etwa „eigener Zug 1280x860“: beide Seiten je einmal dran und einmal wartend
   const axed = new Set<string>();
   const hostId = await myId(host);
@@ -202,6 +217,16 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
     expect(C.know).toBeUndefined();
     C.reveal?.items.forEach((x) => expect(typeof x.c).toBe('string'));
     if (checked++ % 10 === 0) expect(await fitFindings(guest, ['#me'])).toEqual([]);
+    // Einmal beim Gast: Stapel per Finger auf „gezogen“. Der Geist liegt, bis die Antwort des Gastgebers da ist
+    if (!dragged && v.phase === 'play' && v.players[v.turn]?.id === me && !C.hold && !C.power && C.deck > 0) {
+      await dragReady(guest);
+      await dragIdle(guest);
+      await drag(guest, guest.locator(DECK).last(), guest.locator(HOLD_DROP));
+      await expect.poll(async () => (await mustView(guest)).cb?.hold?.by).toBe(me);
+      await expect(guest.locator(GHOST)).toHaveCount(0);
+      dragged = true;
+      return;
+    }
     // Einmal beim Gast: eigene Karte antippen, während der Gastgeber dran ist. Ohne KIs steht der Tisch dabei still,
     // der Gastgeber zieht erst im nächsten Durchgang. Der Grund steht am Tisch und es geht kein Zug raus
     if (told || v.phase !== 'play' || v.players[v.turn]?.id === me || !C.P[me]?.length) return;
@@ -215,6 +240,7 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
     told = true;
   });
   expect(told, 'Gast hat eine eigene Karte angetippt, während der Gastgeber dran war').toBe(true);
+  expect(dragged, 'Gast hat per Finger vom Stapel gezogen').toBe(true);
   expect([...axed].sort(), 'axe hat eigenen Zug und Warten an PC und Handy geprüft').toHaveLength(4);
   await waitForPhase(guest, ['over'], 30_000);
   for (const [pg, size] of [
@@ -441,5 +467,274 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
   await expect(host.locator('#status .main')).toContainText('ist dran.');
   await host.locator('#me .cbslot[data-act=cbm][aria-disabled=true]').first().click({ force: true });
   await expect(host.locator('#fly .nopelbl')).toContainText('nicht dran');
+  expect(errors.list).toEqual([]);
+});
+
+/**
+ * Zustand beim Gastgeber für die Fälle mit Ziehen: KIs halten, alle haben angesehen, Schnappen an, `who` ist dran und
+ * hat nichts gezogen. `fn` darf danach noch am Zustand drehen (läuft im Browser, als Text übergeben).
+ */
+async function setCb(host: Page, who: 'me' | 'other', fn = ''): Promise<void> {
+  await host.evaluate(
+    ({ who, fn }) => {
+      const S = window.__schnautz!;
+      S.BOTS.hold = true;
+      const st = S.H.st!;
+      st.players.forEach((p) => {
+        if (!p.ready && st.phase === 'peek')
+          S.act(st, p.id, { type: 'cblook', ids: st.cb!.P[p.id].slice(0, 2).map((s) => s.id) });
+      });
+      st.rules.cb!.snap = true;
+      st.turn = st.players.findIndex((p) => (who === 'me' ? p.id === S.App.me : p.id !== S.App.me));
+      st.cb!.t += 1;
+      st.cb!.hold = null;
+      st.cb!.power = null;
+      if (fn) new Function('st', 'me', fn)(st, S.App.me);
+      S.hostCommit();
+    },
+    { who, fn },
+  );
+  await dragIdle(host);
+}
+
+/** Eigene Plätze und die Logeinträge ab `n` beim Gastgeber */
+const myRow = async (host: Page): Promise<{ id: number; c?: string; up?: boolean }[]> =>
+  host.evaluate(() => window.__schnautz!.App.view!.cb!.P[window.__schnautz!.App.me]);
+const logSince = async (host: Page, n: number): Promise<View['log']> =>
+  host.evaluate((n) => window.__schnautz!.App.view!.log.filter((e) => e.n > n), n);
+/** Erster eigener Logeintrag der Art `k` ab `n`, als flaches Objekt */
+const ownLog = async (host: Page, n: number, k: string, me: string): Promise<Record<string, unknown> | undefined> =>
+  (await logSince(host, n)).find((e) => e.k === k && e.p === me) as Record<string, unknown> | undefined;
+const lastN = async (host: Page): Promise<number> =>
+  host.evaluate(() => Math.max(0, ...window.__schnautz!.App.view!.log.map((e) => e.n)));
+
+/** Handy mit echtem Finger in Chromium, im WebKit-Projekt das iPhone des Projekts mit synthetischen Zeigern */
+async function dragPhone(browser: Browser): Promise<Page> {
+  const webkit = test.info().project.name === 'webkit';
+  return (await (webkit ? browser.newContext() : phone(browser))).newPage();
+}
+
+const SLOT = (id: number) => `#me .cbslot[data-sid="${id}"]`;
+const DECK = '#center .cbdeck [data-drag=deck]';
+const HOLD_DROP = '#center [data-drop=hold]';
+const PILE_DROP = '#center [data-drop=pile]';
+
+test(
+  'Cabo ziehen am Handy: Stapel, Ablegen, Ablage auf Platz, Schnappen, Eintauschen',
+  { tag: DRAG_TAG },
+  async ({ browser }) => {
+    test.setTimeout(3 * 60_000);
+    const errors = new Errors();
+    const host = errors.watch(await dragPhone(browser), 'host');
+    await dragTable(host, 'cabo', { bots: 3 });
+    await waitForPhase(host, ['peek'], 20_000);
+    const me = await myId(host);
+    await setCb(host, 'me');
+    await dragReady(host);
+
+    // Stapel auf „gezogen“: Etikett vor dem Loslassen, nur „gezogen“ leuchtet
+    let held = await grab(host, host.locator(DECK).last(), host.locator(HOLD_DROP));
+    await expect(host.locator(GHOST_LABEL)).toHaveText('Ziehen');
+    await expect(host.locator(DROP_OK)).toHaveCount(1);
+    await held.release();
+    await expect.poll(async () => (await mustView(host)).cb?.hold?.by).toBe(me);
+    await dragIdle(host);
+
+    // Tippen direkt nach dem Zug wird angenommen: der Platz ist gewählt
+    const row = await myRow(host);
+    await tapAfterDrag(host, host.locator(SLOT(row[0].id)));
+    await expect(host.locator(SLOT(row[0].id))).toHaveClass(/\bsel\b/);
+    // Enter auf einer Karte geht weiter über den Tipp-Weg
+    await host.locator(SLOT(row[1].id)).focus();
+    await host.keyboard.press('Enter');
+    await expect(host.locator(SLOT(row[1].id))).toHaveClass(/\bsel\b/);
+    // Gewählte ziehen alle mit, das Etikett warnt vor ungleichen
+    held = await grab(host, host.locator(SLOT(row[0].id)), host.locator(HOLD_DROP));
+    await expect(host.locator(GHOST_LABEL)).toHaveText('2 eintauschen · nur gleiche');
+    await expect(host.locator(`${GHOST} .tb-ghost-n`)).toHaveText('×2');
+    // Mitten im Zug bleibt der Tisch, wie er ist
+    expect(await fitFindings(host, ['#me', '#center'])).toEqual([]);
+    expect(await host.evaluate(() => scrollY)).toBe(0);
+    let n = await lastN(host);
+    await held.release();
+    await expect.poll(async () => (await ownLog(host, n, 'cbswap', me))?.ids).toEqual([row[0].id, row[1].id]);
+
+    // Gezogene Karte auf einen gewählten Platz tauscht alle gewählten (ziehen.md 4.1)
+    await setCb(host, 'me');
+    await drag(host, host.locator(DECK).last(), host.locator(HOLD_DROP));
+    await expect.poll(async () => (await mustView(host)).cb?.hold?.by).toBe(me);
+    await dragIdle(host);
+    const rs = await myRow(host);
+    await tapAfterDrag(host, host.locator(SLOT(rs[1].id)));
+    await tap(host, host.locator(SLOT(rs[2].id)));
+    await expect(host.locator('#me .cbslot.sel')).toHaveCount(2);
+    n = await lastN(host);
+    held = await grab(host, host.locator('#center [data-drag=hold]'), host.locator(SLOT(rs[2].id)));
+    await expect(host.locator(GHOST_LABEL)).toHaveText(/^2 eintauschen/);
+    await held.release();
+    await expect
+      .poll(async () => ((await ownLog(host, n, 'cbswap', me))?.ids as number[] | undefined)?.slice().sort())
+      .toEqual([rs[1].id, rs[2].id].sort());
+    await dragIdle(host);
+
+    // Gezogene Karte (ohne Fähigkeit) auf die Ablage: Ablegen
+    await setCb(
+      host,
+      'me',
+      `st.cb.deck.push('H5'); st.cb.deck = st.cb.deck.filter((c, i, a) => c !== 'H5' || i === a.length - 1)`,
+    );
+    await drag(host, host.locator(DECK).last(), host.locator(HOLD_DROP));
+    await expect.poll(async () => (await mustView(host)).cb?.hold?.c).toBe('H5');
+    await dragIdle(host);
+    n = await lastN(host);
+    held = await grab(host, host.locator('#center [data-drag=hold]'), host.locator(PILE_DROP));
+    await expect(host.locator(GHOST_LABEL)).toHaveText('Ablegen');
+    await held.release();
+    await expect.poll(async () => (await logSince(host, n)).some((e) => e.k === 'cbdiscard' && e.p === me)).toBe(true);
+
+    // Ablage direkt auf einen eigenen Platz: nehmen und tauschen in einem Zug
+    await setCb(host, 'me');
+    const r2 = await myRow(host);
+    const top = (await mustView(host)).cb!.pile.at(-1);
+    n = await lastN(host);
+    held = await grab(host, host.locator(PILE_DROP), host.locator(SLOT(r2[2].id)));
+    await expect(host.locator(GHOST_LABEL)).toHaveText('Nehmen und tauschen');
+    await held.release();
+    await expect.poll(async () => (await logSince(host, n)).map((e) => e.k)).toEqual(['cbdraw', 'cbswap']);
+    expect((await myRow(host)).find((s) => s.id === r2[2].id)).toMatchObject({ c: top, up: true });
+    await dragIdle(host);
+
+    // Schnappen außer der Reihe: richtig fliegt die Karte raus, nur die Ablage leuchtet und fängt nur unter dem Finger
+    await setCb(
+      host,
+      'other',
+      // Zwei gleiche aus dem Stapel (ohne Könige, rot und schwarz zählen anders): eine oben auf die Ablage, eine auf
+      // meinen ersten Platz
+      'const D = st.cb.deck; const rk = (c) => c.split(":")[0].slice(1);' +
+        ' const a = D.find((c) => rk(c) !== "K" && D.some((d) => d !== c && rk(d) === rk(c)));' +
+        ' const b = D.find((d) => d !== a && rk(d) === rk(a)); st.cb.deck = D.filter((c) => c !== a && c !== b);' +
+        ' const r = st.cb.P[me]; st.cb.deck.push(r[0].c); r[0].c = a; delete r[0].up; st.cb.pile.push(b);',
+    );
+    const r3 = await myRow(host);
+    n = await lastN(host);
+    held = await grab(host, host.locator(SLOT(r3[0].id)), host.locator(PILE_DROP));
+    await expect(host.locator(GHOST_LABEL)).toHaveText('⚡ Schnappen');
+    await expect(host.locator(DROP_OK)).toHaveCount(1);
+    await held.release();
+    await expect.poll(async () => (await ownLog(host, n, 'cbsnap', me))?.ok).toBe(true);
+    expect(await myRow(host)).toHaveLength(r3.length - 1);
+    await dragIdle(host);
+    // Falsch geschnappt: offen plus Strafkarte
+    const r4 = await myRow(host);
+    const topNow = (await mustView(host)).cb!.pile.at(-1)!;
+    const wrong = await host.evaluate(
+      ({ me, t }) => {
+        const C = window.__schnautz!.H.st!.cb!;
+        const val = (c: string) => c.replace(/:2$/, '').slice(1);
+        return C.P[me].find((s) => val(s.c) !== val(t))?.id ?? -1;
+      },
+      { me, t: topNow },
+    );
+    n = await lastN(host);
+    await drag(host, host.locator(SLOT(wrong)), host.locator(PILE_DROP));
+    await expect.poll(async () => (await ownLog(host, n, 'cbsnap', me))?.ok).toBe(false);
+    expect(await myRow(host)).toHaveLength(r4.length + 1);
+    await dragIdle(host);
+
+    // Loslassen neben jedem Ziel: nichts geht raus, die Karte fliegt zurück
+    n = await lastN(host);
+    const r5 = await myRow(host);
+    await drag(host, host.locator(SLOT(r5[0].id)), { x: 20, y: 300 });
+    await dragIdle(host);
+    expect(await logSince(host, n)).toEqual([]);
+
+    // Schalter aus: kein Geist, Tippen geht wie vorher
+    await setDragPref(host, false);
+    await setCb(host, 'me');
+    await dragReady(host, false);
+    await drag(host, host.locator(DECK).last(), host.locator(HOLD_DROP));
+    await expect(host.locator(GHOST)).toHaveCount(0);
+    expect((await mustView(host)).cb?.hold).toBeNull();
+    await tap(host, host.locator('#center .cbdeck[data-act=cbdeck]'));
+    await expect.poll(async () => (await mustView(host)).cb?.hold?.by).toBe(me);
+    expect(errors.list).toEqual([]);
+  },
+);
+
+test('Cabo ziehen: Geist dreht sich nach der Einblendung auf den Rücken', async ({ browser }) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await phone(browser)).newPage(), 'host');
+  await hostTable(host, 'Tahna');
+  await chooseCabo(host, false);
+  await host.click('[data-act=addbot]');
+  await expect.poll(() => playerCount(host)).toBe(2);
+  await startGame(host);
+  await waitForPhase(host, ['peek'], 20_000);
+  // Ich darf mir eine eigene Karte ansehen, danach ist die andere Person dran und Schnappen geht
+  await setCb(host, 'me', `st.cb.power = { by: me, kind: 'peek', c: 'H7' }; st.cb.pile.push('H7')`);
+  await dragReady(host);
+  const id = (await myRow(host))[3].id;
+  await host.locator(SLOT(id)).click();
+  await expect(host.locator(`${SLOT(id)}.seen`)).toHaveCount(1);
+  const held = await grab(host, host.locator(SLOT(id)), { x: 200, y: 420 });
+  await expect(host.locator(`${GHOST} .card:not(.back)`)).toHaveCount(1);
+  // Länger festhalten zeigt die Karte nicht länger
+  await expect(host.locator(`${GHOST} .card.back`)).toHaveCount(1, { timeout: 5000 });
+  await expect(host.locator(`${SLOT(id)}.seen`)).toHaveCount(0);
+  await held.release();
+  await dragIdle(host);
+  expect(errors.list).toEqual([]);
+});
+
+test('Cabo ziehen: Blindtausch ins Karussell, Halten am Rand dreht weiter, Wischen geht weiter', async ({
+  browser,
+}) => {
+  const errors = new Errors();
+  const host = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  await hostTable(host, 'Tahna');
+  await chooseCabo(host, false);
+  for (let i = 0; i < 20 && (await playerCount(host)) < 7; i++) {
+    const add = host.locator('[data-act=addbot]');
+    if (await add.count()) await add.first().click();
+    else await host.click('[data-act=seats][data-d="1"]');
+    await host.waitForTimeout(100);
+  }
+  await expect.poll(() => playerCount(host)).toBe(7);
+  await host.click('[data-act=start]');
+  await waitForPhase(host, ['peek'], 20_000);
+  const me = await myId(host);
+  await setCb(host, 'me', `st.cb.power = { by: me, kind: 'swap', c: 'HB' }; st.cb.pile.push('HB')`);
+  await expect(host.locator('#opps.car')).toHaveCount(1);
+  await dragReady(host);
+  const pidAt = (s: number) => host.locator(`#opps .opp[data-slot="${s}"]`).getAttribute('data-pid');
+  const mid0 = await pidAt(0);
+  const id = (await myRow(host))[0].id;
+  const box = (await host.locator('#opps').boundingBox())!;
+  // Halten im rechten Drittel: das Karussell dreht um einen Platz
+  const held = await grab(host, host.locator(SLOT(id)), { x: box.x + box.width - 30, y: box.y + box.height / 2 });
+  await expect.poll(() => pidAt(0), { timeout: 3000 }).not.toBe(mid0);
+  const target = await pidAt(0);
+  await host.waitForTimeout(500);
+  await held.move(host.locator(`#opps .opp[data-pid="${target}"] .cbslot`).first());
+  await expect(host.locator(GHOST_LABEL)).toContainText('🔀 mit');
+  const n = await lastN(host);
+  await held.release();
+  await expect.poll(async () => (await ownLog(host, n, 'cbblind', me))?.to).toBe(target);
+  await dragIdle(host);
+  // Wischen im Karussell bleibt unberührt
+  const t0 = await host
+    .locator('#opps .opp')
+    .first()
+    .evaluate((b) => b.style.transform);
+  await host.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await host.mouse.down();
+  await host.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2, { steps: 8 });
+  const t1 = await host
+    .locator('#opps .opp')
+    .first()
+    .evaluate((b) => b.style.transform);
+  await host.mouse.up();
+  expect(t1).not.toBe(t0);
+  await expect(host.locator(GHOST)).toHaveCount(0);
   expect(errors.list).toEqual([]);
 });

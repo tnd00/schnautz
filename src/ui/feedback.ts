@@ -15,6 +15,7 @@ import type { LogEntry } from '../game/types';
 import { ctxOfView, rejectText } from '../content/texts';
 import { myMoveNow } from './helpers';
 import { sfx, sfxCalm, type SoundName } from './sound';
+import { dragCancel } from './table/drag';
 import { type BatchState, type Box, levelInBatch, movedEnough, newBatch, toneOf } from './feedback-rules';
 import {
   type BandGeo,
@@ -1063,6 +1064,8 @@ function rejectTargets(act: string | null): HTMLElement[] {
  * Stapel. Lobby, Plätze, Netz und alles in Fenstern bleiben Toasts. `act` ist der Typ der abgelehnten Aktion.
  */
 export function showReject(r: Reject, act?: string | null, fallback?: string): void {
+  // Gehört die Ablehnung zum abgelegten Geist (Ziehen), fliegt er gleich zurück, statt 2,5 Sekunden zu warten
+  dragCancel('reject', act);
   const text = rejectText(r, ctxOfView(App.view), fallback);
   if (!text) return;
   const v = App.view;

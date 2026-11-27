@@ -1,12 +1,14 @@
 /*
  * Cabo: Karten fliegen sichtbar. Gezogene Karten kommen vom Stapel oder der Ablage, getauschte Karten fliegen von
  * ihrem Platz auf die Ablage, beim Blindtausch kreuzen sich zwei Rücken. Wer sich eine Karte ansieht, hebt sie
- * kurz an, damit alle sehen, welche. Vor dem Zeichnen merkt sich cbSnap, wo alles lag.
+ * kurz an, damit alle sehen, welche. Vor dem Zeichnen merkt sich cbSnap, wo alles lag. Eigene gezogene Karten starten
+ * dort, wo der Finger sie losließ (dragLanded).
  */
 import type { Card, LogEntry, View } from '../../game/types';
 import { flyG } from '../animations';
 import { App } from '../app';
 import { $opt, reduceMotion } from '../dom';
+import { dragLanded } from '../table/drag';
 
 export interface CbSnap {
   /** Platz (Besitzer und Platz-ID) und wo er vor dem Zeichnen lag */
@@ -77,7 +79,24 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
   // Wo die gezogene Karte vorher lag: bei mir in der Mitte, sonst über der Reihe
   const heldFrom = (pid: string | undefined): DOMRect | null =>
     pid === App.me ? snap.hold : pid ? (snap.held.get(pid) ?? null) : null;
+  // Mein Abwurf beim Ziehen: Karte Nummer i startet am Geist, wenn die Quelle passt (Stapel, Ablage, gezogene Karte
+  // oder an Stelle i die Platz-ID)
+  const L = dragLanded();
+  const at = (pid: string, src: string | number | undefined, i = 0): DOMRect | undefined => {
+    const k = L?.key;
+    return k?.g === 'cabo' && pid === App.me && (k.from === src || (k.from === 'slot' && k.ids[i] === src))
+      ? L?.rects[i]
+      : undefined;
+  };
+  const held = (pid: string): DOMRect | undefined => at(pid, 'hold') ?? at(pid, 'pile');
+  /** Daneben: die gezogene eigene Karte fliegt vom Geist zurück an ihren Platz, offen */
+  const home = (pid: string, id: number | undefined, c: Card, from: DOMRect | undefined): void => {
+    const el = slotEl(pid, id)?.querySelector<HTMLElement>('.card');
+    if (from && el) flyG(null, el.getBoundingClientRect(), c, { from, w: el.offsetWidth, hideEl: el, dur: 300 });
+  };
   let d = 0;
+  // Nehmen und tauschen in einem Zug (cbdraw mit into): Die Karte fliegt nur einmal, direkt von der Ablage an den Platz
+  const drew = new Map<string, DOMRect | null>();
   fresh.forEach((e) => {
     const pid = e.p ?? '';
     switch (e.k) {
@@ -96,11 +115,15 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
     if (calm) return;
     switch (e.k) {
       case 'cbdraw': {
+        const from = e.from === 'pile' ? snap.pile : snap.deck;
+        if (C.hold?.by !== pid) {
+          drew.set(pid, from);
+          return;
+        }
         const to =
           pid === App.me
             ? $opt<HTMLElement>('#center .cbhold > .card')
             : $opt<HTMLElement>(`.opp[data-pid="${CSS.escape(pid)}"] .cbheld .card`);
-        const from = e.from === 'pile' ? snap.pile : snap.deck;
         const c: Card | null = e.from === 'pile' ? (e.c ?? null) : pid === App.me ? (C.hold?.c ?? null) : null;
         if (to)
           flyG(from, to.getBoundingClientRect(), c, {
@@ -109,13 +132,20 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
             dur: 420,
             flip: pid === App.me && e.from === 'deck',
             delay: d,
+            from: at(pid, e.from),
           });
         return;
       }
       case 'cbdiscard': {
         const to = pileTop();
         if (to)
-          flyG(heldFrom(pid), to.getBoundingClientRect(), e.c, { w: to.offsetWidth, hideEl: to, dur: 420, spin: 10 });
+          flyG(heldFrom(pid), to.getBoundingClientRect(), e.c, {
+            w: to.offsetWidth,
+            hideEl: to,
+            dur: 420,
+            spin: 10,
+            from: at(pid, 'hold'),
+          });
         return;
       }
       case 'cbswap': {
@@ -131,14 +161,16 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
               dur: 460,
               delay: 80 + i * 90,
               spin: -8,
+              from: at(pid, ids[i], i),
             }),
           );
+        else if (!e.ok) e.out.forEach((c, i) => home(pid, ids[i], c, at(pid, ids[i], i)));
         // Die gezogene Karte kommt an ihren Platz, oder bei einem Fehlgriff auf die Ablage
         const slot = slotEl(pid, ids[0]);
         if (e.ok && slot) {
           const c = slot.querySelector<HTMLElement>('.card');
           flyG(
-            heldFrom(pid),
+            drew.get(pid) ?? heldFrom(pid),
             slot.getBoundingClientRect(),
             e.up ? (C.P[pid]?.find((s) => s.id === ids[0])?.c ?? null) : null,
             {
@@ -146,9 +178,16 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
               hideEl: c ?? undefined,
               dur: 480,
               delay: 160,
+              from: held(pid),
             },
           );
-        } else if (!e.ok && to) flyG(heldFrom(pid), to.getBoundingClientRect(), null, { w, fade: true, dur: 420 });
+        } else if (!e.ok && to)
+          flyG(drew.get(pid) ?? heldFrom(pid), to.getBoundingClientRect(), null, {
+            w,
+            fade: true,
+            dur: 420,
+            from: held(pid),
+          });
         if (e.pen) penalty(pid);
         return;
       }
@@ -160,8 +199,12 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
             hideEl: to,
             dur: 380,
             spin: 14,
+            from: at(pid, e.id),
           });
-        else if (!e.ok) penalty(pid);
+        else if (!e.ok) {
+          home(pid, e.id, e.c, at(pid, e.id));
+          penalty(pid);
+        }
         return;
       }
       case 'cbblind': {
@@ -188,6 +231,7 @@ export function cbFlights(prev: View, v: View, snap: CbSnap, fresh: LogEntry[]):
             dur: 640,
             arc: -60,
             spin: -20,
+            from: at(pid, e.id),
           });
         return;
       }

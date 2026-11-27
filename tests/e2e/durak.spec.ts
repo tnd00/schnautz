@@ -2,12 +2,26 @@
  * Durak im Browser: allein gegen KIs bis zum Ende, zwei echte Browser gegeneinander und ein voller Tisch am Handy.
  * Die Züge wählt der Test mit derselben Spiellogik, die das Spiel nutzt, geklickt wird über die Oberfläche.
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test';
 import { dkBeats, rankOf, suitOf } from '../../src/game/cards';
 import { SH_ORD } from '../../src/game/constants';
-import { dkTrump, dkWaiting } from '../../src/game/durak';
-import type { View } from '../../src/game/types';
+import { dkNextTarget, dkTrump, dkWaiting } from '../../src/game/durak';
+import type { Card, View } from '../../src/game/types';
 import { axeCheck } from './axe';
+import {
+  DRAG_TAG,
+  dragIdle,
+  dragReady,
+  dragTable as hostDrag,
+  GHOST,
+  GHOST_LABEL,
+  grab,
+  GUARD_MS,
+  mouseDrag,
+  setDragPref,
+  tap,
+  tapAfterDrag,
+} from './drag';
 import {
   quickBots,
   fitFindings,
@@ -299,5 +313,249 @@ test('Durak zu acht passt am Handy ohne Scrollen auf den Bildschirm', async ({ b
     await host.waitForTimeout(300);
   }
   expect(await fitFindings(host, ['#me'])).toEqual([]);
+  expect(errors.list).toEqual([]);
+});
+
+/*
+ * Ziehen (ziehen.md 4.2 und 7): Gastgeber mit zwei KIs, die KIs stehen (BOTS.hold), der Test legt Hände und Tisch fest
+ * und lässt die KIs selbst ziehen. Am Handy zieht in Chromium ein echter Finger über CDP, in WebKit gehen die
+ * Zeigerereignisse synthetisch (tests/e2e/drag.ts).
+ */
+
+/** Gastgeber mit zwei stehenden KIs am Durak-Tisch. Ohne Gerät: Handy in Chromium, das Gerät des Projekts in WebKit. */
+async function dragTable(browser: Browser, info: TestInfo, ctx?: 'desktop'): Promise<{ page: Page; errors: Errors }> {
+  const errors = new Errors();
+  const wk = info.project.name === 'webkit';
+  const c = ctx === 'desktop' ? await desktop(browser) : wk ? await browser.newContext() : await phone(browser);
+  const page = errors.watch(await c.newPage(), 'host');
+  await hostDrag(page, 'durak', { bots: 2, hold: true });
+  await waitForPhase(page, ['play'], 20_000);
+  return { page, errors };
+}
+
+interface Rig {
+  att: number;
+  def: number;
+  hands: Card[][];
+  table?: { a: Card; d?: Card; by: number }[];
+  transfer?: boolean;
+}
+
+/** Tisch fest legen, Plätze als Index in v.players (0 bin ich), Trumpf Herz */
+async function rig(page: Page, o: Rig): Promise<string[]> {
+  return page.evaluate((o) => {
+    const s = window.__schnautz;
+    const st = s?.H.st;
+    const D = st?.dk;
+    if (!s || !st || !D) throw new Error('keine Partie');
+    const ids = [s.App.me, ...st.players.map((p) => p.id).filter((id) => id !== s.App.me)];
+    st.rules.dk = { ...st.rules.dk, transfer: !!o.transfer };
+    D.trump = 'H6';
+    D.P = Object.fromEntries(ids.map((id, i) => [id, o.hands[i] ?? []]));
+    Object.assign(D, {
+      att: ids[o.att],
+      def: ids[o.def],
+      table: (o.table ?? []).map((p) => ({ a: p.a, by: ids[p.by], ...(p.d ? { d: p.d } : {}) })),
+      take: false,
+      done: [],
+      finished: [],
+      limit: Math.min(6, o.hands[o.def].length),
+    });
+    s.App.ds = { idx: [], pair: null };
+    s.hostCommit();
+    return ids;
+  }, o);
+}
+
+/** Eine KI zieht über die Spiellogik des Gastgebers */
+async function botAct(page: Page, id: string, a: unknown): Promise<void> {
+  await page.evaluate(
+    ([id, a]) => {
+      const s = window.__schnautz;
+      if (!s?.H.st) throw new Error('kein Gastgeber');
+      const e = s.act(s.H.st, id as string, a as Parameters<typeof s.act>[2]);
+      if (e) throw new Error(JSON.stringify(e));
+      s.hostCommit();
+    },
+    [id, a] as const,
+  );
+}
+
+const hand = (page: Page, c: Card) => page.locator(`#me [data-act=dkh][data-fk="hand:${c}"]`);
+const pairAt = (page: Page, i: number) => page.locator(`#center .dkpair[data-i="${i}"]`);
+const tableOf = async (page: Page) => (await mustView(page)).dk?.table ?? [];
+const logN = async (page: Page) => (await mustView(page)).log.reduce((m, e) => Math.max(m, e.n), 0);
+
+test(
+  'Durak: Angreifen und Nachlegen per Ziehen, Tippen und Enter bleiben',
+  { tag: DRAG_TAG },
+  async ({ browser }, info) => {
+    const { page, errors } = await dragTable(browser, info);
+    const ids = await rig(page, {
+      att: 0,
+      def: 1,
+      hands: [
+        ['C7', 'D7', 'S8', 'H8', 'DK', 'C9'],
+        ['C8', 'D8', 'SA', 'CA', 'DA', 'HK'],
+        ['S9', 'SB', 'SD'],
+      ],
+    });
+    await dragReady(page);
+    // Bündel: beide Siebener antippen, dann einen davon ziehen, der andere kommt mit
+    await tap(page, hand(page, 'C7'));
+    await tap(page, hand(page, 'D7'));
+    await expect(page.locator('#me .dkhand .card.sel')).toHaveCount(2);
+    const table = page.locator('#center .dktable');
+    const held = await grab(page, hand(page, 'D7'), table);
+    await expect(page.locator(GHOST_LABEL)).toHaveText('Angreifen ×2');
+    await expect(page.locator(`${GHOST} .tb-ghost-n`)).toHaveText('×2');
+    await expect(page.locator('#center .dktable.tb-drop-hot')).toHaveCount(1);
+    expect(await fitFindings(page, ['#me'])).toEqual([]);
+    await held.release();
+    // Tippen direkt nach dem Zug außerhalb des Tischs (Menü) wird sofort angenommen, der Klick-Wächter gilt nur am Tisch
+    await tapAfterDrag(page, page.locator('#btn-menu'));
+    await expect(page.locator('#menu')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#menu')).toBeHidden();
+    await dragIdle(page);
+    await expect.poll(async () => (await tableOf(page)).map((p) => p.a).sort()).toEqual(['C7', 'D7']);
+    // Die KI schlägt beides, jetzt darf ich Achten nachlegen
+    await botAct(page, ids[1], { type: 'dkdefend', a: 0, i: 0, ac: 'C7', c: 'C8' });
+    await botAct(page, ids[1], { type: 'dkdefend', a: 1, i: 0, ac: 'D7', c: 'D8' });
+    await expect(pairAt(page, 1).locator('.dkd')).toHaveCount(1);
+    // Falscher Wert ist ausgegraut: lässt sich nicht anheben, nichts geht raus, der Tipp nennt den Grund
+    const n0 = await logN(page);
+    const miss = await grab(page, hand(page, 'DK'), table);
+    await expect(page.locator(GHOST)).toHaveCount(0);
+    await miss.release();
+    expect(await logN(page)).toBe(n0);
+    await tap(page, hand(page, 'DK'));
+    await expect(page.locator('#fly .nopelbl')).toHaveText(
+      'Nachlegen geht nur mit Werten, die schon auf dem Tisch liegen.',
+    );
+    await expect(hand(page, 'DK')).not.toHaveClass(/\bsel\b/);
+    // Eine andere Karte ziehen nimmt nur sie mit, mit der Maus
+    await tap(page, hand(page, 'H8'));
+    await expect(hand(page, 'H8')).toHaveClass(/\bsel\b/);
+    await mouseDrag(page, hand(page, 'S8'), table);
+    await dragIdle(page);
+    await expect.poll(async () => (await tableOf(page)).map((p) => p.a)).toEqual(['C7', 'D7', 'S8']);
+    await expect(hand(page, 'H8')).toBeVisible();
+    // Tippen direkt nach einem Zug am Tisch wird angenommen
+    await tapAfterDrag(page, hand(page, 'H8'));
+    await expect(hand(page, 'H8')).toHaveClass(/\bsel\b/);
+    // Enter auf einer Karte schaltet wie ein Tipp
+    await hand(page, 'H8').focus();
+    await page.keyboard.press('Enter');
+    await expect(hand(page, 'H8')).not.toHaveClass(/\bsel\b/);
+    expect(errors.list).toEqual([]);
+  },
+);
+
+test(
+  'Durak: Schlagen auf einen Angriff, freie Fläche und Schiebefeld',
+  { tag: DRAG_TAG },
+  async ({ browser }, info) => {
+    const { page, errors } = await dragTable(browser, info);
+    await rig(page, {
+      att: 1,
+      def: 0,
+      hands: [
+        ['C9', 'H9', 'DK', 'S7'],
+        ['SA', 'CA', 'DA'],
+        ['S9', 'SB', 'SD', 'S10'],
+      ],
+      table: [
+        { a: 'C6', by: 1 },
+        { a: 'D6', by: 1 },
+      ],
+    });
+    await dragReady(page);
+    // Karo König schlägt Kreuz Sechs nicht: zurück mit Grund, nichts geschickt
+    const n0 = await logN(page);
+    const held = await grab(page, hand(page, 'DK'), pairAt(page, 0));
+    await expect(page.locator(GHOST_LABEL)).toHaveText('Die Karte schlägt das nicht.');
+    await held.release();
+    await dragIdle(page);
+    expect(await logN(page)).toBe(n0);
+    // Kreuz Neun auf Kreuz Sechs
+    const beat = await grab(page, hand(page, 'C9'), pairAt(page, 0));
+    await expect(page.locator(GHOST_LABEL)).toContainText('schlagen');
+    await beat.release();
+    await dragIdle(page);
+    await expect.poll(async () => (await tableOf(page))[0]?.d).toBe('C9');
+    // Herz Neun auf die freie Fläche (über dem geschlagenen Paar): Es ist nur noch ein Angriff offen
+    await mouseDrag(page, hand(page, 'H9'), pairAt(page, 0));
+    await dragIdle(page);
+    await expect.poll(async () => (await tableOf(page))[1]?.d).toBe('H9');
+    // Weiterschieben: Das Feld erscheint erst beim Ziehen einer passenden Karte und verschwindet danach
+    await rig(page, {
+      att: 2,
+      def: 0,
+      hands: [
+        ['S6', 'C9', 'DK'],
+        ['SA', 'CA', 'DA'],
+        ['S9', 'SB', 'SD', 'S10'],
+      ],
+      table: [{ a: 'C6', by: 2 }],
+      transfer: true,
+    });
+    await dragReady(page);
+    const field = page.locator('#center .dkxfer');
+    const v = await mustView(page);
+    const to = dkNextTarget(v, v.me);
+    const next = v.players.find((p) => p.id === to)?.name ?? '';
+    const shove = await grab(page, hand(page, 'S6'), page.locator('#center .dktable'));
+    await expect(field).toBeVisible();
+    await expect(field).toContainText(next);
+    expect(await fitFindings(page, ['#me'])).toEqual([]);
+    await shove.move(field);
+    await expect(page.locator(GHOST_LABEL)).toHaveText(`Schieben → ${next}`);
+    await shove.release();
+    await dragIdle(page);
+    await expect.poll(async () => (await mustView(page)).dk?.def).toBe(to);
+    await expect(field).toHaveCount(0);
+    expect(errors.list).toEqual([]);
+  },
+);
+
+test('Durak: Schiebefeld am PC und Schalter „Karten ziehen“ aus', async ({ browser }, info) => {
+  const { page, errors } = await dragTable(browser, info, 'desktop');
+  const hands: Card[][] = [
+    ['S6', 'C9', 'DK'],
+    ['SA', 'CA', 'DA'],
+    ['S9', 'SB', 'SD', 'S10'],
+  ];
+  await rig(page, { att: 2, def: 0, hands, table: [{ a: 'C6', by: 2 }], transfer: true });
+  await dragReady(page);
+  const v = await mustView(page);
+  const to = dkNextTarget(v, v.me);
+  // Mit verkleinertem Tisch (fitDesktop) liegt das Feld neben dem Angriff und nimmt den Abwurf an
+  const field = page.locator('#center .dkxfer');
+  const held = await grab(page, hand(page, 'S6'), page.locator('#center .dktable'), { kind: 'mouse' });
+  await expect(field).toBeVisible();
+  const [f, p] = await Promise.all([field.boundingBox(), pairAt(page, 0).boundingBox()]);
+  expect(f && p && f.x >= p.x + p.width).toBe(true);
+  expect(await fitFindings(page, ['#me'])).toEqual([]);
+  await held.move(field);
+  await held.release();
+  await dragIdle(page);
+  await expect.poll(async () => (await mustView(page)).dk?.def).toBe(to);
+  // Schalter aus: kein Geist, kein Zug, Tippen geht wie vorher
+  await setDragPref(page, false);
+  await rig(page, { att: 0, def: 1, hands: [['C7', 'D7', 'S8'], hands[1], hands[2]] });
+  await dragReady(page, false);
+  const n0 = await logN(page);
+  await mouseDrag(page, hand(page, 'C7'), page.locator('#center .dktable'));
+  await expect(page.locator(GHOST)).toHaveCount(0);
+  expect(await logN(page)).toBe(n0);
+  // Der Klick-Wächter nach dem Schieben eben gilt noch, ein Mensch braucht länger als dieser Test
+  await page.waitForTimeout(GUARD_MS + 50);
+  await hand(page, 'C7').click();
+  await expect(hand(page, 'C7')).toHaveClass(/\bsel\b/);
+  // Kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (barGuard)
+  await page.waitForTimeout(450);
+  await page.click('[data-act=dkgo]');
+  await expect.poll(async () => (await tableOf(page)).map((p) => p.a)).toEqual(['C7']);
   expect(errors.list).toEqual([]);
 });

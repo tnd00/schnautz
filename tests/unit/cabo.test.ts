@@ -289,6 +289,58 @@ describe('Cabo: Runde', () => {
     lookAll(off.st);
     expect(msgOf(act(off.st, 'h', { type: 'cbsnap', id: off.C.P.h[0].id }))).toBe('Schnappen ist an diesem Tisch aus.');
   });
+
+  it('Schnappen mit gesehener Oberkarte: veraltet ohne Strafkarte und ohne Log, passend und ohne wie heute', () => {
+    const { st, C } = table(2, 17, { snap: true });
+    lookAll(st);
+    const b = st.players.find((p) => p.id !== cur(st))!.id;
+    const top = C.pile.at(-1)!;
+    const wrong = C.P[b].find((s) => cbVal(s.c) !== cbVal(top))!;
+    const before = { n: st.n, deck: C.deck.length, row: C.P[b].length, pile: C.pile.length };
+    // Jemand hat inzwischen eine andere Karte abgelegt: verlorenes Rennen kostet nichts
+    for (const stale of ['HA:2', C.deck[0], null, 7]) {
+      const r = act(st, b, { type: 'cbsnap', id: wrong.id, top: stale as Card });
+      expect(codeOf(r)).toBe('cb.snapLate');
+      expect(msgOf(r)).toBe('Zu spät, oben liegt schon eine andere Karte.');
+    }
+    expect({ n: st.n, deck: C.deck.length, row: C.P[b].length, pile: C.pile.length }).toEqual(before);
+    expect(wrong.up).toBeUndefined();
+    // Dieselbe Oberkarte: daneben kostet wie heute eine Strafkarte
+    expect(act(st, b, { type: 'cbsnap', id: wrong.id, top })).toBeNull();
+    expect(wrong.up).toBe(true);
+    expect(C.P[b]).toHaveLength(before.row + 1);
+    cardsOk(st);
+  });
+
+  it('Ablage direkt auf eigene Karten: nehmen und tauschen in einem Aufruf, ungültig passiert nichts', () => {
+    const { st, C } = table(3, 21);
+    lookAll(st);
+    const a = cur(st);
+    const top = C.pile.at(-1)!;
+    const slot = C.P[a][1];
+    const old = slot.c;
+    const other = st.players.find((p) => p.id !== a)!.id;
+    const snapshot = JSON.stringify({ C, n: st.n, turn: st.turn });
+    for (const into of [[], [C.P[other][0].id], [999], 'x', [slot.id, slot.id, 998]] as unknown[]) {
+      expect(codeOf(act(st, a, { type: 'cbdraw', from: 'pile', into } as Action))).toBe('cb.pickSwap');
+    }
+    // into gibt es nur von der Ablage
+    expect(codeOf(act(st, a, { type: 'cbdraw', from: 'deck', into: [slot.id] } as unknown as Action))).toBe(
+      'any.unknown',
+    );
+    expect(JSON.stringify({ C, n: st.n, turn: st.turn })).toBe(snapshot);
+    const n0 = st.n;
+    expect(act(st, a, { type: 'cbdraw', from: 'pile', into: [slot.id] })).toBeNull();
+    const fresh = st.log.filter((e) => e.n > n0);
+    expect(fresh.map((e) => e.k)).toEqual(['cbdraw', 'cbswap']);
+    expect(fresh[0]).toMatchObject({ p: a, from: 'pile', c: top });
+    expect(fresh[1]).toMatchObject({ p: a, ok: true, ids: [slot.id], out: [old], up: true });
+    expect(slot).toMatchObject({ c: top, up: true });
+    expect(C.pile.at(-1)).toBe(old);
+    expect(C.hold).toBeNull();
+    expect(cur(st)).not.toBe(a);
+    cardsOk(st);
+  });
 });
 
 describe('Cabo: Grenzfälle', () => {

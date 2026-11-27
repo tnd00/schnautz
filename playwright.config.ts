@@ -54,7 +54,21 @@ export default defineConfig({
       ],
     },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // Ziehen zusätzlich in WebKit (Plan 2.8 Tor G4), lokal wie in der CI nur mit PW_WEBKIT=1 (dazu einmalig
+    // `npx playwright install webkit`): nur Dateien mit „drag“ im Namen und Tests mit @drag, ohne die
+    // Chromium-Schalter. Zeigerereignisse gehen dort synthetisch (tests/e2e/drag.ts), npm run test:e2e bleibt Chromium
+    ...(!process.env.PW_WEBKIT
+      ? []
+      : [
+          {
+            name: 'webkit',
+            use: { ...devices['iPhone 13'], launchOptions: {} },
+            grep: [/@drag\b/, /drag[\w-]*\.spec\.ts/],
+          },
+        ]),
+  ],
   webServer: [
     {
       command: 'node tests/e2e/peer-server.js',

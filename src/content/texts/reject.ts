@@ -54,6 +54,7 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
     const p = f.name('p');
     return p && `${p} ist wieder da.`;
   },
+  'any.noDrop': 'Da passt das nicht hin.',
   'seat.tooFew': (f) => {
     const n = f.num('min');
     return n == null ? null : `Ihr braucht mindestens ${NUM_WORD[n] ?? n} Leute am Tisch.`;
@@ -108,6 +109,7 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
   'dk.noTarget': 'Diese Karte schlägt keinen offenen Angriff.',
   'dk.pickPair': 'Tippe den Angriff an, den du schlagen willst.',
   'dk.oneCard': 'Schlagen geht mit genau einer Karte.',
+  'dk.dropPair': 'Zieh die Karte auf den Angriff, den du schlagen willst.',
   'cb.peekOver': 'Ansehen geht nur zu Beginn der Runde.',
   'cb.pickTwo': (f) => (f.num('n') === 1 ? 'Wähle eine deiner Karten.' : 'Wähle zwei deiner Karten.'),
   'cb.peeking': 'Erst sehen sich alle ihre zwei Karten an.',
@@ -127,6 +129,7 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, Tpl>> = {
   'cb.pickPair': 'Wähle eine eigene und eine fremde Karte.',
   'cb.pickSwap': 'Wähle die Karten, die du tauschen willst.',
   'cb.snapOff': 'Schnappen ist an diesem Tisch aus.',
+  'cb.snapLate': 'Zu spät, oben liegt schon eine andere Karte.',
   'cb.finishTurn': 'Spiel erst deinen Zug zu Ende.',
   'sz.chosen': 'Die Karten sind schon verteilt, gewählt wird jetzt nicht mehr.',
   'sz.dealerOnly': 'Das entscheidet, wer gibt.',

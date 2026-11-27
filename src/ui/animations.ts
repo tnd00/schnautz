@@ -8,6 +8,7 @@ import { haptic } from './a11y/haptic';
 import { panelFor, shakeEl } from './feedback';
 import { pById } from './helpers';
 import { sfx, sfxCalm } from './sound';
+import { dragLanded } from './table/drag';
 
 const EASE = 'cubic-bezier(.3,.7,.2,1)';
 
@@ -34,6 +35,8 @@ function cardGhost(card: Card | null | undefined): HTMLElement {
 }
 
 interface FlyOptions {
+  /** Startrechteck nach einem Abwurf (dragLanded): ersetzt die Lage von fromEl, die Karte gleitet ohne Bogen ins Ziel */
+  from?: Rect;
   hide?: boolean;
   fadeIn?: boolean;
   fadeOut?: boolean;
@@ -50,12 +53,13 @@ function fly(
   card: Card | null | undefined,
   o: FlyOptions = {},
 ): void {
-  if (!fromEl || !toEl || !toEl.isConnected) return;
-  const a = fromEl.getBoundingClientRect();
+  const a = o.from ?? fromEl?.getBoundingClientRect();
+  if (!a || !toEl || !toEl.isConnected) return;
   const b = toEl.getBoundingClientRect();
   const w = toEl.offsetWidth;
   const hh = toEl.offsetHeight;
-  const w0 = fromEl.offsetWidth || w;
+  const w0 = (o.from ? o.from.width : fromEl?.offsetWidth) || w;
+  const arc = o.from ? 0 : 46;
   if (!w || !hh) return;
   const cx = b.left + b.width / 2;
   const cy = b.top + b.height / 2;
@@ -72,7 +76,7 @@ function fly(
     [
       { transform: `translate(${dx}px,${dy}px) scale(${s0})`, opacity: o.fadeIn ? 0 : 1 },
       {
-        transform: `translate(${dx / 2}px,${dy / 2 - 46}px) scale(${((s0 + 1) / 2) * 1.1}) rotate(${o.spin ?? 0}deg)`,
+        transform: `translate(${dx / 2}px,${dy / 2 - arc}px) scale(${((s0 + 1) / 2) * 1.1}) rotate(${o.spin ?? 0}deg)`,
         opacity: 1,
         offset: 0.5,
       },
@@ -109,8 +113,12 @@ export function runFlights(prev: View, v: View): void {
   if (L.k === 'swap' && L.h != null && L.m != null) {
     const hEl = cardElFor(L.p, L.h);
     const mEl = midEl(L.m);
-    fly(hEl, mEl, L.give as Card, { spin: -8 });
-    fly(mEl, hEl, L.take as Card, { delay: 90, flipBack: hidden, spin: 8 });
+    // Per Ziehen getauscht: die gezogene Karte fliegt dort weiter, wo der Finger sie losließ
+    const d = me ? dragLanded() : null;
+    const at = (from: 'hand' | 'mid'): Rect | undefined =>
+      d?.key.g === 'schnautz' && d.key.from === from ? d.rects[0] : undefined;
+    fly(hEl, mEl, L.give as Card, { spin: -8, from: at('hand') });
+    fly(mEl, hEl, L.take as Card, { delay: 90, flipBack: hidden, spin: 8, from: at('mid') });
   } else if (L.k === 'swapAll' && L.give && L.take) {
     const give = asCards(L.give);
     const take = asCards(L.take);
@@ -340,6 +348,11 @@ export interface Rect {
 }
 
 export interface FlyGOptions {
+  /**
+   * Startrechteck nach einem Abwurf (dragLanded): ersetzt fromR, die Karte startet in dessen Größe und gleitet ohne
+   * Bogen ins Ziel. s0 und arc gelten dann nicht.
+   */
+  from?: Rect;
   /** Breite der fliegenden Karte am Ziel. */
   w?: number;
   /** Skalierung am Start und am Ziel. */
@@ -372,15 +385,16 @@ export function flyG(
   card: Card | null,
   o: FlyGOptions = {},
 ): void {
-  if (!fromR || !toR || !toR.width) return;
+  const from = o.from ?? fromR;
+  if (!from || !toR || !toR.width) return;
   const w = o.w ?? 80;
   const h = w * 1.4;
-  const s0 = o.s0 ?? 1;
+  const s0 = o.from ? o.from.width / w : (o.s0 ?? 1);
   const s1 = o.s1 ?? 1;
   const cx = toR.left + toR.width / 2;
   const cy = toR.top + toR.height / 2;
-  const dx = fromR.left + fromR.width / 2 - cx;
-  const dy = fromR.top + fromR.height / 2 - cy;
+  const dx = from.left + from.width / 2 - cx;
+  const dy = from.top + from.height / 2 - cy;
   let g: HTMLElement;
   if (o.flip) {
     g = document.createElement('div');
@@ -392,7 +406,7 @@ export function flyG(
   g.style.cssText = `position:fixed; left:${cx - w / 2}px; top:${cy - h / 2}px; width:${w}px; height:${h}px; --cw:${w}px; z-index:${o.z ?? 44}; pointer-events:none; transition:none`;
   $('#fly').appendChild(g);
   const rot = o.rot ?? '0deg';
-  const arc = o.arc ?? 54;
+  const arc = o.from ? 0 : (o.arc ?? 54);
   const pre = o.flip ? 'perspective(900px) ' : '';
   const flipAt = (deg: number) => (o.flip ? ` rotateY(${deg}deg)` : '');
   const k0 = `${pre}translate(${dx}px,${dy}px) scale(${s0})${flipAt(180)}`;

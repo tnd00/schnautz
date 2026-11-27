@@ -53,6 +53,12 @@ export function cbKamikaze(cards: Card[]): boolean {
 
 const slotIdx = (row: CbSlot[], id: number): number => row.findIndex((s) => s.id === Number(id));
 
+/** Plätze zum Tauschen aus einer Aktion vom Netz: eigene, ohne doppelte, mindestens einer, sonst null. */
+function swapIds(row: readonly { id: number }[], raw: unknown): number[] | null {
+  const ids = Array.isArray(raw) ? [...new Set(raw.map(Number))] : [];
+  return ids.length && ids.length <= row.length && ids.every((id) => row.some((s) => s.id === id)) ? ids : null;
+}
+
 /** Gültige fremde Person aus einer Aktion vom Netz: nur echte Reihen, nie man selbst. */
 function otherId(C: CbState, pid: string, raw: unknown): string | null {
   return typeof raw === 'string' && raw !== pid && Object.hasOwn(C.P, raw) ? raw : null;
@@ -164,7 +170,7 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
     if (st.players.every((p) => p.ready || !C.P[p.id])) cbBegin(st);
     return null;
   }
-  if (a.type === 'cbsnap') return snap(st, pid, a.id);
+  if (a.type === 'cbsnap') return snap(st, pid, a.id, a.top);
   if (st.phase !== 'play') return phaseReject(st) ?? rj('any.unknown');
   const cur = cbCurrent(st);
   if (cur !== pid) return cur ? rj('any.notYourTurn', { p: cur }) : rj('any.notYourTurn');
@@ -176,11 +182,14 @@ export function cbAct(st: State, pid: string, pi: number, a: Action, rng?: Rng):
       if (from === 'pile' && !row.length) return rj('cb.pileNoCards');
       const src = from === 'pile' ? C.pile : C.deck;
       if (!src.length) return rj(from === 'pile' ? 'cb.pileEmpty' : 'cb.deckEmpty');
+      // Ablage direkt auf eigene Karten (ziehen.md 6.2): erst prüfen, dann nehmen und tauschen in einem Aufruf
+      const into = intoOf(a, row);
+      if (into === false) return rj(from === 'pile' ? 'cb.pickSwap' : 'any.unknown');
       const c = src.pop() as Card;
       C.hold = { by: pid, c, from };
       addLog(st, from === 'pile' ? { k: 'cbdraw', p: pid, from, c } : { k: 'cbdraw', p: pid, from });
       st.last = { k: 'cbdraw', p: pid, n: st.n };
-      return null;
+      return into ? swap(st, pid, into, rng) : null;
     }
     case 'cbcabo': {
       if (C.hold || C.power) return rj('cb.caboLate');
@@ -283,8 +292,8 @@ function swap(st: State, pid: string, raw: unknown, rng?: Rng): ActResult {
   const C = cb(st);
   if (!C.hold) return rj('cb.drawFirst');
   const row = C.P[pid];
-  const ids = Array.isArray(raw) ? [...new Set(raw.map(Number))] : [];
-  if (!ids.length || ids.length > row.length || ids.some((id) => slotIdx(row, id) < 0)) return rj('cb.pickSwap');
+  const ids = swapIds(row, raw);
+  if (!ids) return rj('cb.pickSwap');
   const hold = C.hold;
   C.hold = null;
   const up = hold.from === 'pile';
@@ -325,8 +334,21 @@ function swap(st: State, pid: string, raw: unknown, rng?: Rng): ActResult {
   return null;
 }
 
-/** Schnappen: außer der Reihe eine eigene Karte auf eine gleiche oben auf der Ablage werfen. */
-function snap(st: State, pid: string, id: number): ActResult {
+/**
+ * `into` aus cbdraw vom Netz: undefined ohne, false wenn ungültig (nur von der Ablage und nur eigene Plätze), sonst
+ * die Plätze.
+ */
+function intoOf(a: Action, row: readonly { id: number }[]): number[] | false | undefined {
+  const raw = (a as { into?: unknown }).into;
+  if (raw === undefined) return undefined;
+  return (a.type === 'cbdraw' && a.from === 'pile' && swapIds(row, raw)) || false;
+}
+
+/**
+ * Schnappen: außer der Reihe eine eigene Karte auf eine gleiche oben auf der Ablage werfen. `top` ist die Oberkarte,
+ * die man gesehen hat. Liegt inzwischen eine andere oben, hat man das Rennen verloren: Ablehnung ohne Strafkarte.
+ */
+function snap(st: State, pid: string, id: number, seen: unknown): ActResult {
   const C = cb(st);
   if (!st.rules.cb?.snap) return rj('cb.snapOff');
   if (st.phase !== 'play') return phaseReject(st) ?? rj('any.unknown');
@@ -336,6 +358,7 @@ function snap(st: State, pid: string, id: number): ActResult {
   const top = C.pile[C.pile.length - 1];
   const i = slotIdx(row, id);
   if (!top) return rj('cb.pileEmpty');
+  if (seen !== undefined && seen !== top) return rj('cb.snapLate');
   if (i < 0) return rj('cb.pickOwn');
   const s = row[i];
   if (cbVal(s.c) === cbVal(top)) {
@@ -380,6 +403,7 @@ export function cbWhyNot(t: Table, pid: string, a: Action): Reject | null {
     if (t.phase !== 'play') return phaseReject(t) ?? rj('any.unknown');
     if (C.hold?.by === pid || C.power?.by === pid) return rj('cb.finishTurn');
     if (!C.pile.length) return rj('cb.pileEmpty');
+    if (a.top !== undefined && a.top !== C.pile[C.pile.length - 1]) return rj('cb.snapLate');
     return has(row, a.id) ? null : rj('cb.pickOwn');
   }
   if (t.phase !== 'play') return phaseReject(t) ?? rj('any.unknown');
@@ -392,16 +416,14 @@ export function cbWhyNot(t: Table, pid: string, a: Action): Reject | null {
       const from = a.from === 'pile' ? 'pile' : 'deck';
       if (from === 'pile' && !row.length) return rj('cb.pileNoCards');
       if (from === 'pile' ? !C.pile.length : !deck) return rj(from === 'pile' ? 'cb.pileEmpty' : 'cb.deckEmpty');
-      return null;
+      return intoOf(a, row) === false ? rj(from === 'pile' ? 'cb.pickSwap' : 'any.unknown') : null;
     }
     case 'cbcabo':
       if (C.hold || C.power) return rj('cb.caboLate');
       return C.cabo ? rj('cb.called', { p: C.cabo }) : null;
-    case 'cbswap': {
+    case 'cbswap':
       if (!C.hold) return rj('cb.drawFirst');
-      const ids = Array.isArray(a.ids) ? [...new Set(a.ids.map(Number))] : [];
-      return !ids.length || ids.length > row.length || ids.some((id) => !has(row, id)) ? rj('cb.pickSwap') : null;
-    }
+      return swapIds(row, a.ids) ? null : rj('cb.pickSwap');
     case 'cbdiscard':
       if (!C.hold) return rj('cb.drawFirst');
       return C.hold.from === 'pile' ? rj('cb.mustSwap') : null;

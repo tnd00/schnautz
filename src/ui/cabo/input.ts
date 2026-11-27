@@ -103,6 +103,12 @@ function explainMine(v: View, id: number, a: Action): void {
   showReject(no, a.type);
 }
 
+/** Abwurf beim Ziehen (src/ui/cabo/drag.ts): geprüft hat schon dropOf, geschickt wird wie beim Tippen */
+export function cbDragSend(a: Action): void {
+  unlockAudio();
+  send(a);
+}
+
 /** Eigene Karte angetippt. */
 export function cbTapMine(id: number): void {
   const v = App.view;
@@ -110,7 +116,8 @@ export function cbTapMine(id: number): void {
   if (!v || !row || App.busy || !row.some((s) => s.id === id)) return;
   unlockAudio();
   if (App.cs.snap && cbCanSnap(v)) {
-    send({ type: 'cbsnap', id });
+    // Mit der gesehenen Oberkarte: liegt beim Gastgeber schon eine andere oben, gibt es keine Strafkarte
+    send({ type: 'cbsnap', id, top: v.cb?.pile.at(-1) });
     return;
   }
   const cur = App.cs.ids;

@@ -592,7 +592,13 @@ export type Action =
   | { type: 'dktransfer'; idx: number[]; cards?: Card[] }
   /** Cabo: zu Beginn zwei eigene Plätze ansehen */
   | { type: 'cblook'; ids: number[] }
-  | { type: 'cbdraw'; from: 'deck' | 'pile' }
+  | { type: 'cbdraw'; from: 'deck' }
+  /**
+   * Von der Ablage nehmen. Mit `into` (ziehen.md 6.2, Ablage auf eigene Karte gezogen) tauscht der Gastgeber im selben
+   * Aufruf gegen diese eigenen Plätze, Regeln und Logeinträge wie cbdraw plus cbswap. Ungültige Plätze: nichts passiert.
+   * Vom Stapel gibt es das nicht, man tauschte sonst eine Karte ein, die man nie gesehen hat.
+   */
+  | { type: 'cbdraw'; from: 'pile'; into?: number[] }
   | { type: 'cbcabo' }
   /** Gezogene Karte gegen einen oder mehrere eigene Plätze tauschen (mehrere nur mit gleichem Wert) */
   | { type: 'cbswap'; ids: number[] }
@@ -602,8 +608,12 @@ export type Action =
   | { type: 'cbspy'; to: string; id: number }
   | { type: 'cbblind'; id: number; to: string; oid: number }
   | { type: 'cbskip' }
-  /** Schnappen: eigene Karte außer der Reihe auf eine gleiche oben auf der Ablage werfen */
-  | { type: 'cbsnap'; id: number };
+  /**
+   * Schnappen: eigene Karte außer der Reihe auf eine gleiche oben auf der Ablage werfen. `top` ist die Oberkarte, die
+   * man gesehen hat (ziehen.md 6.1). Liegt inzwischen eine andere oben, lehnt der Gastgeber mit `cb.snapLate` ab, ohne
+   * Strafkarte. Ohne `top` gilt die Regel von vorher.
+   */
+  | { type: 'cbsnap'; id: number; top?: Card };
 
 export type ActionType = Action['type'];
 

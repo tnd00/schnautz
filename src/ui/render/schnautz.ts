@@ -134,6 +134,9 @@ function szCenter(v: View): CenterModel {
                 sel: App.sel.m === i,
                 why,
                 tab: playing ? 0 : -1,
+                // Ziehen (ziehen.md 4.3): Mittelkarte auf Handkarte oder umgekehrt, nur wer dran ist
+                drag: playing ? 'mid' : undefined,
+                drop: playing ? 'mid' : undefined,
                 cls: cl(playing && 'pick', (deal || App.anim.dealMid) && 'deal'),
                 style: `--d:${0.3 + i * 0.08}s`,
               }),
@@ -256,6 +259,8 @@ function szMe(v: View): MeModel {
     act: 'hand',
     sel: sel.h === i,
     why,
+    drag: playing ? 'hand' : undefined,
+    drop: playing ? 'hand' : undefined,
     cls: cl(playing && 'pick', deal && 'deal'),
     delay: 0.1 + i * 0.1,
   }));
@@ -557,5 +562,6 @@ export const szSpec: NewTable = {
   me: szMe,
   status: szStatus,
   sheet: szSheet,
-  drag: null,
+  // Adapter in src/ui/schnautz/drag.ts, lädt mit dem Motor nach
+  drag: true,
 };

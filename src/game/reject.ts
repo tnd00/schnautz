@@ -25,6 +25,8 @@ export const REJECT_CODES = [
   'any.done',
   'any.ready',
   'any.allHere',
+  // Ziehen: Abwurf auf ein Ziel, das zu dieser Karte nicht passt (nur aus dropOf, nie vom Gastgeber)
+  'any.noDrop',
   // Plätze
   'seat.tooFew',
   'seat.tooMany',
@@ -75,6 +77,8 @@ export const REJECT_CODES = [
   'dk.noTarget',
   'dk.pickPair',
   'dk.oneCard',
+  // Ziehen: verteidigen auf die freie Tischfläche, wenn nicht genau ein offener Angriff passt (nur aus dropOf)
+  'dk.dropPair',
   // Cabo
   'cb.peekOver',
   'cb.pickTwo',
@@ -95,6 +99,8 @@ export const REJECT_CODES = [
   'cb.pickPair',
   'cb.pickSwap',
   'cb.snapOff',
+  // Schnappen mit `top`, aber oben liegt inzwischen eine andere Karte: kein Zug, keine Strafkarte
+  'cb.snapLate',
   'cb.finishTurn',
   // Schnautz
   'sz.chosen',

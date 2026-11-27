@@ -14,6 +14,7 @@ import { type Announcement, boomFx, emit, shakeEl } from '../feedback';
 import { burnCue, cueOf, type LevelCtx } from '../levels';
 import { nameOf, vb } from '../helpers';
 import { renderSh } from '../render/shithead';
+import { dragLanded } from '../table/drag';
 import { renderTable } from '../table/index';
 import { sfx } from '../sound';
 import { taunt } from '../taunts';
@@ -210,6 +211,12 @@ function shSrcEl(pid: string | undefined, src: 'hand' | 'up' | 'down'): HTMLElem
   return $opt('.tcards', root) ?? root;
 }
 
+/** Eigene Karten, die gerade per Ziehen abgelegt wurden: Sie gleiten von der Abwurfstelle ohne Bogen (flyG `from`). */
+function glide(pid: string | undefined, src: 'hand' | 'up' | 'down', fr: Rect): { from?: Rect } {
+  const k = pid === App.me ? dragLanded()?.key : null;
+  return k?.g === 'shithead' && k.from === src ? { from: fr } : {};
+}
+
 /** Startpunkte der Flüge. Eigene Karten starten genau dort, wo man sie angeklickt hat. */
 function srcRects(pid: string | undefined, src: 'hand' | 'up' | 'down', n: number): Rect[] {
   const pr = App.playRects;
@@ -269,6 +276,7 @@ function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
           dur: s.src === 'down' ? 760 : 560,
           flip: s.src === 'down',
           spin: -8,
+          ...glide(e.p, s.src, fr),
           // Zeitlupe für die entscheidende Karte: über der Abdunklung, Balken erst beim Umdrehen
           ...(s.slow
             ? {
@@ -346,6 +354,7 @@ function runStep(s: Step, v: View, fresh: readonly LogEntry[]): void {
           hideEl: bt,
           dur: 760,
           flip: true,
+          ...glide(e.p, 'down', br),
         });
       }
       later(() => {

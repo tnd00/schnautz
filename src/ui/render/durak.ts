@@ -186,7 +186,7 @@ function dkCenter(v: View): CenterModel | null {
       const cls = ['dkpair', p.d ? 'beaten' : 'open', targets.includes(i) && 'target', App.ds.pair === i && 'chosen']
         .filter(Boolean)
         .join(' ');
-      const attrs = pick ? ` data-act="dkt" role="button" tabindex="0" data-fk="pair:${p.a}"` : '';
+      const attrs = pick ? ` data-act="dkt" role="button" tabindex="0" data-fk="pair:${p.a}" data-drop="pair"` : '';
       return (
         `<div class="${cls}" data-i="${i}"${attrs}>` +
         cardHTML(p.a, { key: '', cls: 'dka' }) +
@@ -216,6 +216,7 @@ function dkCenter(v: View): CenterModel | null {
         k: 'table',
         cls: `dktable${D.table.length ? '' : ' empty'}`,
         title: '',
+        ...(over ? {} : { drop: 'table' as const }),
         // Die Zeile nennt Namen als <b>, deshalb im Slot statt als Klartext in cnt
         body: (pairs || empty) + (info ? `<span class="cnt">${info}</span>` : ''),
       },
@@ -495,6 +496,7 @@ function dkMe(v: View): MeModel | MeOut | null {
       c,
       i,
       ...(tappable ? { act: 'dkh' } : {}),
+      ...(acting ? { drag: 'hand' as const } : {}),
       sel: sel.has(i),
       dim: acting && !!why,
       why,
@@ -602,6 +604,6 @@ export const dkSpec: NewTable = {
   me: dkMe,
   status: dkStatus,
   sheet: dkSheet,
-  drag: null,
+  drag: true,
   after: () => fitHand(),
 };

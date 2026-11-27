@@ -2,7 +2,7 @@
  * Shithead mit zwei echten Browsern bis zum Ende: Tauschrunde, normale Züge, Aufnehmen, blinde Karten,
  * 4er bei neuen Stapeln und Bomben. Die Züge wählt der Test mit derselben Spiellogik, die das Spiel nutzt.
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { rankOf } from '../../src/game/cards';
 import { SH_ORD } from '../../src/game/constants';
 import { shAlways, shCanBomb, shCanPlay, shCanThrow, shWhyNot } from '../../src/game/shithead';
@@ -11,10 +11,26 @@ import type { View } from '../../src/game/types';
 import { BAR_GUARD_MS } from '../../src/ui/table/consts';
 import { axeCheck } from './axe';
 import {
+  DRAG_TAG,
+  dragIdle,
+  dragReady,
+  DROP_HOT,
+  GHOST,
+  GHOST_LABEL,
+  dragTable as hostDrag,
+  grab,
+  type Held,
+  mouseDrag,
+  tap,
+  tapAfterDrag,
+  type Point,
+} from './drag';
+import {
   closeAll,
   desktop,
   Errors,
   fillWithBots,
+  fitFindings,
   hostTable,
   joinTable,
   menuConfirm,
@@ -520,6 +536,59 @@ async function tabTo(page: Page, sel: string, opts: { back?: boolean; stay?: boo
   throw new Error(`Tab erreicht ${sel} nicht`);
 }
 
+/**
+ * Gastgeber am Zug mit genau diesen Handkarten und diesem Stapel (je Karte einer der Werte, gewählt mit rankOf), ohne offene
+ * Tischkarten und ohne Karten zum Nachziehen. Alles Übrige liegt bei den verbrannten, die Kartenzahl bleibt stimmig.
+ */
+async function rigTable(host: Page, hand: string[], pile: string[], keepUp = false): Promise<void> {
+  const pool = await host.evaluate(
+    ({ keepUp }) => {
+      const s = window.__schnautz;
+      const S = s?.H.st?.sh;
+      if (!s || !S) throw new Error('kein Shithead');
+      const P = S.P[s.App.me];
+      return [...S.deck, ...S.pile, ...S.burned, ...P.hand, ...(keepUp ? [] : P.up)];
+    },
+    { keepUp },
+  );
+  const take = (r: string): string => {
+    const c = pool.find((x) => r.split('|').includes(rankOf(x)));
+    if (!c) throw new Error(`keine ${r}`);
+    pool.splice(pool.indexOf(c), 1);
+    return c;
+  };
+  const h = hand.map(take);
+  const p = pile.map(take);
+  await host.evaluate(
+    ({ h, p, rest, keepUp }) => {
+      const s = window.__schnautz;
+      const st = s?.H.st;
+      const S = st?.sh;
+      if (!s || !st || !S) throw new Error('kein Shithead');
+      const P = S.P[s.App.me];
+      S.deck.splice(0);
+      S.pile.splice(0, S.pile.length, ...p);
+      S.burned.splice(0, S.burned.length, ...rest);
+      P.hand.splice(0, P.hand.length, ...h);
+      if (!keepUp) P.up.splice(0);
+      S.win = null;
+      st.turn = st.players.findIndex((x) => x.id === s.App.me);
+      st.n++;
+      s.hostCommit();
+    },
+    { h, p, rest: pool, keepUp },
+  );
+  await expect
+    .poll(async () => {
+      const v = await view(host);
+      const own = v?.sh?.P[v.me].hand;
+      return Array.isArray(own) ? own.length : own;
+    })
+    .toBe(hand.length);
+  // Eine Taste kurz nach dem Wechsel der Knopfzeile gilt dem vorigen Knopf (barGuard), ein Mensch ist nie so schnell
+  await host.waitForTimeout(BAR_GUARD_MS + 100);
+}
+
 test('nur Tastatur: Tauschrunde, Ausspielen, Aufnehmen und blinde Karte, der Fokus bleibt in #me', async ({
   browser,
 }) => {
@@ -538,52 +607,7 @@ test('nur Tastatur: Tauschrunde, Ausspielen, Aufnehmen und blinde Karte, der Fok
     return Array.isArray(h) ? h.length : h;
   };
 
-  /**
-   * Gastgeber am Zug mit genau diesen Handkarten und diesem Stapel (je Karte einer der Werte, gewählt mit rankOf), ohne offene
-   * Tischkarten und ohne Karten zum Nachziehen. Alles Übrige liegt bei den verbrannten, die Kartenzahl bleibt stimmig.
-   */
-  const rig = async (hand: string[], pile: string[], keepUp = false): Promise<void> => {
-    const pool = await host.evaluate(
-      ({ keepUp }) => {
-        const s = window.__schnautz;
-        const S = s?.H.st?.sh;
-        if (!s || !S) throw new Error('kein Shithead');
-        const P = S.P[s.App.me];
-        return [...S.deck, ...S.pile, ...S.burned, ...P.hand, ...(keepUp ? [] : P.up)];
-      },
-      { keepUp },
-    );
-    const take = (r: string): string => {
-      const c = pool.find((x) => r.split('|').includes(rankOf(x)));
-      if (!c) throw new Error(`keine ${r}`);
-      pool.splice(pool.indexOf(c), 1);
-      return c;
-    };
-    const h = hand.map(take);
-    const p = pile.map(take);
-    await host.evaluate(
-      ({ h, p, rest, keepUp }) => {
-        const s = window.__schnautz;
-        const st = s?.H.st;
-        const S = st?.sh;
-        if (!s || !st || !S) throw new Error('kein Shithead');
-        const P = S.P[s.App.me];
-        S.deck.splice(0);
-        S.pile.splice(0, S.pile.length, ...p);
-        S.burned.splice(0, S.burned.length, ...rest);
-        P.hand.splice(0, P.hand.length, ...h);
-        if (!keepUp) P.up.splice(0);
-        S.win = null;
-        st.turn = st.players.findIndex((x) => x.id === s.App.me);
-        st.n++;
-        s.hostCommit();
-      },
-      { h, p, rest: pool, keepUp },
-    );
-    await expect.poll(async () => handN()).toBe(hand.length);
-    // Eine Taste kurz nach dem Wechsel der Knopfzeile gilt dem vorigen Knopf (barGuard), ein Mensch ist nie so schnell
-    await host.waitForTimeout(BAR_GUARD_MS + 100);
-  };
+  const rig = (hand: string[], pile: string[], keepUp = false): Promise<void> => rigTable(host, hand, pile, keepUp);
 
   await test.step('Tauschrunde: Handkarte und Tischkarte tauschen, dann Bereit', async () => {
     const before = (await mustView(host)).sh?.P[me].up.join();
@@ -671,5 +695,137 @@ test('nur Tastatur: Tauschrunde, Ausspielen, Aufnehmen und blinde Karte, der Fok
     await expect(host.locator('#chatin')).toHaveValue('hallo');
   });
 
+  expect(errors.list).toEqual([]);
+});
+
+/** Stelle nahe der linken oberen Ecke, die kein Nachbar in einer überlappenden Hand verdeckt */
+async function corner(loc: Locator): Promise<Point> {
+  const b = await loc.boundingBox();
+  if (!b) throw new Error('Karte nicht sichtbar');
+  return { x: b.x + 8, y: b.y + 18 };
+}
+
+/** Gastgeber mit zwei KIs am Tisch, Tauschrunde offen und Ziehen bereit */
+async function dragTable(page: Page): Promise<string> {
+  await hostDrag(page, 'shithead', { bots: 2 });
+  await waitForPhase(page, ['swap']);
+  await dragReady(page);
+  return myId(page);
+}
+
+const PILE = '#center [data-drop=pile]';
+const handCard = (i: number) => `#me .shhand [data-drag=hand][data-i="${i}"]`;
+
+test('Ziehen: Tauschrunde, Bündel auf den Stapel, Tippen direkt danach', { tag: DRAG_TAG }, async ({ browser }) => {
+  const errors = new Errors();
+  // WebKit nimmt das Gerät des Projekts (iPhone 13), Chromium das Handy mit echtem Finger über CDP
+  const ctx = browser.browserType().name() === 'webkit' ? await browser.newContext() : await phone(browser);
+  const page = errors.watch(await ctx.newPage(), 'host');
+  const hold = async (from: Locator, to: Locator): Promise<Held> => grab(page, await corner(from), to);
+  const me = await dragTable(page);
+  const P0 = (await mustView(page)).sh!.P[me];
+  const h0 = (P0.hand as string[])[0];
+
+  await test.step('Handkarte auf Tischkarte tauscht, mitten im Zug passt alles', async () => {
+    const held = await hold(page.locator(handCard(0)), page.locator('#me [data-drop=up][data-i="0"]'));
+    await expect(page.locator(GHOST)).toHaveCount(1);
+    await expect(page.locator(GHOST_LABEL)).toHaveText(/^Gegen .+ tauschen$/);
+    await expect(page.locator(DROP_HOT)).toHaveCount(1);
+    expect(await fitFindings(page)).toEqual([]);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await held.release();
+    await expect.poll(async () => (await view(page))?.sh?.P[me].up[0]).toBe(h0);
+    await dragIdle(page);
+  });
+
+  await test.step('Tippen direkt nach dem Zug wird angenommen', async () => {
+    const last = page.locator(handCard(2));
+    await tapAfterDrag(page, last);
+    await expect(last).toHaveClass(/\bsel\b/);
+  });
+
+  await tap(page, page.locator('[data-act=shready]'));
+  await waitForPhase(page, ['play']);
+
+  await test.step('zwei gewählte gleiche ziehen zusammen auf den Stapel', async () => {
+    // Zwei Karten gleichen Werts über einer 8 oder 9, dazu eine niedrige, die nicht passt
+    const pair = await page.evaluate(() => {
+      const s = window.__schnautz;
+      const S = s?.H.st?.sh;
+      if (!s || !S) throw new Error('kein Shithead');
+      const P = S.P[s.App.me];
+      const pool = [...S.deck, ...S.pile, ...S.burned, ...P.hand, ...P.up].map((c) => c.split(':')[0].slice(1));
+      return ['B', 'D', 'K', 'A'].find((r) => pool.filter((x) => x === r).length >= 2) ?? 'B';
+    });
+    await rigTable(page, [pair, pair, '4|5|6'], ['8|9']);
+    await expect.poll(() => seqBusy(page)).toBe(false);
+    await tap(page, page.locator(`${handCard(0)}${LIVE}`), { x: 8, y: 18 });
+    await tap(page, page.locator(`${handCard(1)}${LIVE}`), { x: 8, y: 18 });
+    await expect(page.locator('#me .shhand .card.sel')).toHaveCount(2);
+    // Die niedrige passt nicht und lässt sich nicht anheben, sie bleibt ein Tipp mit Grund
+    await expect(page.locator(handCard(2))).toHaveAttribute('aria-disabled', 'true');
+    const kings = ((await mustView(page)).sh!.P[me].hand as string[]).slice(0, 2);
+    const held = await hold(page.locator(handCard(0)), page.locator(PILE));
+    await expect(page.locator(GHOST_LABEL)).toHaveText('Alle 2 ablegen');
+    await expect(page.locator('#fly .tb-ghost-n')).toHaveText('×2');
+    await expect(page.locator(`${PILE}.tb-drop-hot`)).toHaveCount(1);
+    expect(await fitFindings(page)).toEqual([]);
+    await held.release();
+    await expect.poll(async () => (await view(page))?.sh?.pile.slice(-2).sort()).toEqual([...kings].sort());
+    await dragIdle(page);
+  });
+  expect(errors.list).toEqual([]);
+});
+
+test('Ziehen mit der Maus am PC: Stapel, blinde Karte, Schalter aus', async ({ browser }) => {
+  const errors = new Errors();
+  const page = errors.watch(await (await desktop(browser)).newPage(), 'host');
+  const me = await dragTable(page);
+  await page.click('[data-act=shready]');
+  await waitForPhase(page, ['play']);
+
+  await test.step('eine Handkarte auf den Stapel', async () => {
+    await rigTable(page, ['4|5|6', HIGH], ['8|9']);
+    await expect.poll(() => seqBusy(page)).toBe(false);
+    const k = ((await mustView(page)).sh!.P[me].hand as string[])[1];
+    await mouseDrag(page, page.locator(handCard(1)), page.locator(PILE));
+    await expect.poll(async () => (await view(page))?.sh?.pile.at(-1)).toBe(k);
+    await dragIdle(page);
+  });
+
+  await test.step('verdeckte Tischkarte auf den Stapel', async () => {
+    await rigTable(page, [], []);
+    await expect.poll(() => seqBusy(page)).toBe(false);
+    const downN = (v: View | null): number | undefined => {
+      const d = v?.sh?.P[me].down;
+      return typeof d === 'number' ? d : d?.length;
+    };
+    const n = downN(await mustView(page)) ?? 0;
+    expect(n).toBeGreaterThan(0);
+    await mouseDrag(page, page.locator('#me [data-drag=down][data-i="0"]'), page.locator(PILE));
+    await expect.poll(async () => downN(await view(page))).toBe(n - 1);
+    await dragIdle(page);
+  });
+
+  await test.step('Schalter „Karten ziehen“ aus: kein Geist, Tippen und Legen gehen weiter', async () => {
+    await expect.poll(() => seqBusy(page)).toBe(false);
+    await page.click('#btn-menu');
+    await page.click('#menu-prefs');
+    await page.locator('#modal [data-pref=drag]').uncheck();
+    await page.click('#modal [data-act=closemodal]');
+    await rigTable(page, ['4|5|6', HIGH], ['8|9']);
+    await dragReady(page, false);
+    await expect.poll(() => seqBusy(page)).toBe(false);
+    const n0 = (await mustView(page)).n;
+    const held = await grab(page, page.locator(handCard(1)), page.locator(PILE), { kind: 'mouse' });
+    await expect(page.locator(GHOST)).toHaveCount(0);
+    await held.release();
+    await page.waitForTimeout(500);
+    expect((await mustView(page)).n).toBe(n0);
+    await page.mouse.move(1, 1);
+    await page.click(`${handCard(1)}${LIVE}`);
+    await page.click(`#me [data-act=shplay]${LIVE}`);
+    await waitForChange(page, n0);
+  });
   expect(errors.list).toEqual([]);
 });

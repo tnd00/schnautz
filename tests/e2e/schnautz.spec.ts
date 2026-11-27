@@ -3,11 +3,29 @@
  * Neuladen von Gast und Host, Verlassen und Wiederkommen.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { handValue } from '../../src/game/schnautz';
+import type { Card, View } from '../../src/game/types';
 import { axeCheck } from './axe';
+import {
+  DRAG_TAG,
+  dragIdle,
+  dragReady,
+  dragTable,
+  DROP_HOT,
+  DROP_NO,
+  GHOST,
+  GHOST_LABEL,
+  grab,
+  GUARD_MS,
+  setDragPref,
+  tap,
+  tapAfterDrag,
+} from './drag';
 import {
   closeAll,
   desktop,
   Errors,
+  fitFindings,
   hostTable,
   joinTable,
   menuConfirm,
@@ -49,6 +67,33 @@ async function step(host: Page, byId: Map<string, Page>, prefer: Prefer): Promis
     }
   } else return;
   await waitForChange(host, v.n);
+}
+
+const handCard = (p: Page, i: number) => p.locator(`#me [data-act=hand][data-i="${i}"]`);
+const midCard = (p: Page, i: number) => p.locator(`#center [data-act=mid][data-i="${i}"]`);
+
+/**
+ * Erster Tausch, der die Runde nicht sofort beendet (31 oder Feuer), damit die Partie für die nächsten Schritte
+ * weiterläuft. Dazu das Etikett, das der Geist dafür zeigen muss (Wert nach dem Tausch wie die Pille).
+ */
+function calmSwap(v: View): { h: number; m: number; label: string; give: Card; take: Card } {
+  const hand = v.hands[v.me];
+  if (!Array.isArray(hand)) throw new Error('keine eigene Hand');
+  for (let h = 0; h < 3; h++)
+    for (let m = 0; m < 3; m++) {
+      const nh = hand.slice();
+      nh[h] = v.middle[m];
+      const hv = handValue(nh, v.rules);
+      if (hv.v < 31)
+        return { h, m, label: `Tauschen → ${String(hv.v).replace('.', ',')}`, give: hand[h], take: v.middle[m] };
+    }
+  throw new Error('jeder Tausch beendet die Runde');
+}
+
+/** Hat `me` nach Logeintrag n0 genau diesen Tausch gemacht? */
+async function swappedSince(page: Page, me: string, n0: number, s: { give: Card; take: Card }): Promise<boolean> {
+  const v = await mustView(page);
+  return v.log.some((e) => e.n > n0 && e.k === 'swap' && e.p === me && e.give === s.give && e.take === s.take);
 }
 
 /** Regeln, die axe hier auslässt. Leer: Es gilt WCAG 2.2 AA vollständig. */
@@ -176,9 +221,96 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
         await axeCheck(p, { include: '#scr-game', exclude: '#fly', disable: AXE_OFF, where });
       }
       if (round) break;
-      await step(host, byId, 'swap');
+      // Schieben wechselt den Zug wie ein Tausch, kann die Runde aber nicht per 31 beenden
+      await step(host, byId, 'pass');
       await expect.poll(async () => (await mustView(host)).turn).not.toBe(v.turn);
     }
+  });
+
+  // Nach axe, sonst wird der Verlauf am PC zur scrollbaren Fläche
+  await test.step('Tauschen per Ziehen: Finger am Handy, Maus am PC, Tippen und Enter gehen weiter', async () => {
+    await dragReady(host);
+    await dragReady(guest);
+    for (let k = 0; k < 2; k++) {
+      const v = await mustView(host);
+      expect(v.phase).toBe('play');
+      const id = v.players[v.turn].id;
+      const p = byId.get(id);
+      if (!p) throw new Error('Spieler unbekannt');
+      const pv = await mustView(p);
+      // Auf die eigene Seite passt nichts: gestrichelt, Grund im Etikett, Loslassen daneben bricht still ab
+      const miss = await grab(p, handCard(p, 0), handCard(p, 1));
+      await expect(p.locator(GHOST)).toHaveCount(1);
+      await expect(p.locator(DROP_NO)).toHaveCount(1);
+      await expect(p.locator(GHOST_LABEL)).toHaveText('Da passt das nicht hin.');
+      await miss.move({ x: 8, y: 8 });
+      await miss.release();
+      await dragIdle(p);
+      expect((await mustView(host)).n).toBe(v.n);
+      // Tippen direkt nach dem Ziehen wird angenommen, Enter auf einer Karte auch, die Vorschau in der Pille bleibt
+      await tapAfterDrag(p, handCard(p, 1));
+      await expect(handCard(p, 1)).toHaveClass(/\bsel\b/);
+      await midCard(p, 0).focus();
+      await p.keyboard.press('Enter');
+      await expect(midCard(p, 0)).toHaveClass(/\bsel\b/);
+      await expect(p.locator('#me .pill.pre .to')).toBeVisible();
+      // Der Tausch in einer Geste: Handkarte auf Mittelkarte am Handy (Finger), umgekehrt am PC (Maus)
+      const s = calmSwap(pv);
+      const fromHand = p === guest;
+      const held = await grab(
+        p,
+        fromHand ? handCard(p, s.h) : midCard(p, s.m),
+        fromHand ? midCard(p, s.m) : handCard(p, s.h),
+      );
+      await expect(p.locator(DROP_HOT)).toHaveCount(1);
+      await expect(p.locator(GHOST_LABEL)).toHaveText(s.label);
+      // Mitten im Zug scrollt nichts und nichts ragt aus dem Bild
+      expect(await fitFindings(p, ['#me'])).toEqual([]);
+      await held.release();
+      await expect.poll(() => swappedSince(host, id, v.n, s)).toBe(true);
+      await dragIdle(p);
+    }
+  });
+
+  await test.step('Schalter „Karten ziehen“ aus: kein Geist, Tippen tauscht wie vorher', async () => {
+    // Der Klick-Wächter des Motors schluckt Zeiger-Klicks kurz nach dem letzten Ziehen, auch am Menü
+    await guest.waitForTimeout(GUARD_MS + 50);
+    await guest.click('#btn-menu');
+    await guest.click('#menu-prefs');
+    const sw = guest.locator('#modal [data-pref=drag]');
+    await expect(sw).toBeChecked();
+    await sw.uncheck();
+    await guest.click('#modal [data-act=closemodal]');
+    // Ist der Gast nicht dran, tauscht der Gastgeber einmal mit Tippen
+    const v0 = await mustView(host);
+    if (v0.players[v0.turn].id !== ids[1]) {
+      const s = calmSwap(v0);
+      await host.click(`#me [data-act=hand][data-i="${s.h}"]`);
+      await host.click(`#center [data-act=mid][data-i="${s.m}"]`);
+      await host.click('[data-act=swap]');
+      await waitForChange(host, v0.n);
+    }
+    await expect.poll(async () => (await mustView(guest)).turn).toBe((await mustView(host)).turn);
+    // Zweimal tippen zeichnet neu, danach sind Griff-Zeiger und touch-action weg
+    await tap(guest, handCard(guest, 0));
+    await expect(handCard(guest, 0)).toHaveClass(/\bsel\b/);
+    await tap(guest, handCard(guest, 0));
+    await expect(handCard(guest, 0)).not.toHaveClass(/\bsel\b/);
+    await dragReady(guest, false);
+    const v = await mustView(host);
+    expect(v.players[v.turn].id).toBe(ids[1]);
+    const held = await grab(guest, handCard(guest, 0), midCard(guest, 1));
+    await expect(guest.locator(GHOST)).toHaveCount(0);
+    await held.release();
+    await guest.waitForTimeout(300);
+    expect((await mustView(host)).n).toBe(v.n);
+    await expect(guest.locator('#me .hand .sel')).toHaveCount(0);
+    const s = calmSwap(await mustView(guest));
+    await tap(guest, handCard(guest, s.h));
+    await tap(guest, midCard(guest, s.m));
+    await guest.click('[data-act=swap]');
+    await expect.poll(() => swappedSince(host, ids[1], v.n, s)).toBe(true);
+    await setDragPref(guest, true);
   });
 
   await test.step('eine Runde bis zum Ergebnis', async () => {
@@ -263,6 +395,29 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     await expect(guest.locator('#joincode')).toBeVisible();
   });
 
+  expect(errors.list).toEqual([]);
+});
+
+test('Schnautz: Tauschen per Ziehen allein mit KI', { tag: DRAG_TAG }, async ({ browser }) => {
+  const errors = new Errors();
+  // Chromium nimmt hier den Desktop, WebKit das iPhone 13 des Projekts (playwright.config.ts)
+  const page = errors.watch(await (await browser.newContext()).newPage(), 'host');
+  await dragTable(page, 'schnautz', { bots: 1, quick: true, rules: { dealerChoice: false } });
+  await waitForPhase(page, ['play']);
+  await dragReady(page);
+  const me = await myId(page);
+  await expect
+    .poll(async () => (await mustView(page)).players[(await mustView(page)).turn].id, { timeout: 30_000 })
+    .toBe(me);
+  const v = await mustView(page);
+  const s = calmSwap(v);
+  const held = await grab(page, handCard(page, s.h), midCard(page, s.m));
+  await expect(page.locator(DROP_HOT)).toHaveCount(1);
+  await expect(page.locator(GHOST_LABEL)).toHaveText(s.label);
+  expect(await fitFindings(page, ['#me'])).toEqual([]);
+  await held.release();
+  await expect.poll(() => swappedSince(page, me, v.n, s)).toBe(true);
+  await dragIdle(page);
   expect(errors.list).toEqual([]);
 });
 

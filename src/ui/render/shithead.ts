@@ -717,7 +717,7 @@ export const shSpec: NewTable = {
   me: shMe,
   status: shStatus,
   sheet: shSheet,
-  drag: null,
+  drag: true,
   after(v) {
     fitHand();
     layoutSwapOpps(v);

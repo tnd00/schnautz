@@ -203,6 +203,14 @@ export function focusOpp(pid: string): boolean {
   return true;
 }
 
+/** Ziehen hält am Rand (Cabo-Blindtausch): einen Platz weiter drehen, -1 holt die linke Kachel. Gibt zurück, ob gedreht. */
+export function carouselNudge(dir: -1 | 1): boolean {
+  const el = $('#opps');
+  if (!el.classList.contains('car') || CAR.drag || CAR.wheeling) return false;
+  snap(el, Math.round(CAR.shown) + dir);
+  return true;
+}
+
 /** Wieder frei: zurück zur Person am Zug, außer es wischt gerade jemand. */
 export function carouselRelease(): void {
   if (CAR.hold === 0) return;

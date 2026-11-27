@@ -1,8 +1,9 @@
 /*
  * Regelrahmen fürs Ziehen (src/game/drop.ts, ziehen.md 7), ohne DOM. Weiche nach Spiel, Schlüssel aus den Attributen
- * eines Ziels, Vergleich von Quellen und Zielen, Fangradius, Etiketten zu jedem Code. Die Regeln je Spiel sind bis
- * Runde 5 Stummel, die Eigenschaft „dropsFor ist genau die Menge der Ziele, für die dropOf ok liefert“ läuft aber
- * schon über alle Spiele und Ziele, damit sie mit den Adaptern gleich mitwacht.
+ * eines Ziels, Vergleich von Quellen und Zielen, Fangradius, Etiketten zu jedem Code und die gemeinsamen Prüfungen aus
+ * tests/unit/helpers.ts (dropProblems und Teile). Die Regeln je Spiel prüft jedes Spiel selbst in
+ * tests/unit/drop-<spiel>.test.ts mit seinen Spielständen, hier laufen die Prüfungen nur mit festen Quellen über
+ * Zufallspartien aller vier Spiele, damit die Weiche und die Prüfungen selbst stimmen.
  */
 import { describe, expect, it } from 'vitest';
 import { dragLabel, DRAG_SR } from '../../src/content/texts/drag';
@@ -24,7 +25,19 @@ import type { RejectArgs } from '../../src/game/reject';
 import { addPlayer, newState } from '../../src/game/state';
 import type { GameKind, View } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
-import { rngF } from './helpers';
+import {
+  argLeaks,
+  cardsSeen,
+  dropCandidates,
+  dropHostProblems,
+  dropSecretProblems,
+  dropSetProblems,
+  dropStates,
+  dropTapProblems,
+  rngF,
+  tapActs,
+  type DropCase,
+} from './helpers';
 
 /** Gestartete Partie zu dritt aus Sicht des Gastgebers */
 function viewOf(game: GameKind): View {
@@ -102,6 +115,47 @@ describe('Weiche nach Spiel', () => {
   }
 });
 
+describe('Gemeinsame Prüfungen fürs Ziehen (helpers.ts)', () => {
+  const cases = (game: GameKind): DropCase[] =>
+    dropStates(game, 5, { every: 7, max: 30 }).map(({ st, me }) => ({ st, me, srcs: SOURCES[game] }));
+
+  for (const game of GAMES)
+    it(`${game}: Menge, Gastgeber und Geheimnis halten über eine Zufallspartie`, () => {
+      const c = cases(game);
+      // Wirklich verschiedene Stände, Schnautz ist nach wenigen Zügen vorbei
+      expect(new Set(c.map((x) => x.st.n)).size).toBeGreaterThan(2);
+      expect(dropSetProblems(c)).toEqual([]);
+      expect(dropHostProblems(c)).toEqual([]);
+      expect(dropSecretProblems(c)).toEqual([]);
+    });
+
+  it('dropCandidates hat jede Zielart und die Plätze aller Leute', () => {
+    const v = viewOf('cabo');
+    const all = dropCandidates(v);
+    for (const z of ['pile', 'up', 'hand', 'table', 'pair', 'transfer', 'hold', 'slot', 'mid'])
+      expect(all.some((d) => d.z === z)).toBe(true);
+    for (const p of v.players) expect(all).toContainEqual({ z: 'slot', owner: p.id, id: 3 });
+  });
+
+  it('argLeaks meldet verdeckte Karten und fremde Plätze, sichtbare nicht', () => {
+    const v = viewOf('durak');
+    const seen = [...cardsSeen(v)];
+    expect(seen.length).toBeGreaterThan(0);
+    const hidden = ['HA', 'S6', 'C10', 'DK', 'H7:2'].find((c) => !seen.includes(c))!;
+    expect(argLeaks({ c: seen[0], p: 'a', n: 2 }, v)).toEqual([]);
+    expect(argLeaks({ c: hidden }, v)).toEqual([`c=${hidden} ist eine verdeckte Karte`]);
+    expect(argLeaks({ p: 'k-0123456789ab' }, v)).toEqual(['p=k-0123456789ab sitzt nicht am Tisch']);
+  });
+
+  it('Tipp-Wege: Namen müssen in onAction stehen, jede gültige Aktion braucht einen', () => {
+    for (const n of ['hand', 'mid', 'swap', 'shh', 'shu', 'shd', 'shplay', 'dkh', 'dkt', 'cbm', 'cbo', 'cbpile'])
+      expect(tapActs().has(n), n).toBe(true);
+    expect(dropTapProblems([], { cbsnap: ['cbsnapmode', 'gibtsnicht'] })).toEqual([
+      'cbsnap: data-act „gibtsnicht“ kennt onAction nicht',
+    ]);
+  });
+});
+
 describe('dropKeyOf liest die Attribute eines Ziels', () => {
   it('Ziele ohne Index', () => {
     for (const z of ['pile', 'table', 'transfer', 'hold'] as const) expect(dropKeyOf({ drop: z }, 'h')).toEqual({ z });
@@ -163,13 +217,27 @@ describe('Etiketten am Geist', () => {
     }
   });
 
+  it('Etiketten aus ziehen.md 4 mit ihren Argumenten', () => {
+    expect(dragLabel({ k: 'dk.attack', a: { n: 2 } }, ctx)).toBe('Angreifen ×2');
+    expect(dragLabel({ k: 'dk.throw' }, ctx)).toBe('Nachlegen');
+    expect(dragLabel({ k: 'dk.transfer', a: { p: 'a', n: 2 } }, ctx)).toBe('Schieben → Lena ×2');
+    expect(dragLabel({ k: 'cb.swap', a: { n: 3, odd: 1 } }, ctx)).toBe('3 eintauschen · nur gleiche');
+    expect(dragLabel({ k: 'cb.swap' }, ctx)).toBe('Eintauschen');
+    expect(dragLabel({ k: 'cb.takeSwap', a: { n: 2 } }, ctx)).toBe('Nehmen und 2 tauschen');
+    expect(dragLabel({ k: 'cb.discard', a: { f: 'peek' } }, ctx)).toBe('Ablegen + 👁️ Ansehen');
+    expect(dragLabel({ k: 'cb.discard', a: { f: 'toString' } }, ctx)).toBe('Ablegen');
+    expect(dragLabel({ k: 'cb.snap' }, ctx)).toBe('⚡ Schnappen');
+    expect(dragLabel({ k: 'sz.swap', a: { v: 30.5, on: 'HA' } }, ctx)).toBe('Tauschen → 30,5');
+    expect(dragLabel({ k: 'sh.blind' }, ctx)).toBe('Aufdecken');
+  });
+
   it('Argumente landen im Satz', () => {
     expect(dragLabel({ k: 'dk.beat', a: { on: 'S6' } }, ctx)).toBe('Karte S6 schlagen');
     expect(dragLabel({ k: 'sz.swap', a: { on: 'HA' } }, ctx)).toBe('Gegen Karte HA tauschen');
     expect(dragLabel({ k: 'sh.play', a: { n: 3 } }, ctx)).toBe('Alle 3 ablegen');
     expect(dragLabel({ k: 'sh.play' }, ctx)).toBe('Ablegen');
-    expect(dragLabel({ k: 'cb.blind', a: { p: 'a' } }, ctx)).toBe('Blind mit Lena tauschen');
-    expect(dragLabel({ k: 'cb.blind', a: { p: 'zz' } }, ctx)).toBe('Blind mit Jemand tauschen');
+    expect(dragLabel({ k: 'cb.blind', a: { p: 'a' } }, ctx)).toBe('🔀 mit Lena tauschen');
+    expect(dragLabel({ k: 'cb.blind', a: { p: 'zz' } }, ctx)).toBe('🔀 mit Jemand tauschen');
   });
 
   it('Ansagen für den Vorleser', () => {

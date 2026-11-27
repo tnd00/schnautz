@@ -10,7 +10,6 @@ import type { Sheet } from '../render/result';
 import { szSpec } from '../render/schnautz';
 import { shSpec } from '../render/shithead';
 import type { Status } from '../status';
-import type { DragAdapter } from './drag';
 import type { CenterModel, MeModel, MeOut, SeatModel } from './types';
 
 /** Ein Spiel auf dem gemeinsamen Gerüst. Es gibt keine Punkteleiste mehr, Werte stehen in `SeatModel.value`. */
@@ -27,8 +26,11 @@ export interface NewTable {
   status(v: View): Status;
   /** aus src/ui/render/result.ts, render() ruft renderResult(v, spec.sheet(v)) */
   sheet(v: View): Sheet | null;
-  /** Adapter fürs Ziehen, alle vier Spiele bekommen einen (Entscheidung des Users) */
-  drag: DragAdapter | null;
+  /**
+   * Ziehen an: true, sobald src/ui/<spiel>/drag.ts den Adapter exportiert. Der Adapter lädt mit dem Motor nach
+   * (Muster oben in ./drag.ts), die Spec importiert ihn nie, sonst landet er im Einstieg.
+   */
+  drag: true | null;
   /** Nach dem Schreiben: fitHand, layoutSwapOpps */
   after?(v: View): void;
 }

@@ -26,12 +26,15 @@ const handSel = (i: number): string => `#me [data-act="dkh"][data-i="${i}"]`;
 
 /**
  * Senden: Auswahl weg, Bedienung sperren, bis die Antwort da ist. Vorher merken, was zur Aktion gehört, damit bei
- * einer Ablehnung die gemeinten Karten wackeln (showReject). `extra` sind weitere Selektoren, etwa der Angriff.
+ * einer Ablehnung die gemeinten Karten wackeln (showReject). `extra` sind weitere Selektoren, etwa der Angriff. Auch
+ * der Abwurf beim Ziehen (src/ui/durak/drag.ts) geht hier durch, `from` ist dann die Abwurfstelle.
  */
-function send(a: Action, idx: number[] = [], extra: string[] = []): void {
-  // Merkt sich, wo die eigenen Karten lagen, damit sie von dort auf den Tisch fliegen
+export function send(a: Action, idx: number[] = [], extra: string[] = [], from?: DOMRect[]): void {
+  // Merkt sich, wo die eigenen Karten lagen, damit sie von dort auf den Tisch fliegen. Nach einem Abwurf starten sie
+  // an der Abwurfstelle (dragLanded), dkFlights erkennt das am selben Feld
   const els = idx.flatMap((i) => document.querySelector<HTMLElement>(handSel(i)) ?? []);
-  if (els.length) grabRects(els, 'hand');
+  if (from?.length) App.playRects = { t: Date.now(), src: 'hand', rects: from };
+  else if (els.length) grabRects(els, 'hand');
   const sel = [...idx.map(handSel), ...extra];
   if (sel.length) noteTap(a.type, sel);
   App.ds = { idx: [], pair: null };
