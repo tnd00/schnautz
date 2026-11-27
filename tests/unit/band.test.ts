@@ -58,25 +58,27 @@ describe('Band', () => {
     expect(bandGeo(TURN['shithead 375x548'])).toEqual({
       zone: { top: 257, bottom: 323 },
       lane: { top: 305, bottom: 323 },
-      dip: 326,
+      dip: 327,
       guard: 289,
       text: 303,
       over: null,
       open: 126,
       st: null,
       shut: false,
+      give: false,
       lines: [],
     });
     expect(bandGeo(TURN['schnautz 375x548'])).toEqual({
       zone: { top: 266, bottom: 321 },
       lane: { top: 311, bottom: 321 },
-      dip: 324,
+      dip: 325,
       guard: 295,
       text: 309,
       over: null,
       open: 166,
       st: null,
       shut: false,
+      give: false,
       lines: [],
     });
   });
@@ -371,10 +373,10 @@ describe('Kleine Meldungen im Band (Grund, Hinweis, Automatisches)', () => {
     expect(s.tops[0]! + 19 - (b.me - 1)).toBe(3);
     // Shithead 375x548: Die Unterlängen der Unterzeile zu berühren reicht nicht, um auf den Rand zu rücken
     expect(pillStack(bandGeo(TURN['shithead 375x548']), [{ h: 19, prio: 2 }]).tops[0]).toBe(304);
-    // Höchstens bis 3 px vor den ersten Inhalt, höchstens 8 px auf den Rand
+    // Höchstens bis 2 px vor den ersten Inhalt, höchstens 8 px auf den Rand
     expect(bandGeo({ ...TURN['shithead 375x548'], head: 400 }).dip).toBe(332);
-    expect(bandGeo({ ...TURN['shithead 375x548'], head: 330 }).dip).toBe(327);
-    expect(bandGeo({ ...TURN['shithead 375x548'], head: 326 }).dip).toBe(323);
+    expect(bandGeo({ ...TURN['shithead 375x548'], head: 330 }).dip).toBe(328);
+    expect(bandGeo({ ...TURN['shithead 375x548'], head: 325 }).dip).toBe(323);
     expect(bandGeo({ ...TURN['shithead 375x548'], head: undefined }).dip).toBe(323);
     // Ein Reaktionsfenster über dem eigenen Platz begrenzt auch den Rand
     const e = bandGeo({ ...TURN['durak 375x548'], emotes: { top: 300, bottom: 360 } });
@@ -515,6 +517,41 @@ describe('Kleine Meldungen im Band (Grund, Hinweis, Automatisches)', () => {
     }
   });
 
+  it('lassen bei Shithead 375x548 die Unterzeile frei, wenn der Rand des eigenen Platzes reicht (gemessen)', () => {
+    // Unterzeile bis 317,5, eigener Platz ab 331,1, Kopf ab 338,1. Früher stand der Grund bei 313 auf ihren Unterlängen
+    const b: BandIn = {
+      opps: 142,
+      pile: 267,
+      me: 331.1,
+      head: 338.1,
+      status: { top: 280.7, main: 301.5, text: 317.5 },
+    };
+    const top = pillStack(bandGeo(b), [nope]).tops[0]!;
+    expect(top).toBeGreaterThanOrEqual(316.5);
+    expect(top + nope.h).toBeLessThanOrEqual(b.head! - 2);
+  });
+
+  it('stehen über der Statuszeile, wenn Knöpfe darin unten keinen Platz lassen (Shithead 375x548, 4er-Fenster)', () => {
+    // Gemessen: Hauptzeile 273 bis 293, 4er-Knopf bis 325, eigener Platz ab 331, Kopf ab 335. Früher lag der Grund bei
+    // 327 bis 346 auf dem Kopf am eigenen Platz
+    const b: BandIn = {
+      opps: 142,
+      pile: 267,
+      me: 331,
+      head: 335,
+      status: { top: 273, main: 325, text: 325 },
+      lines: [{ top: 244, bottom: 264 }],
+    };
+    expect(pillStack(bandGeo(b), [nope]).tops).toEqual([327]);
+    const g = bandGeo({ ...b, quick: true });
+    expect(g.give).toBe(true);
+    const top = pillStack(g, [nope]).tops[0]!;
+    // Deckt die Regelzeile am Stapel ganz, bleibt über der Statuszeile und unter den Gegnern
+    expect(top).toBe(244);
+    expect(top + nope.h).toBeLessThanOrEqual(b.status!.top!);
+    expect(top).toBeGreaterThan(b.opps);
+  });
+
   it('stapeln sich nach oben, ältere unten, solange Platz ist', () => {
     const g = bandGeo(TURN['durak 360x640']);
     expect(pillStack(g, [hint, hint])).toEqual({ tops: [423, 402], evict: [] });
@@ -524,7 +561,9 @@ describe('Kleine Meldungen im Band (Grund, Hinweis, Automatisches)', () => {
     const b = TURN['durak 375x548'];
     const g = bandGeo(b);
     const s = pillStack(g, [auto, nope]);
-    expect(s).toEqual({ tops: [322, 343], evict: [] });
+    // Beide unter dem Text der Statuszeile (ein Pixel Rundung), dafür auf dem Rand des eigenen Platzes
+    expect(s).toEqual({ tops: [324, 345], evict: [] });
+    expect(s.tops[0]!).toBeGreaterThanOrEqual(b.status!.text - 1);
     expect(s.tops[0]!).toBeGreaterThan(b.status!.main);
   });
 
@@ -578,7 +617,7 @@ describe('Kleine Meldungen im Band (Grund, Hinweis, Automatisches)', () => {
         }
         expect(top).toBeGreaterThan(main);
         // Ohne Notlage (direkt unter der Hauptzeile) nie auf den Kopf am eigenen Platz
-        if (top > Math.round(g.guard)) expect(top + p.h).toBeLessThanOrEqual(Math.max(g.lane.bottom, head - 3) + 0.5);
+        if (top > Math.round(g.guard)) expect(top + p.h).toBeLessThanOrEqual(Math.max(g.lane.bottom, head - 2) + 0.5);
       });
     }
   });

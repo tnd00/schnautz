@@ -1,5 +1,5 @@
 /*
- * Eigenheiten von Durak im Sticker-Look (Plan 2.8 Runde 4c). Lädt nur über looks/sticker.css, das Gemeinsame aller
+ * Eigenheiten von Durak im Sticker-Look (Plan 2.8 Runde 4c). Steht am Ende des Haupt-CSS, das Gemeinsame aller
  * Tische steht in table/look-sticker.css, Stapelzahl, leere Hand und Zähler (verbrannt wie Bito) in table/sticker-shithead.css.
  * Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße. Kein Rot außer auf Karten und im Farbzeichen.
  */

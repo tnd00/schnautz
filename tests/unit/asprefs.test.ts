@@ -7,6 +7,7 @@ import { asPrefs, PREFS_DEFAULT, type Prefs } from '../../src/net/protocol';
 
 const FULL: Prefs = {
   look: 'sticker',
+  deck: 'classic',
   theme: 'dark',
   calm: 'on',
   drag: false,
@@ -16,17 +17,19 @@ const FULL: Prefs = {
 };
 
 describe('asPrefs', () => {
-  it('liefert ohne Speicher den Standard, bis Runde 6 mit Legacy', () => {
+  it('liefert ohne Speicher den Standard, Sticker mit Vinyl', () => {
     for (const x of [undefined, null, 0, 'legacy', true, [], [FULL]]) expect(asPrefs(x)).toEqual(PREFS_DEFAULT);
-    expect(PREFS_DEFAULT.look).toBe('legacy');
+    expect(PREFS_DEFAULT.look).toBe('sticker');
+    expect(PREFS_DEFAULT.deck).toBe('vinyl');
     expect(PREFS_DEFAULT.theme).toBe('light');
   });
 
   it('übernimmt gültige Werte unverändert', () => {
     expect(asPrefs(FULL)).toEqual(FULL);
-    expect(asPrefs({ ...FULL, look: 'legacy', theme: 'light', calm: 'off', turnTone: 'off' })).toEqual({
+    expect(asPrefs({ ...FULL, look: 'legacy', deck: 'vinyl', theme: 'light', calm: 'off', turnTone: 'off' })).toEqual({
       ...FULL,
       look: 'legacy',
+      deck: 'vinyl',
       theme: 'light',
       calm: 'off',
       turnTone: 'off',
@@ -35,6 +38,7 @@ describe('asPrefs', () => {
 
   it('setzt nur das kaputte Feld zurück, die übrigen bleiben', () => {
     expect(asPrefs({ ...FULL, look: 'Legacy' })).toEqual({ ...FULL, look: PREFS_DEFAULT.look });
+    expect(asPrefs({ ...FULL, deck: 'Klassisch' })).toEqual({ ...FULL, deck: PREFS_DEFAULT.deck });
     expect(asPrefs({ ...FULL, theme: 1 })).toEqual({ ...FULL, theme: PREFS_DEFAULT.theme });
     expect(asPrefs({ ...FULL, calm: true })).toEqual({ ...FULL, calm: PREFS_DEFAULT.calm });
     expect(asPrefs({ ...FULL, drag: 'false' })).toEqual({ ...FULL, drag: PREFS_DEFAULT.drag });

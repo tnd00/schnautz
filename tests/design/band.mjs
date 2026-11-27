@@ -6,7 +6,7 @@
  *   node tests/design/band.mjs --serve [--games=shithead,durak,cabo,schnautz] [--roles=host,guest]
  *     [--sizes=360x640,375x548,390x844,1280x860]
  *     [--checks=swap,pair,big,reason,spy,emoturn,still,under,emo,playfor,seat]
- *     [--shots]
+ *     [--shots] [--look=sticker|legacy] [--theme=light|dark] [--out=DIR]
  *
  * Prüfungen (je Zeile ein Urteil, Befunde stehen in band.json):
  *   swap    Shithead-Tauschrunde: große Meldung und Hinweis über dem eigenen Platz, nie über Karten oder Gegnern
@@ -50,6 +50,8 @@ import {
   joinTable,
   launch,
   LONG_GUEST,
+  LOOKS,
+  THEMES,
   measure,
   parseSize,
   poll,
@@ -69,6 +71,8 @@ const roles = arg('roles', 'host,guest').split(',');
 const sizes = sizeList(arg('sizes', '360x640,375x548,390x844,1280x860'));
 const checks = arg('checks', 'swap,pair,big,reason,spy,emoturn,still,under,emo,playfor,seat').split(',');
 const LONG = 'Wolfgang-Amadeu0';
+/** Ein Look und ein Thema je Lauf (--look, --theme aus lib.mjs), ohne Angabe der Standard der Seite */
+const LOOK = { look: LOOKS[0], theme: THEMES[0] };
 const OVER = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-win' };
 const ROUND = { cabo: 'cb-round', schnautz: 'sz-round' };
 
@@ -326,9 +330,8 @@ function judge(o, { need = [], edge = true } = {}) {
   if (o.hidden) return 'unsichtbar';
   const bad = [];
   if (o.covered) bad.push(`verdeckt von ${o.covered}`);
-  // Stehen Knöpfe in der Statuszeile, darf die Bühne (große Meldung, Hinweis mit Spruch) über den Stapel
-  const stage = /\.(ann|tauntlbl)\b/.test(o.name ?? '');
-  const yielded = o.quick && stage ? (o.hits ?? []).filter((h) => h.startsWith('#center')) : [];
+  // Stehen Knöpfe in der Statuszeile, darf jede Meldung über den Stapel (src/ui/band.ts, give)
+  const yielded = o.quick ? (o.hits ?? []).filter((h) => h.startsWith('#center')) : [];
   const hits = (o.hits ?? []).filter((h) => !yielded.includes(h));
   if (hits.length) bad.push(`über ${hits.join(', ')}`);
   if (o.clip?.length) bad.push(`abgeschnitten ${o.clip.join(', ')}`);
@@ -1010,7 +1013,7 @@ async function checkSeat(page, host, meta, game, group) {
 }
 
 async function run(browser, game, role, group) {
-  const hctx = await context(browser, role === 'host' ? group[0] : '1280x860');
+  const hctx = await context(browser, role === 'host' ? group[0] : '1280x860', LOOK);
   await hctx.addInitScript(initPage);
   let gctx = null;
   const host = watchErrors(await hctx.newPage(), 'host', errors);
@@ -1020,7 +1023,7 @@ async function run(browser, game, role, group) {
     await fillSeats(host, 8);
     let page = host;
     if (role === 'guest') {
-      gctx = await context(browser, group[0]);
+      gctx = await context(browser, group[0], LOOK);
       await gctx.addInitScript(initPage);
       page = watchErrors(await gctx.newPage(), 'gast', errors);
       await joinTable(page, code, LONG_GUEST);
@@ -1102,6 +1105,8 @@ async function run(browser, game, role, group) {
         await passTurn(host, pid);
         await sleep(400);
       }
+      // Eine schon geplante KI-Aktion kommt trotz Anhalten noch, ihre Meldung soll nicht mitten in eine Prüfung fallen
+      await sleep(2000);
       for (const size of group) {
         await page.setViewportSize(parseSize(size));
         await sleep(400);

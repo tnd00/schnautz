@@ -7,6 +7,8 @@ import { $, $opt, reduceMotion } from './dom';
 import { haptic } from './a11y/haptic';
 import { panelFor, shakeEl } from './feedback';
 import { pById } from './helpers';
+import { paletteOf } from './look';
+import { prefs } from './prefs';
 import { sfx, sfxCalm } from './sound';
 import { dragLanded } from './table/drag';
 
@@ -201,8 +203,6 @@ function fall(make: (i: number) => HTMLElement, o: FallOptions): void {
   }
 }
 
-const CONFETTI_COLORS = ['#f3cd7d', '#d6a24a', '#f6efdf', '#b3312a', '#8fd3e8', '#7fe3a3'];
-
 export interface ConfettiOptions {
   colors?: string[];
   n?: number;
@@ -214,7 +214,7 @@ export interface ConfettiOptions {
 }
 
 export function confetti(o: ConfettiOptions = {}): void {
-  const colors = o.colors ?? CONFETTI_COLORS;
+  const colors = o.colors ?? paletteOf(prefs().look, 'party');
   const chars = (o.extra ?? []).flatMap((x) => Array.from({ length: x.n }, () => x.ch));
   const n = o.n ?? 70;
   fall(

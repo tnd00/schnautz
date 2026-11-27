@@ -1,4 +1,10 @@
 /* Bierdeckel (Leben) und Spielkarten */
+/* Kartendeck Klassisch, in beiden Looks: die zwei Werte, die Regeln außerhalb dieser Datei lesen. Vinyl setzt sie in
+ * table/cards-vinyl.css unter data-deck='vinyl'. */
+:root {
+  --card-red: var(--red);
+  --card-back-rim: #f1e6cf;
+}
 .lives {
   display: inline-flex;
   align-items: center;
@@ -217,12 +223,10 @@
     --ty: -7px;
   }
 }
+/* Die Hervorhebung gehört zum Look, nicht zum Deck: unter Legacy derselbe Messingring wie bis 2.7 */
 .card.sel {
   --ty: -16px;
-  box-shadow:
-    0 0 0 3px var(--brass-hi),
-    0 0 26px rgba(243, 205, 125, 0.55),
-    0 14px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--tb-card-sel);
 }
 .card.ghost {
   opacity: 0.35;

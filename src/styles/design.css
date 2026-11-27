@@ -1,0 +1,125 @@
+/* Bogen „Design“ (src/ui/render/design.ts, lädt mit ihm nach). Zeilen kommen aus .gset in lobby.css, hier nur die
+ * Wahl als Knopf, Vorschau und Punkt. Das Muster für Legacy trägt eigene Farben, denn die Legacy-Tokens gibt es nur
+ * mit geladenem Stück und nur an html. */
+#modal .gset.dsg .lead {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--st-ink-soft);
+}
+#modal .gset.dsg .rs-h {
+  margin-top: 12px;
+}
+/* Am kurzen Handy (375x548) passen drei Designs und zwei Decks nur mit engeren Titeln ohne Scrollen */
+@media (max-height: 600px) {
+  #modal .gset.dsg .rs-h {
+    margin-top: 6px;
+  }
+}
+#modal .gset.dsg .dsg-o {
+  width: 100%;
+  margin: 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+#modal .gset.dsg .rlist .dsg-o:last-child {
+  border-bottom: 0;
+}
+#modal .gset.dsg .dsg-o:focus-visible {
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.dsg-pv {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 76px;
+  height: 52px;
+}
+.dsg-cards .card {
+  --cw: 34px;
+  box-shadow: 0 0 0 1px rgba(26, 24, 48, 0.14);
+  transition: none;
+}
+.dsg-cards .card:first-child {
+  --rot: -3deg;
+}
+.dsg-cards .card + .card {
+  --rot: 3deg;
+}
+/* Muster: Grund des Tischs, darauf eine Karte und ein Chip in Farben des Looks */
+.dsg-lk {
+  border-radius: 14px;
+  overflow: hidden;
+}
+.dsg-lk i {
+  position: absolute;
+  display: block;
+}
+.dsg-lk i:first-child {
+  left: 14px;
+  top: 9px;
+  width: 26px;
+  height: 34px;
+  border-radius: 5px;
+  rotate: -3deg;
+}
+.dsg-lk i + i {
+  right: 12px;
+  top: 16px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.dsg-sticker {
+  background: #6f6cf0;
+}
+.dsg-sticker i:first-child {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--st-ink);
+}
+.dsg-sticker i + i {
+  background: var(--st-shithead);
+  box-shadow: 0 0 0 2px var(--st-ink);
+}
+.dsg-dark {
+  background: #1b194e;
+}
+.dsg-dark i:first-child {
+  background: #fff;
+}
+.dsg-dark i + i {
+  background: var(--st-shithead);
+}
+.dsg-legacy {
+  background: radial-gradient(circle at 40% 35%, #1f5a40, #123326 75%);
+  box-shadow: inset 0 0 0 2px #c9962e;
+}
+.dsg-legacy i:first-child {
+  background: linear-gradient(155deg, #fffdf6, #efe3c8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.dsg-legacy i + i {
+  background: radial-gradient(circle at 35% 30%, #fff1c7, #e8b64c 55%, #c9962e);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+/* Punkt der Radiogruppe: Ring mit 3:1 auf Weiß (WCAG 1.4.11), gewählt Tinte mit weißem Kern */
+.dsg-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(26, 24, 48, 0.55);
+}
+.dsg-o[aria-checked='true'] .dsg-dot {
+  background: var(--st-ink);
+  box-shadow: inset 0 0 0 6px var(--st-ink);
+  background-image: radial-gradient(circle, var(--st-paper) 0 4px, transparent 4.5px);
+}

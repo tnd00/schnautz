@@ -11,7 +11,8 @@
  *   --serve     SERVE=1    Dev-Server und PeerServer selbst starten und am Ende beenden
  *   --reduce    REDUCE=1   „Bewegung reduzieren“ einschalten
  *   --headed    HEADED=1   Browser sichtbar
- *   --look=L    LOOK       Look vor dem Laden setzen (schnautz:look), Liste wie sticker,legacy erlaubt
+ *   --look=L    LOOK       Look vor dem Laden setzen (schnautz:design), Liste wie sticker,legacy erlaubt
+ *   --deck=D    DECK       Kartendeck vor dem Laden setzen (schnautz:deck), vinyl oder classic
  *   --theme=T   THEME      Thema vor dem Laden setzen (schnautz:theme), Liste wie light,dark erlaubt
  *               PW_CHROME  eigenes Chrome statt des Chromiums von Playwright
  */
@@ -47,6 +48,8 @@ const list = (name, env) => {
   return v ? v.split(',').filter(Boolean) : [null];
 };
 export const LOOKS = list('look', 'LOOK');
+/** Ein Deck für den ganzen Lauf, ohne Angabe der Standard der Seite */
+export const DECK = arg('deck', process.env.DECK ?? '') || null;
 export const THEMES = list('theme', 'THEME');
 
 /**
@@ -157,10 +160,10 @@ export async function launch() {
 
 /**
  * Kontext passend zur Größe: bis 960 px wie ein Handy (Touch, isMobile), sonst wie ein PC. Dev-Menü frei. Mit
- * `look` oder `theme` stehen `schnautz:look` und `schnautz:theme` vor dem ersten Laden im Speicher (als JSON wie bei
- * `LS.set`), ohne bleibt der Speicher, wie er ist.
+ * `look`, `deck` oder `theme` stehen `schnautz:design`, `schnautz:deck` und `schnautz:theme` vor dem ersten Laden im
+ * Speicher (als JSON wie bei `LS.set`), ohne bleibt der Speicher, wie er ist.
  */
-export async function context(browser, size, { look = null, theme = null } = {}) {
+export async function context(browser, size, { look = null, theme = null, deck = DECK } = {}) {
   const phone = isPhoneSize(size);
   const ctx = await browser.newContext({
     viewport: parseSize(size),
@@ -170,12 +173,13 @@ export async function context(browser, size, { look = null, theme = null } = {})
     reducedMotion: REDUCE ? 'reduce' : 'no-preference',
   });
   await ctx.addInitScript(
-    ([l, t]) => {
+    ([l, k, t]) => {
       localStorage.setItem('schnautz:dev', 'true');
-      if (l) localStorage.setItem('schnautz:look', JSON.stringify(l));
+      if (l) localStorage.setItem('schnautz:design', JSON.stringify(l));
+      if (k) localStorage.setItem('schnautz:deck', JSON.stringify(k));
       if (t) localStorage.setItem('schnautz:theme', JSON.stringify(t));
     },
-    [look, theme],
+    [look, deck, theme],
   );
   return ctx;
 }

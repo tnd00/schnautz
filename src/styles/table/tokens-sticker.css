@@ -1,16 +1,16 @@
 /*
- * Wortschatz am Tisch (--tb-*) im Sticker-Look. Lädt nachgeladen über looks/sticker.css.
+ * Wortschatz am Tisch (--tb-*) im Sticker-Look, dem Standard. Steht im Haupt-CSS auf dem nackten :root, damit auch ohne
+ * Attribut der Standard gilt, Legacy setzt dieselben Namen unter :root[data-look='legacy'] (table/tokens.css, lädt nach).
  * Dieselben Namen wie table/tokens.css, nur Werte, keine Geometrie. Die fünf Werte mit Spielfarbe stehen zusätzlich
- * an .g-<spiel>, weil --g erst dort gesetzt ist (ein var(--g) auf :root bliebe leer). Auf :root stehen für sie
- * neutrale Werte, damit außerhalb eines Spiels nichts vom Legacy-Block durchsickert.
+ * an .g-<spiel>, weil --g erst dort gesetzt ist (ein var(--g) auf :root bliebe leer), aber nie unter Legacy.
+ * Auf :root stehen für sie neutrale Werte.
  */
-:root[data-look='sticker'] {
+:root {
   /* Grund, Schrift und Bedeutung */
   --tb-ground:
     radial-gradient(115% 62% at 4% -6%, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0) 52%),
     radial-gradient(90% 70% at 104% 108%, rgba(40, 34, 150, 0.3) 0%, rgba(40, 34, 150, 0) 64%), var(--st-ground);
   --tb-ground-base: var(--st-ground);
-  --tb-ground-grain: 0;
   --tb-text: var(--st-paper);
   --tb-text-soft: var(--st-ink-soft);
   --tb-ink: var(--st-ink);
@@ -330,7 +330,7 @@
   --tb-fx-bunny: #ffd1dc; /* Hase (Grundfarbe für color-mix), wie Legacy */
 }
 
-:root[data-look='sticker'] :is(.g-schnautz, .g-shithead, .g-durak, .g-cabo) {
+:root:not([data-look='legacy']) :is(.g-schnautz, .g-shithead, .g-durak, .g-cabo) {
   --tb-accent: var(--g);
   --tb-tag-turn-bg: var(--g);
   --tb-brand-bg: var(--g);

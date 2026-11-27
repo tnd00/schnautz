@@ -16,8 +16,8 @@
  * - Grund und Automatisches liegen über der großen Meldung, die Bühne weicht ihnen aus. Hinweise und Sprüche
  *   warten, bis die große Meldung vorbei ist.
  * - Nie über den Gegnern. Am eigenen Zug bleibt der Stapel frei, außer das Reaktionsfenster oder Knöpfe in der
- *   Statuszeile (4er, Bombe, Vorspulen, „Für … spielen“) lassen sonst keinen Platz. Diese Knöpfe deckt keine Meldung,
- *   denn der 4er-Knopf steht nur 2 Sekunden (stageRoom).
+ *   Statuszeile (4er, Bombe, Vorspulen, „Für … spielen“) lassen sonst keinen Platz, das gilt auch für kleine
+ *   Meldungen. Diese Knöpfe deckt keine Meldung, denn der 4er-Knopf steht nur 2 Sekunden (stageRoom).
  * In der Spielfläche (nicht am Zug) hat eine neue große Meldung Vorrang: Kleine Meldungen an der Stapelkante, die sie
  * schneidet, blenden aus (yieldToBig).
  */
@@ -49,7 +49,7 @@ const GAP = 4;
 /** So weit dürfen kleine Meldungen höchstens auf den Rand des eigenen Platzes */
 const DIP = 8;
 /** Abstand zum ersten Inhalt im eigenen Platz (Kopf, runde Knöpfe) */
-const HEAD_GAP = 3;
+const HEAD_GAP = 2;
 /** Unterlängen der Unterzeile: so viel darf eine kleine Meldung den Statustext berühren */
 const DESC = 4;
 
@@ -84,6 +84,8 @@ export interface BandIn {
    * sie eine davon ganz oder gar nicht
    */
   lines?: readonly Span[];
+  /** Knöpfe in der Statuszeile (4er, Bombe, Vorspulen): Reicht der Platz darunter nicht, weicht der Stapel */
+  quick?: boolean;
 }
 
 export interface BandGeo {
@@ -109,8 +111,10 @@ export interface BandGeo {
    * wenn ihre Oberkante nicht gemessen ist
    */
   st: Span | null;
-  /** Ein offenes Reaktionsfenster begrenzt das Band nach unten: Dann darf der Stapel auch kleinen Meldungen weichen */
+  /** Ein offenes Reaktionsfenster begrenzt das Band nach unten */
   shut: boolean;
+  /** Der Stapel darf auch kleinen Meldungen weichen: bei `shut` oder Knöpfen in der Statuszeile */
+  give: boolean;
   /** Textzeilen am Stapel (BandIn.lines) */
   lines: readonly Span[];
 }
@@ -142,7 +146,9 @@ export function bandGeo(b: BandIn): BandGeo {
   const dip = me < b.me - 1 ? me : Math.max(me, Math.min((b.head ?? b.me) - HEAD_GAP, b.me + DIP));
   // Begrenzt ein offenes Reaktionsfenster das Band, darf der Stapel kleinen Meldungen über der Statuszeile weichen
   const shut = me < b.me - 1;
-  const over = st?.top !== undefined && st.top - 2 > (shut ? open : top) ? st.top - 2 : null;
+  // Knöpfe in der Statuszeile lassen unter ihr kaum Platz, dann weicht der Stapel wie beim Reaktionsfenster
+  const give = shut || !!b.quick;
+  const over = st?.top !== undefined && st.top - 2 > (give ? open : top) ? st.top - 2 : null;
   const text = st ? st.text : top;
   const block = st?.top !== undefined ? { top: st.top, bottom: st.text } : null;
   return {
@@ -155,6 +161,7 @@ export function bandGeo(b: BandIn): BandGeo {
     open,
     st: block,
     shut,
+    give,
     // Was das Reaktionsfenster verdeckt, zählt nicht zur Zeile
     lines: (b.lines ?? [])
       .map((l) => (em && em.top > b.opps ? { top: l.top, bottom: Math.min(l.bottom, em.top) } : l))
@@ -357,11 +364,16 @@ export function pillStack(g: BandGeo, pills: readonly Pill[]): { tops: (number |
       .sort((a, b) => Number(pills[b].prio === 2) - Number(pills[a].prio === 2) || a - b);
     let tops = from(order, g.lane.bottom);
     // Reicht die Bahn nicht, rückt der Stapel um das Fehlende auf den Rand des eigenen Platzes (höchstens bis `dip`),
-    // wenn er dann unter dem Text bleibt. Die Unterlängen der Unterzeile zu berühren reicht dafür nicht
+    // wenn er dann unter dem Text bleibt: möglichst ohne ihn zu berühren (höchstens ein Pixel, ganze Pixel wegen der
+    // Rundung am Ende), sonst höchstens seine Unterlängen
     const high = Math.min(...order.map((i) => tops[i]));
-    if (order.length && high < clear) {
-      const low = from(order, Math.min(g.dip, g.lane.bottom + (clear - high)));
-      if (order.every((i) => low[i] >= clear)) tops = low;
+    for (const want of [Math.min(Math.ceil(g.text) - 1, g.lane.top), clear]) {
+      if (!order.length || high >= want) break;
+      const low = from(order, Math.min(g.dip, g.lane.bottom + (want - high)));
+      if (order.every((i) => low[i] >= want)) {
+        tops = low;
+        break;
+      }
     }
     return { order, tops };
   };
@@ -383,7 +395,7 @@ export function pillStack(g: BandGeo, pills: readonly Pill[]): { tops: (number |
   // Reichte das nur auf den Inhalt des eigenen Platzes oder ins Reaktionsfenster, steht der Stapel über der Statuszeile,
   // wenn er dort ganz Platz hat. Begrenzt das Reaktionsfenster das Band, darf er dafür über den Stapel (wie die Bühne)
   const floor = Math.max(g.dip, g.lane.bottom) + 1;
-  const ceil = g.shut ? g.open : g.zone.top;
+  const ceil = g.give ? g.open : g.zone.top;
   if (g.over !== null && out.some((t, i) => t !== null && t + pills[i].h > floor)) {
     const alt = from(order, g.over);
     if (order.every((i) => alt[i] >= ceil)) out = pills.map((_, i) => (gone.has(i) ? null : alt[i]));

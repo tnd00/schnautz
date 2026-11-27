@@ -1,0 +1,19 @@
+/*
+ * Nachgeladenes Stück für das Legacy-Design: die Tokens mit den Werten bis 2.7 und das Filz-Dekor, das kein Token
+ * ausdrücken kann. src/ui/look.ts lädt es per import(), sobald data-look='legacy' gilt (legacy.md 7). Jede Regel
+ * beginnt mit :root[data-look='legacy'] und einer Tischzone, damit sie nach dem Zurückschalten wirkungslos ist und nie
+ * Menü oder Fenster trifft. Grenze 4 kB gzip (tests/size.mjs).
+ */
+@import '../table/tokens.css';
+
+/* Filz: Rauschen über dem Grund und Vignette, nur am Tisch. Lage und Größe stehen in base.css (keine Maße hier) */
+:root[data-look='legacy'] body.ingame::before {
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-look='legacy'] body.ingame::after {
+  content: '';
+  /* rgba wie bis 2.7: mit color-mix verliefe der Verlauf in Oklab und sähe anders aus */
+  background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+}

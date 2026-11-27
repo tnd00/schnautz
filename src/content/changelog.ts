@@ -17,6 +17,9 @@ export const CHANGELOG: readonly Release[] = [
       {
         h: 'Neu',
         items: [
+          'Der Tisch trägt jetzt den Sticker-Look wie Start und Lobby, jedes Spiel in seiner Farbe. Dazu gibt es ein neues Kartendeck mit dicken Zeichen, gut lesbar auch aus der Sofaecke.',
+          'Wer den Filztisch vermisst, wählt im Menü ⋯ unter „Design“ Legacy. Das Kartendeck stellst du dort getrennt ein, Vinyl oder Klassisch mit den alten Bildkarten. Dein Gerät merkt sich die Wahl.',
+          'Unter „Design“ gibt es auch Sticker dunkel, für die Runde nach Mitternacht.',
           'Im Menü ⋯ gibt es „Bedienung“. Dort stellst du Ruhig (weniger Bewegung), die Lautstärke, den Ton bei deinem Zug und am Android-Handy die Vibration ein.',
           'Gibt es eine neue Version, lädt die Seite von selbst neu, sobald gerade nichts passiert. Danach sitzt du wieder an deinem Platz. So spielen alle am Tisch immer mit derselben Version.',
         ],
@@ -45,6 +48,8 @@ export const CHANGELOG: readonly Release[] = [
           'Bei Durak ziehst du auf den Tisch zum Angreifen, auf einen Angriff zum Schlagen und aufs Schiebefeld zum Weiterschieben.',
           'Bei Schnautz tauschst du mit einer Geste Hand gegen Mitte. Bei Shithead ziehst du Karten auf den Stapel und in der Tauschrunde auf deine Tischkarten.',
           'Wer bei Cabo zu spät schnappt, verliert nur das Rennen und bekommt keine Strafkarte.',
+          'Am kleinen Handy liegen Meldungen nicht mehr auf den Werten unter den Gegnern oder auf deinem Platz. Große Meldungen rücken über die Statuszeile, statt sie anzuschneiden.',
+          'Lädt Legacy gerade nicht, bleibt der Tisch Sticker und ein Hinweis sagt es dir.',
         ],
       },
     ],

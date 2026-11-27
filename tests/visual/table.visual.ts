@@ -11,7 +11,9 @@ import { join } from 'node:path';
 
 const FIXTURES = join(process.cwd(), 'tests/design/fixtures');
 const START = `./?peerhost=127.0.0.1&peerport=${process.env.PEER_PORT ?? 9312}&noice=1`;
-const LOOK = process.env.PW_LOOK || 'legacy';
+// Standards wie in playwright.visual.config.ts: die App nimmt Sticker, Legacy-Vorlagen haben klassische Karten
+const LOOK = process.env.PW_LOOK || 'sticker';
+const DECK = process.env.PW_DECK || (LOOK === 'legacy' ? 'classic' : 'vinyl');
 const THEME = process.env.PW_THEME || 'light';
 /** Fester Zeitpunkt für Date.now in der Seite */
 const T0 = new Date('2026-11-26T18:00:00+01:00').getTime();
@@ -57,19 +59,20 @@ async function open(browser: Browser, size: string): Promise<BrowserContext> {
   });
 }
 
-/** Speicher vor dem ersten Skript der Seite füllen: Look, Thema, Name und der gespeicherte Platz. */
+/** Speicher vor dem ersten Skript der Seite füllen: Look, Deck, Thema, Name und der gespeicherte Platz. */
 async function seed(page: Page, entries: Record<string, unknown>): Promise<void> {
   await page.addInitScript(
-    ([entries, look, theme]) => {
+    ([entries, look, deck, theme]) => {
       for (const [k, v] of Object.entries(entries)) {
         const x = v && typeof v === 'object' ? { ...v, ts: Date.now() } : v;
         localStorage.setItem(`schnautz:${k}`, JSON.stringify(x));
       }
-      localStorage.setItem('schnautz:look', JSON.stringify(look));
+      localStorage.setItem('schnautz:design', JSON.stringify(look));
+      localStorage.setItem('schnautz:deck', JSON.stringify(deck));
       localStorage.setItem('schnautz:theme', JSON.stringify(theme));
       document.documentElement.dataset.theme = theme;
     },
-    [entries, LOOK, THEME] as const,
+    [entries, LOOK, DECK, THEME] as const,
   );
 }
 
@@ -77,8 +80,9 @@ async function seed(page: Page, entries: Record<string, unknown>): Promise<void>
 async function resume(page: Page, act: 'resumehost' | 'resumeguest'): Promise<void> {
   await page.goto(START);
   await page.waitForFunction(() => !!window.__schnautz);
-  // Sonst misst PW_LOOK=sticker still Legacy
-  expect(await page.evaluate(() => document.documentElement.dataset.look)).toBe(LOOK);
+  // Sonst misst PW_LOOK=legacy still Sticker
+  const d = await page.evaluate(() => ({ ...document.documentElement.dataset }));
+  expect([d.look, d.deck]).toEqual([LOOK, DECK]);
   await page.evaluate(() => {
     window.__schnautz!.BOTS.hold = true;
   });

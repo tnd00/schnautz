@@ -699,6 +699,10 @@
   body.ingame .iconbtn:not(.rulesbtn) {
     width: 34px;
   }
+  /* Runde Knöpfe am eigenen Platz auf Höhe des Kopfs, so bleibt über ihnen Platz für einen Grund (src/ui/band.ts) */
+  .fab {
+    top: 8px;
+  }
   /* Etiketten ragen 8 px über die Kachel (im Sticker-Look gekippt etwas mehr), der Tisch schneidet oben ab */
   .opps {
     padding-top: 14px;

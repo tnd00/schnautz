@@ -4,8 +4,10 @@ import { defineConfig } from '@playwright/test';
  * Bildvergleich des Tisches über feste Spielstände (tests/visual, Stände aus tests/design/fixtures.mjs).
  * Die Schnappschüsse liegen außerhalb des Repos, weil sie nur auf derselben Maschine vergleichbar sind:
  *   PW_VISUAL_REF   Ordner der Vorlagen, Standard /Users/tnd/schnautz-2-8/visual-ref
- *   PW_LOOK         setzt localStorage schnautz:look (heute ohne Wirkung), Standard legacy
- *   PW_THEME        setzt localStorage schnautz:theme und data-theme an <html> (heute ohne Wirkung), Standard light
+ *   PW_LOOK         setzt localStorage schnautz:design, Standard sticker wie in der App
+ *   PW_DECK         setzt localStorage schnautz:deck, Standard classic unter legacy und vinyl unter sticker, so wie
+ *                   die Vorlagen aufgenommen sind (Legacy vor Runde 6 von 2.8 nur mit den klassischen Karten)
+ *   PW_THEME        setzt localStorage schnautz:theme und data-theme an <html>, Standard light
  * Look und Thema stehen im Pfad der Vorlagen, jede Kombination hat also eigene Bilder.
  * Eigene Ports und eigener Build-Ordner, damit es neben anderen Läufen geht: PW_PORT (5312), PEER_PORT (9312),
  * PW_DIST (/Users/tnd/schnautz-2-8/bild/dist). PW_FAST=1 baut ohne Typprüfung. PW_VISUAL_STRICT=1 erlaubt keine
@@ -17,7 +19,7 @@ const PORT = Number(process.env.PW_PORT ?? 5312);
 const PEER_PORT = Number(process.env.PEER_PORT ?? 9312);
 const DIST = process.env.PW_DIST ?? '/Users/tnd/schnautz-2-8/bild/dist';
 const REF = process.env.PW_VISUAL_REF ?? '/Users/tnd/schnautz-2-8/visual-ref';
-const LOOK = process.env.PW_LOOK || 'legacy';
+const LOOK = process.env.PW_LOOK || 'sticker';
 const THEME = process.env.PW_THEME || 'light';
 const BUILD = process.env.PW_FAST
   ? `npx vite build --outDir ${DIST} --emptyOutDir`

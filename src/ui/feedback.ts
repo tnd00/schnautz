@@ -81,6 +81,20 @@ const emotesTop = (): number => emotesBox()?.top ?? Infinity;
 const atTable = (): boolean => document.body.classList.contains('ingame') && !!$opt('#table') && !!shown('#me');
 
 /**
+ * Unterkante der Gegner für Band und kleine Meldungen. Gekippte Kacheln (Sticker) und ihr Wert darunter ragen aus
+ * #opps, sie zählen mit, sonst landen Meldungen ein paar Pixel auf ihnen. Die Spielfläche (fieldBox) misst weiter
+ * nur #opps, sonst rückten große Meldungen dort in die Statuszeile.
+ */
+function oppsBottom(): number | null {
+  let bottom = shown('#opps')?.bottom ?? null;
+  for (const el of document.querySelectorAll('#opps .opp, #opps .opp > .val')) {
+    const r = el.getBoundingClientRect();
+    if (r.height > 0) bottom = Math.max(bottom ?? 0, r.bottom);
+  }
+  return bottom;
+}
+
+/**
  * Freie Spielfläche zwischen Gegnern und eigenem Platz, ungeprüft auf ihre Höhe. Meldungen liegen nur dort, damit
  * sie weder die eigenen Karten noch die Gegner verdecken.
  */
@@ -138,7 +152,6 @@ function bandIn(): (BandIn & { left: number; width: number }) | null {
   const me = shown('#me');
   if (!me) return null;
   const table = shown('#table');
-  const opps = shown('#opps');
   const swap = v.phase === 'swap';
   const st = shown('#status');
   const head = shown('#me .swhead');
@@ -153,13 +166,14 @@ function bandIn(): (BandIn & { left: number; width: number }) | null {
   const x0 = Math.max(Math.min(st?.left ?? Infinity, me.left), fl ? fl.right + 6 : -Infinity);
   const x1 = Math.min(Math.max(st?.right ?? -Infinity, me.right), fr ? fr.left - 6 : Infinity);
   return {
-    opps: Math.max(table?.top ?? 0, opps?.bottom ?? 0),
+    opps: Math.max(table?.top ?? 0, oppsBottom() ?? 0),
     pile: swap || myMoveNow(v) ? pileBottom(me.top) : null,
     me: me.top,
     head: firsts.length ? Math.min(...firsts) : me.top,
     deep: swap && head ? head.bottom : me.top,
     emotes: emotesBox(),
     status: st ? statusLines(st) : null,
+    quick: !!shown('#status .quick'),
     lines: [...document.querySelectorAll<HTMLElement>('#center .cnt')]
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0)
@@ -396,9 +410,8 @@ function positionMessage(el: HTMLElement, mode: Mode, fresh = false): void {
   el.style.left = `${Math.round(area.left + area.width / 2)}px`;
   const h = el.offsetHeight;
   const cap = shown('#center .cap');
-  const oppsBottom = $opt('#opps')?.getBoundingClientRect().bottom ?? area.top;
-  let top =
-    mode === 'cap' && cap ? Math.max(oppsBottom, cap.bottom - h) : area.top + Math.max(0, (area.height - h) / 2);
+  const opps = oppsBottom() ?? area.top;
+  let top = mode === 'cap' && cap ? Math.max(opps, cap.bottom - h) : area.top + Math.max(0, (area.height - h) / 2);
   const taken = [...document.querySelectorAll<HTMLElement>('#fly .mid')]
     .filter((o) => o !== el && !o.classList.contains('out') && o.style.top !== '-999px')
     .map(restBox)
@@ -406,7 +419,7 @@ function positionMessage(el: HTMLElement, mode: Mode, fresh = false): void {
   for (const o of taken) if (top < o.bottom + 4 && top + h > o.top - 4) top = o.bottom + 4;
   // Ist das Reaktionsfenster offen, rückt die Meldung darüber
   const limit = emotesTop() - 6;
-  if (top + h > limit) top = Math.max(oppsBottom, limit - h);
+  if (top + h > limit) top = Math.max(opps, limit - h);
   el.style.top = `${Math.round(top)}px`;
 }
 
@@ -510,6 +523,7 @@ function placeInField(el: HTMLElement | null): void {
   const was = el.classList.contains('band') ? 'band' : el.classList.contains('field') ? 'field' : '';
   // Gerade erst eingehängt (annNext), noch nie gesetzt
   const fresh = [...el.querySelectorAll<HTMLElement>('.ann:not(.out)')].some((a) => !a.dataset.shown);
+  const top0 = el.style.top;
   const band = bandNow();
   if (band) {
     const same = was === 'band';
@@ -538,20 +552,22 @@ function placeInField(el: HTMLElement | null): void {
       }
     };
     put(f);
-    // Reicht eine große Meldung in die Statuszeile hinein (Schnautz am PC), rückt die Fläche über die Statuszeile,
-    // solange dort Platz für eine kompakte bleibt. Sonst schaute unter ihr eine halbe Hauptzeile hervor
+    // Reicht eine große Meldung in die Statuszeile hinein (Schnautz am PC, kurze Handys), rückt die Fläche über die
+    // Statuszeile, solange dort Platz für eine kompakte bleibt. Sonst schaute unter ihr eine halbe Hauptzeile hervor
     const line = shown('#status .main');
     const above = f && line ? line.top - 6 - f.top : 0;
     const y0 = parseFloat(el.style.top) || 0;
-    const low =
-      !!line &&
-      [...el.querySelectorAll<HTMLElement>('.ann:not(.out)')].some(
-        (a) => y0 + a.offsetTop + a.offsetHeight > line.top - 2,
-      );
-    if (f && low && above >= FIELD_BIG && above < f.height) put({ ...f, height: above });
+    const anns = [...el.querySelectorAll<HTMLElement>('.ann:not(.out)')];
+    const low = !!line && anns.some((a) => y0 + a.offsetTop + a.offsetHeight > line.top - 2);
+    if (f && low && above > 0 && above < f.height) {
+      put({ ...f, height: above });
+      // Unter FIELD_BIG nur, wenn die kompakte Fassung dort ganz hineinpasst (gemessen)
+      if (above < FIELD_BIG && anns.some((a) => a.offsetHeight > above)) put(f);
+    }
     // Eine neue große Meldung hat Vorrang: Kleine an der Stapelkante, die sie schneidet, blenden aus. Sonst stünde
-    // etwa „… wirft eine Bombe ein“ auf ihrem Zeichen, sobald sie über die Statuszeile rückt
-    if (fresh) fadeUnder(el);
+    // etwa „… wirft eine Bombe ein“ auf ihrem Zeichen, sobald sie über die Statuszeile rückt. Das gilt auch, wenn sie
+    // erst beim nächsten Zeichnen dorthin rückt
+    if (fresh || el.style.top !== top0) fadeUnder(el);
   }
   const now = el.classList.contains('band') ? 'band' : el.classList.contains('field') ? 'field' : '';
   for (const a of el.querySelectorAll<HTMLElement>('.ann')) {

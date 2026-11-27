@@ -1,6 +1,5 @@
 /* Reihenfolge ist wichtig: spätere Dateien überschreiben frühere. */
 @import './base.css';
-@import './table/tokens.css';
 @import './sticker.css';
 @import './start.css';
 @import './cards.css';
@@ -19,3 +18,12 @@
 @import './status.css';
 @import './result.css';
 @import './a11y.css';
+/* Sticker (Standard) und Kartenset Vinyl zuletzt, wie früher als nachgeladenes Stück. Legacy lädt nach
+ * (looks/legacy.css), das dunkle Thema ebenso (looks/dark.css). */
+@import './table/tokens-sticker.css';
+@import './table/cards-vinyl.css';
+@import './table/look-sticker.css';
+@import './table/sticker-shithead.css';
+@import './table/sticker-durak.css';
+@import './table/sticker-cabo.css';
+@import './table/sticker-schnautz.css';

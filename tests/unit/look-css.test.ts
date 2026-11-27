@@ -1,7 +1,7 @@
 /**
  * Vertrag der Looks am Tisch (Plan 2.8, Runde 1).
  *
- * - Die drei Token-Blöcke (Legacy auf :root, Sticker, Sticker dunkel) tragen dieselben Namen --tb-*.
+ * - Die drei Token-Blöcke (Sticker auf :root, Legacy, Sticker dunkel) tragen dieselben Namen --tb-*.
  *   Hilfswerte --st-* und --sn-* zählen nicht mit, --sn-* lebt nur im dunklen Block.
  * - Look-Dateien (Token-Dateien, looks/*.css, später table/sticker-*.css und table/look-sticker.css) setzen keine Maße.
  * - Tisch-CSS schreibt keine Farbwerte direkt, sondern liest Tokens. Ausgenommen ist jede Datei mit der Marke
@@ -16,8 +16,10 @@ import { GAMES } from '../../src/game/games';
 const STYLES = path.resolve(__dirname, '../../src/styles');
 const OPEN_MARK = '/* tb: offen */';
 
-const LEGACY = ':root';
-const STICKER = ":root[data-look='sticker']";
+const LEGACY = ":root[data-look='legacy']";
+const STICKER = ':root';
+/** Spielfarben unter Sticker: gilt auch ohne Attribut, nie unter Legacy */
+const STICKER_G = ":root:not([data-look='legacy'])";
 const DARK = ":root[data-look='sticker'][data-theme='dark']";
 const GAME_IS = `:is(${GAMES.map((g) => `.g-${g}`).join(', ')})`;
 
@@ -152,7 +154,7 @@ describe('Token-Blöcke', () => {
 
   it('stehen nur unter ihrem Selektor und setzen nur Custom Properties', () => {
     expect([...parsed.legacy.keys()]).toEqual([LEGACY]);
-    expect([...parsed.sticker.keys()]).toEqual([STICKER, `${STICKER} ${GAME_IS}`]);
+    expect([...parsed.sticker.keys()]).toEqual([STICKER, `${STICKER_G} ${GAME_IS}`]);
     expect([...parsed.dark.keys()]).toEqual([DARK, `${DARK} ${GAME_IS}`]);
     for (const file of Object.values(TOKEN_FILES)) {
       const root = parse(file);
@@ -179,7 +181,7 @@ describe('Token-Blöcke', () => {
 
   it('setzen an .g-<spiel> nur Namen aus dem Wortschatz, die fünf Spielfarben in beiden Sticker-Blöcken', () => {
     const five = ['--tb-accent', '--tb-brand-bg', '--tb-sheet-win-bg', '--tb-status-turn-bg', '--tb-tag-turn-bg'];
-    const st = tbNames(parsed.sticker.get(`${STICKER} ${GAME_IS}`) ?? []);
+    const st = tbNames(parsed.sticker.get(`${STICKER_G} ${GAME_IS}`) ?? []);
     const dk = tbNames(parsed.dark.get(`${DARK} ${GAME_IS}`) ?? []);
     expect(st).toEqual(five);
     expect(five.every((n) => dk.includes(n))).toBe(true);
@@ -214,11 +216,14 @@ describe('Token-Blöcke', () => {
     expect(leaks).toEqual([]);
   });
 
-  it('Legacy steht im Haupt-CSS direkt nach base.css, Sticker und Dunkel werden nachgeladen', () => {
+  it('Sticker und Vinyl stehen am Ende des Haupt-CSS, Legacy und Dunkel werden nachgeladen', () => {
     const imports = [...read('index.css').matchAll(/@import\s+'([^']+)'/g)].map((m) => m[1]);
-    expect(imports.slice(0, 3)).toEqual(['./base.css', './table/tokens.css', './sticker.css']);
-    expect(imports.some((i) => /tokens-|looks\//.test(i))).toBe(false);
-    expect(read('looks/sticker.css')).toContain("@import '../table/tokens-sticker.css';");
+    const tail = ['./table/tokens-sticker.css', './table/cards-vinyl.css', './table/look-sticker.css'];
+    expect(imports.slice(-7, -4)).toEqual(tail);
+    // Reihenfolge wie im früheren Stück looks/sticker.css
+    expect(imports.slice(-4)).toEqual(['shithead', 'durak', 'cabo', 'schnautz'].map((g) => `./table/sticker-${g}.css`));
+    expect(imports.some((i) => /tokens(?:-dark)?\.css|looks\//.test(i))).toBe(false);
+    expect(read('looks/legacy.css')).toContain("@import '../table/tokens.css';");
     expect(read('looks/dark.css')).toContain("@import '../table/tokens-dark.css';");
   });
 });
@@ -228,8 +233,8 @@ describe('Look-Dateien', () => {
     (f) => /^table\/(?:tokens-[\w-]+|sticker-[\w-]+|look-sticker)\.css$/.test(f) || f.startsWith('looks/'),
   );
 
-  it('gibt es für Sticker und Dunkel', () => {
-    expect(files).toEqual(expect.arrayContaining([TOKEN_FILES.sticker, TOKEN_FILES.dark, 'looks/sticker.css']));
+  it('gibt es für Sticker, Legacy und Dunkel', () => {
+    expect(files).toEqual(expect.arrayContaining([TOKEN_FILES.sticker, TOKEN_FILES.dark, 'looks/legacy.css']));
   });
 
   it('setzen keine Maße', () => {

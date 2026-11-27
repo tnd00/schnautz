@@ -9,18 +9,19 @@
  * Ohne Ordner gilt dist. Mit --clean wird der Ordner danach gelöscht (für npm run size, das in dist-size baut).
  * Die Grenzen stehen unten, angehoben werden sie nur mit gutem Grund (etwa wenn ein Teil nachgeladen wird).
  *
- * Dazu meldet es ohne Grenze die nachgeladenen CSS-Stücke (bis Runde 6 von 2.8 nur zur Info): jedes weitere
- * Stylesheet im Build und jeden Einstieg aus src/styles/looks, der noch in keinem Stück des Builds steckt
- * (dann mit lightningcss gebündelt und verkleinert, wie Vite es täte).
+ * Das Legacy-Stück (assets/legacy-*.css aus src/styles/looks/legacy.css) hat eine eigene Grenze, fehlt es, ist das
+ * ein Befund. Die übrigen nachgeladenen CSS-Stücke meldet es ohne Grenze.
  */
 import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 /** Grenzen in kB (1000 Bytes) nach gzip */
 // CSS 44 kB: vom User am 27.11.2026 freigegeben, damit Sticker und Vinyl ohne Nachladen im Haupt-CSS stehen (Runde 6)
-const LIMITS = { js: 175, css: 44 };
+// legacy 4 kB: Tokens und Filz-Dekor des Legacy-Designs, nachgeladen (Plan 2.8 legacy.md 13.5)
+// JS 176 kB: Look, Deck und Paletten (Runde 6 von 2.8) brauchen 0,4 kB. Notfalls bis 185 kB freigegeben (User 25.11.2026),
+// die Grenze bleibt bei 176 kB, das reicht auch für den TURN-Hotfix (rund 0,4 kB)
+const LIMITS = { js: 176, css: 44, legacy: 4 };
 
 const args = process.argv.slice(2);
 const clean = args.includes('--clean');
@@ -28,7 +29,6 @@ const flagged = args.indexOf('--dist');
 const dir = resolve(flagged >= 0 ? args[flagged + 1] : (args.find((a) => !a.startsWith('--')) ?? 'dist'));
 
 const kB = (n) => (n / 1000).toFixed(1).replace('.', ',');
-const LOOKS = fileURLToPath(new URL('../src/styles/looks/', import.meta.url));
 
 /** Alle Dateien mit Endung ext unter d, rekursiv */
 function filesIn(d, ext) {
@@ -37,33 +37,26 @@ function filesIn(d, ext) {
   );
 }
 
-/** Meldet nachgeladene CSS-Stücke ohne Grenze. main ist der Pfad des Haupt-Stylesheets */
+/** Prüft das Legacy-Stück und meldet die übrigen nachgeladenen CSS-Stücke. main ist das Haupt-Stylesheet. Liefert
+ * die Zahl der Befunde */
 async function lazyCss(main) {
   const built = filesIn(dir, '.css').filter((f) => f !== main);
+  const legacy = built.filter((f) => /^legacy-[\w-]+\.css$/.test(basename(f)));
+  let bad = legacy.length === 1 ? 0 : 1;
+  if (bad) console.error(`Legacy-Stück: ${legacy.length} statt genau einer Datei legacy-*.css im Build`);
   for (const f of built) {
     const raw = readFileSync(f);
     const gz = gzipSync(raw, { level: 9 }).byteLength;
-    console.log(`info  nachgeladen ${relative(dir, f)}: ${kB(raw.byteLength)} kB roh, ${kB(gz)} kB gzip, ohne Grenze`);
-  }
-  if (!existsSync(LOOKS)) return;
-  const names = built.map((f) => basename(f));
-  const open = filesIn(LOOKS, '.css').filter((f) => !names.some((n) => n.startsWith(`${basename(f, '.css')}-`)));
-  if (!open.length) return;
-  let bundle;
-  try {
-    ({ bundle } = await import('lightningcss'));
-  } catch {
-    console.log('info  lightningcss fehlt, Einstiege aus src/styles/looks nicht gemessen');
-    return;
-  }
-  for (const f of open) {
-    const { code } = bundle({ filename: f, minify: true });
-    const gz = gzipSync(code, { level: 9 }).byteLength;
+    const own = legacy.includes(f);
+    const over = own && gz > LIMITS.legacy * 1000;
+    if (over) bad++;
+    const limit = own ? `Grenze ${LIMITS.legacy} kB` : 'ohne Grenze';
     console.log(
-      `info  Einstieg looks/${basename(f)} (noch nicht im Build): ${kB(code.byteLength)} kB roh, ${kB(gz)} kB gzip, ` +
-        'ohne Grenze',
+      `${over ? 'ZU GROSS' : own ? 'ok' : 'info'}  nachgeladen ${relative(dir, f)}: ${kB(raw.byteLength)} kB roh, ` +
+        `${kB(gz)} kB gzip, ${limit}`,
     );
   }
+  return bad;
 }
 
 async function check() {
@@ -118,7 +111,7 @@ async function check() {
         `Grenze ${LIMITS[p.kind]} kB`,
     );
   }
-  await lazyCss(mainCss);
+  bad += await lazyCss(mainCss);
   return bad ? 1 : 0;
 }
 

@@ -94,6 +94,8 @@ export function asSavedGuest(x: unknown): SavedGuest | null {
 export interface Prefs {
   /** Tisch im Sticker-Look oder im Legacy-Design */
   look: 'sticker' | 'legacy';
+  /** Kartendeck in beiden Looks: Vinyl oder das klassische aus cards.css */
+  deck: 'vinyl' | 'classic';
   /** wirkt nur unter Sticker, der Schalter steht in 2.8 nur im Dev-Menü */
   theme: 'light' | 'dark';
   /** Ruhig: auto folgt prefers-reduced-motion */
@@ -108,12 +110,10 @@ export interface Prefs {
   turnTone: 'always' | 'away' | 'off';
 }
 
-/**
- * Standard je Vorliebe. Der Look ist bis Runde 6 Legacy, danach Sticker. DEFAULT_LOOK in src/ui/look.ts liest den Wert
- * von hier, damit es nur eine Stelle gibt.
- */
+/** Standard je Vorliebe, für alle Sticker mit Vinyl. DEFAULT_LOOK in src/ui/look.ts liest den Wert von hier. */
 export const PREFS_DEFAULT: Readonly<Prefs> = {
-  look: 'legacy',
+  look: 'sticker',
+  deck: 'vinyl',
   theme: 'light',
   calm: 'auto',
   drag: true,
@@ -137,6 +137,7 @@ export function asPrefs(x: unknown): Prefs {
   const vol = o.volume;
   return {
     look: oneOf(o.look, ['sticker', 'legacy'], d.look),
+    deck: oneOf(o.deck, ['vinyl', 'classic'], d.deck),
     theme: oneOf(o.theme, ['light', 'dark'], d.theme),
     calm: oneOf(o.calm, ['auto', 'on', 'off'], d.calm),
     drag: boolOr(o.drag, d.drag),

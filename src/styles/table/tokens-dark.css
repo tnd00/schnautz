@@ -27,7 +27,6 @@
     radial-gradient(115% 62% at 4% -6%, rgba(130, 126, 255, 0.3) 0%, rgba(130, 126, 255, 0) 55%),
     radial-gradient(90% 70% at 104% 108%, rgba(6, 5, 34, 0.6) 0%, rgba(6, 5, 34, 0) 64%), var(--sn-ground);
   --tb-ground-base: var(--sn-ground);
-  --tb-ground-grain: 0;
   --tb-text: var(--sn-text);
   --tb-text-soft: var(--sn-soft);
   --tb-ink: var(--sn-text);

@@ -18,7 +18,9 @@ export function showScreen(name: Screen): void {
   // Am Tisch passt mobil alles auf einen Bildschirm, ohne Scrollen
   document.body.classList.toggle('ingame', name === 'game');
   // Browserleiste in der Farbe des Grundes (look.ts)
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColorOf(prefs().look, name));
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', themeColorOf(prefs().look, name, prefs().theme === 'dark'));
   document.body.classList.toggle('inlobby', name === 'lobby');
   document.body.classList.toggle('onstart', name === 'start');
   if (name !== 'start') document.body.classList.remove('startform');

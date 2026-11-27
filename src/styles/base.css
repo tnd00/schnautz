@@ -77,23 +77,23 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.22;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
+/* Flächen über dem Grund: Glanz im Rahmen (sticker.css), Filzrauschen und Vignette am Legacy-Tisch (looks/legacy.css,
+ * ::after entsteht erst dort mit content) */
+body::before,
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+}
+body::after {
+  content: none;
+}
+/* Legacy: Tisch erst zeigen, wenn Farben und Dekor nachgeladen sind. look.ts setzt look-ready, spätestens nach
+ * 3 Sekunden. visibility lässt Messungen weiterlaufen, der Filz von body bleibt sichtbar. */
+:root[data-look='legacy']:not(.look-ready) body.ingame :is(#app, #overlay, #zer, #announce, #fly, .toasts, .netbar) {
+  visibility: hidden;
 }
 button,
 input {

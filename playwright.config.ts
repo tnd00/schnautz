@@ -6,8 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
  * Lokal kann PW_CHROME auf ein installiertes Chrome zeigen, sonst nimmt Playwright sein eigenes Chromium.
  * PW_PORT, PEER_PORT und PW_DIST erlauben mehrere Läufe nebeneinander (eigene Ports, eigener Build-Ordner).
  * PW_FAST=1 baut ohne Typprüfung, damit halbfertige Dateien anderer Arbeiten einen Einzellauf nicht blockieren.
- * PW_LOOK und PW_THEME legen schnautz:look und schnautz:theme für alle Specs vorab in localStorage (fit.spec prüft
- * zusätzlich, ob der Look ankommt).
+ * PW_LOOK, PW_DECK und PW_THEME legen schnautz:design, schnautz:deck und schnautz:theme für alle Specs vorab in
+ * localStorage (fit.spec prüft zusätzlich, ob der Look ankommt). Ohne sie gilt der Standard, Sticker mit Vinyl.
  */
 const PORT = Number(process.env.PW_PORT ?? 4173);
 const PEER_PORT = Number(process.env.PEER_PORT ?? 9000);
@@ -18,7 +18,8 @@ const BUILD = process.env.PW_FAST
 // Chrome verweigert seine Sandbox als root (CI-Container); auf dem Mac bleibt sie an
 const noSandbox = !!process.env.CI || process.getuid?.() === 0;
 const PRESET = [
-  ['schnautz:look', process.env.PW_LOOK],
+  ['schnautz:design', process.env.PW_LOOK],
+  ['schnautz:deck', process.env.PW_DECK],
   ['schnautz:theme', process.env.PW_THEME],
 ].flatMap(([name, v]) => (v ? [{ name: name as string, value: JSON.stringify(v) }] : []));
 

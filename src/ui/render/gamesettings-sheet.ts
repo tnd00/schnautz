@@ -122,7 +122,8 @@ function bodyHTML(r: Rules, g: GameKind, edit: boolean, flip: boolean): string {
 /** Was zuletzt im Bogen stand: Neu gezeichnet wird nur, wenn sich etwas geändert hat. */
 const GS = { g: '' as GameKind | '', html: '', lives: 0 };
 
-const paper = (): HTMLElement | null => $opt('#modal .paper.gset');
+// Nur der Spiel-Bogen trägt data-g, „Bedienung“ und „Design“ nutzen dieselben Zeilen (.gset) und bleiben unberührt
+const paper = (): HTMLElement | null => $opt('#modal .paper.gset[data-g]');
 
 /** Kopfzeile unter dem Titel: Gäste erfahren, warum sie nichts schalten können. */
 function headHTML(v: View, edit: boolean): string {
@@ -161,7 +162,7 @@ export function openGameSettings(v: View, g: GameKind): void {
     head: headHTML(v, edit),
     body: html,
   });
-  paper()?.setAttribute('data-g', game);
+  box.querySelector('.paper')?.setAttribute('data-g', game);
 }
 
 /** Welches Bedienelement den Fokus hat, als Selektor, damit es nach dem Neuzeichnen wieder gefunden wird. */

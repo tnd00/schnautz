@@ -60,8 +60,8 @@ import { LS, SS } from './storage';
 import { closePick, openPick, placePick, sendToss, TOSS } from './toss';
 import { dkButton, dkTapHand, dkTapTable } from './durak/input';
 import { cbButton, cbTapMine, cbTapOpp } from './cabo/input';
-import { setLook } from './look';
-import { openPrefs, prefs } from './prefs';
+import { openDesign } from './look';
+import { openPrefs } from './prefs';
 import { dragCancel } from './table/drag';
 import { dragOn } from './table/index';
 
@@ -600,9 +600,9 @@ function onAction(a: string, t: HTMLElement, viaCar = false): void {
     case 'updates':
       openUpdates(() => ($('#menu').hidden = true));
       break;
-    case 'look':
+    case 'design':
       $('#menu').hidden = true;
-      setLook(prefs().look === 'legacy' ? 'sticker' : 'legacy');
+      openDesign();
       break;
     case 'prefs':
       $('#menu').hidden = true;
@@ -1105,8 +1105,6 @@ export function initEvents(): void {
   $('#btn-board').onclick = () => {
     if (App.view) $('#modal').innerHTML = boardHTML(App.view);
   };
-  // Der Look-Schalter ist bis zum Umschaltschritt nur beim Entwickeln zu sehen (Plan 4.2)
-  if (import.meta.env.DEV) $('#menu-look').hidden = false;
   $('#btn-menu').onclick = () => {
     const m = $('#menu');
     $('#menu-dev').hidden = !LS.get('dev', false);

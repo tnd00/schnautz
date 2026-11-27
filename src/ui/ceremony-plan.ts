@@ -5,6 +5,7 @@
  */
 import { LOSER_NAME, unreachable } from '../game/games';
 import type { Card, GameKind, LogEntry, View } from '../game/types';
+import type { PaletteName } from './look';
 
 /** Zusätzliche Flugzeit der entscheidenden Karte in Zeitlupe */
 export const ZER_SLOW_FLIGHT_MS = 1500;
@@ -31,8 +32,8 @@ export interface Stage {
   /** Titel in der Meldung */
   what: string;
   tone: 'brown' | 'red' | 'gold';
-  /** Farben des Konfettis */
-  colors: readonly string[];
+  /** Farben des Konfettis, je Look aus paletteOf (src/ui/look.ts) */
+  palette: PaletteName;
   /** Posaune bei Schande, Fanfare bei Krönung */
   sfx: 'trombone' | 'crown';
   /** Spruchtöpfe, `stays` wenn der Cabo-König die Krone verteidigt */
@@ -46,12 +47,6 @@ export interface Stage {
 }
 
 export type CeremonyPlan = { kind: 'none' } | Stage;
-
-const BROWN = ['#9c6b3a', '#b07a42', '#c08a50', '#d9a96b', '#e8c9a0'];
-/** Narrenfarben für den Durak */
-const JESTER = ['#e0362b', '#f3cd7d', '#2e8b57', '#4a6fd1', '#f6efdf', '#b3312a'];
-/** Gold für den Cabo-König */
-const GOLD = ['#f3cd7d', '#e8b64c', '#fff1c7', '#c9962e', '#f6efdf'];
 
 /** Zahl aus unsicherer Quelle, sonst 0 (wie `num` in src/ui/dom.ts) */
 const num = (x: unknown): number => {
@@ -100,7 +95,7 @@ export function planOf(game: GameKind): CeremonyPlan {
         mark: '💩',
         what: LOSER_NAME.shithead,
         tone: 'brown',
-        colors: BROWN,
+        palette: 'brown',
         sfx: 'trombone',
         taunts: { self: 'shLoserSelf', other: 'shLoserOther' },
         count: (v, id) => num(seat(v, id)?.shc),
@@ -115,7 +110,7 @@ export function planOf(game: GameKind): CeremonyPlan {
         mark: '🤡',
         what: LOSER_NAME.durak,
         tone: 'red',
-        colors: JESTER,
+        palette: 'jester',
         sfx: 'trombone',
         taunts: { self: 'dkLoserSelf', other: 'dkLoserOther' },
         count: (v, id) => num(seat(v, id)?.dkc),
@@ -131,7 +126,7 @@ export function planOf(game: GameKind): CeremonyPlan {
         mark: '👑',
         what: 'Cabo-König',
         tone: 'gold',
-        colors: GOLD,
+        palette: 'gold',
         sfx: 'crown',
         taunts: { self: 'cbKingSelf', other: 'cbKingOther', stays: 'cbKingStays' },
         count: (v, id) => num(seat(v, id)?.stats?.cabo?.wins),

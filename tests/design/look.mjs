@@ -5,12 +5,13 @@
  *
  *   node tests/design/look.mjs [--update] [--ref=tests/design/legacy-ref.json] [--games=shithead,durak,cabo,schnautz]
  *     [--states=lobby,swap,turn,menu,modal,msg,wait,round,over] [--sizes=390x844,1280x860] [--seats=4]
- *     [--look=legacy] [--theme=light] [--out=DIR] [--port=5173] [--peer=9000] [--serve] [--shots]
+ *     [--look=legacy] [--deck=classic] [--theme=light] [--out=DIR] [--port=5173] [--peer=9000] [--serve] [--shots]
  *
  * Mit `--update` schreibt es die Referenz neu, sonst vergleicht es dagegen und listet jede Abweichung als Befund
  * (Ausgangscode 1). Rollen, die in einem Lauf fehlen (etwa keine Kachel am Zug), werden nicht verglichen, nur
  * vermerkt. Farben werden vorher in Zahlen umgerechnet (`color(srgb …)`, `oklab`, `oklch` wie `rgb`) und mit Toleranz
- * verglichen. `--look` und `--theme` setzen `schnautz:look` und `schnautz:theme` vor dem Laden (je ein Wert).
+ * verglichen. `--look`, `--deck` und `--theme` setzen `schnautz:design`, `schnautz:deck` und `schnautz:theme` vor dem
+ * Laden (je ein Wert). Die Referenz gilt für Legacy mit klassischen Karten, deshalb ist das der Standard hier.
  *
  * Damit Karten und KIs bei jedem Lauf gleich fallen, ersetzt das Skript `Math.random` durch einen festen Zufall je
  * Spiel. Während der Messung sind Animationen und Übergänge kurz abgeschaltet, gemessen wird also der Ruhezustand.
@@ -49,7 +50,8 @@ const games = arg('games', 'shithead,durak,cabo,schnautz').split(',');
 const states = arg('states', 'lobby,swap,turn,menu,modal,msg,wait,round,over').split(',');
 const sizes = sizeList(arg('sizes', '390x844,1280x860'));
 const seats = Number(arg('seats', '4'));
-const look = arg('look', process.env.LOOK ?? '') || null;
+const look = arg('look', process.env.LOOK ?? 'legacy') || null;
+const deck = arg('deck', process.env.DECK ?? (look === 'legacy' ? 'classic' : '')) || null;
 const theme = arg('theme', process.env.THEME ?? '') || null;
 const REF = arg('ref', join(REPO, 'tests/design/legacy-ref.json'));
 const UPDATE = flag('update');
@@ -525,7 +527,7 @@ async function take(page, game, state, size, extra = '') {
 }
 
 async function run(browser, game, group) {
-  const ctx = await context(browser, group[0], { look, theme });
+  const ctx = await context(browser, group[0], { look, theme, deck });
   await seedRandom(ctx, seedOf(game));
   const page = watchErrors(await ctx.newPage(), game, errors);
   const each = async (fn) => {

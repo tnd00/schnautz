@@ -1,8 +1,11 @@
 /*
- * Vorlieben pro Gerät (Plan 2.8 Abschnitt 8, gefuehl.md 3.7): Look, Thema, Ruhig, Karten ziehen, Vibration,
- * Lautstärke und Zug-Ton. Look und Thema stehen einzeln unter `look` und `theme` im Speicher (so setzen sie auch
- * tests/e2e/fit.spec.ts und tests/design), alles Übrige als ein Objekt unter `prefs`. Geprüft wird mit asPrefs aus
- * src/net/protocol.ts.
+ * Vorlieben pro Gerät (Plan 2.8 Abschnitt 8, gefuehl.md 3.7): Look, Kartendeck, Thema, Ruhig, Karten ziehen,
+ * Vibration, Lautstärke und Zug-Ton. Look, Deck und Thema stehen einzeln im Speicher (so setzen sie auch die Tests und
+ * tests/design), alles Übrige als ein Objekt unter `prefs`. Geprüft wird mit asPrefs aus src/net/protocol.ts.
+ *
+ * Der Look steht unter `design`. Unter `look` lag er, solange Legacy Standard war (vor Runde 6 von 2.8): Dort steht
+ * meist nur der alte Standard und keine bewusste Wahl, deshalb wird der Schlüssel nicht mehr gelesen und alle
+ * bekommen Sticker. Wer jetzt im Bogen „Design“ wählt, landet unter `design` (Migration, tests/unit/prefs.test.ts).
  *
  * Ruhig hat eine Quelle, die Klasse `calm` an html: applyCalm setzt sie, reduceMotion() in dom.ts und das CSS
  * (`:where(html.calm)`) lesen sie. Der Bogen „Bedienung“ lädt nach (src/ui/render/prefs.ts).
@@ -12,27 +15,33 @@ import { LS } from './storage';
 
 export type { Prefs } from '../net/protocol';
 
-/** Das Objekt unter `prefs` ohne Look und Thema, kaputt oder fehlend ist es leer */
+/** Was nicht im Speicher ankam (gesperrt oder voll), gilt bis zum Neuladen */
+const session = new Map<string, unknown>();
+const read = (k: string): unknown => (session.has(k) ? session.get(k) : LS.get<unknown>(k, null));
+function keep(k: string, v: unknown): void {
+  LS.set(k, v);
+  if (JSON.stringify(LS.get<unknown>(k, null)) === JSON.stringify(v)) session.delete(k);
+  else session.set(k, v);
+}
+
+/** Das Objekt unter `prefs` ohne Look, Deck und Thema, kaputt oder fehlend ist es leer */
 function stored(): Record<string, unknown> {
-  const raw = LS.get<unknown>('prefs', null);
-  return raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const raw = read('prefs');
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const rest = { ...(raw as Record<string, unknown>) };
+  for (const k of ['look', 'deck', 'theme']) delete rest[k];
+  return rest;
 }
 
 /** Alle Vorlieben, geprüft */
 export function prefs(): Prefs {
-  return asPrefs({ ...stored(), look: LS.get<unknown>('look', null), theme: LS.get<unknown>('theme', null) });
+  return asPrefs({ ...stored(), look: read('design'), deck: read('deck'), theme: read('theme') });
 }
 
 /** Eine Vorliebe speichern */
 export function setPref<K extends keyof Prefs>(k: K, val: Prefs[K]): void {
-  if (k === 'look' || k === 'theme') {
-    LS.set(k, val);
-    return;
-  }
-  const rest = stored();
-  delete rest.look;
-  delete rest.theme;
-  LS.set('prefs', { ...rest, [k]: val });
+  if (k === 'look' || k === 'deck' || k === 'theme') keep(k === 'look' ? 'design' : k, val);
+  else keep('prefs', { ...stored(), [k]: val });
 }
 
 const SYS_CALM = '(prefers-reduced-motion: reduce)';

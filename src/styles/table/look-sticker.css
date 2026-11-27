@@ -1,7 +1,7 @@
 /*
- * Haut des Sticker-Looks für alle Tische (Plan 2.8 Runde 3, Skizze .impeccable/mocks/table). Lädt nur über
- * looks/sticker.css, jede Regel hängt zusätzlich an :root[data-look='sticker'], damit nach einem Wechsel zu Legacy
- * nichts hängen bleibt. Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße (tests/unit/look-css.test.ts).
+ * Haut des Sticker-Looks für alle Tische (Plan 2.8 Runde 3, Skizze .impeccable/mocks/table). Steht am Ende des
+ * Haupt-CSS, jede Regel hängt zusätzlich an :root[data-look='sticker'], damit unter Legacy nichts davon wirkt.
+ * Was das Kartendeck meint (Rückseite, Kartenrot), liest --card-* aus cards.css oder table/cards-vinyl.css. Nur Farbe, Material, Schrift, Schatten und rotate, keine Maße (tests/unit/look-css.test.ts).
  *
  * Stanzrand: ein Innenschatten in der Breite --tb-cut, nie ein Rahmen, so bleibt die Geometrie beider Looks gleich.
  * Neigung: rotate mal --tb-tilt, höchstens 3 Grad. Spielfarbe nur über die fünf Tokens an .g-<spiel>.
@@ -15,11 +15,6 @@
   background: var(--tb-ground);
   background-color: var(--tb-ground-base);
   color: var(--tb-text);
-}
-/* Rauschen und Vignette gibt es nur im Legacy-Look */
-:root[data-look='sticker'] body.ingame::before,
-:root[data-look='sticker'] body.ingame::after {
-  opacity: var(--tb-ground-grain);
 }
 :root[data-look='sticker'][data-theme='dark'] body.ingame {
   color-scheme: dark;
@@ -606,7 +601,7 @@
 }
 
 /* ---------- Reaktionen: Kopf und Wurf-Chips ---------- */
-:root[data-look='sticker'] body.ingame :is(.ehead, .xbtn) {
+:root[data-look='sticker'] body.ingame .ehead {
   color: var(--tb-fx-emotes-text);
 }
 :root[data-look='sticker'] body.ingame .emotes .etab.on {
@@ -617,11 +612,6 @@
 }
 :root[data-look='sticker'] body.ingame .erow.cool::after {
   background: var(--tb-turn-line);
-}
-:root[data-look='sticker'] body.ingame .outrow .chip {
-  color: var(--tb-seat-text);
-  background: var(--tb-seat-bg);
-  box-shadow: var(--tb-edge), var(--tb-shadow-flat);
 }
 
 /* ---------- Seitenleiste am PC: Sonderkarten, Verlauf und Chat ---------- */

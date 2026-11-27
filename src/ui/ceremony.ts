@@ -16,6 +16,8 @@ import { render } from './render/index';
 import { renderLog } from './render/log';
 import { SEQ } from './shithead/sequence';
 import { planOf, type Stage, ZER_REVEAL_MS } from './ceremony-plan';
+import { paletteOf, sparkOf } from './look';
+import { prefs } from './prefs';
 import { sfx } from './sound';
 import { taunt } from './taunts';
 
@@ -157,8 +159,12 @@ function reveal(v: View, pid: string, gen: number): void {
     const first = firstOf(v) === App.me || (crown && pid === App.me);
     setTimeout(() => {
       if (gen !== ZER.gen || !ZER.on) return;
+      const l = prefs().look;
+      const colors = paletteOf(l, look.palette);
+      // Wer den Titel zum ersten Mal hat, bekommt zusätzlich Funken
+      const spark = sparkOf(l, crown);
       confetti({
-        colors: first ? [...look.colors, '#f3cd7d', '#f3cd7d'] : [...look.colors],
+        colors: first ? [...colors, spark, spark] : [...colors],
         n: 80,
         dur: [3200, 1400],
         extra: [{ ch: look.mark, n: loser || (crown && pid === App.me) ? 12 : 4 }],

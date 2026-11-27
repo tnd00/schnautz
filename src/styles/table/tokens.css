@@ -1,14 +1,14 @@
 /*
- * Wortschatz am Tisch (--tb-*), Legacy-Werte. Steht im Haupt-CSS direkt nach base.css.
+ * Wortschatz am Tisch (--tb-*), Legacy-Werte. Lädt nach über looks/legacy.css, sobald jemand das Legacy-Design wählt.
  *
  * Bausteine lesen Farben, Schatten und Schriftschnitte nur über diese Namen, nie über --felt, --brass, --cream oder
- * --st-* direkt. Der nackte :root trägt den heutigen Tisch, :root[data-look='sticker'] (table/tokens-sticker.css) und
- * :root[data-look='sticker'][data-theme='dark'] (table/tokens-dark.css) tragen dieselben Namen mit eigenen Werten
- * (Parität prüft tests/unit/look-css.test.ts). Neue Namen kommen nur über den Zusammenführer in alle drei Dateien.
- * Geometrie steht in keinem Token, außer Rundungen und --tb-cut. Deckkraft-Stufen entstehen per color-mix() aus
- * einem Token. Werte nach .impeccable/mocks/table/tokens.md, in Runde 1 liest noch keine Regel sie.
+ * --st-* direkt. Der nackte :root trägt den Standard Sticker (table/tokens-sticker.css, im Haupt-CSS), dieser Block
+ * unter :root[data-look='legacy'] und :root[data-look='sticker'][data-theme='dark'] (table/tokens-dark.css) tragen
+ * dieselben Namen mit eigenen Werten (Parität prüft tests/unit/look-css.test.ts). Neue Namen kommen immer in alle drei
+ * Dateien. Geometrie steht in keinem Token, außer Rundungen und --tb-cut. Deckkraft-Stufen entstehen per color-mix()
+ * aus einem Token. Ohne das Attribut wirkt der Block nicht, nach dem Zurückschalten bleibt also nichts hängen.
  */
-:root {
+:root[data-look='legacy'] {
   /* Grund, Schrift und Bedeutung */
   --tb-ground: radial-gradient(
     110% 80% at 50% 38%,
@@ -17,7 +17,6 @@
     var(--felt-lo) 100%
   ); /* Grund hinter dem Tisch */
   --tb-ground-base: var(--felt-lo); /* Grundfarbe unter dem Verlauf */
-  --tb-ground-grain: 1; /* Rauschen und Vignette (Deckkraft 0 oder 1, Dekor nur Legacy), geschätzt */
   --tb-text: var(--cream); /* Schrift direkt auf dem Grund */
   --tb-text-soft: #b4cbc0; /* Nebentext */
   --tb-ink: var(--cream); /* Tinte für Zeichen auf hellen Bausteinen */

@@ -64,6 +64,17 @@ html.tb-dragging * {
   box-shadow: var(--tb-shadow);
   transition: box-shadow 320ms var(--tb-ease);
 }
+/* Rückseiten behalten ihren Rand aus dem Kartendeck (cards.css oder table/cards-vinyl.css) */
+.tb-ghost > .tb-ghost-c.back {
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.05) var(--card-back-rim),
+    var(--tb-shadow-lift);
+}
+.tb-ghost.tb-ghost-down > .tb-ghost-c.back {
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.05) var(--card-back-rim),
+    var(--tb-shadow);
+}
 
 /* Absichtsetikett: kleiner Tinten-Sticker über dem Geist */
 .tb-ghost-lbl {

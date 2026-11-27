@@ -5,9 +5,10 @@
  * deckt jeder Test beide Rollen ab und baut nur einen Tisch. Alle Prüfungen sind weich (expect.soft), ein roter Lauf
  * listet also jede Größe mit ihrem Befund.
  *
- * PW_LOOK und PW_THEME (etwa `PW_LOOK=legacy PW_THEME=dark npm run test:fit`) legen `schnautz:look` und
- * `schnautz:theme` vor dem ersten Laden in den Speicher, wie es `LS.set` täte. Ohne beide bleibt der Speicher leer
- * und die Seite nimmt ihren Standard.
+ * PW_LOOK, PW_DECK und PW_THEME (etwa `PW_LOOK=legacy PW_DECK=classic npm run test:fit`) legen `schnautz:design`,
+ * `schnautz:deck` und `schnautz:theme` vor dem ersten Laden in den Speicher, wie es `LS.set` täte. Ohne sie bleibt
+ * der Speicher leer und die Seite nimmt ihren Standard (Sticker mit Vinyl). Dann laufen Tisch und Ergebnisblatt
+ * zusätzlich in Legacy und der Shithead-Tisch einmal mit dem Deck Klassisch.
  */
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import {
@@ -38,26 +39,41 @@ const SHEET_PC = ['1280x720'];
 const GAMES = ['shithead', 'durak', 'cabo', 'schnautz'] as const;
 
 const LOOK = process.env.PW_LOOK || null;
+const DECK = process.env.PW_DECK || null;
 const THEME = process.env.PW_THEME || null;
-// Look und Thema stehen im Titel, damit Läufe nebeneinander im Bericht unterscheidbar bleiben
-const tag = [LOOK, THEME].filter(Boolean).join(' ');
-const named = (title: string) => (tag ? `${title} [${tag}]` : title);
+/** Look, Deck und Thema eines Laufs, null heißt Standard */
+type Variant = readonly [look: string | null, deck: string | null, theme: string | null];
+const ENV: Variant = [LOOK, DECK, THEME];
+const PRESET = ENV.some(Boolean);
+/** Ohne Vorgabe laufen Tisch und Ergebnisblatt in beiden Looks (legacy.md 13.2), mit Vorgabe nur in ihr */
+const LOOKS: Variant[] = PRESET ? [ENV] : [ENV, ['legacy', null, null]];
+// Look, Deck und Thema stehen im Titel, damit Läufe nebeneinander im Bericht unterscheidbar bleiben
+const named = (title: string, v: Variant = ENV) => {
+  const tag = v.filter(Boolean).join(' ');
+  return tag ? `${title} [${tag}]` : title;
+};
 
-/** Look und Thema vor dem ersten Laden setzen (nur mit PW_LOOK oder PW_THEME). */
-async function setLook(ctx: BrowserContext): Promise<void> {
-  if (!LOOK && !THEME) return;
+/** Look, Deck und Thema vor dem ersten Laden setzen (nur, wenn der Lauf etwas vorgibt). */
+async function setLook(ctx: BrowserContext, [LOOK, DECK, THEME]: Variant = ENV): Promise<void> {
+  if (!LOOK && !DECK && !THEME) return;
   await ctx.addInitScript(
-    ([l, t]) => {
-      if (l) localStorage.setItem('schnautz:look', JSON.stringify(l));
+    ([l, k, t]) => {
+      if (l) localStorage.setItem('schnautz:design', JSON.stringify(l));
+      if (k) localStorage.setItem('schnautz:deck', JSON.stringify(k));
       if (t) localStorage.setItem('schnautz:theme', JSON.stringify(t));
-      // Kommt der Look nicht an, misst der Lauf still Legacy: als Konsolenfehler melden, Errors lässt den Test scheitern
+      // Kommt der Look nicht an, misst der Lauf still den Standard: als Konsolenfehler melden, Errors lässt den Test
+      // scheitern
       addEventListener('load', () => {
         const d = document.documentElement.dataset;
-        if ((l && d.look !== l) || (t && l !== 'legacy' && d.look === 'sticker' && d.theme !== t))
-          console.error(`Look nicht angekommen: ${d.look}/${d.theme} statt ${l}/${t}`);
+        if (
+          (l && d.look !== l) ||
+          (k && d.deck !== k) ||
+          (t && l !== 'legacy' && d.look === 'sticker' && d.theme !== t)
+        )
+          console.error(`Look nicht angekommen: ${d.look}/${d.deck}/${d.theme} statt ${l}/${k}/${t}`);
       });
     },
-    [LOOK, THEME],
+    [LOOK, DECK, THEME],
   );
 }
 
@@ -66,7 +82,11 @@ const size = (s: string) => {
   return { width, height };
 };
 
-async function phoneCtx(browser: Browser, reducedMotion: 'reduce' | 'no-preference' = 'no-preference') {
+async function phoneCtx(
+  browser: Browser,
+  reducedMotion: 'reduce' | 'no-preference' = 'no-preference',
+  v: Variant = ENV,
+) {
   const ctx = await browser.newContext({
     viewport: size(PHONE[0]),
     deviceScaleFactor: 2,
@@ -75,14 +95,14 @@ async function phoneCtx(browser: Browser, reducedMotion: 'reduce' | 'no-preferen
     reducedMotion,
   });
   await unlockDev(ctx);
-  await setLook(ctx);
+  await setLook(ctx, v);
   return ctx;
 }
 
-async function pcCtx(browser: Browser) {
+async function pcCtx(browser: Browser, v: Variant = ENV) {
   const ctx = await browser.newContext({ viewport: size(PC[0]) });
   await unlockDev(ctx);
-  await setLook(ctx);
+  await setLook(ctx, v);
   return ctx;
 }
 
@@ -252,12 +272,12 @@ async function waitSheet(page: Page): Promise<void> {
 }
 
 /** Tisch zu acht: Gastgeber am PC, Gast am Handy übernimmt einen KI-Platz, danach Start. */
-async function tableOfEight(browser: Browser, errors: Errors, game: (typeof GAMES)[number]) {
-  const host = errors.watch(await (await pcCtx(browser)).newPage(), 'host');
+async function tableOfEight(browser: Browser, errors: Errors, game: (typeof GAMES)[number], v: Variant = ENV) {
+  const host = errors.watch(await (await pcCtx(browser, v)).newPage(), 'host');
   const code = await hostTable(host, 'Tahna');
   await chooseGame(host, game);
   await fillWithBots(host, 8);
-  const guest = errors.watch(await (await phoneCtx(browser)).newPage(), 'gast');
+  const guest = errors.watch(await (await phoneCtx(browser, 'no-preference', v)).newPage(), 'gast');
   await joinTable(guest, code, 'Lena');
   // Der Gast übernimmt einen KI-Platz, es bleiben acht
   await expect.poll(async () => (await view(host))?.players.filter((p) => !p.bot).length).toBe(2);
@@ -301,13 +321,19 @@ test(named('Lobby zu acht am PC: Partie starten liegt im Bild'), async ({ browse
   expect(errors.list).toEqual([]);
 });
 
-for (const game of GAMES) {
+/** Tisch: jedes Spiel in jedem Look, ohne Vorgabe dazu Shithead einmal mit dem Deck Klassisch */
+const TABLE_RUNS = [
+  ...LOOKS.flatMap((v) => GAMES.map((game) => ({ game, v }))),
+  ...(PRESET ? [] : [{ game: 'shithead' as const, v: [null, 'classic', null] as Variant }]),
+];
+
+for (const { game, v } of TABLE_RUNS) {
   test(
-    named(`${game} zu acht: Tauschrunde, Tisch und Menü passen, Gast am Handy und Gastgeber am PC`),
+    named(`${game} zu acht: Tauschrunde, Tisch und Menü passen, Gast am Handy und Gastgeber am PC`, v),
     async ({ browser }) => {
       test.setTimeout(3 * 60_000);
       const errors = new Errors();
-      const { host, guest } = await tableOfEight(browser, errors, game);
+      const { host, guest } = await tableOfEight(browser, errors, game, v);
 
       if (game === 'shithead') {
         await waitForPhase(guest, ['swap']);
@@ -345,39 +371,40 @@ for (const game of GAMES) {
 /** Welcher Zeitraffer zum Ergebnisblatt führt. Bei Schnautz zeigt nur das Rundenende alle acht Zeilen. */
 const SHEET_JUMP = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-round' } as const;
 
-for (const game of GAMES) {
-  // Alle vier Spiele zeichnen das gemeinsame Blatt (src/ui/render/result.ts): bis acht Leute scrollt am Handy nichts,
-  // auch nicht nach dem Bereitmelden, wenn der Wartetext in der Knopfreihe steht
-  test(named(`${game} zu acht: Ergebnisblatt zeigt eigene Zeile und Verlierer`), async ({ browser }) => {
-    test.setTimeout(3 * 60_000);
-    const errors = new Errors();
-    const { host, guest } = await tableOfEight(browser, errors, game);
-    await devJump(host, SHEET_JUMP[game]);
-    await waitSheet(guest);
-    for (const s of SHEET_PHONE) {
-      await resize(guest, s);
-      expect.soft(await sheetFindings(guest, true), `Ergebnis ${s}`).toEqual([]);
-    }
-    await waitSheet(host);
-    for (const s of SHEET_PC) {
-      await resize(host, s);
-      expect.soft(await sheetFindings(host, true), `Ergebnis PC ${s}`).toEqual([]);
-    }
-    // Der Gast meldet sich bereit, der Gastgeber noch nicht: Wartetext statt Knopf. Beim Rundenende läuft der
-    // Countdown, deshalb nur messen, solange das Blatt noch steht
-    const ready = guest.locator('#overlay .paper.result [data-act=ready]').first();
-    if (await ready.isVisible()) {
-      await ready.click();
-      await expect(guest.locator('#overlay .waittxt')).toBeVisible();
-    } else test.info().annotations.push({ type: 'Hinweis', description: 'Blatt schon weg, bereit nicht gemessen' });
-    for (const s of SHEET_PHONE) {
-      if (!(await guest.locator('#overlay .paper.result').isVisible())) break;
-      await resize(guest, s);
-      expect.soft(await sheetFindings(guest, true), `Ergebnis bereit ${s}`).toEqual([]);
-    }
-    expect(errors.list).toEqual([]);
-  });
-}
+for (const v of LOOKS)
+  for (const game of GAMES) {
+    // Alle vier Spiele zeichnen das gemeinsame Blatt (src/ui/render/result.ts): bis acht Leute scrollt am Handy nichts,
+    // auch nicht nach dem Bereitmelden, wenn der Wartetext in der Knopfreihe steht
+    test(named(`${game} zu acht: Ergebnisblatt zeigt eigene Zeile und Verlierer`, v), async ({ browser }) => {
+      test.setTimeout(3 * 60_000);
+      const errors = new Errors();
+      const { host, guest } = await tableOfEight(browser, errors, game, v);
+      await devJump(host, SHEET_JUMP[game]);
+      await waitSheet(guest);
+      for (const s of SHEET_PHONE) {
+        await resize(guest, s);
+        expect.soft(await sheetFindings(guest, true), `Ergebnis ${s}`).toEqual([]);
+      }
+      await waitSheet(host);
+      for (const s of SHEET_PC) {
+        await resize(host, s);
+        expect.soft(await sheetFindings(host, true), `Ergebnis PC ${s}`).toEqual([]);
+      }
+      // Der Gast meldet sich bereit, der Gastgeber noch nicht: Wartetext statt Knopf. Beim Rundenende läuft der
+      // Countdown, deshalb nur messen, solange das Blatt noch steht
+      const ready = guest.locator('#overlay .paper.result [data-act=ready]').first();
+      if (await ready.isVisible()) {
+        await ready.click();
+        await expect(guest.locator('#overlay .waittxt')).toBeVisible();
+      } else test.info().annotations.push({ type: 'Hinweis', description: 'Blatt schon weg, bereit nicht gemessen' });
+      for (const s of SHEET_PHONE) {
+        if (!(await guest.locator('#overlay .paper.result').isVisible())) break;
+        await resize(guest, s);
+        expect.soft(await sheetFindings(guest, true), `Ergebnis bereit ${s}`).toEqual([]);
+      }
+      expect(errors.list).toEqual([]);
+    });
+  }
 
 test(named('Schnautz am PC: Vorschau beim Tauschen schiebt die Reaktionsleiste nicht weg'), async ({ browser }) => {
   const errors = new Errors();

@@ -40,11 +40,15 @@ In VS Code schlägt das Projekt beim ersten Öffnen die passenden Erweiterungen 
 | `npm run format`     | Alles mit Prettier formatieren                                  |
 | `npm run check`      | Typen, Lint, Format und Unit-Tests auf einmal (wie in der CI)   |
 
-Für die Browser-Tests einmal `npx playwright install chromium` ausführen. Sie starten selbst einen lokalen PeerServer und brauchen deshalb kein Internet. Ports und Build-Ordner lassen sich mit `PW_PORT`, `PEER_PORT` und `PW_DIST` umstellen, etwa wenn Port 9000 belegt ist. Mess-Skripte für das Layout liegen in `tests/design` (Aufrufe in der README dort).
+Für die Browser-Tests einmal `npx playwright install chromium` ausführen. Sie starten selbst einen lokalen PeerServer und brauchen deshalb kein Internet. Ports und Build-Ordner lassen sich mit `PW_PORT`, `PEER_PORT` und `PW_DIST` umstellen, etwa wenn Port 9000 belegt ist. Mess-Skripte für das Layout liegen in `tests/design` (Aufrufe in der README dort). `PW_LOOK`, `PW_DECK` und `PW_THEME` legen Design, Kartendeck und Thema für einen Lauf fest, etwa `PW_LOOK=legacy npm run test:fit`. Ohne sie gilt Sticker mit Vinyl und `fit.spec.ts` misst Tisch und Ergebnisblatt in beiden Looks.
 
 ### Dev-Menü
 
 Zum Testen am Tisch gibt es ein verstecktes Menü, auch auf der veröffentlichten Seite. Unter ⋯ → Updates fünfmal schnell auf die Versionszeile ganz unten tippen, danach steht „Dev-Menü“ im Menü ⋯. Der Host kann dort Partien im Zeitraffer bis kurz vor das Ende spulen (etwa für die Shithead-Zeremonie), die KI werfen lassen sowie Effekte und Klänge bei allen abspielen. Dazu kommen ein Protokoll mit Fehlern und Verbindungsereignissen, der rohe Verlauf und Infos zu Version, Verbindung, Gerät und Ton. Gäste sehen Infos und Logs, Effekte laufen bei ihnen nur selbst.
+
+## Design und Kartendeck
+
+Im Menü ⋯ unter „Design“ wählt jede Person für ihr Gerät zwischen dem Sticker-Look (Standard) und dem Legacy-Design, dem Filztisch bis 2.7. Das Kartendeck wählt man getrennt davon, Vinyl (Standard) oder Klassisch. Die Wahl geht nie ins Netz, am selben Tisch kann also jede Person einen anderen Look haben. Sticker und beide Decks stehen im Haupt-CSS, Legacy und das dunkle Thema laden erst nach, wenn jemand sie wählt (`src/ui/look.ts`).
 
 ## Aufbau
 
