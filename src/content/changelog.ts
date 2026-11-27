@@ -30,7 +30,7 @@ export const CHANGELOG: readonly Release[] = [
           'Wer mit Vorleser spielt, hört, wann er dran ist, was ihn betrifft und warum ein Zug gerade nicht geht.',
           'Kleine Schrift am Tisch ist größer, etwa an den Plätzen und am Stapel. Bei Shithead lassen sich die Knöpfe leichter treffen.',
           'Bei Shithead steht die Zahl der Handkarten unten an jedem Platz, Krone und 💩 kleben auf der Ecke. So bleibt mehr Platz für den Namen.',
-          'Bei Shithead sagen gesperrte Knöpfe beim Antippen, warum es gerade nicht geht. Ausspielen und Aufnehmen bleiben immer an ihrem Platz und mit der Tastatur erreichst du jede Karte und jeden Knopf.',
+          'Bei Shithead sagen gesperrte Knöpfe beim Antippen, warum es gerade nicht geht. Ein Tipp kurz nach einem Wechsel der Knöpfe trifft nicht aus Versehen den falschen. Mit der Tastatur erreichst du jede Karte und jeden Knopf.',
           'Am PC zu acht überlappen die Plätze oben nicht mehr, auch nicht auf kleinen Bildschirmen.',
         ],
       },

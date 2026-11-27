@@ -238,6 +238,18 @@ describe('Knopfleiste', () => {
     barHTML({ btns: [B.btns[1], B.btns[0]] });
     expect(barGuard(B.btns[0].act)).toBe(true);
   });
+  it('kommt hinten einer dazu, rücken am Handy alle außer dem ersten', () => {
+    const C = { ...B.btns[0], act: 'shall' };
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    barHTML(B);
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    barHTML({ btns: [...B.btns, C] });
+    expect(barGuard(B.btns[0].act)).toBe(false);
+    expect(barGuard(B.btns[1].act)).toBe(true);
+    expect(barGuard(C.act)).toBe(true);
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    expect(barGuard(B.btns[1].act)).toBe(false);
+  });
 });
 
 describe('Tischmitte', () => {

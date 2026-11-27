@@ -405,6 +405,13 @@
     flex: 0 0 150px;
   }
 }
+/* Am Handy fällt der leere Platz weg: zwei Knöpfe je halb breit, sonst brechen „Aufnehmen (12)“ und Co. um.
+ * Kommt einer dazu, rücken die hinteren, dagegen sperrt barGuard sie kurz */
+@media (max-width: 960px) {
+  .me .actions.slots > .bslot {
+    display: none;
+  }
+}
 .btn.small {
   min-height: 34px;
   padding: 0 12px;
