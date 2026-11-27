@@ -19,7 +19,8 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 /** Grenzen in kB (1000 Bytes) nach gzip */
-const LIMITS = { js: 175, css: 40 };
+// CSS 44 kB: vom User am 27.11.2026 freigegeben, damit Sticker und Vinyl ohne Nachladen im Haupt-CSS stehen (Runde 6)
+const LIMITS = { js: 175, css: 44 };
 
 const args = process.argv.slice(2);
 const clean = args.includes('--clean');
