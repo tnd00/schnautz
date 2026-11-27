@@ -200,6 +200,10 @@ button.chip:hover {
 button.chip#netchip {
   cursor: pointer;
 }
+/* Am Tisch im Sticker-Look eckig wie Bestenliste und Menü daneben, nicht rund (User 27.11.2026) */
+:root[data-look='sticker'] body.ingame #netchip {
+  border-radius: 12px;
+}
 /* Ein Knopf für Tisch und Verbindung: sichtbar sind Punkt und Code, der Status steht für Screenreader dabei */
 .top .sr {
   position: absolute;
