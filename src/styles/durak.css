@@ -197,3 +197,8 @@
 :where(html.calm) .dkpair.target .dka {
   animation: none;
 }
+
+/* Krone, 💩 und KI kommen über den Zähler-Slot der Kachel und stehen wie in 2.7 vor dem Namen (bis 4b) */
+.opp.dk .ometa .marks {
+  order: -1;
+}

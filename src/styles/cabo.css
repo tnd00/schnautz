@@ -237,6 +237,10 @@
     0 0 0 2px var(--tb-accent),
     0 6px 12px color-mix(in srgb, var(--tb-shade) 45%, transparent);
 }
+/* Krone und KI stehen im Zähler-Slot der Kachel (src/ui/render/cabo.ts), bis 4b wie in 2.7 vor dem Namen */
+.opp.cb .ometa .marks {
+  order: -1;
+}
 .ometa .cbp {
   margin-left: 4px;
   padding: 1px 7px;
@@ -253,6 +257,9 @@
 .tag.king {
   background: color-mix(in srgb, var(--tb-accent) 22%, transparent);
   color: var(--tb-accent);
+}
+.opp.cb .tag.king {
+  white-space: nowrap;
 }
 
 /* Eigene Reihe */

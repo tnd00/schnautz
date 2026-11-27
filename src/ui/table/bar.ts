@@ -1,7 +1,6 @@
 /*
  * Baustein Knopfleiste (Plan 2.8 Abschnitt 8, geruest.md 3.6): feste Knopfplätze, Gründe über aria-disabled statt
- * `disabled` und eine Sperre gegen Tipps, die einem gerade getauschten Knopf galten. `BAR` ersetzt später App.dkBtn
- * und App.cbBtn und gilt dann für alle vier Spiele.
+ * `disabled` und eine Sperre gegen Tipps, die einem gerade getauschten Knopf galten. `BAR` gilt für alle vier Spiele.
  */
 import { TABLE } from '../../content/texts/table';
 import { esc } from '../dom';
@@ -16,12 +15,12 @@ export const BAR = { sig: '', prev: '', at: 0 };
 export const twoLabel = (long: string, short: string): string =>
   `<span class="blong">${long}</span><span class="bshort">${short}</span>`;
 
-/** Ein Knopf. Gesperrt bleibt er antippbar und nennt beim Tipp seinen Grund (außer im Übergang mit `hard`). */
+/** Ein Knopf. Gesperrt bleibt er antippbar und nennt beim Tipp seinen Grund. */
 export function btnHTML(b: BarButton): string {
   const why = b.ok ? null : whyText(b.why);
   return (
     `<button class="btn ${b.cls}${b.pulse ? ' pulse' : ''}" data-act="${b.act}" data-intent="${b.intent}"` +
-    (b.ok ? '' : b.hard ? ' disabled' : ' aria-disabled="true"') +
+    (b.ok ? '' : ' aria-disabled="true"') +
     (why ? ` aria-description="${esc(why)}"` : '') +
     (b.on != null ? ` aria-pressed="${b.on}"` : '') +
     (b.aria ? ` aria-label="${esc(b.aria)}"` : '') +

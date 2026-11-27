@@ -1,220 +1,257 @@
+/*
+ * Schnautz am Tisch (Plan 2.8 Runde 4a): liefert nur Modelle für die Bausteine in src/ui/table, renderTable zeichnet.
+ * Legacy sieht aus wie vorher. Die Leben stehen bis 4b in der Punkteleiste und im Zähler der Kachel, `value` bleibt
+ * leer. Krone und KI stehen wie bisher im Feld vor dem Namen (marksHTML im Zähler, fit-schnautz.css stellt es vor).
+ */
 import { handValue, szWhyNot } from '../../game/schnautz';
-import type { Card, HandValue, LifeChange, Player, SchnautzResult, View } from '../../game/types';
+import type { HandValue, LifeChange, Player, SchnautzResult, View } from '../../game/types';
 import { activeList } from '../../game/state';
 import { onlyBotsPlaying } from '../../game/games';
+import { rj } from '../../game/reject';
 import { App } from '../app';
 import { cardHTML, fmtVal, livesHTML, SWIM_ICON, valHTML } from '../cards';
-import { layoutOpps } from '../carousel';
-import { aimAttrs, marksHTML } from './marks';
-import { markClocks } from '../clock';
-import { markTosses } from '../toss';
-import { $, esc, listJoin, num } from '../dom';
-import { dealerId, myTurn, nameOf, pById, roundBest, schnautzResult, seatOrder, turnId } from '../helpers';
-import { botsOnlyHTML, renderResult, type Sheet, type SheetRow } from './result';
+import { marksHTML } from './marks';
+import { esc, listJoin, num } from '../dom';
+import { dealerId, myTurn, nameOf, pById, roundBest, schnautzResult, turnId } from '../helpers';
+import { botsOnlyHTML, type Sheet, type SheetRow } from './result';
 import { taunt } from '../taunts';
 import { ceremonyOn } from '../ceremony';
-import { endMain, renderStatus, turnMain, whoHTML, type Status } from '../status';
+import { endMain, turnMain, whoHTML, type Status } from '../status';
 import { OFFLINE_WAIT, offline, STATUS } from '../../content/texts/status';
 import { SZ_SHEET, SZ_STATUS } from '../../content/texts/status-schnautz';
-import { ctxOfView, rejectText } from '../../content/texts/reject';
-import type { OldTable } from '../table/spec';
+import { TABLE } from '../../content/texts/table';
+import { renderTable } from '../table/index';
+import { handHTML, whyText } from '../table/hand';
+import type { NewTable } from '../table/spec';
+import type { BarModel, CenterModel, HandCard, MeModel, MeState, SeatModel, SeatState, TagModel } from '../table/types';
 
-/** Schnautz-Tisch: Gegner, Mitte, Status und eigene Hand. */
-export function renderGame(v: View): void {
-  const tId = turnId(v);
-  const dId = dealerId(v);
-  const reveal: SchnautzResult | null = v.phase === 'end' || v.phase === 'over' ? schnautzResult(v) : null;
-  // Gegner
-  let oh = '';
-  seatOrder(v).forEach((p) => {
-    let cards = '';
-    const hidden = v.hands[p.id];
-    if (reveal?.hands[p.id]) cards = reveal.hands[p.id].map((c) => cardHTML(c)).join('');
-    else if (typeof hidden === 'number') {
-      for (let i = 0; i < hidden; i++)
-        cards += cardHTML(null, App.anim.deal ? 'deal' : '', 'style="--d:' + (i * 0.08 + 0.05) + 's"');
-    }
-    let tag = '';
-    const live = v.phase === 'choose' || v.phase === 'play';
-    if (p.out) tag = '';
-    else if (!live) tag = '';
-    else if (v.phase === 'play' && tId === p.id)
-      tag = '<span class="tag turn">ist dran<span class="thinking"><i></i><i></i><i></i></span></span>';
-    else if (v.phase === 'choose' && dId === p.id)
-      tag = '<span class="tag turn">gibt<span class="thinking"><i></i><i></i><i></i></span></span>';
-    else if (v.knocker === p.id) tag = '<span class="tag knock">hat geklopft</span>';
-    else if (dId === p.id) tag = '<span class="tag">gibt</span>';
-    const on = (v.phase === 'play' && tId === p.id) || (v.phase === 'choose' && dId === p.id);
-    let rcls = '';
-    if (reveal?.changes) {
-      if (reveal.changes[p.id]) rcls = ' rlose';
-      else if (roundBest(v).includes(p.id) && Object.keys(reveal.changes).length) rcls = ' rwin';
-    }
-    oh +=
-      '<div class="opp' +
-      (on ? ' turn' : '') +
-      (p.out ? ' out' : '') +
-      (!p.online ? ' offline' : '') +
-      rcls +
-      '" data-pid="' +
-      esc(p.id) +
-      '"' +
-      aimAttrs(p) +
-      '>' +
-      '<div class="ocards">' +
-      cards +
-      '</div><div class="ometa">' +
-      marksHTML(v, p) +
-      '<span class="nm">' +
-      esc(p.name) +
-      '</span>' +
-      livesHTML(p, v.rules) +
-      '</div>' +
-      (tag || '<span class="tag" style="visibility:hidden">.</span>') +
-      '</div>';
-  });
-  $('#opps').innerHTML = oh;
-  layoutOpps(v);
+/** Teile eines Vorlesesatzes, leere fallen weg */
+const said = (...xs: (string | false | null | undefined)[]): string => xs.filter(Boolean).join(', ');
 
-  // Mitte
+const cl = (...xs: (string | false | null | undefined)[]): string => xs.filter(Boolean).join(' ');
+
+const isLive = (v: View): boolean => v.phase === 'choose' || v.phase === 'play';
+
+/** Wer gerade gefragt ist: beim Wählen der Geber, im Spiel wer dran ist */
+const actor = (v: View): string | null => (v.phase === 'choose' ? dealerId(v) : v.phase === 'play' ? turnId(v) : null);
+
+/** Aufgedeckte Runde am Rundenende und Partieende */
+const revealOf = (v: View): SchnautzResult | null =>
+  v.phase === 'end' || v.phase === 'over' ? schnautzResult(v) : null;
+
+/** Am Rundenende: hat verloren oder lag vorn (alte Klassen rlose und rwin) */
+function roundMark(v: View, r: SchnautzResult | null, id: string): 'win' | 'lose' | null {
+  if (!r?.changes) return null;
+  if (r.changes[id]) return 'lose';
+  return roundBest(v).includes(id) && Object.keys(r.changes).length ? 'win' : null;
+}
+
+const livesSay = (p: Player): string => (p.out ? 'raus' : p.lives === 0 ? 'schwimmt' : `${num(p.lives)} Leben`);
+
+const back = (deal: boolean, d: number): string =>
+  cardHTML(null, { key: '', cls: deal ? 'deal' : '', style: `--d:${d}s` });
+
+function szTag(v: View, p: Player): TagModel | null {
+  if (p.out || !isLive(v)) return null;
+  if (actor(v) === p.id)
+    return { text: v.phase === 'play' ? TABLE.tag.turn : 'gibt', kind: 'turn', cls: 'turn', think: true };
+  if (v.knocker === p.id) return { text: 'hat geklopft', kind: 'knock', cls: 'knock' };
+  if (dealerId(v) === p.id) return { text: 'gibt', kind: 'role' };
+  return null;
+}
+
+/** Gegnerkachel: drei Rücken oder am Ende die offene Hand, darunter Zeichen, Name und Leben */
+function szSeat(v: View, p: Player): SeatModel {
+  const r = revealOf(v);
+  const hidden = v.hands[p.id];
+  const shown = r?.hands[p.id];
+  let cards = '';
+  if (shown) cards = shown.map((c) => cardHTML(c, { key: '' })).join('');
+  else if (typeof hidden === 'number') for (let i = 0; i < hidden; i++) cards += back(!!App.anim.deal, i * 0.08 + 0.05);
+  const tag = szTag(v, p);
+  const rm = roundMark(v, r, p.id);
+  const st: SeatState[] = [];
+  if (actor(v) === p.id) st.push('turn');
+  if (p.out) st.push('out');
+  if (!p.online) st.push('offline');
+  if (rm) st.push(rm);
+  return {
+    id: p.id,
+    name: p.name,
+    // Eckaufkleber und Wert erst in 4b, bis dahin bleibt das Zeichenfeld vor dem Namen
+    marks: '',
+    value: '',
+    count: marksHTML(v, p) + livesHTML(p, v.rules),
+    tag,
+    body: `<div class="ocards">${cards}</div>`,
+    st,
+    role: v.knocker === p.id ? 'knock' : dealerId(v) === p.id ? 'deal' : undefined,
+    aim: v.players.some((q) => q.id === App.me),
+    cls: rm ? [`r${rm}`] : [],
+    say: said(p.bot && 'KI', livesSay(p), tag?.text),
+  };
+}
+
+/** Stapel mit seiner Zahl und die Mitte: drei offene Karten, beim Wählen des Gebers das zweite Blatt verdeckt */
+function szCenter(v: View): CenterModel {
+  const playing = myTurn(v);
+  const why = whyText(isLive(v) && !playing ? szWhyNot(v, App.me, 'swap') : null);
+  const deal = !!App.anim.deal;
+  const n = num(v.deck);
+  const slot = (c: string) => `<div class="slot">${c}</div>`;
+  const mid =
+    v.phase === 'choose'
+      ? [0, 1, 2].map((j) => slot(back(deal, 0.3 + j * 0.08))).join('')
+      : (v.middle || [])
+          .map((c, i) =>
+            slot(
+              cardHTML(c, {
+                key: `mid:${i}`,
+                act: 'mid',
+                i,
+                sel: App.sel.m === i,
+                why,
+                tab: playing ? 0 : -1,
+                cls: cl(playing && 'pick', (deal || App.anim.dealMid) && 'deal'),
+                style: `--d:${0.3 + i * 0.08}s`,
+              }),
+            ),
+          )
+          .join('');
+  const b = cardHTML(null, { key: '' });
+  return {
+    cap: v.phase === 'choose' ? 'Zweites Blatt' : 'Mitte',
+    label: `Tischmitte, ${n} Karten im Stapel`,
+    stacks: [
+      // Immer drei Rücken, die Zahl sitzt als Plakette am Stapel wie bei Shithead
+      { k: 'deck', cls: 'deck', title: `${n} Karten im Stapel`, body: b + b + b, count: n },
+      { k: 'middle', cls: 'middle', title: '', body: mid },
+    ],
+  };
+}
+
+/** Knöpfe: der Geber behält oder nimmt, wer dran ist, tauscht, schiebt oder klopft */
+function szBar(v: View, both: boolean): BarModel {
+  if (v.phase === 'choose' && dealerId(v) === App.me)
+    return {
+      btns: [
+        { act: 'keep', label: 'Blatt behalten', intent: 'go', cls: 'primary', ok: true },
+        { act: 'take', label: 'Zweites Blatt nehmen', intent: 'alt', cls: 'ghost', ok: true },
+      ],
+    };
+  if (!myTurn(v)) return { btns: [] };
+  // Ausgegraut, aber antippbar: Ein Tipp nennt den Grund am Tisch (showReject), statt stumm zu bleiben
+  const whyKnock = szWhyNot(v, App.me, 'knock');
+  const kt = whyText(whyKnock);
+  return {
+    btns: [
+      {
+        act: 'swap',
+        label: 'Tauschen',
+        intent: 'go',
+        cls: 'primary',
+        ok: both,
+        pulse: both,
+        why: both ? null : rj('any.pickCard'),
+        title: both ? undefined : SZ_STATUS.tip,
+      },
+      {
+        act: 'swapAll',
+        label: `Alle drei → ${shortVal(handValue(v.middle, v.rules))}`,
+        intent: 'alt',
+        cls: 'ghost',
+        ok: true,
+        title: 'Alle drei Karten mit der Mitte tauschen',
+      },
+      { act: 'pass', label: 'Schieben', intent: 'alt', cls: 'ghost', ok: true },
+      {
+        act: 'knock',
+        label: 'Klopfen',
+        intent: 'call',
+        cls: 'wood',
+        ok: !whyKnock,
+        why: whyKnock,
+        title: kt ?? 'Alle anderen haben noch einen Zug',
+      },
+    ],
+    extra: whyKnock?.e === 'sz.knockEarly' && kt ? `<div class="hint">${esc(kt)}</div>` : '',
+  };
+}
+
+/** Eigener Platz: Leben, Etikett, Pille mit Handwert und Vorschau, die drei Karten und die Knöpfe */
+function szMe(v: View): MeModel {
   const me = pById(v, App.me);
-  const ownHand = v.hands[App.me];
-  const mine: Card[] | null = Array.isArray(ownHand) ? ownHand : null;
-  const playing = myTurn(v),
-    sel = App.sel;
-  let ch = '<span class="cap">' + (v.phase === 'choose' ? 'Zweites Blatt' : 'Mitte') + '</span>';
-  // Die Zahl sitzt als Plakette am Stapel wie bei Shithead, darunter braucht die Mitte keinen Platz
-  ch +=
-    `<div class="deck" title="${num(v.deck)} Karten im Stapel">` +
-    cardHTML(null) +
-    cardHTML(null) +
-    cardHTML(null) +
-    `<span class="pcount">${num(v.deck)}</span></div>`;
-  ch += '<div class="middle">';
-  if (v.phase === 'choose') {
-    for (let j = 0; j < 3; j++)
-      ch +=
-        '<div class="slot">' +
-        cardHTML(null, App.anim.deal ? 'deal' : '', 'style="--d:' + (0.3 + j * 0.08) + 's"') +
-        '</div>';
-  } else {
-    (v.middle || []).forEach((c, i) => {
-      const cls =
-        (playing ? 'pick' : '') + (sel.m === i ? ' sel' : '') + (App.anim.deal || App.anim.dealMid ? ' deal' : '');
-      ch +=
-        '<div class="slot">' +
-        cardHTML(
-          c,
-          cls,
-          'data-act="mid" data-i="' +
-            i +
-            '" style="--d:' +
-            (0.3 + i * 0.08) +
-            's"' +
-            (playing ? ' role="button" tabindex="0"' : ''),
-        ) +
-        '</div>';
-    });
+  const r = revealOf(v);
+  const rm = roundMark(v, r, App.me);
+  const base = { cls: rm ? [`r${rm}`] : [], st: (rm ? [rm] : []) as MeState[] };
+  const lives = me ? livesHTML(me, v.rules) : '';
+  if (!me || me.out)
+    return {
+      ...base,
+      head: { marks: '', count: lives },
+      rows: `<div class="outmsg">${SZ_STATUS.out}</div>`,
+      bar: null,
+      say: SZ_STATUS.out,
+    };
+  const own = v.hands[App.me];
+  const mine = Array.isArray(own) ? own : null;
+  const hand = r?.hands[App.me] ?? mine;
+  const playing = myTurn(v);
+  const sel = App.sel;
+  const hv = handValue(hand ?? undefined, v.rules);
+  // Sind Hand- und Tischkarte gewählt, zeigt die Pille den Wert nach dem Tausch. Der Knopf bleibt gleich breit
+  const both = playing && !!mine && sel.h != null && sel.m != null;
+  let preview = '';
+  if (both && mine && sel.h != null && sel.m != null) {
+    const nh = mine.slice();
+    nh[sel.h] = v.middle[sel.m];
+    preview = shortVal(handValue(nh, v.rules));
   }
-  ch += '</div>';
-  $('#center').innerHTML = ch;
+  const live = isLive(v);
+  const dealer = dealerId(v) === App.me;
+  const tags = !live
+    ? ''
+    : v.knocker === App.me
+      ? '<span class="tag knock">geklopft</span>'
+      : dealer
+        ? '<span class="tag">du gibst</span>'
+        : '';
+  const pill = hand
+    ? `<span class="${cl('pill', hv.v >= 30.5 && 'hot', preview && 'pre')}">` +
+      (preview ? `${shortVal(hv)} <span class="to">→ ${preview}</span>` : valHTML(hv)) +
+      '</span>'
+    : '';
+  const why = live && !playing ? szWhyNot(v, App.me, 'swap') : null;
+  const deal = App.anim.deal || App.anim.dealHand;
+  const cards: HandCard[] = (hand ?? []).map((c, i) => ({
+    c,
+    i,
+    fk: `hand:${i}`,
+    act: 'hand',
+    sel: sel.h === i,
+    why,
+    cls: cl(playing && 'pick', deal && 'deal'),
+    delay: 0.1 + i * 0.1,
+  }));
+  const on = playing || (v.phase === 'choose' && dealer);
+  return {
+    head: { marks: '', count: lives, tags, pill },
+    rows: handHTML({ kind: 'fan3', cls: 'hand', label: `Deine Hand, ${cards.length} Karten`, cards }),
+    bar: szBar(v, both),
+    st: on ? ['turn', ...base.st] : base.st,
+    cls: base.cls,
+    say: said(
+      on && 'Du bist dran',
+      livesSay(me),
+      v.knocker === App.me && 'geklopft',
+      hv.kind !== 'none' && `Handwert ${fmtVal(hv.v)}`,
+    ),
+  };
+}
 
-  renderStatus(v);
-
-  // Eigene Hand
-  let mh = '';
-  const handCards = reveal?.hands[App.me] ?? mine;
-  const isOn = playing || (v.phase === 'choose' && dId === App.me);
-  if (!me || me.out) {
-    mh =
-      '<div class="mehead"><span class="nm">Du</span>' +
-      (me ? livesHTML(me, v.rules) : '') +
-      `</div><div class="outmsg">${SZ_STATUS.out}</div>`;
-  } else {
-    const hv = handValue(handCards ?? undefined, v.rules);
-    // Sind Hand- und Tischkarte gewählt, zeigt die Pille den Wert nach dem Tausch. Der Knopf bleibt gleich breit
-    const both = playing && sel.h != null && sel.m != null && !!mine;
-    let preview = '';
-    if (both && mine && sel.h != null && sel.m != null) {
-      const nh = mine.slice();
-      nh[sel.h] = v.middle[sel.m];
-      preview = shortVal(handValue(nh, v.rules));
-    }
-    const liveMe = v.phase === 'choose' || v.phase === 'play';
-    const tagMe = !liveMe
-      ? ''
-      : v.knocker === App.me
-        ? '<span class="tag knock">geklopft</span>'
-        : dId === App.me
-          ? '<span class="tag">du gibst</span>'
-          : '';
-    mh +=
-      '<div class="mehead"><span class="nm">Du</span>' +
-      livesHTML(me, v.rules) +
-      tagMe +
-      (handCards
-        ? '<span class="pill' +
-          (hv.v >= 30.5 ? ' hot' : '') +
-          (preview ? ' pre' : '') +
-          '">' +
-          (preview ? shortVal(hv) + ' <span class="to">→ ' + preview + '</span>' : valHTML(hv)) +
-          '</span>'
-        : '') +
-      '</div>';
-    mh += '<div class="hand">';
-    (handCards || []).forEach((c, i) => {
-      const cls =
-        (playing ? 'pick' : '') + (sel.h === i ? ' sel' : '') + (App.anim.deal || App.anim.dealHand ? ' deal' : '');
-      mh += cardHTML(
-        c,
-        cls,
-        'data-act="hand" data-i="' +
-          i +
-          '" style="--d:' +
-          (0.1 + i * 0.1) +
-          's"' +
-          (playing ? ' role="button" tabindex="0"' : ''),
-      );
-    });
-    mh += '</div><div class="actions">';
-    if (v.phase === 'choose' && dId === App.me) {
-      mh +=
-        '<button class="btn primary" data-act="keep">Blatt behalten</button><button class="btn ghost" data-act="take">Zweites Blatt nehmen</button>';
-    } else if (playing) {
-      // Ausgegraut, aber antippbar: Ein Tipp nennt den Grund am Tisch (showReject), statt stumm zu bleiben
-      const whyKnock = szWhyNot(v, App.me, 'knock');
-      mh +=
-        '<button class="btn primary' +
-        (both ? ' pulse' : '') +
-        '" data-act="swap"' +
-        (both ? '' : ` aria-disabled="true" title="${esc(SZ_STATUS.tip)}"`) +
-        '>Tauschen</button>';
-      mh +=
-        '<button class="btn ghost" data-act="swapAll" title="Alle drei Karten mit der Mitte tauschen">Alle drei → ' +
-        shortVal(handValue(v.middle, v.rules)) +
-        '</button>';
-      mh += '<button class="btn ghost" data-act="pass">Schieben</button>';
-      mh +=
-        '<button class="btn wood" data-act="knock"' +
-        (whyKnock
-          ? ` aria-disabled="true" title="${esc(rejectText(whyKnock, ctxOfView(v)))}"`
-          : ' title="Alle anderen haben noch einen Zug"') +
-        '>Klopfen</button>';
-      if (whyKnock?.e === 'sz.knockEarly') mh += `<div class="hint">${esc(rejectText(whyKnock, ctxOfView(v)))}</div>`;
-    }
-    mh += '</div>';
-  }
-  let mcls = '';
-  if (reveal?.changes) {
-    if (reveal.changes[App.me]) mcls = ' rlose';
-    else if (roundBest(v).includes(App.me) && Object.keys(reveal.changes).length) mcls = ' rwin';
-  }
-  const meEl = $('#me');
-  meEl.className = 'me' + (isOn ? ' turn' : '') + mcls;
-  meEl.setAttribute('data-pid', App.me);
-  meEl.innerHTML = mh;
-  markClocks();
-  markTosses();
+/** Zeichnet den ganzen Tisch neu, etwa nach einer Auswahl (events.ts) */
+export function renderGame(v: View): void {
+  renderTable(v);
 }
 
 /** Kurzer Handwert für Pille und Knopf: Zahl mit Farbe, besondere Hände nur als Zahl. So bleibt die Breite fest. */
@@ -485,9 +522,13 @@ export function szSheet(v: View): Sheet | null {
   };
 }
 
-/** Ergebnisfenster nach einer Schnautz-Runde oder am Ende der Partie, über das gemeinsame Blatt. */
-export function renderOverlay(v: View): void {
-  renderResult(v, szSheet(v));
-}
-
-export const szSpec: OldTable = { badge: true, old: { draw: renderGame, overlay: renderOverlay } };
+export const szSpec: NewTable = {
+  badge: true,
+  actor,
+  seat: szSeat,
+  center: szCenter,
+  me: szMe,
+  status: szStatus,
+  sheet: szSheet,
+  drag: null,
+};

@@ -125,7 +125,9 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
         // Wer nicht dran ist und eine Karte antippt, erfährt warum, statt dass nichts passiert
         const other = byId.get(ids.find((id) => id !== v.players[v.turn].id) ?? '');
         if (!other) throw new Error('Spieler unbekannt');
-        await other.click('#me [data-act=hand][data-i="0"]');
+        // Seit 2.8 tragen die Karten dann aria-disabled mit Grund, force wie beim Klopfen unten
+        await expect(other.locator('#me [data-act=hand][data-i="0"]')).toHaveAttribute('aria-disabled', 'true');
+        await other.click('#me [data-act=hand][data-i="0"]', { force: true });
         await expect(other.locator('#fly .nopelbl')).toHaveText('Du bist gerade nicht dran.');
         // Tauschen ohne Auswahl ist ausgegraut und nennt beim Tipp den Grund
         const swap = p.locator('#me [data-act=swap]');

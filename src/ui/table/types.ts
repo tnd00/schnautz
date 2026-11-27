@@ -253,11 +253,6 @@ export interface BarButton {
    */
   why?: Reject | null;
   pulse?: boolean;
-  /**
-   * Übergang, bis Durak (4a) seine Knöpfe umstellt: gesperrt heißt echtes `disabled` wie in 2.7 statt aria-disabled,
-   * damit Legacy gleich aussieht. Der Grund steht trotzdem in aria-description. Shithead nutzt es seit 3b nicht mehr.
-   */
-  hard?: boolean;
   /** Schalter (Schnappen), aria-pressed */
   on?: boolean;
   aria?: string;

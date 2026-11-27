@@ -38,14 +38,10 @@ export const App = {
   sw: { h: null as number | null, u: null as number | null },
   /** Durak: gewählte Handkarten und der Angriff, den der Verteidiger schlagen will. */
   ds: { idx: [] as number[], pair: null as number | null },
-  /** Durak: Knopfzeile und wann sie sich zuletzt geändert hat, gegen Tipps auf einen gerade getauschten Knopf */
-  dkBtn: { sig: '', at: 0 },
   /** Cabo: gewählte eigene Plätze, gewählter fremder Platz (Blindtausch) und ob Schnappen gerade an ist */
   cs: { ids: [] as number[], opp: null as { to: string; id: number } | null, snap: false },
   /** Cabo: was ich gerade kurz sehen darf, bis wann, und welche Einblendung (in welcher Partie und Runde) schon dran war */
   cbShow: { rid: 0, g: -1, round: 0, until: 0, items: [] as { owner: string; slot: number; c: string }[] },
-  /** Cabo: Knopfzeile wie bei Durak, gegen Tipps auf einen gerade getauschten Knopf */
-  cbBtn: { sig: '', at: 0 },
   /** Lobby am Handy: welcher Reiter offen ist. */
   ltab: 'table' as 'table' | 'game',
   seenN: 0,

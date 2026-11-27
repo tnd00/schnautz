@@ -325,13 +325,16 @@ button.chip#netchip {
   cursor: not-allowed;
   filter: saturate(0.4);
 }
-/* Ausgegraut wie .btn[disabled], bleibt aber antippbar und nennt dann den Grund (Schnautz, Cabo) */
+/* Ausgegraut wie .btn[disabled], bleibt aber antippbar und nennt dann den Grund */
 .me .actions .btn[aria-disabled='true'] {
   opacity: 0.38;
   cursor: not-allowed;
   filter: saturate(0.4);
-  box-shadow: none;
   animation: none;
+}
+/* Schnautz und Cabo ohne Schatten wie in 2.7, Durak behält ihn wie früher bei [disabled] (:where hält das Gewicht) */
+.me:where(:not(.dkme)) .actions .btn[aria-disabled='true'] {
+  box-shadow: none;
 }
 .btn.pulse {
   animation: pulse 1.6s infinite;

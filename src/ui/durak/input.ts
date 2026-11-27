@@ -12,18 +12,10 @@ import { doAct } from '../../net/dispatch';
 import { App } from '../app';
 import { noteTap, showReject } from '../feedback';
 import { render } from '../render/index';
-import { dkBeatPair, dkCanPass, dkMine, dkRole, dkSelected, dkTargets } from '../render/durak';
+import { dkBeatPair, dkBtnState, dkMine, dkRole, dkSelected, dkTargets, type DkBtn } from '../render/durak';
 import { sfx, unlockAudio } from '../sound';
-
-/** Ein Tipp so kurz nach einem Wechsel der Knopfzeile galt wohl dem alten Knopf */
-const BTN_GUARD_MS = 400;
-
-/** Merkt sich, wo die eigenen Karten lagen, damit sie von dort auf den Tisch fliegen. */
-function grabRects(idx: number[]): void {
-  const els = Array.from(document.querySelectorAll<HTMLElement>('#me .dkhand .card'));
-  const rects = idx.map((i) => els[i]?.getBoundingClientRect()).filter((r): r is DOMRect => !!r);
-  if (rects.length) App.playRects = { t: Date.now(), src: 'hand', rects };
-}
+import { barGuard } from '../table/bar';
+import { grabRects } from '../table/hand';
 
 function redraw(): void {
   App.anim = {};
@@ -37,7 +29,9 @@ const handSel = (i: number): string => `#me [data-act="dkh"][data-i="${i}"]`;
  * einer Ablehnung die gemeinten Karten wackeln (showReject). `extra` sind weitere Selektoren, etwa der Angriff.
  */
 function send(a: Action, idx: number[] = [], extra: string[] = []): void {
-  if (idx.length) grabRects(idx);
+  // Merkt sich, wo die eigenen Karten lagen, damit sie von dort auf den Tisch fliegen
+  const els = idx.flatMap((i) => document.querySelector<HTMLElement>(handSel(i)) ?? []);
+  if (els.length) grabRects(els, 'hand');
   const sel = [...idx.map(handSel), ...extra];
   if (sel.length) noteTap(a.type, sel);
   App.ds = { idx: [], pair: null };
@@ -122,16 +116,27 @@ export function dkTapTable(pair: number): void {
   redraw();
 }
 
-/** Knöpfe am eigenen Platz. */
-export function dkButton(kind: string): void {
+/**
+ * Knöpfe am eigenen Platz. Ein gesperrter Knopf (aria-disabled) nennt seinen Grund aus der Spiellogik (dkBtnState),
+ * ohne einen Zug als Probe zu schicken. Ohne passenden Code bleibt der Tipp still.
+ */
+export function dkButton(kind: DkBtn): void {
   const v = App.view;
-  if (!v || App.busy) return;
   // Hat sich die Knopfzeile gerade geändert, galt der Tipp vermutlich dem Knopf, der vorher dort stand
-  if (Date.now() - App.dkBtn.at < BTN_GUARD_MS) return;
+  if (!v || App.busy || barGuard(kind)) return;
+  unlockAudio();
+  const s = dkBtnState(v, kind);
+  if (!s.ok) {
+    if (s.why) {
+      noteTap(kind, [`#me [data-act="${kind}"]`]);
+      showReject(s.why, kind);
+    }
+    return;
+  }
   const sel = dkSelected(v);
   switch (kind) {
     case 'dkgo':
-      if (sel.idx.length) send({ type: 'dkattack', idx: sel.idx, cards: sel.cards }, sel.idx);
+      send({ type: 'dkattack', idx: sel.idx, cards: sel.cards }, sel.idx);
       return;
     case 'dkbeat': {
       const pair = dkBeatPair(v);
@@ -139,13 +144,13 @@ export function dkButton(kind: string): void {
       return;
     }
     case 'dktransfer':
-      if (sel.idx.length) send({ type: 'dktransfer', idx: sel.idx, cards: sel.cards }, sel.idx);
+      send({ type: 'dktransfer', idx: sel.idx, cards: sel.cards }, sel.idx);
       return;
     case 'dktake':
       send({ type: 'dktake' });
       return;
     case 'dkpass':
-      if (dkCanPass(v)) send({ type: 'dkpass' });
+      send({ type: 'dkpass' });
       return;
   }
 }

@@ -32,6 +32,7 @@ export const CHANGELOG: readonly Release[] = [
           'Bei Shithead steht die Zahl der Handkarten unten an jedem Platz, Krone und 💩 kleben auf der Ecke. So bleibt mehr Platz für den Namen.',
           'Bei Shithead sagen gesperrte Knöpfe beim Antippen, warum es gerade nicht geht. Ein Tipp kurz nach einem Wechsel der Knöpfe trifft nicht aus Versehen den falschen. Mit der Tastatur erreichst du jede Karte und jeden Knopf.',
           'Am PC zu acht überlappen die Plätze oben nicht mehr, auch nicht auf kleinen Bildschirmen.',
+          'Bei Durak sagen gesperrte Knöpfe beim Antippen, warum es gerade nicht geht.',
         ],
       },
     ],

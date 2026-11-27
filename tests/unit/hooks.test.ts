@@ -1,8 +1,8 @@
 /*
  * Selektorvertrag (Plan 2.8 Abschnitt 8, abgleich.md 1.1): Die Bausteine am Tisch erzeugen jeden Selektor, den E2E,
- * Flüge, Abläufe, Band und Mess-Skripte lesen. Shithead ist umgestellt, seine Modelle kommen über specOf aus echten
- * Spielständen. Durak, Cabo und Schnautz sind bis 4a von Hand gebaut. #status (paintStatus), #emofab und #logfab
- * stehen fest in index.html und gehören nicht zu den Bausteinen.
+ * Flüge, Abläufe, Band und Mess-Skripte lesen. Shithead kommt hier über specOf aus echten Spielständen, Durak, Cabo
+ * und Schnautz ebenso in hooks-dk, hooks-cb und hooks-sz (die Modelle von Hand hier sind älter). #status (paintStatus),
+ * #emofab und #logfab stehen fest in index.html und gehören nicht zu den Bausteinen.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
@@ -23,7 +23,7 @@ import { handHTML } from '../../src/ui/table/hand';
 import { meClass, meHTML } from '../../src/ui/table/me';
 import { centerHTML, deckCards } from '../../src/ui/table/pile';
 import { seatHTML } from '../../src/ui/table/seat';
-import { isOld, specOf } from '../../src/ui/table/spec';
+import { specOf } from '../../src/ui/table/spec';
 import type { CenterModel, MeModel, MeOut, SeatModel } from '../../src/ui/table/types';
 import { parseHTML, qsa, rngF } from './helpers';
 
@@ -77,7 +77,6 @@ function shModels(st: State, ss: typeof App.ss = { src: null, idx: [] }): Models
   const v = viewFor(st, 'h');
   Object.assign(App, { me: 'h', view: v, role: 'host', ss, anim: {} });
   const spec = specOf('shithead');
-  if (isOld(spec)) throw new Error('Shithead ist noch nicht umgestellt');
   const center = spec.center(v);
   const me = spec.me(v);
   if (!center || !me) throw new Error('Shithead liefert keine Mitte oder keinen eigenen Platz');
@@ -373,7 +372,7 @@ const CASES: [string, () => Models, string[], boolean?][] = [
       '#me .dkhand .card',
       '#center .dktrump .card',
       '#center .cnt',
-      '#me [data-act=dkbeat]:not([disabled])',
+      '#me [data-act=dkbeat]:not([aria-disabled])',
       '.opp[data-role=def]',
       '#me .mehead .nm',
     ],

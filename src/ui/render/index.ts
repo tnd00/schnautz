@@ -16,7 +16,7 @@ import { realignFeedback } from '../feedback';
 import { GAME_NAME, GAMES } from '../../game/games';
 import { renderResult } from './result';
 import { renderTable } from '../table/index';
-import { isOld, scorebarOf, specOf } from '../table/spec';
+import { scorebarOf, specOf } from '../table/spec';
 import { peelChosen } from '../peel';
 
 /** Zeichnet alles neu, was zur aktuellen Ansicht gehört. */
@@ -58,8 +58,7 @@ export function render(): void {
   // Offenes Tipp-Fenster mitziehen oder schließen, wenn Tippen nicht mehr geht
   if ($opt('#modal .paper.bets')) renderBetModal(v);
   renderLog(v);
-  if (isOld(spec)) spec.old.overlay(v);
-  else renderResult(v, spec.sheet(v));
+  renderResult(v, spec.sheet(v));
   // Beim Ansehen des Tisches nach einer Runde wird nur in der Übersicht reagiert
   document.body.classList.toggle('peeking', App.peek && (v.phase === 'end' || v.phase === 'over'));
   // Das Ergebnisfenster hat ein eigenes Reaktionsfenster

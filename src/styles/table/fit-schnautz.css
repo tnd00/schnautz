@@ -63,3 +63,8 @@
     height: 10px;
   }
 }
+
+/* Krone und KI stehen seit 2.8 im Zähler der Kachel (render/schnautz.ts), gezeigt wie vorher vor dem Namen */
+#table[data-game='schnautz'] .opp .tb-count > .marks {
+  order: -1;
+}

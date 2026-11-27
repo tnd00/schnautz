@@ -204,14 +204,6 @@ describe('Knopfleiste', () => {
     expect(one(h, '[data-act=cbsnap]')['aria-pressed']).toBe('false');
     expect(barHTML(null)).toBe('');
   });
-  it('im Übergang echtes disabled, der Grund steht trotzdem da', () => {
-    const h = barHTML({ btns: [{ ...B.btns[1], hard: true }] });
-    const a = one(h, '[data-act=shpickup]');
-    expect('disabled' in a).toBe(true);
-    expect(a['aria-disabled']).toBeUndefined();
-    expect(a['aria-description']).toBe(REJECT_TEXT['sh.handFirst'] as string);
-    expect('disabled' in one(barHTML({ btns: [{ ...B.btns[0], hard: true }] }), '.btn')).toBe(false);
-  });
   it('zwei Fassungen einer Beschriftung', () => {
     expect(twoLabel('Weiterschieben', 'Schieben')).toBe(
       '<span class="blong">Weiterschieben</span><span class="bshort">Schieben</span>',

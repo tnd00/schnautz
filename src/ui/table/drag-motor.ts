@@ -46,7 +46,7 @@ import {
   type PointerKind,
 } from './dragmath';
 import { tableBusy } from './index';
-import { isOld, specOf } from './spec';
+import { specOf } from './spec';
 
 /** Zeiten aus ziehen.md 5.3 bis 5.5 */
 const GLIDE_MS = 160;
@@ -124,7 +124,7 @@ const table = (): HTMLElement | null => document.getElementById('table');
 function adapterOf(v: View | null): DragAdapter | null {
   if (!v) return null;
   const s = specOf(v.game);
-  return isOld(s) ? null : s.drag;
+  return s.drag;
 }
 
 const dctx = (v: View): DragCtx => ({

@@ -1,9 +1,6 @@
 /*
- * Was jedes Spiel am Tisch zeichnet (Plan 2.8 Abschnitt 8, geruest.md 3.3). Ein Spiel, das noch nicht umgestellt
- * ist, steht als `OldTable` da und zeichnet wie heute selbst. Ein umgestelltes Spiel ist ein `NewTable` und liefert
- * nur Modelle, die gemeinsamen Bausteine zeichnen. `specOf` löst `tableOf` aus src/ui/render/index.ts ab.
- *
- * Stand Runde 3a: Shithead ist ein `NewTable`, Durak, Cabo und Schnautz sind noch `OldTable`.
+ * Was jedes Spiel am Tisch zeichnet (Plan 2.8 Abschnitt 8, geruest.md 3.3). Jedes Spiel ist seit Runde 4a ein
+ * `NewTable` und liefert nur Modelle, die gemeinsamen Bausteine zeichnen.
  */
 import { unreachable } from '../../game/games';
 import type { GameKind, Player, View } from '../../game/types';
@@ -15,13 +12,6 @@ import { shSpec } from '../render/shithead';
 import type { Status } from '../status';
 import type { DragAdapter } from './drag';
 import type { CenterModel, MeModel, MeOut, SeatModel } from './types';
-
-/** Übergang: Ein Spiel, das noch nicht umgestellt ist, zeichnet wie heute selbst. */
-export interface OldTable {
-  /** Abzeichen am Namen in der Kopfzeile */
-  badge: boolean;
-  old: { draw(v: View): void; overlay(v: View): void };
-}
 
 /** Ein Spiel auf dem gemeinsamen Gerüst. Es gibt keine Punkteleiste mehr, Werte stehen in `SeatModel.value`. */
 export interface NewTable {
@@ -43,9 +33,7 @@ export interface NewTable {
   after?(v: View): void;
 }
 
-export type TableSpec = OldTable | NewTable;
-
-export const isOld = (s: TableSpec): s is OldTable => 'old' in s;
+export type TableSpec = NewTable;
 
 /** Spec je Spiel, liefert shSpec, dkSpec, cbSpec und szSpec aus den Render-Dateien. */
 export function specOf(game: GameKind): TableSpec {

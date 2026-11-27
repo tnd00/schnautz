@@ -43,9 +43,12 @@ function cheapest(hand: string[], a: string, ts: string): number {
   return best;
 }
 
-/** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (src/ui/durak/input.ts). */
+/** Knöpfe, die gerade gehen. Gesperrte bleiben antippbar und nennen nur ihren Grund (aria-disabled, seit 2.8). */
+const LIVE = ':not([disabled]):not([aria-disabled=true])';
+
+/** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (barGuard). */
 async function button(page: Page, act: string): Promise<boolean> {
-  const b = page.locator(`[data-act=${act}]:not([disabled])`);
+  const b = page.locator(`[data-act=${act}]${LIVE}`);
   if (!(await b.count())) return false;
   await page.waitForTimeout(450);
   await b.first().click({ timeout: 5000 });
@@ -126,6 +129,7 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   let passBtn = 0;
   let passedSeen = 0;
   let whySeen = 0;
+  let btnSeen = 0;
   await playToEnd([host], async (p) => {
     // Wer gepasst hat, kann nichts nachlegen, bis ein neuer Wert liegt oder aufgenommen wird. Ansicht und
     // Oberfläche in einem Zug lesen, sonst kommt ein KI-Zug dazwischen. Die ausgegrauten Karten bleiben
@@ -136,7 +140,7 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
       if (!s || !D || s.App.view?.phase !== 'play' || !D.table.length || !D.done.includes(s.App.me)) return null;
       const res = {
         pick: document.querySelectorAll('#me .dkhand .pick[data-act=dkh]').length,
-        go: document.querySelectorAll('#me [data-act=dkgo]:not([disabled])').length,
+        go: document.querySelectorAll('#me [data-act=dkgo]:not([aria-disabled=true])').length,
         sub: document.querySelector('#status .sub')?.textContent ?? '',
         why: null as string | null,
       };
@@ -156,6 +160,25 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
         whySeen++;
         expect(passed.why).toMatch(/^Du hast gepasst\./);
       }
+      // Der gesperrte Knopf „Gepasst ✓“ nennt beim Tipp denselben Grund, ohne einen Zug zu schicken
+      if (!btnSeen && passed.why == null) {
+        let why: string | null = null;
+        try {
+          // force: Playwright hält aria-disabled für nicht klickbar, ein Mensch kann trotzdem tippen
+          await p.locator('#me [data-act=dkpass][aria-disabled=true]').click({ force: true, timeout: 1000 });
+          why = await p.evaluate(() =>
+            document.querySelector('#me [data-act=dkpass].shake')
+              ? (document.querySelector('#fly .nopelbl')?.textContent ?? '')
+              : null,
+          );
+        } catch {
+          // Die Lage hat sich inzwischen geändert, beim nächsten Passen noch einmal
+        }
+        if (why != null) {
+          btnSeen++;
+          expect(why).toMatch(/^Du hast gepasst\./);
+        }
+      }
     }
     // Der Knopf heißt Passen, gedrückt Gepasst ✓, das Etikett am Platz passt ✓
     const labels = await p.locator('[data-act=dkpass]').allTextContents();
@@ -167,6 +190,7 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   expect(passBtn).toBeGreaterThan(0);
   expect(passedSeen).toBeGreaterThan(0);
   expect(whySeen).toBeGreaterThan(0);
+  expect(btnSeen).toBeGreaterThan(0);
   await waitForPhase(host, ['over'], 20_000);
   await expect(host.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
   expect(errors.list).toEqual([]);

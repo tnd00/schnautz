@@ -12,13 +12,11 @@ import { App } from '../app';
 import { CAR, carouselRelease } from '../carousel';
 import type { Timer } from '../dom';
 import { render } from '../render/index';
-import { cbCanSnap, cbMine, cbRole } from '../render/cabo';
+import { cbBtnAct, cbCanSnap, cbMine, cbProbe, cbRole } from '../render/cabo';
 import { noteTap, showReject, tauntLabel } from '../feedback';
+import { barGuard } from '../table/bar';
 import { sfx, unlockAudio } from '../sound';
 import { taunt } from '../taunts';
-
-/** Ein Tipp so kurz nach einem Wechsel der Knopfzeile galt wohl dem alten Knopf */
-const BTN_GUARD_MS = 400;
 
 const CBT = { t: null as Timer | null };
 
@@ -136,15 +134,11 @@ export function cbTapMine(id: number): void {
       App.cs.ids = cur.includes(id) ? [] : [id];
       break;
     // Nicht wählbar: Die Karte nennt ihren Grund, ein Zug geht dabei nie raus
-    case 'draw':
-    case 'wait':
-      explainMine(v, id, { type: 'cbswap', ids: [id] });
+    default: {
+      const a = cbProbe(v, id);
+      if (a) explainMine(v, id, a);
       return;
-    case 'spy':
-      explainMine(v, id, { type: 'cbspy', to: App.me, id });
-      return;
-    default:
-      return;
+    }
   }
   redraw();
 }
@@ -170,41 +164,18 @@ export function cbButton(kind: string, fromButton = true): void {
   const v = App.view;
   if (!v || App.busy) return;
   // Hat sich die Knopfzeile gerade geändert, galt der Tipp vermutlich dem Knopf, der vorher dort stand
-  if (fromButton && Date.now() - App.cbBtn.at < BTN_GUARD_MS) return;
-  const C = v.cb;
-  if (!C) return;
+  if (fromButton && barGuard(kind)) return;
+  if (!v.cb) return;
   unlockAudio();
   const role = cbRole(v);
   // Ausgegraute Knöpfe, Stapel und Ablage nennen ihren Grund statt still nichts zu tun
-  switch (kind) {
-    case 'cbdeck':
-      trySend(v, { type: 'cbdraw', from: 'deck' });
-      return;
-    case 'cbpile':
-      trySend(v, { type: 'cbdraw', from: 'pile' });
-      return;
-    case 'cbcabo':
-      trySend(v, { type: 'cbcabo' });
-      return;
-    case 'cbswap':
-      trySend(v, { type: 'cbswap', ids: App.cs.ids.slice() });
-      return;
-    case 'cbdiscard':
-      trySend(v, { type: 'cbdiscard' });
-      return;
-    case 'cbskip':
-      if (role === 'ownpeek' || role === 'spy' || role === 'blind') send({ type: 'cbskip' });
-      return;
-    case 'cbblind': {
-      const o = App.cs.opp;
-      trySend(v, { type: 'cbblind', id: App.cs.ids[0] ?? -1, to: o?.to ?? '', oid: o?.id ?? -1 });
-      return;
-    }
-    case 'cbsnapmode':
-      if (!cbCanSnap(v)) return;
-      App.cs = { ids: [], opp: null, snap: !App.cs.snap };
-      redraw();
-      return;
+  const a = cbBtnAct(kind);
+  if (a) trySend(v, a);
+  else if (kind === 'cbskip') {
+    if (role === 'ownpeek' || role === 'spy' || role === 'blind') send({ type: 'cbskip' });
+  } else if (kind === 'cbsnapmode' && cbCanSnap(v)) {
+    App.cs = { ids: [], opp: null, snap: !App.cs.snap };
+    redraw();
   }
 }
 

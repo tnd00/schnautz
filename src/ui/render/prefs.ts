@@ -12,7 +12,7 @@ import { sheetHTML } from '../dialog';
 import { $opt, esc } from '../dom';
 import { applyCalm, prefs, setPref, type Prefs } from '../prefs';
 import { setSbVolume, sfx } from '../sound';
-import { isOld, specOf } from '../table/spec';
+import { specOf } from '../table/spec';
 
 type Opts = readonly (readonly [string, string])[];
 
@@ -38,7 +38,7 @@ const pct = (v: number): number => Math.round(v * 100);
 const canDrag = (): boolean =>
   GAMES.some((g) => {
     const s = specOf(g);
-    return !isOld(s) && !!s.drag;
+    return !!s.drag;
   });
 
 function volumeRow(v: number): string {
