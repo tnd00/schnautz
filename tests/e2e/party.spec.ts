@@ -44,6 +44,32 @@ test('Werfen und Soundboard zwischen Host und Gast', async ({ browser }) => {
   const hostId = await myId(host);
   const guestId = await myId(guest);
 
+  await test.step('Menü am Handy liegt über dem eigenen Platz, X und Escape schließen es', async () => {
+    await guest.click('#emofab');
+    await expect(guest.locator('#emofab')).toHaveAttribute('aria-expanded', 'true');
+    // Form B2: deckt den Platz, das X steht an der Stelle des Chat-Knopfs (nach dem Einblenden gemessen)
+    const gap = () =>
+      guest.evaluate(() => {
+        const a = document.querySelector('.seat')!.getBoundingClientRect();
+        const b = document.querySelector('#emotes')!.getBoundingClientRect();
+        return Math.round(Math.abs(a.top - b.top) + Math.abs(a.bottom - b.bottom));
+      });
+    await expect.poll(gap).toBeLessThan(2);
+    await expect(guest.locator('#logfab')).toBeHidden();
+    await guest.click('#emotes .emox');
+    await expect(guest.locator('#emotes')).toBeHidden();
+    await expect(guest.locator('#logfab')).toBeVisible();
+    // Tastatur: Der Reiter behält den Fokus, Escape schließt und gibt ihn an den Smiley zurück
+    await guest.click('#emofab');
+    await guest.focus('#emotes [data-act=etab][data-t=snd]');
+    await guest.keyboard.press('Enter');
+    await expect(guest.locator('#emotes [data-act=etab][data-t=snd]')).toBeFocused();
+    await guest.keyboard.press('Escape');
+    await expect(guest.locator('#emotes')).toBeHidden();
+    await expect(guest.locator('#emofab')).toBeFocused();
+    await expect(guest.locator('#emofab')).toHaveAttribute('aria-expanded', 'false');
+  });
+
   await test.step('Gast wirft eine Tomate über das Reaktionsfenster', async () => {
     await guest.click('#emofab');
     await guest.click('[data-act=etab][data-t=toss]');
@@ -80,6 +106,17 @@ test('Werfen und Soundboard zwischen Host und Gast', async ({ browser }) => {
     await guest.evaluate(() => document.querySelector('#me .card')?.setAttribute('data-keep', '1'));
     await host.click(`.opp[data-pid="${guestId}"]`);
     await expect(host.locator('#tosspick')).toBeVisible();
+    // Form C: Die Reihe liegt auf der Statuszeile (nach dem Einblenden gemessen). Stehen dort Knöpfe wie 4er oder
+    // Bombe im 4er-Fenster, rückt sie darüber, damit sie nichts Zeitkritisches verdeckt
+    const off = () =>
+      host.evaluate(() => {
+        const p = document.querySelector('#tosspick')!.getBoundingClientRect();
+        const st = document.querySelector('#status')!;
+        const r = st.getBoundingClientRect();
+        if (st.classList.contains('hasquick')) return p.bottom <= r.top + 1 ? 0 : Math.round(p.bottom - r.top);
+        return Math.round(Math.abs(p.top + p.height / 2 - (r.top + r.height / 2)));
+      });
+    await expect.poll(off).toBeLessThan(2);
     await host.click('#tosspick [data-item=crown]');
     await expect(host.locator('#tosspick')).toHaveCount(0);
     await expect(guest.locator('.tossmark.crown')).toBeVisible();
@@ -94,6 +131,8 @@ test('Werfen und Soundboard zwischen Host und Gast', async ({ browser }) => {
     await guest.click('#emofab');
     await guest.click('[data-act=etab][data-t=snd]');
     await guest.click('#emotes [data-act=sb][data-s=horn]');
+    // Das Menü schließt nach dem Senden von selbst
+    await expect(guest.locator('#emotes')).toBeHidden();
     await expect.poll(() => logKinds(host, 'sound')).toBe(1);
     await expect.poll(() => sbSeen(host)).toBe(seenH + 1);
     await expect.poll(() => sbSeen(guest)).toBe(seenG + 1);

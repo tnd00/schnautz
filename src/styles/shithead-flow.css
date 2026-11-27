@@ -278,7 +278,7 @@
 :where(html.calm) .erow.cool::after {
   animation: none;
 }
-.emotes button {
+.emotes button:where(:not(.fab)) {
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -293,7 +293,7 @@
     opacity 0.2s;
   cursor: pointer;
 }
-.emotes button:hover {
+.emotes button:where(:not(.fab)):hover {
   transform: scale(1.18);
 }
 .emotes button:disabled,
@@ -311,7 +311,12 @@
   font-style: normal;
 }
 .emotes .etab span {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .emotes .etab:hover {
   transform: none;
@@ -357,7 +362,7 @@
 .ehead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   margin-bottom: 8px;
   font: 650 13.5px/1.2 var(--ui);
@@ -368,6 +373,10 @@
   height: 28px;
   flex: none;
   font-size: 18px;
+}
+.ex svg {
+  width: 18px;
+  height: 18px;
 }
 .echips {
   display: grid;
@@ -620,6 +629,17 @@
 /* Reaktionen: am Desktop eine Leiste unter dem eigenen Platz */
 .emotes {
   z-index: 9;
+}
+/* Wurf-Reihe (Form C): ein Tipp auf eine Gegnerkachel legt sie über die Statuszeile, ein Tipp darin wirft */
+#tosspick {
+  background: var(--tb-fx-emotes-gloss), var(--tb-fx-emotes-bg);
+  border-color: var(--tb-fx-emotes-line);
+}
+#tosspick button {
+  width: 44px;
+  height: 44px;
+  background: var(--tb-fx-emote-bg);
+  box-shadow: var(--tb-shadow-flat);
 }
 
 /* Regeln: Buch mit Beschriftung, oben im Fenster die Karten auf einen Blick */

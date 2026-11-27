@@ -390,7 +390,62 @@ export async function measure(page, extra = []) {
           tableBottom = { bottom: Math.round(r.bottom), who: name(el) };
       });
     }
+    // Eckaufkleber und Etiketten über der Gegnerkachel: oben oder unten abgeschnitten oder übereinander (wie fitFindings)
+    const marks = [];
+    document.querySelectorAll('.opp > .rmark, .opp > .tag').forEach((el) => {
+      if (!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') return;
+      const r = el.getBoundingClientRect();
+      // Außerhalb des Bildes (Karussell schiebt Kacheln seitlich hinaus) sieht es niemand
+      if (r.right <= 0 || r.left >= W) return;
+      const who = `${name(el)} an ${el.parentElement?.dataset.pid ?? '?'}`;
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowY === 'visible') continue;
+        const ar = a.getBoundingClientRect();
+        if (r.right <= ar.left || r.left >= ar.right) return;
+        if (r.top < ar.top - 1 || r.bottom > ar.bottom + 1) {
+          marks.push(
+            `${who} von ${name(a)} um ${Math.round(Math.max(ar.top - r.top, r.bottom - ar.bottom))} px abgeschnitten`,
+          );
+          break;
+        }
+      }
+      const tag = el.classList.contains('rmark') && el.parentElement?.querySelector(':scope > .tag');
+      if (!tag || !tag.getClientRects().length) return;
+      const t = tag.getBoundingClientRect();
+      if (r.left < t.right - 1 && t.left < r.right - 1 && r.top < t.bottom - 1 && t.top < r.bottom - 1)
+        marks.push(`${who} liegt auf dem Etikett`);
+    });
+    // Tippfläche: Knöpfe der Knopfreihe und der Statuszeile nehmen 44 x 44 px an (table.css ::before), gemessen
+    // mit elementFromPoint je 1 px innerhalb der Kanten der vergrößerten Fläche. Nur am Handy (Touch): Am PC verkleinert
+    // fitDesktop den Tisch, dort zählt die Maus und WCAG 2.5.8 verlangt 24 px
+    const taps = [];
+    if (W <= 960)
+      document.querySelectorAll('#table .actions .btn, #status .btn').forEach((b) => {
+        if (!b.getClientRects().length || getComputedStyle(b).visibility === 'hidden') return;
+        const r = b.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        // Liegt ein Fenster oder Menü über dem Knopf, gibt es nichts zu tippen
+        if (document.elementFromPoint(cx, cy)?.closest('button, .btn') !== b) return;
+        const hw = Math.max(r.width, 44) / 2 - 1;
+        const hh = Math.max(r.height, 44) / 2 - 1;
+        const miss = [
+          ['oben', cx, cy - hh],
+          ['unten', cx, cy + hh],
+          ['links', cx - hw, cy],
+          ['rechts', cx + hw, cy],
+        ].filter(([, x, y]) => {
+          if (x < 0 || y < 0 || x >= W || y >= H) return false;
+          return document.elementFromPoint(x, y)?.closest('button, .btn') !== b;
+        });
+        if (miss.length)
+          taps.push(
+            `Tippfläche ${b.dataset.act ?? name(b)} ${Math.round(r.height)} px, ${miss.map((m) => m[0]).join('/')} daneben`,
+          );
+      });
     return {
+      taps,
+      marks,
       w: W,
       h: H,
       docH: se.scrollHeight,
@@ -478,6 +533,8 @@ export function verdict(m, keys, { table = true, sheet = null, menu } = {}) {
     if (p.fscroll) bad.push(`${p.pane} fscroll`);
     else if (p.hidden > 1) bad.push(`${p.pane} ${p.hidden}px unter der Startleiste`);
   }
+  if (m.marks?.length) bad.push(...m.marks);
+  if (m.taps?.length) bad.push(...m.taps);
   if (table && m.tableBottom && m.tableBottom.bottom > m.h + 1)
     bad.push(`Tisch bis ${m.tableBottom.bottom} (${m.tableBottom.who})`);
   if (sheet) {

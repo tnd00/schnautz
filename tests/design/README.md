@@ -1,6 +1,6 @@
 # Mess-Skripte für das Layout
 
-Diese Skripte messen mit Playwright, ob am Bildschirm etwas scrollt oder abgeschnitten wird. Sie laufen ohne Testrunner gegen einen Dev-Server und einen lokalen PeerServer und schreiben ein Urteil pro Messung, dazu JSON und auf Wunsch Aufnahmen. Gedacht sind sie für die Bauzeit, der feste Wächter in der Testsuite ist `tests/e2e/fit.spec.ts`.
+Diese Skripte messen mit Playwright, ob am Bildschirm etwas scrollt oder abgeschnitten wird. Sie laufen ohne Testrunner gegen einen Dev-Server und einen lokalen PeerServer und schreiben ein Urteil pro Messung, dazu JSON und auf Wunsch Aufnahmen. Gedacht sind sie für die Bauzeit, der feste Wächter in der Testsuite ist `tests/e2e/fit.spec.ts`. `measure` meldet außerdem Eckaufkleber und Etiketten der Gegnerkacheln, die ein Vorfahr oben oder unten abschneidet oder die übereinander liegen (wie `fitFindings`), und Knöpfe am Tisch mit weniger als 44 px Tippfläche.
 
 ## Umgebung
 
@@ -53,6 +53,9 @@ node tests/design/sweep.mjs --serve --seats=8 --long --sizes=phone
 
 # Krone und Verlierer-Zeichen an KI-Plätzen (wie die Fixture sh-reign-4), vier Plätze
 node tests/design/sweep.mjs --serve --games=shithead --seats=4 --reign --sizes=390x844,360x640
+
+# Dazu eine KI offline (Zeichen am Namen), acht Plätze mit langen Namen am kurzen Handy
+node tests/design/sweep.mjs --serve --seats=8 --long --reign --offline --states=turn --sizes=375x548,360x640
 
 # Nur Zustände Lobby, eigener Zug und offenes Fenster bei Durak
 node tests/design/sweep.mjs --serve --games=durak --states=lobby,turn,modal

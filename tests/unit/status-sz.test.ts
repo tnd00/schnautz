@@ -271,7 +271,7 @@ describe('Ergebnisblatt Schnautz', () => {
     expect(s.rows.map((r) => r.id).sort()).toEqual(['a', 'b', 'h']);
     expect(s.rows.every((r) => r.place === null)).toBe(true);
     expect(s.rows.find((r) => r.id === 'h')!.tone).toBe('win');
-    expect(s.icon).toBe('👑');
+    expect(s.icon).toBe('🏅');
     // Ohne Unterzeile im Kopf, wer geklopft hat, steht in der eigenen Zeile
     expect(s.lead).toBe('');
     expect(strip(s.rows.find((r) => r.id === 'h')!.core)).toBe('hast geklopft · beste Hand');
@@ -327,8 +327,8 @@ describe('Ergebnisblatt Schnautz', () => {
     expect(row('d').hat).toBe('💔');
     expect(strip(row('d').core)).toBe('1 Leben weg');
     expect(short('d')).toBe('');
-    // h hat die beste Hand: die Krone sagt es, a zeigt die Leben als Deckel mit Zahl
-    expect(row('h').hat).toBe('👑');
+    // h hat die beste Hand: die Medaille sagt es, a zeigt die Leben als Deckel mit Zahl
+    expect(row('h').hat).toBe('🏅');
     expect(short('h')).toBe('');
     expect(row('a').short).toContain('class="coaster"');
     expect(short('a')).toBe('2');

@@ -1,9 +1,10 @@
 /*
- * Cabo im Browser: allein gegen KIs bis zum Ende, zwei echte Browser gegeneinander (fremde Karten bleiben geheim)
- * und ein voller Tisch am Handy. Geklickt wird über die Oberfläche wie ein Mensch.
+ * Cabo im Browser: allein gegen KIs bis zum Ende, zwei echte Browser gegeneinander (fremde Karten bleiben geheim,
+ * dazu axe am PC und am Handy) und ein voller Tisch am Handy. Geklickt wird über die Oberfläche wie ein Mensch.
  */
 import { expect, test, type Page } from '@playwright/test';
 import type { View } from '../../src/game/types';
+import { axeCheck } from './axe';
 import {
   quickBots,
   fitFindings,
@@ -26,8 +27,27 @@ import {
 
 test.afterEach(closeAll);
 
-/** Knöpfe, die gerade gehen. Ausgegraute bleiben antippbar und nennen nur ihren Grund (aria-disabled). */
+/**
+ * Knöpfe und Karten, die gerade gehen. Gesperrte bleiben antippbar und nennen nur ihren Grund (aria-disabled), ein
+ * gezielter Tipp darauf braucht in Playwright `force`.
+ */
 const LIVE = ':not([disabled]):not([aria-disabled=true])';
+
+/** Regeln, die axe hier auslässt. Leer: Es gilt WCAG 2.2 AA vollständig. */
+const AXE_OFF: string[] = [];
+
+/** Warten, bis Meldungen weg und endliche Animationen fertig sind, damit axe einen ruhigen Tisch sieht. */
+async function settle(page: Page): Promise<void> {
+  await expect(page.locator('#announce .ann')).toHaveCount(0, { timeout: 20_000 });
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
+}
 
 /** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (src/ui/cabo/input.ts). */
 async function button(page: Page, act: string): Promise<boolean> {
@@ -152,7 +172,26 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
   await waitForPhase(guest, ['peek'], 20_000);
   let checked = 0;
   let told = false;
+  // Geprüfte Lagen für axe, etwa „eigener Zug 1280x860“: beide Seiten je einmal dran und einmal wartend
+  const axed = new Set<string>();
+  const hostId = await myId(host);
+  const guestId = await myId(guest);
   await playToEnd([host, guest], async (p, v, me) => {
+    // Ohne KIs steht der Tisch, bis jemand zieht: Eine Seite ist dran, die andere wartet. Vor dem Zug der Person am
+    // Zug, deshalb bei beiden Seiten
+    if (axed.size < 4 && v.phase === 'play' && v.cb && !v.cb.hold && !v.cb.power) {
+      const turn = v.players[v.turn]?.id;
+      for (const [pg, id, size] of [
+        [host, hostId, '1280x860'],
+        [guest, guestId, '390x844'],
+      ] as const) {
+        const where = `${id === turn ? 'eigener Zug' : 'Warten'} ${size}`;
+        if (axed.has(where)) continue;
+        axed.add(where);
+        await settle(pg);
+        await axeCheck(pg, { include: '#scr-game', exclude: '#fly', disable: AXE_OFF, where: `Cabo ${where}` });
+      }
+    }
     if (p !== guest || !v.cb || (v.phase !== 'play' && v.phase !== 'peek')) return;
     const C = v.cb;
     // Verdeckte Karten sind für den Gast nur Plätze ohne Wert, auch die eigenen
@@ -169,14 +208,23 @@ test('zwei Browser spielen Cabo, fremde Karten bleiben geheim', async ({ browser
     const hv = await mustView(host);
     if (hv.phase !== 'play' || hv.cb?.t !== C.t || hv.players[hv.turn]?.id === me) return;
     await expect(guest.locator('#announce .ann')).toHaveCount(0, { timeout: 20_000 });
-    await guest.locator('#me .cbslot[data-act=cbm]').first().click();
+    // Gesperrt mit Grund (aria-disabled): Playwright tippt nur mit force, ein Mensch kann es immer
+    await guest.locator('#me .cbslot[data-act=cbm][aria-disabled=true]').first().click({ force: true });
     await expect(guest.locator('#fly .nopelbl')).toContainText('Du bist gerade nicht dran.');
     expect((await mustView(host)).cb?.t).toBe(C.t);
     told = true;
   });
   expect(told, 'Gast hat eine eigene Karte angetippt, während der Gastgeber dran war').toBe(true);
+  expect([...axed].sort(), 'axe hat eigenen Zug und Warten an PC und Handy geprüft').toHaveLength(4);
   await waitForPhase(guest, ['over'], 30_000);
-  await expect(guest.locator('#overlay .result h2')).toContainText(/Cabo-König|Unentschieden/, { timeout: 30_000 });
+  for (const [pg, size] of [
+    [host, '1280x860'],
+    [guest, '390x844'],
+  ] as const) {
+    await expect(pg.locator('#overlay .result h2')).toContainText(/Cabo-König|Unentschieden/, { timeout: 30_000 });
+    await settle(pg);
+    await axeCheck(pg, { include: '#overlay', disable: AXE_OFF, where: `Cabo Ergebnisblatt ${size}` });
+  }
   expect(errors.list).toEqual([]);
 });
 
@@ -326,7 +374,10 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
       const btns = [...document.querySelectorAll<HTMLElement>('#me .actions .btn')];
       // Jeder Knopf einzeilig: sichtbare Beschriftung nicht höher als eine Zeile
       const lines = btns.map((b) => {
-        const lbl = [...b.querySelectorAll<HTMLElement>('.blong, .bshort')].find((x) => x.offsetParent) ?? b;
+        const lbl =
+          [...b.querySelectorAll<HTMLElement>('.blong, .bshort, .cbres > :not([aria-hidden])')].find(
+            (x) => x.offsetParent,
+          ) ?? b;
         const r = document.createRange();
         r.selectNodeContents(lbl);
         const tops = new Set([...r.getClientRects()].map((x) => Math.round(x.top)));
@@ -370,8 +421,8 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
   });
   await expect(host.locator('#status .main')).toContainText('Spionieren!');
   await host.waitForTimeout(450);
-  const own = host.locator('#me .cbslot[data-act=cbm]').first();
-  await own.click();
+  const own = host.locator('#me .cbslot[data-act=cbm][aria-disabled=true]').first();
+  await own.click({ force: true });
   await expect(host.locator('#fly .nopelbl').last()).toContainText('Wähle eine Karte von jemand anderem.');
   await expect(own).toHaveClass(/shake/);
   await expect(host.locator('#me')).not.toHaveClass(/shake/);
@@ -388,7 +439,7 @@ test('Am Handy: gezogene Dame mit Knöpfen in einer Zeile, ausgegraute Knöpfe u
     S.hostCommit();
   }, me);
   await expect(host.locator('#status .main')).toContainText('ist dran.');
-  await host.locator('#me .cbslot[data-act=cbm]').first().click();
+  await host.locator('#me .cbslot[data-act=cbm][aria-disabled=true]').first().click({ force: true });
   await expect(host.locator('#fly .nopelbl')).toContainText('nicht dran');
   expect(errors.list).toEqual([]);
 });

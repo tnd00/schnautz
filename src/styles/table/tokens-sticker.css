@@ -225,6 +225,7 @@
   --tb-bubble-text: var(--st-ink); /* dito Schrift */
   --tb-card-edge: color-mix(in srgb, var(--st-ink) 18%, transparent); /* Kante kleiner und angehobener Karten */
   --tb-card-face: var(--st-paper); /* Kartensticker in der Legende */
+  --tb-trump-mark: var(--brass-lo); /* Trumpfstern auf den eigenen Durak-Karten (Kartenvorderseite) */
   --tb-clock-bg: var(--st-ink); /* Countdown des 4er-Fensters */
   --tb-log-text: var(--st-ink); /* Einträge im Verlauf */
   --tb-side-solid: var(--st-sheet); /* Seitenleiste als Bogen am Handy */

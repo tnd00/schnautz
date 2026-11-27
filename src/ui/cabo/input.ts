@@ -12,7 +12,7 @@ import { App } from '../app';
 import { CAR, carouselRelease } from '../carousel';
 import type { Timer } from '../dom';
 import { render } from '../render/index';
-import { cbBtnAct, cbCanSnap, cbMine, cbProbe, cbRole } from '../render/cabo';
+import { cbBtnAct, cbCanSnap, cbMine, cbProbe, cbRole, type CbBtn } from '../render/cabo';
 import { noteTap, showReject, tauntLabel } from '../feedback';
 import { barGuard } from '../table/bar';
 import { sfx, unlockAudio } from '../sound';
@@ -160,7 +160,7 @@ export function cbTapOpp(owner: string, id: number): void {
 }
 
 /** Knöpfe am eigenen Platz und Tipps auf Stapel oder Ablage. */
-export function cbButton(kind: string, fromButton = true): void {
+export function cbButton(kind: CbBtn, fromButton = true): void {
   const v = App.view;
   if (!v || App.busy) return;
   // Hat sich die Knopfzeile gerade geändert, galt der Tipp vermutlich dem Knopf, der vorher dort stand

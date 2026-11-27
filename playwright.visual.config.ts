@@ -31,6 +31,8 @@ export default defineConfig({
   testMatch: '*.visual.ts',
   outputDir: process.env.PW_OUT ?? '/Users/tnd/schnautz-2-8/bild/results',
   snapshotPathTemplate: `${REF}/${LOOK}-${THEME}/{arg}{ext}`,
+  // Lesende Läufe schreiben keine fehlenden Vorlagen in den Referenzordner, aufnehmen nur mit --update-snapshots
+  updateSnapshots: 'none',
   timeout: 3 * 60_000,
   expect: {
     timeout: 20_000,

@@ -83,9 +83,12 @@
   border-radius: 999px;
   background: var(--tb-mark-bg);
   color: var(--cream);
-  font: 800 11px/1.3 var(--ui);
+  font: 800 12px/1.3 var(--ui);
   text-align: center;
   pointer-events: none;
+}
+.cbv::before {
+  content: attr(data-v);
 }
 .cbv.zero {
   background: var(--tb-mark-zero);
@@ -214,7 +217,7 @@
 .opp.cb .cbv {
   min-width: 16px;
   padding: 0 4px;
-  font-size: 9.5px;
+  font-size: 12px;
   bottom: -6px;
 }
 .opp.cb.aimable .cbslot.pick > .card {
@@ -236,19 +239,6 @@
   box-shadow:
     0 0 0 2px var(--tb-accent),
     0 6px 12px color-mix(in srgb, var(--tb-shade) 45%, transparent);
-}
-/* Krone und KI stehen im Zähler-Slot der Kachel (src/ui/render/cabo.ts), bis 4b wie in 2.7 vor dem Namen */
-.opp.cb .ometa .marks {
-  order: -1;
-}
-.ometa .cbp {
-  margin-left: 4px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tb-shade) 35%, transparent);
-  font-weight: 800;
-  font-size: 12px;
-  color: var(--tb-val-text);
 }
 .tag.cabo {
   background: var(--tb-alert);
@@ -281,6 +271,17 @@
 }
 .cbme .actions .bshort {
   display: none;
+}
+/* „Eintauschen“ hält die Breite für „9 eintauschen“ frei (src/ui/render/cabo.ts), bricht nie um und springt nicht */
+.cbres {
+  display: inline-grid;
+  white-space: nowrap;
+}
+.cbres > * {
+  grid-area: 1 / 1;
+}
+.cbres > [aria-hidden] {
+  visibility: hidden;
 }
 /* Ergebnisblatt: Raster der Schlüsselzeile mit Punktzahl steht in result.css */
 .paper h2 .g {
@@ -402,4 +403,13 @@
 :where(html.calm) .opp.cb.aimable .cbslot > .card,
 :where(html.calm) #zer.crown .zer-ring {
   animation: none;
+}
+
+/* „gezogen“ im leeren Platz passt am schmalen Handy nicht in eine Zeile: trennen statt abschneiden */
+body.g-cabo #center .emptyslot {
+  padding: 0 2px;
+  line-height: 1.15;
+  text-align: center;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }

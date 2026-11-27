@@ -26,7 +26,7 @@
 }
 /*
  * Schnautz zu acht auf den kürzesten Handys (375x548): Zwei Knopfreihen und ein zweizeiliger Status passen nur mit
- * engeren Abständen und etwas flacheren Knöpfen. Die Karten bleiben so groß wie vorher.
+ * engeren Abständen. Seit die Punkteleiste fehlt, behalten die Knöpfe ihre Höhe aus fit.css (tippbar 44 px).
  */
 @media (max-width: 960px) and (max-height: 580px) {
   body.ingame #table[data-game='schnautz'] {
@@ -36,10 +36,6 @@
     gap: 3px;
     padding-top: 4px;
     padding-bottom: 6px;
-  }
-  /* Die Hand behält ihren Abstand nach oben, sonst verdeckt die gewählte Karte die Leben */
-  #table[data-game='schnautz'] .me .actions .btn {
-    min-height: 36px;
   }
   /* Haben schon welche geschoben, zählt der Stand mehr als der Tipp, sonst wird der Status dreizeilig */
   #table[data-game='schnautz'] .status .sub:has(.np) .tip {
@@ -55,6 +51,10 @@
 }
 
 @media (max-width: 960px) {
+  /* Am Wert der Kachel steht „schwimmt“ ausgeschrieben, nur das Wellenzeichen wäre zu leicht zu übersehen */
+  body.ingame .opp > .val .swim .swt {
+    display: inline;
+  }
   .opps.car .opp .lives {
     gap: 2px;
   }
@@ -62,9 +62,4 @@
     width: 10px;
     height: 10px;
   }
-}
-
-/* Krone und KI stehen seit 2.8 im Zähler der Kachel (render/schnautz.ts), gezeigt wie vorher vor dem Namen */
-#table[data-game='schnautz'] .opp .tb-count > .marks {
-  order: -1;
 }

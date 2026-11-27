@@ -56,7 +56,7 @@
     flex-wrap: nowrap;
     gap: 6px;
     /* Auf hohen Handys etwas Luft zur Kopfzeile, auf kurzen bleibt es eng */
-    padding-top: clamp(8px, calc(100dvh * 0.07 - 36px), 26px);
+    padding-top: clamp(14px, calc(100dvh * 0.07 - 36px), 26px);
     /* Platz für die Beschriftung, die oben aus dem Stapelkasten ragt, und den Wert auf der Unterkante der Kacheln */
     margin-bottom: 6px;
   }
@@ -70,10 +70,11 @@
   .opp:has(> .val) {
     padding-bottom: 10px;
   }
-  /* Auf der Ecke über der Kachelkante, die Tischkarten darunter bleiben frei */
+  /* Am Handy sind die Kacheln so schmal, dass lange Etiketten („noch einmal“) über die ganze Oberkante reichen. Der
+   * Eckaufkleber sitzt deshalb unter dem Etikett auf der rechten Kante, immer an derselben Stelle */
   .opp > .rmark {
-    top: -10px;
-    right: -8px;
+    top: 14px;
+    right: -7px;
     width: 20px;
     height: 20px;
     font-size: 12px;
@@ -155,8 +156,12 @@
   .opp.offline .nm {
     color: var(--tb-offline-text);
   }
+  /* Am Handy fehlt der Platz für „· offline“ hinter dem Namen, das Zeichen davor kürzt nie (Farbe nie allein, M9) */
   .opp.offline .nm::after {
     content: '';
+  }
+  .opp.offline .nm::before {
+    content: '📴\00a0' / 'offline, ';
   }
   .opp .ocards {
     height: calc(var(--u) * 11 * 1.4 + 4px);
@@ -441,7 +446,7 @@
     border-color: var(--brass-hi);
     color: var(--brass-hi);
   }
-  .emotes button {
+  .emotes button:where(:not(.fab)) {
     flex: 1 1 0;
     min-width: 0;
     max-width: 48px;
@@ -481,7 +486,10 @@
     font-size: 13px;
   }
   .emotes .etab span {
-    display: inline;
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
   }
   .erow {
     justify-content: space-between;
@@ -560,6 +568,91 @@
     max-width: none;
     font-size: 18px;
   }
+  /* Reaktionen am Tisch (Form B2): legen sich 1:1 über den eigenen Platz (am flachsten 177 px, Inhalt braucht 158).
+   * Links bleibt der Smiley, rechts steht das X an der Stelle des Chat-Knopfs, dazwischen die Reiter */
+  #emotes {
+    top: 0;
+    bottom: 0;
+    z-index: 7;
+    padding: 4px 8px 8px;
+  }
+  /* Was das Menü verdeckt, ist auch für Tastatur und Vorleser weg */
+  body.emoopen :is(#me, #logfab) {
+    visibility: hidden;
+  }
+  .emox {
+    top: 4px;
+    right: 4px;
+    rotate: calc(var(--tb-tilt) * 2deg);
+  }
+  #emotes :is(.etabs, .ehead) {
+    flex: none;
+    height: 40px;
+    margin: 0 41px;
+    gap: 4px;
+    container-type: inline-size;
+  }
+  #emotes .etab {
+    flex: 1 1 auto;
+    height: 40px;
+    padding: 0 4px;
+    border-radius: 12px;
+    justify-content: center;
+    font-size: 12.5px;
+  }
+  @container (max-width: 262px) {
+    #emotes .etab i {
+      display: none;
+    }
+  }
+  /* Reaktionen 4 breit, Klänge und Würfe 3 breit, je zwei Reihen */
+  #emotes .erow {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 72px));
+    align-content: center;
+    gap: 8px;
+  }
+  #emotes .erow:is(.e-snd, .e-toss) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  #emotes .erow button {
+    width: auto;
+    max-width: none;
+    height: auto;
+    min-height: 44px;
+    aspect-ratio: auto;
+    border-radius: 16px;
+    font-size: 27px;
+  }
+  /* Werfen, zweiter Schritt: Zurück, Frage und die Namen füllen das Menü */
+  #emotes .epanel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #emotes .echips {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: center;
+  }
+  #emotes .chip {
+    height: auto;
+    min-height: 40px;
+    padding: 2px 6px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.12;
+  }
+  #emotes .ex {
+    width: 40px;
+    height: 40px;
+  }
   /* Größere Wurfzeichen am Tisch, die Krone deutlich größer als die Siegerkrone */
   body.ingame .table .opp > .tossmark.crown {
     font-size: max(22px, calc(var(--u) * 7));
@@ -604,8 +697,9 @@
   body.ingame .iconbtn:not(.rulesbtn) {
     width: 34px;
   }
+  /* Etiketten ragen 8 px über die Kachel (im Sticker-Look gekippt etwas mehr), der Tisch schneidet oben ab */
   .opps {
-    padding-top: 6px;
+    padding-top: 14px;
   }
   .opp,
   .opp.sh {

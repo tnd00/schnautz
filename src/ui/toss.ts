@@ -387,7 +387,7 @@ export function sendToss(item: TossItem, to: string, send: (item: TossItem, to: 
   send(item, to);
 }
 
-/** Kleine Leiste mit den vier Gegenständen direkt an einer Kachel oder Ergebniszeile. */
+/** Eine Reihe Würfe für eine Kachel (über der Statuszeile) oder eine Ergebniszeile, ein Tipp wirft sofort. */
 export function openPick(pid: string): void {
   const a = tossAnchor(pid);
   if (!a || pid === App.me) {
@@ -411,7 +411,7 @@ export function openPick(pid: string): void {
   placePick();
 }
 
-/** Leiste unter ihrem Ziel halten, am Bildschirmrand eingeklemmt. */
+/** Reihe über der Statuszeile oder unter ihrem Ziel halten, am Bildschirmrand eingeklemmt. */
 export function placePick(): void {
   const el = $opt('#tosspick');
   if (!el || !TOSS.pick) return;
@@ -421,11 +421,19 @@ export function placePick(): void {
     return;
   }
   el.querySelectorAll('button').forEach((b) => (b.disabled = App.tossBlock));
-  const r = a.el.getBoundingClientRect();
+  // Am Tisch liegt die Reihe auf der Statuszeile (Form C), im Ergebnisfenster unter ihrer Zeile. Stehen dort Knöpfe
+  // (4er, Bombe, Vorspulen), rückt sie darüber, damit nichts Zeitkritisches verdeckt ist
+  const stEl = $opt('#overlay .modal') ? null : $opt('#status');
+  const st = stEl?.getBoundingClientRect();
+  const r = st?.height ? st : a.el.getBoundingClientRect();
   const w = el.offsetWidth || 190;
   const h = el.offsetHeight || 48;
   const x = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), window.innerWidth - w - 8);
-  let y = r.bottom + 6;
+  let y = !st?.height
+    ? r.bottom + 6
+    : stEl?.classList.contains('hasquick')
+      ? Math.max(8, r.top - h - 6)
+      : r.top + (r.height - h) / 2;
   if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
   el.style.left = `${x}px`;
   el.style.top = `${y}px`;

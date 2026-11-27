@@ -1,7 +1,7 @@
 /*
- * Schnautz am Tisch (Plan 2.8 Runde 4a): liefert nur Modelle für die Bausteine in src/ui/table, renderTable zeichnet.
- * Legacy sieht aus wie vorher. Die Leben stehen bis 4b in der Punkteleiste und im Zähler der Kachel, `value` bleibt
- * leer. Krone und KI stehen wie bisher im Feld vor dem Namen (marksHTML im Zähler, fit-schnautz.css stellt es vor).
+ * Schnautz am Tisch (Plan 2.8 Runde 4a und 4b): liefert nur Modelle für die Bausteine in src/ui/table, renderTable
+ * zeichnet. Die Leben stehen als Wert auf der Unterkante der Kachel, die Krone als Eckaufkleber, die Runde in der
+ * Beschriftung der Mitte. Am Rundenende trägt jede betroffene Kachel eine Plakette (Farbe nie allein).
  */
 import { handValue, szWhyNot } from '../../game/schnautz';
 import type { HandValue, LifeChange, Player, SchnautzResult, View } from '../../game/types';
@@ -10,7 +10,7 @@ import { onlyBotsPlaying } from '../../game/games';
 import { rj } from '../../game/reject';
 import { App } from '../app';
 import { cardHTML, fmtVal, livesHTML, SWIM_ICON, valHTML } from '../cards';
-import { marksHTML } from './marks';
+import { reignHTML } from './marks';
 import { esc, listJoin, num } from '../dom';
 import { dealerId, myTurn, nameOf, pById, roundBest, schnautzResult, turnId } from '../helpers';
 import { botsOnlyHTML, type Sheet, type SheetRow } from './result';
@@ -19,14 +19,12 @@ import { ceremonyOn } from '../ceremony';
 import { endMain, turnMain, whoHTML, type Status } from '../status';
 import { OFFLINE_WAIT, offline, STATUS } from '../../content/texts/status';
 import { SZ_SHEET, SZ_STATUS } from '../../content/texts/status-schnautz';
-import { TABLE } from '../../content/texts/table';
+import { SZ_TABLE } from '../../content/texts/table-sz';
 import { renderTable } from '../table/index';
 import { handHTML, whyText } from '../table/hand';
+import { tagHTML, valueHTML } from '../table/seat';
 import type { NewTable } from '../table/spec';
 import type { BarModel, CenterModel, HandCard, MeModel, MeState, SeatModel, SeatState, TagModel } from '../table/types';
-
-/** Teile eines Vorlesesatzes, leere fallen weg */
-const said = (...xs: (string | false | null | undefined)[]): string => xs.filter(Boolean).join(', ');
 
 const cl = (...xs: (string | false | null | undefined)[]): string => xs.filter(Boolean).join(' ');
 
@@ -46,21 +44,35 @@ function roundMark(v: View, r: SchnautzResult | null, id: string): 'win' | 'lose
   return roundBest(v).includes(id) && Object.keys(r.changes).length ? 'win' : null;
 }
 
-const livesSay = (p: Player): string => (p.out ? 'raus' : p.lives === 0 ? 'schwimmt' : `${num(p.lives)} Leben`);
+/** Plakette am Rundenende: beste Hand oder was verloren ging, mit Zeichen statt nur Rahmenfarbe (M9) */
+function plaque(v: View, r: SchnautzResult | null, id: string): TagModel | null {
+  const rm = roundMark(v, r, id);
+  const c = r?.changes[id];
+  if (rm === 'win') return { ...SZ_TABLE.plaque.best, kind: 'king', title: SZ_TABLE.plaque.best.say };
+  if (rm !== 'lose' || !c) return null;
+  const t = c.to === 'out' ? SZ_TABLE.plaque.out : c.to === 'swim' ? SZ_TABLE.plaque.swim : SZ_TABLE.plaque.life(c.n);
+  return { text: t.text, kind: 'loser', cls: 'outt', title: t.say };
+}
+
+/** Sagt die Plakette schon den neuen Stand (schwimmt, raus), hält der Wert nur seinen Platz */
+const plaqueSaysLives = (r: SchnautzResult | null, id: string): boolean =>
+  !!r?.changes[id] && r.changes[id].to !== 'life';
+
+const crowned = (v: View, id: string): boolean => !!reignHTML(v, id);
 
 const back = (deal: boolean, d: number): string =>
   cardHTML(null, { key: '', cls: deal ? 'deal' : '', style: `--d:${d}s` });
 
 function szTag(v: View, p: Player): TagModel | null {
   if (p.out || !isLive(v)) return null;
-  if (actor(v) === p.id)
-    return { text: v.phase === 'play' ? TABLE.tag.turn : 'gibt', kind: 'turn', cls: 'turn', think: true };
-  if (v.knocker === p.id) return { text: 'hat geklopft', kind: 'knock', cls: 'knock' };
-  if (dealerId(v) === p.id) return { text: 'gibt', kind: 'role' };
+  const T = SZ_TABLE.tag;
+  if (actor(v) === p.id) return { text: v.phase === 'play' ? T.turn : T.deal, kind: 'turn', cls: 'turn', think: true };
+  if (v.knocker === p.id) return { text: T.knock, kind: 'knock', cls: 'knock', title: T.knockSay };
+  if (dealerId(v) === p.id) return { text: T.deal, kind: 'role' };
   return null;
 }
 
-/** Gegnerkachel: drei Rücken oder am Ende die offene Hand, darunter Zeichen, Name und Leben */
+/** Gegnerkachel: drei Rücken oder am Ende die offene Hand, darunter KI-Zeichen und Name, die Leben als Wert */
 function szSeat(v: View, p: Player): SeatModel {
   const r = revealOf(v);
   const hidden = v.hands[p.id];
@@ -68,7 +80,7 @@ function szSeat(v: View, p: Player): SeatModel {
   let cards = '';
   if (shown) cards = shown.map((c) => cardHTML(c, { key: '' })).join('');
   else if (typeof hidden === 'number') for (let i = 0; i < hidden; i++) cards += back(!!App.anim.deal, i * 0.08 + 0.05);
-  const tag = szTag(v, p);
+  const tag = szTag(v, p) ?? plaque(v, r, p.id);
   const rm = roundMark(v, r, p.id);
   const st: SeatState[] = [];
   if (actor(v) === p.id) st.push('turn');
@@ -78,17 +90,27 @@ function szSeat(v: View, p: Player): SeatModel {
   return {
     id: p.id,
     name: p.name,
-    // Eckaufkleber und Wert erst in 4b, bis dahin bleibt das Zeichenfeld vor dem Namen
-    marks: '',
-    value: '',
-    count: marksHTML(v, p) + livesHTML(p, v.rules),
+    marks: reignHTML(v, p.id),
+    bot: !!p.bot,
+    value: valueHTML({
+      k: 'lives',
+      html: p.out ? SZ_TABLE.lives(p) : livesHTML(p, v.rules),
+      title: SZ_TABLE.lives(p),
+      cls: plaqueSaysLives(r, p.id) ? 'hold' : undefined,
+    }),
+    count: '',
     tag,
     body: `<div class="ocards">${cards}</div>`,
     st,
     role: v.knocker === p.id ? 'knock' : dealerId(v) === p.id ? 'deal' : undefined,
     aim: v.players.some((q) => q.id === App.me),
     cls: rm ? [`r${rm}`] : [],
-    say: said(p.bot && 'KI', livesSay(p), tag?.text),
+    say: SZ_TABLE.seat({
+      bot: !!p.bot,
+      crown: crowned(v, p.id),
+      lives: plaqueSaysLives(r, p.id) ? '' : SZ_TABLE.lives(p),
+      tag: tag?.title ?? tag?.text ?? '',
+    }),
   };
 }
 
@@ -120,11 +142,11 @@ function szCenter(v: View): CenterModel {
           .join('');
   const b = cardHTML(null, { key: '' });
   return {
-    cap: v.phase === 'choose' ? 'Zweites Blatt' : 'Mitte',
-    label: `Tischmitte, ${n} Karten im Stapel`,
+    cap: SZ_TABLE.cap(num(v.round), v.phase === 'choose'),
+    label: SZ_TABLE.center(num(v.round), n),
     stacks: [
       // Immer drei Rücken, die Zahl sitzt als Plakette am Stapel wie bei Shithead
-      { k: 'deck', cls: 'deck', title: `${n} Karten im Stapel`, body: b + b + b, count: n },
+      { k: 'deck', cls: 'deck', title: SZ_TABLE.deck(n), body: b + b + b, count: n },
       { k: 'middle', cls: 'middle', title: '', body: mid },
     ],
   };
@@ -184,11 +206,14 @@ function szMe(v: View): MeModel {
   const r = revealOf(v);
   const rm = roundMark(v, r, App.me);
   const base = { cls: rm ? [`r${rm}`] : [], st: (rm ? [rm] : []) as MeState[] };
-  const lives = me ? livesHTML(me, v.rules) : '';
+  // Sagt die Plakette schon „schwimmt“ oder „raus“, fällt der Zähler daneben weg
+  const lives = me && !plaqueSaysLives(r, App.me) ? livesHTML(me, v.rules) : '';
+  const marks = reignHTML(v, App.me);
+  const pq = plaque(v, r, App.me);
   if (!me || me.out)
     return {
       ...base,
-      head: { marks: '', count: lives },
+      head: { marks, count: lives, tags: pq ? tagHTML(pq) : '' },
       rows: `<div class="outmsg">${SZ_STATUS.out}</div>`,
       bar: null,
       say: SZ_STATUS.out,
@@ -209,13 +234,14 @@ function szMe(v: View): MeModel {
   }
   const live = isLive(v);
   const dealer = dealerId(v) === App.me;
-  const tags = !live
-    ? ''
+  const M = SZ_TABLE.me;
+  const tag: TagModel | null = !live
+    ? pq
     : v.knocker === App.me
-      ? '<span class="tag knock">geklopft</span>'
+      ? { text: M.knock, kind: 'knock', cls: 'knock', title: M.knockSay }
       : dealer
-        ? '<span class="tag">du gibst</span>'
-        : '';
+        ? { text: M.deal, kind: 'role' }
+        : null;
   const pill = hand
     ? `<span class="${cl('pill', hv.v >= 30.5 && 'hot', preview && 'pre')}">` +
       (preview ? `${shortVal(hv)} <span class="to">→ ${preview}</span>` : valHTML(hv)) +
@@ -235,17 +261,18 @@ function szMe(v: View): MeModel {
   }));
   const on = playing || (v.phase === 'choose' && dealer);
   return {
-    head: { marks: '', count: lives, tags, pill },
-    rows: handHTML({ kind: 'fan3', cls: 'hand', label: `Deine Hand, ${cards.length} Karten`, cards }),
+    head: { marks, count: lives, tags: tag ? tagHTML(tag) : '', pill },
+    rows: handHTML({ kind: 'fan3', cls: 'hand', label: SZ_TABLE.hand(cards.length), cards }),
     bar: szBar(v, both),
     st: on ? ['turn', ...base.st] : base.st,
     cls: base.cls,
-    say: said(
-      on && 'Du bist dran',
-      livesSay(me),
-      v.knocker === App.me && 'geklopft',
-      hv.kind !== 'none' && `Handwert ${fmtVal(hv.v)}`,
-    ),
+    say: SZ_TABLE.meSay({
+      turn: on,
+      crown: !!marks,
+      lives: plaqueSaysLives(r, App.me) ? '' : SZ_TABLE.lives(me),
+      tag: tag?.title ?? tag?.text ?? '',
+      val: hv.kind !== 'none' ? fmtVal(hv.v) : '',
+    }),
   };
 }
 
@@ -362,7 +389,7 @@ function sheetTitle(v: View, r: SchnautzResult): string {
 }
 
 /**
- * Unterzeile des Kopfs nur, wenn jemand gegangen ist. Wie die Runde ausging, sagen Titel und Zeilen (👑 mit 31 oder
+ * Unterzeile des Kopfs nur, wenn jemand gegangen ist. Wie die Runde ausging, sagen Titel und Zeilen (🏅 mit 31 oder
  * Feuer, „hat geklopft“), so bleibt bei acht Leuten am kurzen Handy Platz für alle Zeilen.
  */
 function sheetLead(v: View, r: SchnautzResult): string {
@@ -424,9 +451,9 @@ export function szSheet(v: View): Sheet | null {
           id: p.id,
           place: null,
           name: nm(p.id),
-          hat: lc?.hat ?? (isBest ? '👑' : undefined),
+          hat: lc?.hat ?? (isBest ? '🏅' : undefined),
           core: lc?.core ?? (isBest ? `<span class="conseq good">${SZ_SHEET.best}</span>` : livesHTML(p, v.rules)),
-          // Kurz: die 👑 sagt „beste Hand“ schon, die Leben stehen als Deckel mit Zahl
+          // Kurz: die 🏅 sagt „beste Hand“ schon, die Leben stehen als Deckel mit Zahl
           short: lc?.short ?? (isBest ? '' : livesShort(p)),
           val: valOf(p.id),
           cards: r.hands[p.id],
@@ -503,7 +530,7 @@ export function szSheet(v: View): Sheet | null {
     : myC
       ? lifeCore(myC, true).hat
       : best.includes(App.me) && losers.length
-        ? '👑'
+        ? '🏅'
         : !losers.length && r.reason !== 'quit'
           ? '🤝'
           : '🃏';

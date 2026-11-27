@@ -41,6 +41,11 @@ export function renderLog(v: View): void {
   const u = $('#unread');
   u.hidden = !App.unread;
   u.textContent = App.unread > 9 ? '9+' : String(App.unread);
+  // Die Zahl am Knopf ist für Vorleser versteckt (aria-hidden) und steht stattdessen im Namen
+  $('#logfab').setAttribute(
+    'aria-label',
+    App.unread ? `Verlauf und Chat, ${App.unread > 9 ? 'mehr als 9' : App.unread} neu` : 'Verlauf und Chat',
+  );
   if (key === lastLogKey) return;
   lastLogKey = key;
   const el = $('#log'),

@@ -217,7 +217,7 @@ export function soundBtnsHTML(withLabels: boolean): string {
   return SOUNDS.map((s) => {
     const m = SOUND_META[s];
     return (
-      `<button type="button" data-act="sb" data-s="${s}" aria-label="Sound ${m.label} abspielen" title="${m.label}"` +
+      `<button type="button" data-act="sb" data-s="${s}" aria-label="Klang ${m.label} abspielen" title="${m.label}"` +
       `${App.sbBlock ? ' aria-disabled="true"' : ''}><i>${m.icon}</i>${withLabels ? `<small>${m.label}</small>` : ''}</button>`
     );
   }).join('');

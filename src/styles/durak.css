@@ -143,14 +143,17 @@
 .dkshow .more {
   align-self: center;
   margin-left: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tb-muted);
 }
 
-/* Eigene Hand: Trümpfe dezent gerahmt */
-.dkhand .card.trumpc {
-  outline: 2px solid color-mix(in srgb, var(--tb-accent-strong) 70%, transparent);
-  outline-offset: -3px;
+/* Eigene Hand: Trümpfe mit Stern unter dem Wert, der Streifen bleibt beim Überlappen sichtbar (Farbe nie allein) */
+.dkhand .trm {
+  position: absolute;
+  top: calc(var(--cw) * 0.4);
+  left: calc(var(--cw) * 0.05);
+  font: normal 700 12px/1 var(--ui);
+  color: var(--tb-trump-mark);
 }
 
 @media (max-width: 520px) {
@@ -196,9 +199,4 @@
 
 :where(html.calm) .dkpair.target .dka {
   animation: none;
-}
-
-/* Krone, 💩 und KI kommen über den Zähler-Slot der Kachel und stehen wie in 2.7 vor dem Namen (bis 4b) */
-.opp.dk .ometa .marks {
-  order: -1;
 }

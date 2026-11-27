@@ -1,5 +1,5 @@
 /*
- * Cabo-Tisch als `NewTable` (Plan 2.8 Runde 4a): Gegner mit ihrer Reihe aus verdeckten Karten und ihrem Punktestand,
+ * Cabo-Tisch als `NewTable` (Plan 2.8 Runde 4a, 4b): Gegner mit ihrer Reihe aus verdeckten Karten und ihren Punkten,
  * in der Mitte Stapel, gezogene Karte und Ablage, unten die eigene Reihe mit Knöpfen, alles als Modelle für die
  * Bausteine in src/ui/table. Was man ansieht, blitzt nur kurz auf (App.cbShow), danach muss man es sich merken. Was
  * ich gerade tun kann, steht in `cbRole`. Tipps verarbeitet src/ui/cabo/input.ts.
@@ -12,18 +12,20 @@ import { App } from '../app';
 import { cardHTML, cardName } from '../cards';
 import { esc, num } from '../dom';
 import { nameOf, onlyBotsPlaying, pById, turnId, vb } from '../helpers';
+import { unreachable } from '../../game/games';
 import { taunt } from '../taunts';
-import { marksHTML, reignHTML } from './marks';
+import { reignHTML } from './marks';
 import { botsOnlyHTML, type Sheet, type SheetRow } from './result';
 import { OFFLINE_WAIT, offline, playFor, STATUS } from '../../content/texts/status';
 import { CB_STATUS, cbHeld, cbLastSub, cbOtherDeck, cbOtherPile, cbOtherPower } from '../../content/texts/status-cb';
 import { TABLE } from '../../content/texts/table';
+import { CB_TABLE } from '../../content/texts/table-cb';
 import { ceremonyOn } from '../ceremony';
 import { endMain, turnMain, waitSub, type Status } from '../status';
 import { twoLabel } from '../table/bar';
 import { whyText } from '../table/hand';
 import { deckCards } from '../table/pile';
-import { numHTML } from '../table/seat';
+import { numHTML, valueHTML } from '../table/seat';
 import type { NewTable } from '../table/spec';
 import type {
   BarButton,
@@ -97,8 +99,11 @@ export function cbCanSnap(v: View): boolean {
   return !!v.rules.cb?.snap && !!C?.pile.length && !!cbMine(v)?.length && (role === 'wait' || role === 'draw');
 }
 
+/** Knöpfe am eigenen Platz, Stapel und Ablage */
+export type CbBtn = 'cbdeck' | 'cbpile' | 'cbcabo' | 'cbswap' | 'cbdiscard' | 'cbblind' | 'cbskip' | 'cbsnapmode';
+
 /** Zug hinter einem Knopf, Stapel oder der Ablage, für den Tipp und für den Grund am gesperrten Knopf. */
-export function cbBtnAct(kind: string): Action | null {
+export function cbBtnAct(kind: CbBtn): Action | null {
   const o = App.cs.opp;
   switch (kind) {
     case 'cbdeck':
@@ -113,8 +118,12 @@ export function cbBtnAct(kind: string): Action | null {
       return { type: 'cbdiscard' };
     case 'cbblind':
       return { type: 'cbblind', id: App.cs.ids[0] ?? -1, to: o?.to ?? '', oid: o?.id ?? -1 };
-    default:
+    // Ohne eigenen Zug dahinter, cbButton in src/ui/cabo/input.ts erledigt sie
+    case 'cbskip':
+    case 'cbsnapmode':
       return null;
+    default:
+      return unreachable(kind);
   }
 }
 
@@ -152,15 +161,25 @@ export function cbShownPoints(v: View, p: Player): number {
   return Math.max(0, before - num(r.scores[p.id]));
 }
 
-const points = (n: number): string => `${n} ${n === 1 ? 'Punkt' : 'Punkte'}`;
-
 /** Wie stark sich Karten überlappen, damit `n` Karten in den Platz für `room` Karten passen. */
 const overlap = (n: number, room: number): number => (n <= room ? 0 : (room - 1) / (n - 1) - 1);
 
-const valBadge = (c: Card): string => `<span class="cbv${cbVal(c) === 0 ? ' zero' : ''}">${cbVal(c)}</span>`;
+/**
+ * Wertmarke unter offenen Karten. Die Zahl zeichnet CSS aus `data-v`, den Wert nennt schon der Name der Karte, und als
+ * Text stünde sie in Ablage und Plätzen zwischen den Wörtern ihres Namens (WCAG 2.5.3).
+ */
+const valBadge = (c: Card): string => `<span class="cbv${cbVal(c) === 0 ? ' zero' : ''}" data-v="${cbVal(c)}"></span>`;
 
-/** Eine Karte ohne eigene Rolle, die Rolle trägt der Platz drumherum */
-const card = (c: Card | null | undefined, cls = ''): string => cardHTML(c ?? null, { key: '', cls });
+/** Eine Karte ohne eigene Rolle, die Rolle trägt der Platz drumherum. Offen nennt sie ihren Wert („Pik 7, 7 Punkte“) */
+const card = (c: Card | null | undefined, cls = ''): string =>
+  cardHTML(c ?? null, { key: '', cls, value: c ? cbVal(c) : undefined });
+
+/**
+ * Untere Karte der Ablage: Auch die obere Ecke zeichnet ihren Wert nur (`data-t` wie die untere Ecke, cards.css), sonst
+ * stünde er im sichtbaren Text des Knopfs „Von der Ablage nehmen“ vor dem der oberen Karte (WCAG 2.5.3).
+ */
+const muted = (html: string): string =>
+  html.replace(/<span class="ix"><span>([^<]+)<\/span>/, '<span class="ix"><span data-t="$1"></span>');
 
 interface SlotOpts {
   act?: string;
@@ -169,8 +188,8 @@ interface SlotOpts {
   pick?: boolean;
   /** Name für den Vorleser, etwa „Deine 2. Karte“ */
   name?: string;
-  /** Grund, wenn die Karte antippbar, aber nicht wählbar ist, als Code wie beim Gastgeber */
-  why?: Action | null;
+  /** Zug, an dem eine antippbare, aber nicht wählbare Karte ihren Grund prüft (cbProbe), geht nie raus */
+  probe?: Action | null;
 }
 
 /**
@@ -185,12 +204,13 @@ function slotHTML(v: View, owner: string, s: CbSlotView, o: SlotOpts = {}): stri
   // Der Balken, der die Restzeit zeigt, läuft beim Neuzeichnen an derselben Stelle weiter
   const left = seen ? Math.max(0, App.cbShow.until - Date.now()) : 0;
   const style = seen ? ` style="--cbms:${CB_REVEAL_MS}ms; --cbgone:${CB_REVEAL_MS - left}ms"` : '';
-  // Nur der Grund als Beschreibung, nicht aria-disabled: Die Karte ist nicht ausgegraut, nur nicht hervorgehoben
-  const why = o.act && !pick && o.why ? whyText(cbWhyNot(v, App.me, o.why)) : null;
-  const name = `${o.name ?? ''}${c ? `: ${cardName(c)}${TABLE.points(cbVal(c))}` : ', verdeckt'}`;
+  // Gesperrt mit Grund wie in allen Spielen (aria-disabled), ausgegraut wird sie dabei nicht, nur nicht hervorgehoben
+  const why = o.act && !pick && o.probe ? whyText(cbWhyNot(v, App.me, o.probe)) : null;
+  const name = `${o.name ?? ''}${c ? `: ${cardName(c)}${TABLE.points(cbVal(c))}` : CB_TABLE.hidden}`;
   const attrs = o.act
     ? ` data-act="${o.act}" data-o="${esc(owner)}" data-fk="cb:${esc(owner)}:${s.id}" role="button" tabindex="0"` +
-      ` aria-pressed="${!!o.sel}" aria-label="${esc(name)}"${why ? ` aria-description="${esc(why)}"` : ''}`
+      ` aria-pressed="${!!o.sel}" aria-label="${esc(name)}"` +
+      (why ? ` aria-disabled="true" aria-description="${esc(why)}"` : '')
     : '';
   return (
     `<div class="${cls}" data-sid="${s.id}"${attrs}${style}>` +
@@ -209,25 +229,25 @@ function cbTag(v: View, C: CbView, p: Player, waiting: string[]): TagModel | nul
   if (v.phase === 'over') {
     // Bis zur Krönung keine Plätze, auch Platz 2 und 3 verrieten den König
     if (App.zerHide) return null;
-    if (v.winner === p.id) return { text: '👑 Cabo-König', kind: 'king', cls: 'king' };
+    if (v.winner === p.id) return { text: CB_TABLE.tag.king, kind: 'king', cls: 'king' };
     return p.place ? plain(TABLE.tag.place(num(p.place))) : null;
   }
   if (v.phase === 'end' && r && p.id in r.scores) return plain(`+${num(r.scores[p.id])}`);
-  if (v.phase === 'peek') return p.ready ? { text: TABLE.tag.ready, kind: 'done', cls: 'done' } : turn('schaut');
-  if (C.cabo === p.id) return { text: '📣 Cabo!', kind: 'call', cls: 'cabo' };
-  if (!waiting.includes(p.id)) return C.cabo && C.left.includes(p.id) ? plain('noch einmal') : null;
-  if (C.power?.by === p.id)
-    return turn(C.power.kind === 'peek' ? 'schaut' : C.power.kind === 'spy' ? 'spioniert' : 'tauscht blind');
-  return turn(C.hold?.by === p.id ? 'überlegt' : TABLE.tag.turn);
+  const T = CB_TABLE.tag;
+  if (v.phase === 'peek') return p.ready ? { text: TABLE.tag.ready, kind: 'done', cls: 'done' } : turn(T.look);
+  if (C.cabo === p.id) return { text: T.call, kind: 'call', cls: 'cabo' };
+  if (!waiting.includes(p.id)) return C.cabo && C.left.includes(p.id) ? plain(T.again) : null;
+  if (C.power?.by === p.id) return turn(C.power.kind === 'peek' ? T.look : C.power.kind === 'spy' ? T.spy : T.blind);
+  return turn(C.hold?.by === p.id ? T.hold : TABLE.tag.turn);
 }
 
 /** Wer gerade gefragt ist, nur während Ansehen und Runde */
 const waitingOf = (v: View): string[] => (v.phase === 'play' || v.phase === 'peek' ? cbWaiting(v) : []);
 
 /**
- * Gegnerkachel: Reihe samt gezogener Karte über ihr (verdeckt, außer sie kam von der Ablage), Name und Punkte. Krone
- * und KI stehen wie in 2.7 vor dem Namen, im Zähler-Slot, cabo.css rückt sie dorthin. Den Wert und den
- * Eckaufkleber bekommt die Kachel erst in 4b.
+ * Gegnerkachel: Reihe samt gezogener Karte über ihr (verdeckt, außer sie kam von der Ablage), Name, KI-Zeichen, die
+ * Krone als Eckaufkleber und die Punkte dieser Partie als Wert auf der Unterkante. Bis zur Krönung zeigt der Wert den
+ * Stand vor der letzten Runde (cbShownPoints), Krone und Etikett bleiben leer.
  */
 function cbSeat(v: View, p: Player): SeatModel | null {
   const C = v.cb;
@@ -242,12 +262,12 @@ function cbSeat(v: View, p: Player): SeatModel | null {
           slotHTML(v, p.id, s, {
             act,
             sel: App.cs.opp?.to === p.id && App.cs.opp.id === s.id,
-            name: `${i + 1}. Karte von ${p.name}`,
+            name: CB_TABLE.theirs(i, p.name),
           }),
         )
         .join('')
-    : '<div class="tnone">spielt ab der nächsten Runde mit</div>';
-  const held = C.hold?.by === p.id ? `<div class="cbheld" title="Gezogene Karte">${card(C.hold.c)}</div>` : '';
+    : `<div class="tnone">${CB_TABLE.later}</div>`;
+  const held = C.hold?.by === p.id ? `<div class="cbheld" title="${CB_TABLE.held}">${card(C.hold.c)}</div>` : '';
   const called = C.cabo === p.id && v.phase === 'play';
   const st: SeatState[] = [];
   if (waiting.includes(p.id)) st.push('turn');
@@ -256,12 +276,14 @@ function cbSeat(v: View, p: Player): SeatModel | null {
   if (called) st.push('called');
   const tag = cbTag(v, C, p, waiting);
   const pts = cbShownPoints(v, p);
+  const marks = reignHTML(v, p.id);
   return {
     id: p.id,
     name: p.name,
-    marks: '',
-    value: '',
-    count: marksHTML(v, p) + numHTML(pts, { cls: 'cbp', title: 'Punkte' }),
+    marks,
+    bot: !!p.bot,
+    value: valueHTML({ k: 'points', html: CB_TABLE.points(pts), title: CB_TABLE.points(pts) }),
+    count: '',
     tag,
     body:
       `<div class="cbrow${row && row.length > 4 ? ' many' : ''}" style="--ov:${overlap(row?.length ?? 0, 4.2).toFixed(3)}">` +
@@ -269,8 +291,8 @@ function cbSeat(v: View, p: Player): SeatModel | null {
     st,
     aim: v.players.some((q) => q.id === App.me),
     cls: ['sh', 'cb', ...(act ? ['aimable'] : []), ...(called ? ['called'] : [])],
-    // reignHTML ist bis zur Krönung leer, das Etikett ebenso
-    say: [p.bot && 'KI', reignHTML(v, p.id) && TABLE.crown, points(pts), tag?.text].filter(Boolean).join(', '),
+    // reignHTML ist bis zur Krönung leer, das Etikett ebenso. „Cabo gerufen“ statt des Etiketts mit 📣
+    say: CB_TABLE.seat({ bot: !!p.bot, crown: !!marks, points: pts, called, tag: called ? '' : (tag?.text ?? '') }),
   };
 }
 
@@ -290,8 +312,10 @@ function cbCenter(v: View): CenterModel | null {
   const live = play && !!cbMine(v);
   const pileTap = pileAct || (live ? (role === 'hold' ? 'cbdiscard' : 'cbpile') : '');
   const pile = top
-    ? (under ? card(under, 'under') : '') + card(top, App.anim.pilePop ? 'pop' : '') + valBadge(top)
-    : '<div class="emptyslot">leer</div>';
+    ? (under ? muted(card(under, 'under')) : '') + card(top, App.anim.pilePop ? 'pop' : '') + valBadge(top)
+    : `<div class="emptyslot">${TABLE.empty}</div>`;
+  // Die Namen von Stapel und Ablage enthalten, was sichtbar darauf steht (WCAG 2.5.3)
+  const pileSay = top ? `, ${cardName(top)}${TABLE.points(cbVal(top))}` : `, ${TABLE.empty}`;
   // Meine gezogene Karte liegt groß in der Mitte, fremde schweben über der Reihe der Person
   const mineHeld = C.hold?.by === App.me && C.hold.c;
   let hold = '<div class="emptyslot">gezogen</div>';
@@ -317,15 +341,15 @@ function cbCenter(v: View): CenterModel | null {
   else if (v.phase === 'peek') cap = `Runde ${num(v.round)} · alle sehen sich zwei Karten an`;
   return {
     cap,
-    label: `Tischmitte, ${cap}`,
+    label: CB_TABLE.center(cap),
     stacks: [
       {
         k: 'deck',
         cls: 'deck cbdeck',
         title: 'Stapel',
-        body: deckCards(dn) + (dn ? numHTML(dn, { cls: 'pcount', title: 'Karten im Stapel' }) : ''),
+        body: deckCards(dn) + (dn ? numHTML(dn, { cls: 'pcount', title: CB_TABLE.deckCount }) : ''),
         can: deckAct,
-        act: live || deckAct ? { act: 'cbdeck', label: 'Vom Stapel ziehen' } : undefined,
+        act: live || deckAct ? { act: 'cbdeck', label: CB_TABLE.deckSay(dn) } : undefined,
       },
       {
         k: 'hold',
@@ -340,7 +364,9 @@ function cbCenter(v: View): CenterModel | null {
         title: 'Ablage',
         body: pile,
         can: !!pileAct,
-        act: pileTap ? { act: pileTap, label: pileTap === 'cbpile' ? 'Von der Ablage nehmen' : 'Ablegen' } : undefined,
+        act: pileTap
+          ? { act: pileTap, label: (pileTap === 'cbpile' ? CB_TABLE.pile : CB_TABLE.discard) + pileSay }
+          : undefined,
       },
     ],
   };
@@ -451,7 +477,7 @@ export function cbStatus(v: View): Status {
 function cbBar(v: View, C: CbView): BarModel {
   const role = cbRole(v);
   const n = App.cs.ids.length;
-  const b = (act: string, intent: BtnIntent, cls: string, label: string, ok: boolean): BarButton => {
+  const b = (act: CbBtn, intent: BtnIntent, cls: string, label: string, ok: boolean): BarButton => {
     const a = ok ? null : cbBtnAct(act);
     return { act, intent, cls, label, ok, why: a && cbWhyNot(v, App.me, a) };
   };
@@ -467,7 +493,9 @@ function cbBar(v: View, C: CbView): BarModel {
     case 'hold': {
       const fromDeck = C.hold?.from === 'deck';
       const pw = fromDeck && C.hold?.c ? cbPower(C.hold.c) : null;
-      btns.push(b('cbswap', 'go', 'primary', n > 1 ? `${n} eintauschen` : 'Eintauschen', n > 0));
+      // Die Breite für „9 eintauschen“ ist reserviert, dann wächst der Knopf beim Wählen nicht und bricht nie um
+      const swap = `<span>${n > 1 ? `${n} eintauschen` : 'Eintauschen'}</span><span aria-hidden="true">9 eintauschen</span>`;
+      btns.push(b('cbswap', 'go', 'primary', `<span class="cbres">${swap}</span>`, n > 0));
       // Am Handy reicht das Zeichen der Fähigkeit, sonst bricht „Eintauschen“ daneben um
       const discard = pw ? twoLabel(`Ablegen + ${POWER_NAME[pw]}`, `Ablegen ${POWER_ICON[pw]}`) : 'Ablegen';
       btns.push(b('cbdiscard', 'alt', 'ghost', discard, fromDeck));
@@ -498,7 +526,7 @@ function cbMe(v: View): MeModel | MeOut | null {
   if (!C) return null;
   const me = pById(v, App.me);
   const row = cbMine(v);
-  if (!me || !row) return { out: 'Du spielst diese Runde nicht mit.', cls: ['shme', 'cbme'] };
+  if (!me || !row) return { out: CB_TABLE.out, cls: ['shme', 'cbme'] };
   const role = cbRole(v);
   const snap = App.cs.snap && cbCanSnap(v);
   const pickable = role === 'look' || role === 'hold' || role === 'ownpeek' || role === 'blind' || snap;
@@ -514,29 +542,29 @@ function cbMe(v: View): MeModel | MeOut | null {
   if (turn) st.push('turn');
   if (role === 'look') st.push('looking');
   if (snap) st.push('snapping');
-  const pts = points(cbShownPoints(v, me));
+  const n = cbShownPoints(v, me);
   const slots = row.map((s, i) =>
     slotHTML(v, App.me, s, {
       act: tappable ? 'cbm' : '',
       pick: pickable,
       sel: sel.has(s.id),
-      name: `Deine ${i + 1}. Karte`,
-      why: pickable ? null : cbProbe(v, s.id),
+      name: CB_TABLE.mine(i),
+      probe: pickable ? null : cbProbe(v, s.id),
     }),
   );
   return {
     head: {
       marks: reignHTML(v, me.id),
-      tags: (called ? '<span class="tag cabo">📣 Cabo!</span>' : '') + score,
-      pill: `<span class="pill">${pts}</span>`,
+      tags: (called ? `<span class="tag cabo">${CB_TABLE.tag.call}</span>` : '') + score,
+      pill: `<span class="pill">${CB_TABLE.points(n)}</span>`,
     },
     rows:
       `<div class="cbrow mine${row.length > 4 ? ' many' : ''}${snap ? ' snapping' : ''}" role="group"` +
-      ` aria-label="Deine Karten" style="--ov:${overlap(row.length, 6).toFixed(3)}">${slots.join('')}</div>`,
+      ` aria-label="${CB_TABLE.row}" style="--ov:${overlap(row.length, 6).toFixed(3)}">${slots.join('')}</div>`,
     bar: cbBar(v, C),
     st,
     cls: ['shme', 'cbme'],
-    say: [turn && 'Du bist dran', called && 'Cabo gerufen', pts].filter(Boolean).join(', '),
+    say: CB_TABLE.me({ turn, called, points: n }),
   };
 }
 

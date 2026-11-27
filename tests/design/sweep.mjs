@@ -3,7 +3,7 @@
  *
  *   node tests/design/sweep.mjs [--games=shithead,durak,cabo,schnautz] [--roles=host,guest]
  *     [--states=lobby,swap,turn,menu,modal,round,over] [--sizes=all|phone|desktop|390x844,...] [--seats=8] [--long]
- *     [--reign]
+ *     [--reign] [--offline]
  *     [--look=sticker,legacy] [--theme=light,dark] [--shots] [--out=DIR] [--port=5173] [--peer=9000] [--serve]
  *
  * Pro Spiel, Rolle und Gerät (Handy oder PC) entsteht ein Tisch. Gemessen wird beim Gastgeber oder beim Gast, die
@@ -53,6 +53,8 @@ const seats = Number(arg('seats', '8'));
 const long = flag('long');
 /** Härtefall wie die Fixture sh-reign-4: Krone und Verlierer-Zeichen an zwei KI-Plätzen */
 const reign = flag('reign');
+/** Härtefall: eine KI offline */
+const offline = flag('offline');
 
 const ROUND = { cabo: 'cb-round', schnautz: 'sz-round' };
 const OVER = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-win' };
@@ -173,6 +175,14 @@ async function run(browser, game, role, group, vari) {
         s.H.st.n++;
         s.hostCommit();
       }, game);
+    // Härtefall offline: die erste KI gilt als getrennt (Zeichen am Namen, M9)
+    if (offline)
+      await host.evaluate(() => {
+        const s = window.__schnautz;
+        s.H.st.players.filter((p) => p.bot)[0].online = false;
+        s.H.st.n++;
+        s.hostCommit();
+      });
     await sleep(1200);
     if (game === 'shithead' && states.includes('swap')) {
       await poll(async () => (await view(page))?.phase === 'swap', { what: 'Tauschrunde' });

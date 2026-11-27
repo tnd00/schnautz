@@ -246,6 +246,7 @@
   --tb-bubble-text: #2a241b; /* dito Schrift */
   --tb-card-edge: rgba(70, 45, 10, 0.25); /* Kante kleiner und angehobener Karten */
   --tb-card-face: linear-gradient(155deg, #fffdf6, #efe3c8); /* Kartensticker in der Legende */
+  --tb-trump-mark: var(--brass-lo); /* Trumpfstern auf den eigenen Durak-Karten (Kartenvorderseite) */
   --tb-clock-bg: #123526; /* Countdown des 4er-Fensters */
   --tb-log-text: #d9e4dd; /* Einträge im Verlauf */
   --tb-side-solid: #0d261c; /* Seitenleiste als Bogen am Handy */

@@ -7,6 +7,7 @@ import { dkBeats, rankOf, suitOf } from '../../src/game/cards';
 import { SH_ORD } from '../../src/game/constants';
 import { dkTrump, dkWaiting } from '../../src/game/durak';
 import type { View } from '../../src/game/types';
+import { axeCheck } from './axe';
 import {
   quickBots,
   fitFindings,
@@ -45,6 +46,31 @@ function cheapest(hand: string[], a: string, ts: string): number {
 
 /** Knöpfe, die gerade gehen. Gesperrte bleiben antippbar und nennen nur ihren Grund (aria-disabled, seit 2.8). */
 const LIVE = ':not([disabled]):not([aria-disabled=true])';
+
+/** Vor axe: alle endlichen Animationen durch, Einblenden täuscht sonst schwachen Kontrast vor */
+async function settle(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
+}
+
+/** axe am Tisch für jede Seite, beschriftet mit eigenem Zug oder Warten und der Größe */
+async function axeTable(pages: Page[], ids: string[], sizes: string[]): Promise<void> {
+  for (const [k, p] of pages.entries()) {
+    await settle(p);
+    const turn = dkWaiting(await mustView(p)).includes(ids[k]);
+    await axeCheck(p, {
+      include: '#scr-game',
+      exclude: '#fly',
+      where: `Durak ${turn ? 'eigener Zug' : 'Warten'} ${sizes[k]}`,
+    });
+  }
+}
 
 /** Knopf antippen wie ein Mensch: kurz nach einem Wechsel der Knopfzeile zählt ein Tipp nicht (barGuard). */
 async function button(page: Page, act: string): Promise<boolean> {
@@ -130,27 +156,31 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   let passedSeen = 0;
   let whySeen = 0;
   let btnSeen = 0;
+  let btnCase = 0;
   await playToEnd([host], async (p) => {
     // Wer gepasst hat, kann nichts nachlegen, bis ein neuer Wert liegt oder aufgenommen wird. Ansicht und
     // Oberfläche in einem Zug lesen, sonst kommt ein KI-Zug dazwischen. Die ausgegrauten Karten bleiben
     // antippbar und nennen ihren Grund am Tisch, statt still nichts zu tun
-    const passed = await p.evaluate((tap) => {
-      const s = window.__schnautz;
-      const D = s?.App.view?.dk;
-      if (!s || !D || s.App.view?.phase !== 'play' || !D.table.length || !D.done.includes(s.App.me)) return null;
-      const res = {
-        pick: document.querySelectorAll('#me .dkhand .pick[data-act=dkh]').length,
-        go: document.querySelectorAll('#me [data-act=dkgo]:not([aria-disabled=true])').length,
-        sub: document.querySelector('#status .sub')?.textContent ?? '',
-        why: null as string | null,
-      };
-      const dim = document.querySelector<HTMLElement>('#me .dkhand .card.dim[data-act=dkh]');
-      if (tap && dim && !s.App.busy) {
-        dim.click();
-        res.why = document.querySelector('#fly .nopelbl')?.textContent ?? '';
-      }
-      return res;
-    }, whySeen < 2);
+    const passed = await p.evaluate(
+      ([tap, live]) => {
+        const s = window.__schnautz;
+        const D = s?.App.view?.dk;
+        if (!s || !D || s.App.view?.phase !== 'play' || !D.table.length || !D.done.includes(s.App.me)) return null;
+        const res = {
+          pick: document.querySelectorAll('#me .dkhand .pick[data-act=dkh]').length,
+          go: document.querySelectorAll(`#me [data-act=dkgo]${live}`).length,
+          sub: document.querySelector('#status .sub')?.textContent ?? '',
+          why: null as string | null,
+        };
+        const dim = document.querySelector<HTMLElement>('#me .dkhand .card.dim[data-act=dkh]');
+        if (tap && dim && !s.App.busy) {
+          dim.click();
+          res.why = document.querySelector('#fly .nopelbl')?.textContent ?? '';
+        }
+        return res;
+      },
+      [whySeen < 2, LIVE] as const,
+    );
     if (passed) {
       passedSeen++;
       expect(passed).toMatchObject({ pick: 0, go: 0 });
@@ -162,6 +192,7 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
       }
       // Der gesperrte Knopf „Gepasst ✓“ nennt beim Tipp denselben Grund, ohne einen Zug zu schicken
       if (!btnSeen && passed.why == null) {
+        btnCase++;
         let why: string | null = null;
         try {
           // force: Playwright hält aria-disabled für nicht klickbar, ein Mensch kann trotzdem tippen
@@ -190,7 +221,8 @@ test('Durak gegen zwei KIs bis zum Ende', async ({ browser }) => {
   expect(passBtn).toBeGreaterThan(0);
   expect(passedSeen).toBeGreaterThan(0);
   expect(whySeen).toBeGreaterThan(0);
-  expect(btnSeen).toBeGreaterThan(0);
+  // Der gesperrte Knopf kommt nur dran, wenn nach den Karten noch einmal gepasst wurde. Das hängt am Zufall
+  if (btnCase) expect(btnSeen).toBeGreaterThan(0);
   await waitForPhase(host, ['over'], 20_000);
   await expect(host.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
   expect(errors.list).toEqual([]);
@@ -207,6 +239,16 @@ test('zwei Browser spielen Durak, fremde Karten bleiben geheim', async ({ browse
   await expect.poll(() => playerCount(host)).toBe(2);
   await host.click('[data-act=start]');
   await waitForPhase(guest, ['play'], 20_000);
+  const pages = [host, guest];
+  const ids = [await myId(host), await myId(guest)];
+  const sizes = ['1280x860', '390x844'];
+  // axe am PC und am Handy, einmal am Zug und einmal wartend: vor und nach dem ersten Angriff
+  await axeTable(pages, ids, sizes);
+  const att = (await mustView(host)).dk?.att;
+  const k = ids.indexOf(att ?? '');
+  await expect.poll(async () => dkMove(pages[k], await mustView(pages[k]), ids[k])).toBe(true);
+  for (const p of pages) await expect.poll(async () => (await mustView(p)).dk?.table.length).toBeGreaterThan(0);
+  await axeTable(pages, ids, sizes);
   let checked = 0;
   await playToEnd([host, guest], async (p, v, me) => {
     if (p !== guest || v.phase !== 'play' || !v.dk) return;
@@ -219,6 +261,11 @@ test('zwei Browser spielen Durak, fremde Karten bleiben geheim', async ({ browse
   });
   await waitForPhase(guest, ['over'], 20_000);
   await expect(guest.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
+  await expect(host.locator('#overlay .result h2')).toContainText(/Durak|Unentschieden/, { timeout: 20_000 });
+  for (const [i, p] of pages.entries()) {
+    await settle(p);
+    await axeCheck(p, { include: '#overlay', where: `Durak Ergebnisblatt ${sizes[i]}` });
+  }
   // Am Ende liegen alle Karten offen
   const end = await view(guest);
   Object.values(end?.dk?.P ?? {}).forEach((h) => expect(Array.isArray(h)).toBe(true));

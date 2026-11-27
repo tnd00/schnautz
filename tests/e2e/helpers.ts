@@ -218,6 +218,31 @@ export async function fitFindings(page: Page, keys: string[] = []): Promise<stri
       });
       if (max > H + 1) out.push(`Tisch reicht bis ${Math.round(max)} (${who})`);
     }
+    // Eckaufkleber und Etiketten ragen über die Gegnerkachel: oben oder unten nicht abgeschnitten, nicht übereinander
+    document.querySelectorAll<HTMLElement>('.opp > .rmark, .opp > .tag').forEach((el) => {
+      if (!shown(el) || getComputedStyle(el).visibility === 'hidden') return;
+      const r = el.getBoundingClientRect();
+      // Außerhalb des Bildes (Karussell schiebt Kacheln seitlich hinaus) sieht es niemand
+      if (r.right <= 0 || r.left >= W) return;
+      const who = `${name(el)} an ${el.parentElement?.dataset.pid ?? '?'}`;
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowY === 'visible') continue;
+        const ar = a.getBoundingClientRect();
+        if (r.right <= ar.left || r.left >= ar.right) return;
+        if (r.top < ar.top - 1 || r.bottom > ar.bottom + 1) {
+          out.push(
+            `${who} von ${name(a)} um ${Math.round(Math.max(ar.top - r.top, r.bottom - ar.bottom))} px abgeschnitten`,
+          );
+          break;
+        }
+      }
+      if (!el.classList.contains('rmark')) return;
+      const tag = el.parentElement?.querySelector(':scope > .tag');
+      if (!shown(tag ?? null) || !tag) return;
+      const t = tag.getBoundingClientRect();
+      if (r.left < t.right - 1 && t.left < r.right - 1 && r.top < t.bottom - 1 && t.top < r.bottom - 1)
+        out.push(`${who} liegt auf dem Etikett`);
+    });
     return out;
   }, keys);
 }

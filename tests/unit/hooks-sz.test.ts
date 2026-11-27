@@ -1,10 +1,11 @@
 /*
- * Schnautz auf den Bausteinen (Plan 2.8 Runde 4a): Modelle aus szSpec für echte Spielstände, gezeichnet mit den
- * Bausteinen wie in renderTable. Geprüft werden die Selektoren, die E2E, Flüge und events.ts lesen, und dass das Bild
- * wie vorher bleibt (Zeichen im Zähler, Kopf auch für wer raus ist, leere Knopfreihe, kein Wert in der Kachel).
+ * Schnautz auf den Bausteinen (Plan 2.8 Runde 4a und 4b): Modelle aus szSpec für echte Spielstände, gezeichnet mit
+ * den Bausteinen wie in renderTable. Geprüft werden die Selektoren, die E2E, Flüge und events.ts lesen, dazu Wert,
+ * Eckaufkleber und Plakette aus 4b (Kopf auch für wer raus ist, leere Knopfreihe).
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from '../../src/game/actions';
+import { finishRound } from '../../src/game/schnautz';
 import { addPlayer, newState } from '../../src/game/state';
 import type { State } from '../../src/game/types';
 import { viewFor } from '../../src/game/view';
@@ -88,15 +89,40 @@ describe('Schnautz auf den Bausteinen', () => {
     expect(sel('#me [data-act=swap][aria-disabled]')).toHaveLength(0);
   });
 
-  it('Krone und KI stehen im Zähler vor den Leben, Wert und Eckaufkleber bleiben leer', () => {
+  it('Leben als Wert, Krone als Eckaufkleber, KI vor dem Namen, Runde in der Mitte', () => {
     const st = play(table());
     st.reigns = { schnautz: { win: 'a', lose: null, game: 'schnautz' } };
+    st.round = 3;
+    st.players[2].lives = 0;
+    st.knocker = 'b';
     const { opps, sel } = draw(st);
-    expect(opps.every((o) => o.value === '' && o.marks === '')).toBe(true);
-    expect(sel('.opp .rmark')).toHaveLength(0);
-    expect(sel('.opp .val')).toHaveLength(0);
-    expect(sel('.opp[data-pid=a] .ometa .tb-count > .marks.two .botb.sq')).toHaveLength(1);
-    expect(sel('.opp[data-pid=a] .ometa .tb-count > .lives')).toHaveLength(1);
+    expect(sel('.opp[data-pid=a] > .rmark .reign')).toHaveLength(1);
+    expect(sel('.opp[data-pid=b] > .rmark')).toHaveLength(0);
+    expect(sel('.opp[data-pid=a] .ometa .botb')).toHaveLength(1);
+    expect(sel('.opp .tb-count > *')).toHaveLength(0);
+    expect(sel('.opp[data-pid=a] > .val.hcount[data-k=lives] .lives .coaster')).toHaveLength(3);
+    // Wer schwimmt, zeigt Zeichen und Wort, wer geklopft hat, trägt ✊ am Etikett
+    expect(sel('.opp[data-pid=b] > .val .swim .swt')).toHaveLength(1);
+    const [a, b] = opps;
+    expect(b.tag?.text).toBe('✊ geklopft');
+    expect(a.say).toBe('KI, trägt die Krone, 3 Leben');
+    expect(b.say).toBe('schwimmt, hat geklopft');
+    expect(specOf('schnautz').center(viewFor(st, 'h'))?.cap).toBe('Runde 3');
+  });
+
+  it('Rundenende: Plakette mit Zeichen statt nur Rahmenfarbe, der Wert hält Platz, wo sie den Stand nennt', () => {
+    const st = play(table());
+    st.players[1].lives = 1;
+    st.hands = { h: ['CA', 'CK', 'CD'], a: ['D7', 'C8', 'S9'], b: ['H7', 'H8', 'H9'] };
+    finishRound(st, 'schnautz', 'h');
+    const { opps, m, sel } = draw(st);
+    expect(sel('.opp[data-pid=a].rlose .tag.outt[data-k=loser]')).toHaveLength(1);
+    expect(opps[0].tag?.text).toBe('🛟 schwimmt');
+    expect(sel('.opp[data-pid=a] > .val.hold')).toHaveLength(1);
+    expect(opps[0].say).toBe('KI, schwimmt jetzt');
+    expect(opps[1].tag).toBeNull();
+    expect(sel('#me.rwin .mehead .tag[data-k=king]')).toHaveLength(1);
+    expect('say' in m && m.say).toContain('beste Hand');
   });
 
   it('nicht dran: Karten bleiben antippbar mit Grund, Knopfreihe leer', () => {

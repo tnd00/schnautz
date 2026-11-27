@@ -649,3 +649,8 @@ body.ingame :is(#table .actions .btn, #table .btn.small, #status .btn, .fab, .to
   position: absolute;
   inset: min(0px, calc((100% - 44px) / 2));
 }
+/* Abgesunkene Handkarten (Sticker-Look, z-index 1 in shithead.css) dürfen die Tippfläche der Knopfreihe nicht verdecken */
+body.ingame #table .me .actions {
+  position: relative;
+  z-index: 2;
+}

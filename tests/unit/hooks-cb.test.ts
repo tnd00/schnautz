@@ -1,5 +1,5 @@
 /*
- * Cabo auf dem gemeinsamen Tisch (Plan 2.8 Runde 4a): Die Modelle aus cbSpec erzeugen aus echten Spielständen die
+ * Cabo auf dem gemeinsamen Tisch (Plan 2.8 Runde 4a und 4b): Die Modelle aus cbSpec erzeugen aus echten Spielständen die
  * Selektoren, die E2E, Flüge und Mess-Skripte lesen, gesperrte Knöpfe und nicht wählbare Karten nennen ihren Grund,
  * fremde verdeckte Karten verraten nichts und bis zur Krönung bleibt der neue Cabo-König verborgen.
  */
@@ -57,7 +57,7 @@ afterEach(() => {
 
 describe('Cabo auf NewTable', () => {
   it('Selektoren beim Ziehen, mit gezogener Karte und beim Spionieren', () => {
-    // Eine KI am Tisch, damit ihr Zeichen vor dem Namen steht
+    // Eine KI am Tisch, damit ihr Zeichen vor dem Namen steht. Die Punkte stehen als Wert auf der Unterkante
     const draw = play((st, me) => (st.players.find((p) => p.id !== me)!.bot = true));
     expect(
       missing(tableOf(draw.st, draw.me), [
@@ -77,8 +77,8 @@ describe('Cabo auf NewTable', () => {
         '#me [data-act=cbdeck]',
         '#me [data-act=cbcabo]',
         '.opp.sh.cb[data-act=aim]',
-        '.opp .ometa .marks .botb',
-        '.opp .ometa .cbp',
+        '.opp .ometa .botb',
+        '.opp > .val.hcount[data-k=points]',
         '#me.turn',
       ]),
     ).toEqual([]);
@@ -124,14 +124,18 @@ describe('Cabo auf NewTable', () => {
     const swap = qsa(root, '#me [data-act=cbswap]')[0].attrs;
     expect(swap['aria-description']).toBe(REJECT_TEXT['cb.pickSwap']);
 
-    // Fremder Zug: Die eigene Karte bleibt antippbar und nennt den Grund, ausgegraut ist sie nicht
+    // Fremder Zug: Die eigene Karte bleibt antippbar, ist gesperrt und nennt den Grund
     const wait = play();
     const guest = wait.st.players.find((p) => p.id !== wait.me)!.id;
     const groot = tableOf(wait.st, guest);
     expect(qsa(groot, `.opp[data-pid=${wait.me}][data-st~=turn].turn`)).toHaveLength(1);
     const own = qsa(groot, '#me .cbslot[data-act=cbm]');
     expect(own.length).toBeGreaterThan(0);
-    expect(own.every((x) => !!x.attrs['aria-description'] && !x.attrs['aria-disabled'])).toBe(true);
+    expect(own.every((x) => !!x.attrs['aria-description'] && x.attrs['aria-disabled'] === 'true')).toBe(true);
+    // Wählbare Karten tragen keinen Grund
+    const pick = qsa(root, '#me .cbslot.pick[data-act=cbm]');
+    expect(pick.length).toBeGreaterThan(0);
+    expect(pick.some((x) => x.attrs['aria-disabled'] || x.attrs['aria-description'])).toBe(false);
     expect(own.every((x) => /^Deine \d\. Karte/.test(x.attrs['aria-label'] ?? ''))).toBe(true);
   });
 
@@ -143,12 +147,38 @@ describe('Cabo auf NewTable', () => {
     expect(qsa(root, '#opps [data-fk]')).toEqual([]);
   });
 
-  it('bis zur Krönung verraten Etikett, Krone und Vorlesetext den neuen König nicht', () => {
+  it('Cabo gerufen steht als Etikett an der Kachel und im Vorlesetext', () => {
+    const { st, me } = play();
+    act(st, me, { type: 'cbcabo' });
+    const guest = st.players.find((p) => p.id !== me)!.id;
+    const root = tableOf(st, guest);
+    expect(qsa(root, `.opp[data-pid=${me}][data-st~=called] .tag.cabo[data-k=call]`)).toHaveLength(1);
+    expect(qsa(root, `.opp[data-pid=${me}]`)[0].attrs['aria-label']).toMatch(/Cabo gerufen/);
+  });
+
+  it('bis zur Krönung verraten Etikett, Krone, Wert und Vorlesetext den neuen König nicht', () => {
     const { st } = play((s) => {
       s.phase = 'over';
       s.winner = 'a';
       s.players.find((p) => p.id === 'a')!.place = 1;
       s.reigns = { cabo: { win: 'a', game: 'cabo' } };
+      s.players.forEach((p, i) => (p.cbp = [104, 12, 30][i]));
+      // Anna kam mit 5 Punkten aus der letzten Runde von 7 auf 12
+      const scores = { h: 9, a: 5, b: 3 };
+      const totals = { h: 104, a: 12, b: 30 };
+      s.result = {
+        reason: 'cabo',
+        scores,
+        sums: scores,
+        totals,
+        resets: [],
+        hands: {},
+        caller: null,
+        ok: null,
+        kami: null,
+        winner: 'a',
+        names: {},
+      };
     });
     App.zerHide = 'a';
     const hidden = tableOf(st, 'h');
@@ -156,9 +186,13 @@ describe('Cabo auf NewTable', () => {
     expect(qsa(hidden, '.reign')).toEqual([]);
     const anna = qsa(hidden, '.opp[data-pid=a]')[0].attrs['aria-label'] ?? '';
     expect(anna).not.toMatch(/Krone|König/);
+    expect(anna).toMatch(/7 Punkte/);
+    expect(qsa(hidden, '.opp[data-pid=a] > .rmark')).toEqual([]);
+    expect(qsa(hidden, '.opp[data-pid=a] > .val')[0].attrs.title).toBe('7 Punkte');
     App.zerHide = '';
     const shown = tableOf(st, 'h');
     expect(qsa(shown, '.opp[data-pid=a] .tag.king')).toHaveLength(1);
-    expect(qsa(shown, '.opp[data-pid=a] .ometa .marks .reign')).toHaveLength(1);
+    expect(qsa(shown, '.opp[data-pid=a] > .rmark .reign')).toHaveLength(1);
+    expect(qsa(shown, '.opp[data-pid=a] > .val')[0].attrs.title).toBe('12 Punkte');
   });
 });

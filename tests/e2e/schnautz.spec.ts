@@ -3,6 +3,7 @@
  * Neuladen von Gast und Host, Verlassen und Wiederkommen.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { axeCheck } from './axe';
 import {
   closeAll,
   desktop,
@@ -48,6 +49,21 @@ async function step(host: Page, byId: Map<string, Page>, prefer: Prefer): Promis
     }
   } else return;
   await waitForChange(host, v.n);
+}
+
+/** Regeln, die axe hier auslässt. Leer: Es gilt WCAG 2.2 AA vollständig. */
+const AXE_OFF: string[] = [];
+
+/** Vor axe: alle endlichen Animationen durch, Einblenden täuscht sonst schwachen Kontrast vor. */
+async function settle(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
 }
 
 /** Beide bestätigen das Rundenergebnis. */
@@ -107,12 +123,6 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     [ids[1], guest],
   ]);
 
-  await test.step('Chat', async () => {
-    await host.fill('#chatin', 'Hallo nach Prag!');
-    await host.press('#chatin', 'Enter');
-    await expect.poll(async () => (await view(guest))?.log.some((e) => e.k === 'chat')).toBe(true);
-  });
-
   await test.step('zu früh geklopft: Klopfen ist ausgegraut, bleibt antippbar und nennt den Grund am Tisch', async () => {
     // Bis zum ersten eigenen Zug dieser Runde, dann klopfen beide zu früh, erst wer dran ist, nach einem Tausch der andere
     for (let i = 0; i < 4 && (await mustView(host)).phase !== 'play'; i++) await step(host, byId, 'swap');
@@ -147,6 +157,30 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
     }
   });
 
+  // Chat vor axe: Beim Gast steht dann die Zahl ungelesener Nachrichten am Knopf #logfab
+  await test.step('Chat', async () => {
+    await host.fill('#chatin', 'Hallo nach Prag!');
+    await host.press('#chatin', 'Enter');
+    await expect.poll(async () => (await view(guest))?.log.some((e) => e.k === 'chat')).toBe(true);
+  });
+
+  await test.step('axe am Tisch: eigener Zug und Warten, am PC und am Handy', async () => {
+    // Zwei Lagen: Wer eben dran war, wartet danach, so sieht axe beide Seiten je einmal dran und einmal wartend
+    for (let round = 0; round < 2; round++) {
+      const v = await mustView(host);
+      expect(v.phase).toBe('play');
+      for (const [k, p] of [host, guest].entries()) {
+        await expect.poll(async () => (await mustView(p)).turn).toBe(v.turn);
+        await settle(p);
+        const where = `Schnautz ${v.players[v.turn].id === ids[k] ? 'eigener Zug' : 'Warten'} ${k ? '390x844' : '1280x860'}`;
+        await axeCheck(p, { include: '#scr-game', exclude: '#fly', disable: AXE_OFF, where });
+      }
+      if (round) break;
+      await step(host, byId, 'swap');
+      await expect.poll(async () => (await mustView(host)).turn).not.toBe(v.turn);
+    }
+  });
+
   await test.step('eine Runde bis zum Ergebnis', async () => {
     for (let i = 0; i < 40; i++) {
       const v = await mustView(host);
@@ -154,6 +188,12 @@ test('zwei Browser spielen Schnautz', async ({ browser }) => {
       await step(host, byId, v.turns >= 3 ? 'knock' : i % 3 === 2 ? 'pass' : 'swap');
     }
     await waitForPhase(host, ['end', 'over']);
+    for (const [k, p] of [host, guest].entries()) {
+      await expect(p.locator('#overlay .paper')).toBeVisible({ timeout: 30_000 });
+      await settle(p);
+      const where = `Schnautz Ergebnisblatt ${k ? '390x844' : '1280x860'}`;
+      await axeCheck(p, { include: '#overlay', disable: AXE_OFF, where });
+    }
   });
 
   await test.step('Gast lädt neu und sitzt ohne Tippen wieder auf seinem Platz', async () => {

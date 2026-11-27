@@ -62,7 +62,7 @@ export const CB_POWER = {
 } as const;
 
 /**
- * Zeichentabelle. 👑 nur für Sieger, Cabo-König und die beste Hand einer Schnautz-Runde, 💩 nur Shithead,
+ * Zeichentabelle. 👑 nur für Sieger und Cabo-König, 🏅 für die beste Hand einer Schnautz-Runde, 💩 nur Shithead,
  * 🤡 nur Durak. Endetiketten bauen alle gleich aus Zeichen plus Titel („💩 Shithead“, „🤡 Durak“, „👑 Cabo-König“).
  */
 export const SIGN = {

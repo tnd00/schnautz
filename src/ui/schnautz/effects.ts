@@ -85,7 +85,7 @@ export function schnautzEffect(c: LevelCtx, e: LogEntry): void {
       icon = c.to === 'out' ? '🫧' : c.to === 'swim' ? '🛟' : '💔';
     } else if (best.indexOf(App.me) >= 0 && ids.length && e.reason !== 'feuer') {
       tone = 'gold';
-      icon = '👑';
+      icon = '🏅';
       lines.push('Du hattest die beste Hand.');
     }
     emit(cue, { text: title, icon, tone, sub: lines.join(' '), taunt: tt, ms: 2300, hold: 400 });
