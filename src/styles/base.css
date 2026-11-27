@@ -407,3 +407,15 @@ button.chip#netchip {
     translate: 6px 0;
   }
 }
+
+/* Am Tisch lässt sich kein Text markieren, sonst markiert ein Ziehen oder langes Drücken Namen und Meldungen
+ * (User 27.11.2026). Eingabefelder wie der Chat bleiben markierbar. */
+body.ingame {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+body.ingame :is(input, textarea) {
+  -webkit-user-select: text;
+  user-select: text;
+}
