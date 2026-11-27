@@ -82,7 +82,7 @@
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--tb-mark-bg);
-  color: var(--cream);
+  color: var(--tb-mark-text);
   font: 800 12px/1.3 var(--ui);
   text-align: center;
   pointer-events: none;
@@ -135,7 +135,7 @@
 }
 /* Offen für alle */
 .cbslot.up > .card {
-  outline: 2px solid color-mix(in srgb, var(--tb-text) 55%, transparent);
+  outline: 2px solid var(--tb-card-open-line);
   outline-offset: -2px;
 }
 /* Nur ich sehe sie gerade, ein Balken läuft leer */
@@ -185,7 +185,7 @@
   20%,
   75% {
     translate: 0 -9px;
-    rotate: -6deg;
+    rotate: -3deg;
     box-shadow:
       0 0 0 2px var(--tb-sea),
       0 12px 18px color-mix(in srgb, var(--tb-shade) 40%, transparent);

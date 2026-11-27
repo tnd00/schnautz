@@ -630,17 +630,6 @@
 .emotes {
   z-index: 9;
 }
-/* Wurf-Reihe (Form C): ein Tipp auf eine Gegnerkachel legt sie über die Statuszeile, ein Tipp darin wirft */
-#tosspick {
-  background: var(--tb-fx-emotes-gloss), var(--tb-fx-emotes-bg);
-  border-color: var(--tb-fx-emotes-line);
-}
-#tosspick button {
-  width: 44px;
-  height: 44px;
-  background: var(--tb-fx-emote-bg);
-  box-shadow: var(--tb-shadow-flat);
-}
 
 /* Regeln: Buch mit Beschriftung, oben im Fenster die Karten auf einen Blick */
 .iconbtn.rulesbtn {

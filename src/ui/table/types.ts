@@ -170,6 +170,8 @@ export interface HandCard {
   why?: Reject | null;
   /** Spielklassen: 'trumpc', 'blindc', 'deal', 'pop' */
   cls?: string;
+  /** Trumpf (Durak): der Name der Karte sagt es dazu („, Trumpf“), das Zeichen kommt weiter über `extra` */
+  trump?: boolean;
   /** --d in Sekunden */
   delay?: number;
   /** Slot auf der Karte: Cabo-Wert, Auge, Restzeit */
@@ -294,10 +296,15 @@ export interface CardOpts {
   sel?: boolean;
   /** .dim */
   dim?: boolean;
-  /** Grund als fertiger Klartext aus `HandCard.why`, wird aria-description, die Karte bleibt antippbar */
+  /** Grund als fertiger Klartext aus `HandCard.why`, wird aria-disabled mit aria-description, die Karte bleibt antippbar */
   why?: string | null;
   /** Name endet auf „, Trumpf“, sichtbares Zeichen in der Ecke */
   trump?: boolean;
+  /**
+   * Wert auch oben nur gezeichnet (data-t), die Karte hat dann keinen sichtbaren Text. Für Karten unter einer anderen,
+   * deren Wert sonst im sichtbaren Text eines Knopfs stünde (WCAG 2.5.3, Cabo-Ablage)
+   */
+  mute?: boolean;
   /** Cabo: Wert im Namen („Herz Dame, 12 Punkte“) */
   value?: number;
   /** Name, wenn die Karte verdeckt ist („Deine 2. Karte, verdeckt“), sonst ist der Rücken aria-hidden */

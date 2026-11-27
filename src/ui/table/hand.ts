@@ -35,6 +35,7 @@ export function handHTML(h: HandModel): string {
       drop: x.drop,
       tab: x === stop ? 0 : -1,
       extra: x.extra,
+      trump: x.trump,
       cls: x.cls,
       style: x.delay != null ? `--d:${x.delay}s` : undefined,
     }),

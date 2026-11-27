@@ -258,6 +258,7 @@
   --tb-side-solid: #0d261c; /* Seitenleiste als Bogen am Handy */
   --tb-hand-pill-bg: rgba(8, 26, 19, 0.9); /* Pille mit der Zahl der Handkarten */
   --tb-mark-bg: rgba(10, 18, 14, 0.82); /* Wertmarke an Cabo-Karten */
+  --tb-mark-text: var(--cream); /* dito Schrift */
   --tb-mark-zero: #2e8b57; /* dito bei null */
   --tb-swap-bg: linear-gradient(
     180deg,

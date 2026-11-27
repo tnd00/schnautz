@@ -171,15 +171,8 @@ const overlap = (n: number, room: number): number => (n <= room ? 0 : (room - 1)
 const valBadge = (c: Card): string => `<span class="cbv${cbVal(c) === 0 ? ' zero' : ''}" data-v="${cbVal(c)}"></span>`;
 
 /** Eine Karte ohne eigene Rolle, die Rolle trägt der Platz drumherum. Offen nennt sie ihren Wert („Pik 7, 7 Punkte“) */
-const card = (c: Card | null | undefined, cls = ''): string =>
-  cardHTML(c ?? null, { key: '', cls, value: c ? cbVal(c) : undefined });
-
-/**
- * Untere Karte der Ablage: Auch die obere Ecke zeichnet ihren Wert nur (`data-t` wie die untere Ecke, cards.css), sonst
- * stünde er im sichtbaren Text des Knopfs „Von der Ablage nehmen“ vor dem der oberen Karte (WCAG 2.5.3).
- */
-const muted = (html: string): string =>
-  html.replace(/<span class="ix"><span>([^<]+)<\/span>/, '<span class="ix"><span data-t="$1"></span>');
+const card = (c: Card | null | undefined, cls = '', mute = false): string =>
+  cardHTML(c ?? null, { key: '', cls, mute, value: c ? cbVal(c) : undefined });
 
 interface SlotOpts {
   act?: string;
@@ -312,7 +305,8 @@ function cbCenter(v: View): CenterModel | null {
   const live = play && !!cbMine(v);
   const pileTap = pileAct || (live ? (role === 'hold' ? 'cbdiscard' : 'cbpile') : '');
   const pile = top
-    ? (under ? muted(card(under, 'under')) : '') + card(top, App.anim.pilePop ? 'pop' : '') + valBadge(top)
+    ? // Untere Karte ohne sichtbaren Text, sonst stünde ihr Wert im Knopf „Von der Ablage nehmen“ (WCAG 2.5.3)
+      (under ? card(under, 'under', true) : '') + card(top, App.anim.pilePop ? 'pop' : '') + valBadge(top)
     : `<div class="emptyslot">${TABLE.empty}</div>`;
   // Die Namen von Stapel und Ablage enthalten, was sichtbar darauf steht (WCAG 2.5.3)
   const pileSay = top ? `, ${cardName(top)}${TABLE.points(cbVal(top))}` : `, ${TABLE.empty}`;

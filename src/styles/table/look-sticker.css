@@ -362,6 +362,8 @@
   color: var(--tb-fx-emotes-soft);
   background: var(--tb-fx-emotes-well);
   border-color: transparent;
+  /* Legacy dimmt inaktive Reiter auf 0.6 (shithead-flow.css), hier trägt die Fläche den Unterschied, sonst fehlt Kontrast */
+  opacity: 1;
 }
 :root[data-look='sticker'] body.ingame .emotes .etab.on {
   color: var(--tb-fx-emote-on-text);

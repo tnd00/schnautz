@@ -501,7 +501,7 @@ function dkMe(v: View): MeModel | MeOut | null {
       cls: [acting && !why && 'pick', trump && 'trumpc', App.anim.deal && 'deal'].filter(Boolean).join(' '),
       delay: Number((0.3 + Math.min(i, 8) * 0.06).toFixed(2)),
       // Trumpf nie nur als Farbe: Zeichen in der Ecke (gefuehl M9), den Namen trägt die Mitte („Trumpf Herz“)
-      ...(trump ? { extra: TRUMP_MARK } : {}),
+      ...(trump ? { extra: TRUMP_MARK, trump: true } : {}),
     };
   });
   const hn = hand.length;

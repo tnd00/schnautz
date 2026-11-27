@@ -103,11 +103,11 @@ export const cardName = (c: Card): string => {
  * Den Wert trägt nur die obere Ecke als Text, Kopie unten und Bild zeichnet CSS aus `data-t` (cards.css). So steht der
  * sichtbare Wert genau einmal im Text und der Name der Karte enthält ihn (WCAG 2.5.3).
  */
-function faceHTML(c: Card): string {
+function faceHTML(c: Card, mute = false): string {
   const s = suitOf(c);
   const r = rankOf(c);
   const sym = SUIT_SYM[s];
-  const ix = `<span class="ix"><span>${r}</span><i>${sym}</i></span><span class="ix br"><span data-t="${r}"></span><i>${sym}</i></span>`;
+  const ix = `<span class="ix">${mute ? `<span data-t="${r}"></span>` : `<span>${r}</span>`}<i>${sym}</i></span><span class="ix br"><span data-t="${r}"></span><i>${sym}</i></span>`;
   const pips = PIPS[r];
   if (pips)
     return (
@@ -154,7 +154,7 @@ function optsHTML(c: Card | null, o: CardOpts): string {
   if (o.drop) a += ` data-drop="${o.drop}"`;
   if (c) a += ` data-r="${rankOf(c)}"`;
   if (o.style) a += ` style="${o.style}"`;
-  return `<div class="${cls}"${a}>${c ? faceHTML(c) : ''}${o.extra ?? ''}</div>`;
+  return `<div class="${cls}"${a}>${c ? faceHTML(c, o.mute) : ''}${o.extra ?? ''}</div>`;
 }
 
 /** Kleine Karte im Fließtext (Verlauf). */

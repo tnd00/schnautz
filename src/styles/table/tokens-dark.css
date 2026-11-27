@@ -244,6 +244,7 @@
   --tb-side-solid: var(--sn-sheet); /* Seitenleiste als Bogen am Handy */
   --tb-hand-pill-bg: var(--sn-ink); /* Pille mit der Zahl der Handkarten */
   --tb-mark-bg: var(--sn-ink); /* Wertmarke an Cabo-Karten (Schrift --tb-val-text) */
+  --tb-mark-text: var(--tb-val-text); /* dito Schrift */
   --tb-mark-zero: var(--st-cabo); /* dito bei null, Limette mit Tinte (--tb-on-accent) */
   --tb-swap-bg: var(--tb-zone-bg); /* eigener Platz in der Tauschrunde, helle Matte wie die Mitte */
   --tb-board-bg: none; /* dunkles Tuch für Regeln, Bestenliste und Ergebnis */

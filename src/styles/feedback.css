@@ -886,6 +886,7 @@ body.logopen #fly .bubble {
 .paper .row[data-act='aim']:focus-visible::after {
   opacity: 1;
 }
+/* Wurf-Reihe (Form C): ein Tipp auf eine Gegnerkachel legt sie über die Statuszeile, ein Tipp darin wirft */
 #tosspick {
   position: fixed;
   z-index: 60;
@@ -893,17 +894,18 @@ body.logopen #fly .bubble {
   gap: 6px;
   padding: 6px;
   border-radius: 999px;
-  background: var(--tb-fx-emotes-bg);
-  border: 1px solid color-mix(in srgb, var(--tb-text) 20%, transparent);
+  background: var(--tb-fx-emotes-gloss), var(--tb-fx-emotes-bg);
+  border: 1px solid var(--tb-fx-emotes-line);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--tb-shade) 55%, transparent);
   animation: rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 #tosspick button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, var(--tb-text) 14%, transparent);
-  background: color-mix(in srgb, var(--tb-shade) 25%, transparent);
+  background: var(--tb-fx-emote-bg);
+  box-shadow: var(--tb-shadow-flat);
   font-size: 21px;
   line-height: 1;
   display: grid;
