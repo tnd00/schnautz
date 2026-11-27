@@ -21,6 +21,7 @@ import {
   dropOf,
   dropsFor,
   sameDrag,
+  sameDrop,
   type DragKey,
   type DropKey,
   type DropResult,
@@ -39,14 +40,17 @@ import type { DragAdapter, DragMotor, Landed } from './drag';
 import {
   catchRadius,
   ghostAt,
+  hitReach,
   hitTest,
   pastSlop,
   pointerKind,
+  reachOf,
   SNAP_PULL,
   tiltOf,
   towards,
   type Box,
   type PointerKind,
+  type Target,
 } from './dragmath';
 import { tableBusy } from './index';
 import { specOf } from './spec';
@@ -75,6 +79,8 @@ interface Zone {
   res: DropResult;
   box: Box;
   pad: number;
+  /** Angenommene Fläche aus reachOf, das Leuchten bleibt an `el` */
+  reach: Box;
 }
 
 /** Ein abgelegter Geist, der auf die passende Ansicht wartet */
@@ -114,6 +120,8 @@ const D = {
   gx: 0,
   gy: 0,
   zones: [] as Zone[],
+  /** Rechtecke der Quelle beim Messen: Loslassen dort bricht ab */
+  home: [] as Box[],
   over: -1,
   tilt: 0,
   raf: 0,
@@ -173,11 +181,15 @@ function findSource(v: View, ad: DragAdapter, key: DragKey): { key: DragKey; els
   return null;
 }
 
-/** Kopie ohne Bedienung: keine IDs, keine Aktionen, kein Fokus, nichts für den Vorleser */
+/**
+ * Kopie ohne Bedienung: keine IDs, keine Aktionen, kein Fokus. aria-label bleibt, daran erkennt das Vinyl-Deck die
+ * Farbe (cards-vinyl.css), ohne es werden die Farbzeichen zu Vierecken. Der Geist selbst ist aria-hidden.
+ */
 function strip(el: HTMLElement): void {
   for (const n of [el, ...el.querySelectorAll<HTMLElement>('*')]) {
     for (const a of [...n.attributes]) {
-      if (/^(id|tabindex|role|data-act|data-fk|data-drag|data-drop|aria-.*)$/.test(a.name)) n.removeAttribute(a.name);
+      if (/^(id|tabindex|role|data-act|data-fk|data-drag|data-drop|aria-(?!label$).*)$/.test(a.name))
+        n.removeAttribute(a.name);
     }
   }
   el.classList.remove('tb-dragsrc', 'tb-drop-ok', 'tb-drop-hot', 'tb-drop-no');
@@ -229,8 +241,30 @@ function place(x: number, y: number, tilt: number, scale: number): void {
 
 function clearZones(): void {
   for (const z of D.zones) z.el.classList.remove('tb-drop-ok', 'tb-drop-hot', 'tb-drop-no');
+  for (const el of document.querySelectorAll('#fly .tb-reach')) el.remove();
   D.zones = [];
   D.over = -1;
+}
+
+const targets = (): Target[] => D.zones.map((z) => ({ box: z.box, ok: z.res.ok, pad: z.pad }));
+
+/** Angenommene Flächen aus den aktuellen Rechtecken, mit dem Schalter „Trefferflächen anzeigen“ gestrichelt in #fly */
+function layout(): void {
+  const c = document.getElementById('center');
+  const reach = reachOf(targets(), c ? boxOf(c) : null, D.home);
+  D.zones.forEach((z, i) => (z.reach = reach[i]));
+  for (const el of document.querySelectorAll('#fly .tb-reach')) el.remove();
+  if (!prefs().zones) return;
+  const fly = document.getElementById('fly');
+  for (const z of D.zones) {
+    if (!z.res.ok) continue;
+    const el = document.createElement('div');
+    el.className = 'tb-reach';
+    el.setAttribute('aria-hidden', 'true');
+    const r = z.reach;
+    el.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.right - r.left}px;height:${r.bottom - r.top}px`;
+    fly?.appendChild(el);
+  }
 }
 
 /** Ziele messen: alle aus dropsFor (gültig) und jedes andere data-drop am Tisch (zeigt beim Drüberfahren den Grund) */
@@ -242,24 +276,30 @@ function measure(v: View): void {
   if (!ad || !key || !t) return;
   const pad = catchRadius(D.w);
   const add = (k: DropKey, el: HTMLElement): void => {
-    if (D.els.includes(el) || D.zones.some((z) => z.el === el)) return;
+    if (D.els.includes(el) || D.zones.some((z) => z.el === el || sameDrop(z.key, k))) return;
     const res = dropOf(v, v.me, key, k);
-    D.zones.push({ key: k, el, res, box: boxOf(el), pad: catches(key, k) ? pad : 0 });
+    const box = boxOf(el);
+    D.zones.push({ key: k, el, res, box, pad: catches(key, k) ? pad : 0, reach: box });
     if (res.ok) el.classList.add('tb-drop-ok');
   };
   for (const k of dropsFor(v, v.me, key)) {
     const el = ad.zone(k);
     if (el) add(k, el);
   }
+  // Auch ungültige zeigen ihr Element aus zone, etwa die Angriffskarte statt des ganzen Durak-Paars
   for (const el of t.querySelectorAll<HTMLElement>('[data-drop]')) {
     const k = dropKeyOf(el.dataset, v.me);
-    if (k) add(k, el);
+    if (k) add(k, ad.zone(k) ?? el);
   }
+  D.home = D.els.map(boxOf);
+  layout();
 }
 
 /** Nur die Rechtecke neu, etwa nachdem das Karussell gedreht hat */
 function remeasure(): void {
   for (const z of D.zones) z.box = boxOf(z.el);
+  D.home = D.els.map(boxOf);
+  layout();
 }
 
 function setOver(i: number, v: View): void {
@@ -297,16 +337,18 @@ function frame(): void {
   const v = App.view;
   if (!D.on || !D.ghost || !v) return;
   const quiet = calm();
-  const hit = hitTest(
+  const hit = hitReach(
     D.x,
     D.y,
-    D.zones.map((z) => z.box),
-    D.zones.map((z) => z.pad),
+    targets(),
+    D.zones.map((z) => z.reach),
+    D.home,
   );
   if (hit !== D.over) setOver(hit, v);
   let p = ghostAt(D.kind, D.x, D.y, D.dx, D.dy, D.h);
   const z = D.zones[hit];
-  if (z?.res.ok && !quiet) {
+  // Einrasten nur nahe am Ziel, nicht schon am anderen Ende der Tischmitte
+  if (z?.res.ok && !quiet && hitTest(D.x, D.y, [z.box], z.pad) === 0) {
     const mid = { x: (z.box.left + z.box.right - D.w) / 2, y: (z.box.top + z.box.bottom - D.h) / 2 };
     p = towards(p, mid, SNAP_PULL);
   }
@@ -381,7 +423,18 @@ function finish(): void {
     // schon freigegeben
   }
   if (D.on) carouselRelease();
-  Object.assign(D, { id: -1, on: false, ad: null, key: null, els: [], ghost: null, lbl: null, tilt: 0, okSeen: false });
+  Object.assign(D, {
+    id: -1,
+    on: false,
+    ad: null,
+    key: null,
+    els: [],
+    home: [],
+    ghost: null,
+    lbl: null,
+    tilt: 0,
+    okSeen: false,
+  });
 }
 
 /** Geist weg ohne Zurückfliegen (Quelle ist weg oder Ruhig) */

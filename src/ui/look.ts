@@ -1,10 +1,11 @@
 /*
  * Look am Tisch (Plan 2.8 Abschnitt 8, legacy.md 8 und 9): Sticker oder Legacy-Design als `data-look` an `html`, das
- * Kartendeck (Vinyl oder Klassisch) getrennt davon als `data-deck`, in beiden Looks. Dazu das Thema als `data-theme`,
- * aber nur unter Sticker. Render-Code verzweigt nie nach Look oder Deck, Ausnahmen stehen nur hier (Paletten,
- * theme-color, Nachladen der Stücke).
+ * Kartendeck (Vinyl, Vinyl dunkel oder Klassisch) getrennt davon als `data-deck`, in jedem Design gleich. Dazu das
+ * Thema als `data-theme`, aber nur unter Sticker. Das Thema färbt kein Deck um, ein neues Deck braucht nur seinen Wert,
+ * einen Texteintrag und eine CSS-Datei (Anleitung in table/cards-vinyl.css). Render-Code verzweigt nie nach Look oder
+ * Deck, Ausnahmen stehen nur hier (Paletten, theme-color, Nachladen der Stücke).
  *
- * Sticker, Vinyl und Klassisch stehen im Haupt-CSS. Legacy (Tokens und Filz-Dekor, styles/looks/legacy.css) und das
+ * Sticker und alle Decks stehen im Haupt-CSS. Legacy (Tokens und Filz-Dekor, styles/looks/legacy.css) und das
  * dunkle Thema kommen per import() erst, wenn jemand sie wählt. Bis das Legacy-Stück da ist, hält die Wache in
  * base.css den Tisch unsichtbar (Klasse `look-ready`, spätestens nach 3 Sekunden), damit nichts aufblitzt.
  */
@@ -25,7 +26,7 @@ export const designOf = (p: Pick<Prefs, 'look' | 'theme'>): Design =>
 
 /** Sticker. Der Wert steht in PREFS_DEFAULT, damit asPrefs denselben nimmt. */
 export const DEFAULT_LOOK: Look = PREFS_DEFAULT.look;
-/** Vinyl, in beiden Looks */
+/** Vinyl, in jedem Design */
 export const DEFAULT_DECK: Deck = PREFS_DEFAULT.deck;
 
 /** Paletten für Konfetti und Zeremonien nach Namen */

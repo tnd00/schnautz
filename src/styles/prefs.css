@@ -24,3 +24,11 @@
   line-height: 1.15;
   white-space: normal;
 }
+/* „Trefferflächen anzeigen“ gehört zu „Karten ziehen“: ohne Trennlinie dazwischen und eng darunter */
+#modal .gset.prefs .rrow:has(+ .rsub:not([hidden])) {
+  border-bottom: 0;
+}
+#modal .gset.prefs .rsub {
+  min-height: 0;
+  padding-top: 0;
+}

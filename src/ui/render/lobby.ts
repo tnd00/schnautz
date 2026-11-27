@@ -159,9 +159,8 @@ function gameCards(v: View, host: boolean, slap: boolean): string {
 }
 
 /**
- * Was anders ist als sonst, als Stichpunkte auf einem weißen Streifen, der mit jeder Abweichung wächst. Der
- * Gastgeber sieht nur ihn, Gäste sehen ihn erst, wenn für die Chips kein Platz mehr ist (lobby.css). Leer, wenn
- * nach Standard gespielt wird.
+ * Gäste: was anders ist als sonst, als Stichpunkte auf einem weißen Streifen, der mit jeder Abweichung wächst. Er
+ * kommt erst, wenn für die Chips kein Platz mehr ist (lobby.css). Leer, wenn nach Standard gespielt wird.
  */
 function deviationLine(v: View): string {
   const words = deviationWords(v.rules, v.game);
@@ -195,12 +194,12 @@ function deviationSheet(v: View): string {
   );
 }
 
-/** Spiel und Regeln: Überschrift, die vier Spielkarten, darunter was anders ist als sonst. */
+/** Spiel und Regeln: Überschrift, die vier Spielkarten, bei Gästen darunter was anders ist (der Gastgeber weiß es). */
 function gamePane(v: View, host: boolean, hostName: string, slap: boolean): string {
   const head = host
     ? '<h2 class="lh lh-game st-display">Was spielt ihr?</h2>'
     : `<h2 class="lh lh-game lh-chosen st-display">${esc(hostName)} hat ${GAME_NAME[v.game]} gewählt</h2>`;
-  return head + gameCards(v, host, slap) + (host ? '' : deviationSheet(v)) + deviationLine(v);
+  return head + gameCards(v, host, slap) + (host ? '' : deviationSheet(v) + deviationLine(v));
 }
 
 /**

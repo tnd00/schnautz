@@ -117,10 +117,11 @@ describe('Durak ziehen, Tabelle ziehen.md 4.2', () => {
     expect(dropsFor(viewFor(st, 'a'), 'a', k('S7'))).toEqual([]);
   });
 
-  it('defend: freie Tischfläche schlägt nur, wenn genau ein Angriff offen ist', () => {
+  it('defend: freie Tischfläche nennt nur den Grund, schlagen geht über das Paar', () => {
     const st = table();
     step(st, 'h', { type: 'dkattack', idx: [0] });
-    expect(drop(st, 'a', k('C9'), T)).toEqual(drop(st, 'a', k('C9'), P(0)));
+    expect(why(st, 'a', k('C9'), T)).toBe('dk.dropPair');
+    expect(why(st, 'a', k('C9'), P(0))).toBe('ok');
     expect(why(st, 'a', k('D6'), T)).toBe('dk.noBeat');
     const two = table();
     step(two, 'h', { type: 'dkattack', idx: [0, 1] });
@@ -148,7 +149,7 @@ describe('Durak ziehen, Tabelle ziehen.md 4.2', () => {
     });
     expect(dropsFor(viewFor(st, 'a'), 'a', k('S7'))).toEqual([X]);
     // Karte zum Schlagen: kein Schiebefeld
-    expect(dropsFor(viewFor(st, 'a'), 'a', k('C9'))).toEqual([T, P(0)]);
+    expect(dropsFor(viewFor(st, 'a'), 'a', k('C9'))).toEqual([P(0)]);
     const off = table();
     step(off, 'h', { type: 'dkattack', idx: [0] });
     expect(why(off, 'a', k('S7'), X)).toBe('dk.transferOff');

@@ -3,7 +3,7 @@
  *
  *   node tests/design/sweep.mjs [--games=shithead,durak,cabo,schnautz] [--roles=host,guest]
  *     [--states=lobby,swap,turn,menu,modal,round,over] [--sizes=all|phone|desktop|390x844,...] [--seats=8] [--long]
- *     [--reign] [--offline]
+ *     [--reign] [--offline] [--clock=60] [--defend]
  *     [--look=sticker,legacy] [--theme=light,dark] [--shots] [--out=DIR] [--port=5173] [--peer=9000] [--serve]
  *
  * Pro Spiel, Rolle und Gerät (Handy oder PC) entsteht ein Tisch. Gemessen wird beim Gastgeber oder beim Gast, die
@@ -11,6 +11,9 @@
  * Kontexten, weil isMobile und hasTouch sich nicht umschalten lassen. Ausgangscode 1, wenn es einen Befund gibt.
  * Mit `--look` oder `--theme` läuft alles je Paar aus Look und Thema, die Ausgabe heißt dann etwa
  * `sweep-legacy-dark.json` und die Aufnahmen enden auf `-legacy-dark`. Ohne beides bleibt alles wie bisher.
+ * Schlimmster Fall am Tisch: Das Zeitlimit läuft (`--clock` Sekunden, 0 schaltet es aus) und vor jeder Messung in
+ * Tauschrunde und eigenem Zug tippt die Seite eine ausgegraute Karte oder einen ausgegrauten Knopf an, damit ein
+ * Kurzhinweis in der Spielfläche steht.
  */
 import {
   LONG_GUEST,
@@ -33,6 +36,7 @@ import {
   poll,
   save,
   serve,
+  setRules,
   sheetInfo,
   shot,
   sizeList,
@@ -55,11 +59,15 @@ const long = flag('long');
 const reign = flag('reign');
 /** Härtefall: eine KI offline */
 const offline = flag('offline');
+/** Zeitlimit in Sekunden, lang genug, dass es während der Messungen nicht abläuft */
+const clock = Number(arg('clock', '60'));
+/** Durak: als eigenen Zug nur die Verteidigung gegen eine offene Angriffskarte messen */
+const defend = flag('defend');
 
 const ROUND = { cabo: 'cb-round', schnautz: 'sz-round' };
 const OVER = { shithead: 'sh-any', durak: 'dk-any', cabo: 'cb-win', schnautz: 'sz-win' };
 
-/** Warten, bis die gemessene Seite selbst am Zug ist. Die KIs spielen von allein, das Zeitlimit ist aus. */
+/** Warten, bis die gemessene Seite selbst am Zug ist. Die KIs spielen von allein. */
 async function waitMyMove(page, host) {
   return poll(
     async () => {
@@ -71,19 +79,42 @@ async function waitMyMove(page, host) {
         if (v?.phase === 'swap' || v?.phase === 'peek') await hostAct(host, null, { type: 'force' });
         return false;
       }
-      return page.evaluate(() => {
+      return page.evaluate((defend) => {
         const s = window.__schnautz;
         const w = s.App.view;
         if (s.SEQ.busy) return false;
-        if (w.game === 'durak') return w.dk?.att === w.me || w.dk?.def === w.me;
+        if (w.game === 'durak') {
+          if (!defend) return w.dk?.att === w.me || w.dk?.def === w.me;
+          if (w.dk?.def === w.me) return !!w.dk.table?.some((p) => !p.d);
+          // Bis zur Verteidigung zieht die KI-Logik für mich, sonst wartet der Tisch jedes Mal die Uhr ab
+          const a = s.botDecide(s.viewFor(s.H.st, w.me));
+          if (a && !s.act(s.H.st, w.me, a)) s.hostCommit();
+          return false;
+        }
         return w.players[w.turn]?.id === w.me;
-      });
+      }, defend);
     },
-    { timeout: 30_000, every: 300, what: 'eigener Zug' },
+    { timeout: defend ? 90_000 : 30_000, every: 300, what: 'eigener Zug' },
   ).catch(() => {
     console.log('  (nicht am Zug, gemessen wird der laufende Tisch)');
     return false;
   });
+}
+
+/** Ausgegraute Karte (sonst Knopf) antippen, ihr Grund steht dann als Kurzhinweis in der Spielfläche */
+async function poke(page) {
+  for (const sel of [
+    '#me .tb-hand .card[aria-disabled="true"]',
+    '#me .tb-hand .card.dim',
+    '#table [aria-disabled="true"]',
+  ]) {
+    const el = page.locator(sel).first();
+    if (!(await el.isVisible().catch(() => false))) continue;
+    // force: Karten wackeln oder fliegen gerade, ein Tipp kommt trotzdem an
+    await el.click({ timeout: 1000, force: true }).catch(() => undefined);
+    await sleep(300);
+    return;
+  }
 }
 
 const rows = [];
@@ -119,7 +150,8 @@ async function run(browser, game, role, group, vari) {
   let gctx = null;
   const host = watchErrors(await hctx.newPage(), 'host', errors);
   try {
-    const code = await hostTable(host, 'Tahna');
+    const code = await hostTable(host, 'Tahna', { clockOff: !clock });
+    if (clock) await setRules(host, { turnSecs: clock });
     await chooseGame(host, game);
     // Ein Gast übernimmt beim Beitreten einen KI-Platz, also erst alle Plätze füllen
     await fillSeats(host, seats);
@@ -186,13 +218,23 @@ async function run(browser, game, role, group, vari) {
     await sleep(1200);
     if (game === 'shithead' && states.includes('swap')) {
       await poll(async () => (await view(page))?.phase === 'swap', { what: 'Tauschrunde' });
-      await each((size) => record(page, meta('swap', size), ['#me']));
+      await each(async (size) => {
+        await poke(page);
+        await record(page, meta('swap', size), ['#me']);
+      });
     }
     if (states.includes('turn') || states.includes('menu') || states.includes('modal')) {
+      // Flotte KIs bis zum eigenen Zug, sonst reichen 30 Sekunden bei 8 Plätzen oft nicht
+      await host.evaluate(() => (window.__schnautz.BOTS.quick = true));
       await waitMyMove(page, host);
+      await host.evaluate(() => (window.__schnautz.BOTS.quick = false));
       await sleep(800);
     }
-    if (states.includes('turn')) await each((size) => record(page, meta('turn', size), ['#me']));
+    if (states.includes('turn'))
+      await each(async (size) => {
+        await poke(page);
+        await record(page, meta('turn', size), ['#me']);
+      });
     if (states.includes('menu')) {
       // Menü ⋯ am Tisch offen: Der Bogen samt allen Einträgen muss ganz ins Bild, ohne in sich zu scrollen
       await page.click('#btn-menu');

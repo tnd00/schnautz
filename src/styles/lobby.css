@@ -270,6 +270,13 @@ body:not(.ingame) #netcode {
   --st-cut: 5px;
   --st-radius: 18px;
 }
+/* Code und Plätze liegen flach: Tintenring direkt an der Kante wie bei der gewählten Spielkarte, ohne Schatten und
+ * ohne Naht zwischen Stanzrand und Fläche */
+#scr-lobby :is(.linvite, .lseat.st) {
+  background-clip: border-box;
+  box-shadow: none;
+  outline: 2.5px solid var(--st-ink);
+}
 /* Lange Sticker in einer Spalte kippen weniger, sonst ragen ihre Ecken in die Nachbarn */
 #scr-lobby .lseat {
   rotate: calc(var(--tilt, 0deg) * var(--tiltk, 1));
@@ -807,7 +814,7 @@ body:not(.ingame) #netcode {
 #scr-lobby .rc-more {
   background: var(--st-paper);
 }
-/* Gastgeber: was anders ist als sonst, als Stichpunkte auf einem weißen Streifen, der mitwächst */
+/* Gäste ab Stufe f6: was anders ist als sonst, als Stichpunkte auf einem weißen Streifen, der mitwächst */
 #scr-lobby .ldevline {
   display: flex;
   align-items: flex-start;
@@ -1683,7 +1690,6 @@ body:not(.ingame) #netcode {
   grid-area: seats;
 }
 #scr-lobby .lp-table.f6 .seats {
-  gap: 6px 8px;
   padding-top: 8px;
 }
 
@@ -1790,8 +1796,7 @@ body:not(.ingame) #netcode {
   padding-top: 12px;
   padding-bottom: 8px;
 }
-#scr-lobby.guest .lp-game.f7 .lh-game,
-#scr-lobby:not(.guest) .lp-game.f7 .ldevline {
+#scr-lobby.guest .lp-game.f7 .lh-game {
   display: none;
 }
 #scr-lobby .lp-game.f8 .lg-aka {

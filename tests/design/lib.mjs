@@ -23,6 +23,7 @@ import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { overlapFindings } from '../e2e/overlap.ts';
 
 export const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -327,9 +328,11 @@ export async function waitResult(page, timeout = 45_000) {
  * Was am Bildschirm zählt, in einem Rutsch gemessen. `doc`: Seite höher oder breiter als das Fenster (bei body
  * overflow hidden heißt das abgeschnitten). `boxes`: Kanten wichtiger Elemente. `inner`: Bereiche, die in sich
  * scrollen oder überlaufen. `panes`: Stufe der Lobby-Bereiche. `tableBottom`: tiefstes sichtbares Element im Tisch.
+ * `overlaps`: Überschneidungen am Tisch aus tests/e2e/overlap.ts (wie fitFindings).
  */
 export async function measure(page, extra = []) {
-  return page.evaluate((extraSel) => {
+  const overlaps = await page.evaluate(overlapFindings);
+  const m = await page.evaluate((extraSel) => {
     const H = window.innerHeight;
     const W = window.innerWidth;
     const se = document.scrollingElement;
@@ -463,6 +466,7 @@ export async function measure(page, extra = []) {
       tableScale: table?.style.transform || '',
     };
   }, extra);
+  return { ...m, overlaps };
 }
 
 /** Ergebnisblatt: Überlauf, sichtbare Zeilen über der angehefteten Fußleiste, eigene Zeile und Verlierer. */
@@ -539,6 +543,7 @@ export function verdict(m, keys, { table = true, sheet = null, menu } = {}) {
   }
   if (m.marks?.length) bad.push(...m.marks);
   if (m.taps?.length) bad.push(...m.taps);
+  if (m.overlaps?.length) bad.push(...m.overlaps);
   if (table && m.tableBottom && m.tableBottom.bottom > m.h + 1)
     bad.push(`Tisch bis ${m.tableBottom.bottom} (${m.tableBottom.who})`);
   if (sheet) {

@@ -3,7 +3,7 @@
  * und die Leiste, wenn nur noch KIs spielen.
  */
 import { shCanBet } from '../../game/bets';
-import { onlyBotsPlaying } from '../../game/games';
+import { onlyBotsPlaying, reignOf } from '../../game/games';
 import type { Card, Player, ShBetResult, View } from '../../game/types';
 import { ffwdInLog } from '../../net/pace';
 import { App } from '../app';
@@ -200,6 +200,14 @@ function sheetRowHTML(v: View, r: SheetRow, key: boolean, withCards = key, wait:
   );
 }
 
+/** Fordern heißt: Duell gegen den Sieger, die nächste Partie entscheidet. Der Name sagt, gegen wen es geht. */
+function rematchBtn(v: View): string {
+  const w = v.players.find((p) => p.id === reignOf(v)?.win);
+  const vs = w ? esc(nameOf(v, w.id)) : '';
+  const tip = vs ? `Fordere ${vs} zum Duell, die nächste Partie entscheidet` : 'Duell, die nächste Partie entscheidet';
+  return `<button class="btn primary rv" data-act="rematch" title="${tip}"><span class="blong">⚔️ Revanche${vs ? ` gegen ${vs}` : ''}</span><span class="bshort">⚔️ Revanche</span></button>`;
+}
+
 /** Knöpfe des Blatts, in allen Spielen gleich: Zur Lobby, Tisch ansehen, Neue Partie oder Nächste Runde, Revanche. */
 function sheetBtns(v: View, me: Player | null, s: Sheet): string {
   const ready = !!me?.ready;
@@ -225,8 +233,8 @@ function sheetBtns(v: View, me: Player | null, s: Sheet): string {
   if (canChallenge(v))
     return (
       h +
-      `<button class="btn ghost" data-act="ready"><span class="blong">${label}</span><span class="bshort">Weiter</span></button>` +
-      '<button class="btn primary rv" data-act="rematch">⚔️ Revanche</button>'
+      `<button class="btn ghost" data-act="ready"><span class="blong">${label}</span><span class="bshort">Nochmal</span></button>` +
+      rematchBtn(v)
     );
   // Ein Span hält Text und Zahl zusammen, sonst setzt das gap von .btn Lücken: „Nächste Runde ( 9 s)“
   return h + `<button class="btn primary" data-act="ready"><span>${label}</span></button>`;

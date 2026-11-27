@@ -88,14 +88,19 @@ const PIPS: Readonly<Record<string, readonly Pip[]>> = {
 export const CARD_RE = /^[CSHD](2|3|4|5|6|7|8|9|10|B|D|K|A)(:2)?$/;
 
 const isRed = (s: Suit | null) => s === 'H' || s === 'D';
+/** Wert in der Ecke: Bube und Dame zeigen J und Q (Entscheidung des Users zu 2.8), die Codes B und D bleiben intern */
+const cornerOf = (c: Card): string => {
+  const r = rankOf(c);
+  return r === 'B' ? 'J' : r === 'D' ? 'Q' : r;
+};
 /**
  * Name einer Karte, mit dem Wert so, wie er in der Ecke steht (WCAG 2.5.3, Sprachsteuerung): „Karo 4“, bei Bildern
- * und Ass dazu das Wort, „Karo B, Bube“. Die Farbe steht vorn, daran erkennt der Sticker-Look sie (cards-vinyl.css).
+ * und Ass dazu das Wort, „Herz Q, Dame“. Die Farbe steht vorn, daran erkennt der Sticker-Look sie (cards-vinyl.css).
  */
 export const cardName = (c: Card): string => {
   const r = rankOf(c);
   const word = Number.isNaN(Number(r)) ? `, ${RANK_NAME[r]}` : '';
-  return `${SUIT_NAME[suitOf(c)]} ${r}${word}`;
+  return `${SUIT_NAME[suitOf(c)]} ${cornerOf(c)}${word}`;
 };
 
 /**
@@ -106,8 +111,9 @@ export const cardName = (c: Card): string => {
 function faceHTML(c: Card, mute = false): string {
   const s = suitOf(c);
   const r = rankOf(c);
+  const t = cornerOf(c);
   const sym = SUIT_SYM[s];
-  const ix = `<span class="ix">${mute ? `<span data-t="${r}"></span>` : `<span>${r}</span>`}<i>${sym}</i></span><span class="ix br"><span data-t="${r}"></span><i>${sym}</i></span>`;
+  const ix = `<span class="ix">${mute ? `<span data-t="${t}"></span>` : `<span>${t}</span>`}<i>${sym}</i></span><span class="ix br"><span data-t="${t}"></span><i>${sym}</i></span>`;
   const pips = PIPS[r];
   if (pips)
     return (
@@ -120,7 +126,7 @@ function faceHTML(c: Card, mute = false): string {
         .join('')
     );
   if (r === 'A') return `${ix}<div class="ace"><b>${sym}</b></div>`;
-  return `${ix}<div class="face"><i>${sym}</i><b data-t="${r}"></b><i>${sym}</i></div>`;
+  return `${ix}<div class="face"><i>${sym}</i><b data-t="${t}"></b><i>${sym}</i></div>`;
 }
 
 /**
@@ -161,7 +167,7 @@ function optsHTML(c: Card | null, o: CardOpts): string {
 export function cardChip(c: unknown): string {
   if (typeof c !== 'string' || !CARD_RE.test(c)) return '?';
   const s = suitOf(c);
-  return `<span class="cs${isRed(s) ? ' r' : ''}">${SUIT_SYM[s]}${rankOf(c)}</span>`;
+  return `<span class="cs${isRed(s) ? ' r' : ''}">${SUIT_SYM[s]}${cornerOf(c)}</span>`;
 }
 
 export const fmtVal = (v: number): string => String(v).replace('.', ',');

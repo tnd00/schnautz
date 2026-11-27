@@ -47,8 +47,18 @@ test('Design: Wahl über das Menü wirkt sofort und bleibt nach dem Neuladen', a
   await expect(sheet).toBeVisible();
   await expect(page.locator('#scr-game')).toBeVisible();
 
-  // Pfeiltaste wählt das nächste Deck und nimmt den Fokus mit
+  // Pfeiltaste wählt das nächste Deck und nimmt den Fokus mit, Vinyl dunkel gilt auch unter Legacy
+  await expect(sheet.locator('[role=radio][data-dsg=deck]')).toHaveCount(3);
+  // Kartendeck steht auf dem zweiten Reiter, Pfeiltaste rechts wechselt dorthin
+  await sheet.locator('[role=tab][data-dtab=look]').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(sheet.locator('[role=tab][data-dtab=deck]')).toHaveAttribute('aria-selected', 'true');
+  await expect(radio('deck', 'vinyl')).toBeVisible();
+  await expect(radio('look', 'sticker')).toBeHidden();
   await radio('deck', 'vinyl').focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(radio('deck', 'vinyl-dark')).toBeFocused();
+  await expect(html).toHaveAttribute('data-deck', 'vinyl-dark');
   await page.keyboard.press('ArrowDown');
   await expect(radio('deck', 'classic')).toHaveAttribute('aria-checked', 'true');
   await expect(radio('deck', 'classic')).toBeFocused();
@@ -222,7 +232,7 @@ test('Design: Tisch in Legacy, Menü und Fenster bleiben Sticker, zurück zu Sti
   expect(errors.list).toEqual([]);
 });
 
-test('Design: alle vier Kombinationen aus Design und Kartendeck stehen am Tisch', async ({ browser }) => {
+test('Design: alle neun Kombinationen aus Design und Kartendeck stehen am Tisch', async ({ browser }) => {
   const errors = new Errors();
   const ctx = await desktop(browser);
   await seed(ctx, {});
@@ -233,31 +243,39 @@ test('Design: alle vier Kombinationen aus Design und Kartendeck stehen am Tisch'
     page
       .locator('#scr-game .card[data-r]')
       .first()
-      .evaluate((el) => getComputedStyle(el).backgroundImage);
+      .evaluate((el) => `${getComputedStyle(el).backgroundColor} ${getComputedStyle(el).backgroundImage}`);
   const faces: Record<string, string> = {};
-  for (const look of ['sticker', 'legacy'] as const) {
-    for (const deck of ['vinyl', 'classic'] as const) {
+  for (const design of ['sticker', 'dark', 'legacy'] as const) {
+    for (const deck of ['vinyl', 'vinyl-dark', 'classic'] as const) {
       await page.evaluate(
         ([l, d]) => {
-          localStorage.setItem('schnautz:design', JSON.stringify(l));
+          localStorage.setItem('schnautz:design', JSON.stringify(l === 'dark' ? 'sticker' : l));
+          localStorage.setItem('schnautz:theme', JSON.stringify(l === 'dark' ? 'dark' : 'light'));
           localStorage.setItem('schnautz:deck', JSON.stringify(d));
         },
-        [look, deck],
+        [design, deck],
       );
       await page.reload();
       await expect(page.locator('#scr-game')).toBeVisible();
-      await expect(html).toHaveAttribute('data-look', look);
+      await expect(html).toHaveAttribute('data-look', design === 'legacy' ? 'legacy' : 'sticker');
       await expect(html).toHaveAttribute('data-deck', deck);
-      if (look === 'legacy') await expect(html).toHaveClass(/\blook-ready\b/);
+      if (design === 'legacy') await expect(html).toHaveClass(/\blook-ready\b/);
+      if (design === 'dark') await expect(html).toHaveAttribute('data-theme', 'dark');
       await expect(page.locator('#scr-game .card[data-r]').first()).toBeVisible();
-      expect((await bodyBg(page)) === FELT, `${look}/${deck} Grund`).toBe(look === 'legacy');
-      expect.soft(await fitFindings(page), `${look}/${deck}`).toEqual([]);
-      faces[`${look}/${deck}`] = await face();
+      expect((await bodyBg(page)) === FELT, `${design}/${deck} Grund`).toBe(design === 'legacy');
+      expect.soft(await fitFindings(page), `${design}/${deck}`).toEqual([]);
+      faces[`${design}/${deck}`] = await face();
     }
   }
-  // Das Deck zeichnet die Karten in beiden Looks anders
-  expect(faces['sticker/vinyl']).not.toBe(faces['sticker/classic']);
-  expect(faces['legacy/vinyl']).not.toBe(faces['legacy/classic']);
+  // Jedes Deck zeichnet die Karten anders, in jedem Design gleich: Sticker dunkel färbt Vinyl nicht mehr um
+  for (const design of ['sticker', 'dark', 'legacy']) {
+    const [a, b, c] = ['vinyl', 'vinyl-dark', 'classic'].map((d) => faces[`${design}/${d}`]);
+    expect(new Set([a, b, c]).size, design).toBe(3);
+  }
+  for (const deck of ['vinyl', 'vinyl-dark']) {
+    expect(faces[`dark/${deck}`], deck).toBe(faces[`sticker/${deck}`]);
+    expect(faces[`legacy/${deck}`], deck).toBe(faces[`sticker/${deck}`]);
+  }
   expect(errors.list).toEqual([]);
 });
 

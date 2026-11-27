@@ -136,15 +136,15 @@ exports[`Verlauf aus dem Textkatalog > rendert jede Logart wortgleich zur Fassun
   ],
   "cbdiscard {"k":"cbdiscard","p":"a","c":"HB","power":"swap"} aus Sicht von a (shithead)": [
     "",
-    "<b>Du</b> legst <span class="cs r">♥B</span> ab und darfst blind tauschen.",
+    "<b>Du</b> legst <span class="cs r">♥J</span> ab und darfst blind tauschen.",
   ],
   "cbdiscard {"k":"cbdiscard","p":"a","c":"HB","power":"swap"} aus Sicht von b (shithead)": [
     "",
-    "<b>Lena</b> legt <span class="cs r">♥B</span> ab und darf blind tauschen.",
+    "<b>Lena</b> legt <span class="cs r">♥J</span> ab und darf blind tauschen.",
   ],
   "cbdiscard {"k":"cbdiscard","p":"a","c":"HB","power":"swap"} aus Sicht von o (shithead)": [
     "",
-    "<b>Lena</b> legt <span class="cs r">♥B</span> ab und darf blind tauschen.",
+    "<b>Lena</b> legt <span class="cs r">♥J</span> ab und darf blind tauschen.",
   ],
   "cbdraw {"k":"cbdraw","p":"a","from":"deck"} aus Sicht von a (shithead)": [
     "",

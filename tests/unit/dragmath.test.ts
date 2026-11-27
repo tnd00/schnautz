@@ -1,19 +1,23 @@
 /*
  * Rechnen fürs Ziehen (src/ui/table/dragmath.ts, ziehen.md 5.4 und 7), ohne DOM: Schwelle je Zeigerart, Treffer mit
- * Fangradius, das nähere von zwei Zielen, kein Fangradius an der Cabo-Ablage, Lage und Neigung des Geists.
+ * Fangradius, das nähere von zwei Zielen, kein Fangradius an der Cabo-Ablage, angenommene Flächen größer als die
+ * angezeigten (Abnahme 1 Punkt 28), Lage und Neigung des Geists.
  */
 import { describe, expect, it } from 'vitest';
 import {
   catchRadius,
   DRAG_SLOP,
   ghostAt,
+  hitReach,
   hitTest,
   MAX_TILT,
   pastSlop,
   pointerKind,
+  reachOf,
   tiltOf,
   towards,
   type Box,
+  type Target,
 } from '../../src/ui/table/dragmath';
 
 const box = (left: number, top: number, w = 60, h = 84): Box => ({ left, top, right: left + w, bottom: top + h });
@@ -69,6 +73,79 @@ describe('Treffer', () => {
     expect(hitTest(65, 40, b, [0, 15])).toBe(-1);
     expect(hitTest(195, 40, b, [0, 15])).toBe(1);
     expect(hitTest(30, 40, b, [0, 15])).toBe(0);
+  });
+});
+
+describe('Angenommene Flächen', () => {
+  const t = (b: Box, ok = true, pad = 10): Target => ({ box: b, ok, pad });
+  const center = box(0, 200, 390, 160);
+  const hit = (x: number, y: number, ts: Target[], home: Box[] = []): number =>
+    hitReach(x, y, ts, reachOf(ts, center, home), home);
+
+  it('ein Ziel in der Tischmitte: die ganze Mitte zählt, die Quelle nicht', () => {
+    const pile = box(160, 230);
+    const home = [box(150, 600)];
+    // Ziehstapel und Verbrannt sind in Shithead keine Ziele
+    const ts = [t(pile), t(box(0, 600, 60, 84), false)];
+    expect(reachOf(ts, center, home)[0]).toEqual({ left: 0, top: 200, right: 390, bottom: 360 });
+    // über Ziehstapel und Verbrannt hinweg
+    expect(hit(60, 260, ts, home)).toBe(0);
+    expect(hit(380, 350, ts, home)).toBe(0);
+    expect(hit(195, 400, ts, home)).toBe(-1);
+    expect(hit(180, 640, ts, home)).toBe(-1);
+  });
+
+  it('die Cabo-Ablage beim Schnappen wächst nicht', () => {
+    const ts = [t(box(160, 230), true, 0)];
+    expect(reachOf(ts, center)[0]).toEqual(box(160, 230));
+    expect(hit(150, 260, ts)).toBe(-1);
+  });
+
+  it('mehrere Ziele: länger statt breiter, in der Mitte nicht über sie hinaus', () => {
+    const a = box(100, 240);
+    const b = box(170, 240);
+    const [ra, rb] = reachOf([t(a), t(b)], center);
+    // 0,5 Höhen nach oben und unten, bis an den Rand der Mitte
+    expect(ra.top).toBe(200);
+    expect(ra.bottom).toBe(360);
+    // Seitlich nur bis zur Mitte der Lücke, nie überlappend
+    expect(ra.left).toBe(90);
+    expect(ra.right).toBe(165);
+    expect(rb.left).toBe(165);
+    expect(rb.right).toBe(240);
+    expect(hit(164, 210, [t(a), t(b)])).toBe(0);
+    expect(hit(166, 350, [t(a), t(b)])).toBe(1);
+  });
+
+  it('außerhalb der Mitte wächst eine Fläche nur in die freie Richtung', () => {
+    const up = box(100, 500);
+    const other = box(100, 600, 60, 84);
+    const [r] = reachOf([t(up), t(other, false)], center, [box(200, 600)]);
+    expect(r.top).toBe(500 - 42);
+    expect(r.bottom).toBe(600);
+  });
+
+  it('überlappende Ziele (Fächer) teilen an der Mitte, gültige vor ungültigen, eigene Quelle bricht ab', () => {
+    const a = box(100, 600);
+    const b = box(130, 600);
+    const [ra, rb] = reachOf([t(a), t(b)], center);
+    expect(ra.right).toBe(145);
+    expect(rb.left).toBe(145);
+    // Durak mit zwei offenen Angriffen: die Tischfläche drumherum nennt nur den Grund
+    const ts = [t(box(100, 240)), t(box(170, 240)), t(box(0, 200, 390, 160), false)];
+    expect(hit(110, 260, ts)).toBe(0);
+    expect(hit(300, 330, ts)).toBe(2);
+    const home = [box(250, 240)];
+    expect(hit(270, 260, ts, home)).toBe(-1);
+  });
+
+  it('eine ungültige Karte unter dem Finger nennt ihren Grund, auch wenn die Mitte sonst annimmt', () => {
+    // Durak: Karo König schlägt Kreuz Sechs nicht, aber Karo Sechs daneben
+    const ts = [t(box(100, 240), false), t(box(170, 240)), t(box(0, 200, 390, 160), false)];
+    expect(reachOf(ts, center)[1]).toEqual({ left: 0, top: 200, right: 390, bottom: 360 });
+    expect(hit(130, 280, ts)).toBe(0);
+    expect(hit(30, 330, ts)).toBe(1);
+    expect(hit(165, 280, ts)).toBe(1);
   });
 });
 

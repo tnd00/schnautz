@@ -7,19 +7,17 @@ import { shareLink } from '../screens';
 
 const n = (x: number): string => `<span class="st-num">${x}</span>`;
 
-/** Wer gerade sitzt und was noch frei ist. In der Lobby gibt es KI-Plätze, mitten in der Partie KI-Plätze samt Karten. */
+/** Was noch frei ist. In der Lobby gibt es KI-Plätze, mitten in der Partie KI-Plätze samt Karten. */
 function seatsHTML(): string {
   const v = App.view;
   if (!v) return '';
-  const humans = v.players.filter((p) => !p.bot).length;
   const bots = v.players.filter((p) => p.bot && !p.left).length;
   const free = Math.max(0, seatLimit(v) - v.players.length);
   const room = free + bots;
   if (!room) return '<p class="iseats">Der Tisch ist gerade voll.</p>';
   const lobby = v.phase === 'lobby';
   return (
-    `<p class="iseats">${n(humans)} ${humans === 1 ? 'Mensch sitzt' : 'Menschen sitzen'} am Tisch, ` +
-    `${n(room)} ${room === 1 ? 'Platz ist' : 'Plätze sind'} noch zu haben.</p>` +
+    `<p class="iseats">${room === 1 ? 'Noch ein Platz frei.' : `Noch ${n(room)} Plätze frei.`}</p>` +
     (bots ? `<p class="ibot">Wer jetzt kommt, übernimmt einen KI-Platz${lobby ? '' : ' samt Karten'}.</p>` : '')
   );
 }

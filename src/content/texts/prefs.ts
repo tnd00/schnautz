@@ -12,6 +12,8 @@ export const PREFS_TEXT = {
   ],
   drag: 'Karten ziehen',
   dragSub: 'Karten mit dem Finger auf den Stapel schieben, Tippen geht immer',
+  zones: 'Trefferflächen anzeigen',
+  zonesSub: 'Zeigt beim Ziehen, wo Loslassen zählt',
   haptic: 'Vibration',
   hapticSub: 'Kurz brummen, wenn dir etwas passiert',
   volume: 'Lautstärke',

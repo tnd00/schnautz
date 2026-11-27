@@ -24,8 +24,116 @@
       content="Schnautz, Shithead, Durak und Cabo im Browser. Tisch aufmachen, Link schicken, losspielen. Ohne Anmeldung, die KI füllt freie Plätze."
     />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      /* Ladebildschirm (src/ui/loading.ts): steht vor dem Haupt-CSS, deshalb Farben aus DESIGN.md direkt hier */
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        background:
+          radial-gradient(90% 55% at 12% 4%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 70%),
+          radial-gradient(80% 55% at 100% 100%, #5d5ae2, rgba(93, 90, 226, 0) 75%), #6f6cf0;
+        transition: opacity 0.22s ease;
+      }
+      #boot.off {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+          opacity 0.22s ease,
+          visibility 0s 0.22s;
+      }
+      /* Erst nach 300 ms, damit bei schnellem Laden nur der Grund steht und nichts aufblitzt */
+      #boot > * {
+        animation: boot-in 0.35s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      #boot .boot-logo {
+        padding: 0.14em 0.3em 0.2em;
+        color: #1a1830;
+        font:
+          900 clamp(46px, 15vw, 84px) / 0.92 'Fraunces Soft',
+          'Fraunces Variable',
+          Georgia,
+          serif;
+        letter-spacing: -0.03em;
+        background: linear-gradient(152deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 34%) #ffd84d;
+        background-clip: padding-box;
+        border: 7px solid #fff;
+        border-radius: 28px;
+        box-shadow:
+          inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+          0 1px 1.5px rgba(26, 24, 48, 0.22),
+          0 4px 6px -2px rgba(26, 24, 48, 0.24),
+          0 14px 24px -10px rgba(26, 24, 48, 0.42);
+        rotate: -2deg;
+      }
+      #boot .boot-dots {
+        display: flex;
+        gap: 12px;
+      }
+      #boot .boot-dots i {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        animation: boot-dot 1.2s ease-in-out infinite;
+      }
+      #boot .boot-dots i:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      #boot .boot-dots i:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      /* Legacy am Tisch: solange sein Stück lädt (Wache in base.css), nach 300 ms derselbe Bildschirm */
+      :root[data-look='legacy']:not(.look-ready) body.ingame #boot.off {
+        opacity: 1;
+        visibility: visible;
+        animation: boot-fade 0.2s 0.3s both;
+      }
+      @keyframes boot-in {
+        from {
+          opacity: 0;
+          translate: 0 10px;
+        }
+      }
+      @keyframes boot-fade {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes boot-dot {
+        0%,
+        70%,
+        100% {
+          opacity: 0.4;
+          scale: 0.7;
+        }
+        35% {
+          opacity: 1;
+          scale: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot > *,
+        #boot .boot-dots i {
+          animation: none;
+        }
+        #boot .boot-dots i {
+          opacity: 0.7;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" role="status">
+      <b class="boot-logo">Schnautz</b>
+      <span class="boot-dots" role="img" aria-label="Lädt"><i></i><i></i><i></i></span>
+    </div>
     <div id="app">
       <header class="top">
         <div class="brand"><span id="brand-name">Schnautz</span> <small id="brand-badge">31</small></div>

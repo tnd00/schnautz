@@ -82,10 +82,12 @@ export function dkDropOf(v: View, me: string, src: DkDragKey, dst: DropKey): Dro
     case 'pair':
       return beat(dst.i);
     case 'table': {
-      // Freie Fläche wie der Ein-Tipp-Weg: nur eindeutig, wenn genau ein Angriff offen ist
+      // Freie Fläche nennt nur den Grund. Ist genau ein Angriff offen, nimmt dessen Fläche die ganze Tischmitte an
+      // (reachOf), ein zweites leuchtendes Ziel für denselben Zug würde sich mit Paar und Schiebefeld überschneiden.
       if (n > 1) return no(rj('dk.oneCard'));
       const open = D.table.flatMap((p, i) => (p.d ? [] : [i]));
-      return open.length === 1 ? beat(open[0]) : no(rj('dk.dropPair'));
+      const r = open.length === 1 ? beat(open[0]) : no(rj('dk.dropPair'));
+      return r.ok ? no(rj('dk.dropPair')) : r;
     }
     case 'transfer': {
       const err = dkTransferError(v, me, cards);

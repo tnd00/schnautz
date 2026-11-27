@@ -20,8 +20,8 @@ import { gzipSync } from 'node:zlib';
 // CSS 44 kB: vom User am 27.11.2026 freigegeben, damit Sticker und Vinyl ohne Nachladen im Haupt-CSS stehen (Runde 6)
 // legacy 4 kB: Tokens und Filz-Dekor des Legacy-Designs, nachgeladen (Plan 2.8 legacy.md 13.5)
 // JS 176 kB: Look, Deck und Paletten (Runde 6 von 2.8) brauchen 0,4 kB. Notfalls bis 185 kB freigegeben (User 25.11.2026),
-// die Grenze bleibt bei 176 kB, das reicht auch für den TURN-Hotfix (rund 0,4 kB)
-const LIMITS = { js: 176, css: 44, legacy: 4 };
+// Abnahme 1 (27.11.2026): Ladebildschirm, Ziehen und Decks brauchen 0,5 kB, deshalb 180 kB aus der Freigabe
+const LIMITS = { js: 180, css: 44, legacy: 4 };
 
 const args = process.argv.slice(2);
 const clean = args.includes('--clean');

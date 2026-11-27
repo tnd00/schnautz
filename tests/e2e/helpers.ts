@@ -1,5 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test';
 import type { GameKind, View } from '../../src/game/types';
+import { overlapFindings } from './overlap';
 
 /** Startseite mit lokalem PeerServer und ohne STUN (siehe playwright.config.ts, Port per PEER_PORT). */
 export const START = `./?peerhost=127.0.0.1&peerport=${process.env.PEER_PORT ?? 9000}&noice=1`;
@@ -175,10 +176,11 @@ export async function menuConfirm(page: Page, item: '#menu-leave' | '#menu-lobby
  * unter die Startleiste, statt zu scrollen. Geprüft werden deshalb auch
  * - jedes Element aus `keys`, es muss ganz im Bild liegen (fehlt es, ist das ein Befund),
  * - die Lobby-Bereiche, kein Inhalt unter der Startleiste und kein Notbehelf `fscroll`,
- * - am Tisch das tiefste sichtbare Element in `#table`, es endet über dem unteren Rand.
+ * - am Tisch das tiefste sichtbare Element in `#table`, es endet über dem unteren Rand,
+ * - am Tisch Überschneidungen von Meldungen, Uhr, Pillen, Handkarten und Knöpfen (`overlapFindings`, tests/e2e/overlap.ts).
  */
 export async function fitFindings(page: Page, keys: string[] = []): Promise<string[]> {
-  return page.evaluate((sel) => {
+  const found = await page.evaluate((sel) => {
     const H = window.innerHeight;
     const W = window.innerWidth;
     const se = document.scrollingElement ?? document.documentElement;
@@ -245,6 +247,7 @@ export async function fitFindings(page: Page, keys: string[] = []): Promise<stri
     });
     return out;
   }, keys);
+  return [...found, ...(await page.evaluate(overlapFindings))];
 }
 
 /**

@@ -489,10 +489,6 @@ body.peeking #emotes {
   outline-color: var(--st-ground);
   outline-offset: 2px;
 }
-/* Im Fenster Tisch: Abstand zwischen Einladen und Verbindung */
-#modal .netinfo.invite .dlg-body > h3 {
-  margin-top: 26px;
-}
 #modal .dlg-tool {
   display: grid;
   place-items: center;
@@ -701,6 +697,32 @@ body.peeking #emotes {
 }
 #modal .netinfo .nnote {
   font-size: 13px;
+}
+/* Verbindung zum Aufklappen: eine weiße Zeile wie die Werte darin (.nrow), Pfeil rechts */
+#modal .netinfo summary {
+  margin: 22px 0 12px;
+  cursor: pointer;
+  list-style: none;
+}
+#modal .netinfo summary::-webkit-details-marker {
+  display: none;
+}
+#modal .netinfo summary h3 {
+  flex: 1;
+  margin: 0;
+}
+#modal .netinfo summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin: 0 3px 4px;
+  border: solid var(--st-ink);
+  border-width: 0 2.5px 2.5px 0;
+  rotate: 45deg;
+}
+#modal .netinfo [open] summary::after {
+  margin-bottom: -4px;
+  rotate: -135deg;
 }
 
 /* ---------- Regeln: Spiel-Reiter, Sprungmarken, Abschnitte ---------- */

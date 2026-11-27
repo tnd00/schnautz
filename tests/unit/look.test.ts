@@ -84,13 +84,16 @@ describe('look', () => {
     expect(html.dataset).toEqual({ look: 'sticker', deck: 'vinyl', theme: 'dark' });
   });
 
-  it('nimmt das Deck in beiden Looks', () => {
+  it('nimmt das Deck in jedem Design, das Thema ändert es nicht', () => {
     const { html } = fakeDom({ 'schnautz:deck': '"classic"' });
     applyLook();
     expect(html.dataset).toEqual({ look: 'sticker', deck: 'classic', theme: 'light' });
-    const legacy = fakeDom({ 'schnautz:design': '"legacy"', 'schnautz:deck': '"classic"' });
+    const legacy = fakeDom({ 'schnautz:design': '"legacy"', 'schnautz:deck': '"vinyl-dark"' });
     applyLook();
-    expect(legacy.html.dataset).toEqual({ look: 'legacy', deck: 'classic' });
+    expect(legacy.html.dataset).toEqual({ look: 'legacy', deck: 'vinyl-dark' });
+    const dark = fakeDom({ 'schnautz:theme': '"dark"', 'schnautz:deck': '"vinyl"' });
+    applyLook();
+    expect(dark.html.dataset).toEqual({ look: 'sticker', deck: 'vinyl', theme: 'dark' });
   });
 
   it('merkt die Wahl aus dem Bogen „Design“ und setzt sie an html', async () => {
@@ -177,12 +180,13 @@ describe('look', () => {
   it('zeigt im Bogen zwei Radiogruppen mit der aktuellen Wahl', () => {
     const html = designHTML({ ...PREFS_DEFAULT, look: 'legacy', deck: 'vinyl' });
     expect(html.match(/role="radiogroup"/g)).toHaveLength(2);
-    const checked = [...html.matchAll(/data-dsg="(\w+)" data-v="(\w+)"/g)].filter((m) =>
+    const checked = [...html.matchAll(/data-dsg="(\w+)" data-v="([\w-]+)"/g)].filter((m) =>
       html.includes(`aria-checked="true" tabindex="0" data-dsg="${m[1]}" data-v="${m[2]}"`),
     );
     expect(checked.map((m) => `${m[1]}:${m[2]}`)).toEqual(['look:legacy', 'deck:vinyl']);
     // Jedes Deck zeigt seine Karten unter eigenem data-deck, unabhängig vom Deck an html
     expect(html).toContain('data-deck="vinyl"');
+    expect(html).toContain('data-deck="vinyl-dark"');
     expect(html).toContain('data-deck="classic"');
     // Name kurz, Erklärsatz als Beschreibung
     expect(html).toContain('aria-labelledby="dsg-legacy" aria-describedby="dsg-legacy-d"');
@@ -263,6 +267,19 @@ describe('Wächter Legacy-Design', () => {
         .map((r) => `${f}: ${r.sel}`),
     );
     expect(stickerBad).toEqual([]);
+  });
+
+  it('Decks hängen nur an data-deck, kein Design färbt sie um', () => {
+    for (const f of ['table/cards-vinyl.css', 'cards.css', 'table/tokens-dark.css']) {
+      const bad = rules(f).filter(
+        (r) => r.decls.some((d) => d.startsWith('--card-')) && /data-(?:theme|look)/.test(r.sel),
+      );
+      expect(bad.map((r) => `${f}: ${r.sel}`)).toEqual([]);
+    }
+    // Ein Scope für beide Vinyl-Decks, er endet vor jedem anderen Deck
+    expect(css('table/cards-vinyl.css')).toContain(
+      "@scope ([data-deck^='vinyl']) to ([data-deck]:not([data-deck^='vinyl']))",
+    );
   });
 
   it('6: der Rahmen liest keine Tisch-Tokens', () => {

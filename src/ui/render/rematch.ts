@@ -1,5 +1,6 @@
 /* Revanche in der Oberfläche: Knöpfe, Zeile im Ergebnisfenster, Ansagen und Verlauf. */
 import type { LogEntry, RematchDuel, RematchOffer, View } from '../../game/types';
+import { reignOf } from '../../game/games';
 import { duelText, persp } from '../../content/texts/log';
 import { App } from '../app';
 import { esc } from '../dom';
@@ -40,6 +41,10 @@ export function rematchLine(v: View): string {
     if (du.vs === App.me) return `⚔️ ${N(v, by)} will Revanche. Traust du dich?`;
     return `⚔️ ${N(v, by)} fordert ${N(v, du.vs)} zur Revanche.`;
   }
+  // Wer fordern darf, liest hier, was Revanche heißt (statt des Spruchs, so wächst das Blatt nicht)
+  const win = reignOf(v)?.win;
+  if (canChallenge(v) && win && win !== App.me)
+    return `⚔️ Revanche heißt Duell gegen ${N(v, win)}, die nächste Partie entscheidet.`;
   const d = v.rematchDuel;
   if (v.phase !== 'over' || !d || d.game !== v.games || !d.res) return '';
   return `⚔️ ${duelResult(v, d)}`;

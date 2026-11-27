@@ -1,6 +1,6 @@
 /* Bierdeckel (Leben) und Spielkarten */
-/* Kartendeck Klassisch, in beiden Looks: die zwei Werte, die Regeln außerhalb dieser Datei lesen. Vinyl setzt sie in
- * table/cards-vinyl.css unter data-deck='vinyl'. */
+/* Kartendeck Klassisch, in beiden Looks: die zwei Werte, die Regeln außerhalb dieser Datei lesen. Vinyl und Vinyl dunkel
+ * setzen sie in table/cards-vinyl.css. */
 :root {
   --card-red: var(--red);
   --card-back-rim: #f1e6cf;

@@ -241,7 +241,11 @@
   --tb-clock-bg: var(--sn-ink); /* Countdown des 4er-Fensters */
   --tb-log-text: var(--sn-text); /* Einträge im Verlauf */
   --tb-side-solid: var(--sn-sheet); /* Seitenleiste als Bogen am Handy */
-  --tb-hand-pill-bg: var(--sn-ink); /* Pille mit der Zahl der Handkarten */
+  --tb-hand-pill-bg: color-mix(
+    in srgb,
+    var(--sn-ink) 60%,
+    transparent
+  ); /* Zahl der Handkarten, Rücken scheinen durch */
   --tb-mark-bg: var(--sn-ink); /* Wertmarke an Cabo-Karten (Schrift --tb-val-text) */
   --tb-mark-text: var(--tb-val-text); /* dito Schrift */
   --tb-mark-zero: var(--st-cabo); /* dito bei null, Limette mit Tinte (--tb-on-accent) */

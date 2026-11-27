@@ -114,6 +114,17 @@ html.tb-dragging * {
   text-align: center;
 }
 
+/* Schalter „Trefferflächen anzeigen“: angenommene Flächen gestrichelt, nur während des Ziehens */
+.tb-reach {
+  position: fixed;
+  z-index: 59;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--tb-target-no);
+  border-radius: 10px;
+  opacity: 0.55;
+}
+
 /* Ruhig: kein Anheben der Ziele, keine Übergänge */
 :where(html.calm) #table .tb-drop-hot {
   scale: none;

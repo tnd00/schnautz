@@ -5,6 +5,8 @@ import { $, $opt } from './dom';
 import { toast } from './feedback';
 import { dealerId, myMoveNow } from './helpers';
 import { dlog } from './devlog';
+import { bootFor } from './loading';
+import { LS } from './storage';
 import { themeColorOf } from './look';
 import { prefs } from './prefs';
 import { GAME_NAME } from '../game/games';
@@ -17,6 +19,12 @@ export function showScreen(name: Screen): void {
   });
   // Am Tisch passt mobil alles auf einen Bildschirm, ohne Scrollen
   document.body.classList.toggle('ingame', name === 'game');
+  // Ladebildschirm: nur die Rückkehr an den eigenen Platz oder Tisch zeigt ihn über dem Warten (src/ui/loading.ts)
+  bootFor(
+    name,
+    name === 'wait' &&
+      (App.role === 'guest' ? G.resume : LS.get<{ code?: unknown } | null>('host', null)?.code === App.code),
+  );
   // Browserleiste in der Farbe des Grundes (look.ts)
   document
     .querySelector('meta[name="theme-color"]')

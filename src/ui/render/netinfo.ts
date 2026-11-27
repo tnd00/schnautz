@@ -1,6 +1,6 @@
 /*
- * Fenster hinter dem Punkt oben: Tischcode mit Link zum Einladen, darunter die Verbindung (Rolle, Antwortzeit und
- * wer gerade da ist). Punkt und Code waren früher zwei Knöpfe, jetzt ist es einer.
+ * Fenster hinter dem Punkt oben: Tischcode mit Link zum Einladen, darunter die Verbindung zum Aufklappen (Rolle,
+ * Antwortzeit und wer gerade da ist). Punkt und Code waren früher zwei Knöpfe, jetzt ist es einer.
  */
 import { APP_VERSION } from '../../content/version';
 import { G } from '../../net/guest';
@@ -33,7 +33,7 @@ const row = (k: string, v: string): string => `<div class="nrow"><span>${k}</spa
 export function netInfoHTML(): string {
   const v = App.view;
   const host = v?.players.find((p) => p.id === v.host);
-  const rows: string[] = [row('Status', `<i class="dot ${App.net}"></i> ${STATE[App.net] ?? App.net}`)];
+  const rows: string[] = [];
   if (App.role === 'host') rows.push(row('Rolle', 'Du bist Gastgeber, alle sind direkt mit dir verbunden'));
   else if (App.role === 'guest') {
     rows.push(row('Rolle', `Gast bei ${esc(host?.name ?? 'dem Gastgeber')}`));
@@ -54,10 +54,13 @@ export function netInfoHTML(): string {
     title: 'Tisch',
     body:
       (App.code && App.view ? inviteBody() : '') +
-      '<h3>Verbindung</h3><p class="lead">Ihr spielt direkt von Browser zu Browser, der Gastgeber hält den Tisch.</p>' +
+      // Zugeklappt steht nur der Status da, damit der Bogen am Handy nicht scrollt
+      `<details><summary class="nrow"><h3>Verbindung</h3><b><i class="dot ${App.net}"></i>${STATE[App.net] ?? App.net}</b></summary>` +
+      '<p class="lead">Ihr spielt direkt von Browser zu Browser, der Gastgeber hält den Tisch.</p>' +
       `<div class="nrows">${rows.join('')}</div>` +
       (list ? `<h3>Am Tisch</h3><ul class="npeople">${list}</ul>` : '') +
       (bots ? `<p class="nnote">Dazu ${bots === 1 ? 'eine KI' : `${bots} KIs`}.</p>` : '') +
+      '</details>' +
       // Kurzform wie im Changelog (2.7.0 heißt 2.7), ohne ihn ins Startpaket zu holen (src/ui/lazy.ts)
       `<p class="nnote">Version ${esc(APP_VERSION.replace(/\.0$/, ''))}</p>`,
   });

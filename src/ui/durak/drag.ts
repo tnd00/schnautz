@@ -2,7 +2,8 @@
  * Durak ziehen (ziehen.md 4.2), lädt mit dem Motor nach (src/ui/table/drag-motor.ts). Quelle ist eine Handkarte, bei
  * Auswahl alle gewählten. Ziele sind die Tischfläche, offene Angriffe und das Schiebefeld, die Regeln stehen rein in
  * src/game/drop/durak.ts. Das Schiebefeld gibt es nur während eines Ziehens, für das Weiterschieben geht: absolut in
- * .dktable rechts neben dem letzten Angriff, sonst über der Zeile .cnt, damit sich keine Höhe ändert.
+ * .dktable rechts neben dem letzten Angriff, wenn es vor Bito passt, sonst über der Zeile .cnt, damit sich keine Höhe
+ * ändert.
  */
 import { dkNextTarget } from '../../game/durak';
 import type { DropKey } from '../../game/drop';
@@ -49,9 +50,18 @@ function transferField(): HTMLElement | null {
   const right = last.offsetLeft + w;
   el.style.cssText = `${LOOK}left:calc(${right}px + ${GAP});top:${last.offsetTop}px;width:${w}px;height:${last.offsetHeight}px;`;
   box.appendChild(el);
-  // Passt es rechts nicht mehr in die Tischmitte, liegt es als Leiste über der Zeile darunter
-  const room = $opt('#center')?.getBoundingClientRect().right ?? Infinity;
-  if (el.getBoundingClientRect().right > room - 4) el.style.cssText = LOOK + LOW;
+  // Passt es rechts nicht mehr vor Bito und in die Tischmitte, liegt es als Leiste über der Zeile darunter
+  const r = el.getBoundingClientRect();
+  const bito = $opt('#center .dkbito')?.getBoundingClientRect();
+  const room = Math.min(
+    $opt('#center')?.getBoundingClientRect().right ?? Infinity,
+    bito && bito.left >= r.left ? bito.left : Infinity,
+  );
+  if (r.right > room - 4) {
+    el.style.cssText = LOOK + LOW;
+    // Die Leiste deckt die Zeile .cnt ab, solange gezogen wird, sonst laufen beide Texte übereinander
+    box.querySelector<HTMLElement>(':scope > .cnt')?.style.setProperty('visibility', 'hidden');
+  }
   return el;
 }
 
@@ -70,7 +80,8 @@ export const adapter: DragAdapter = {
       case 'table':
         return $opt<HTMLElement>('#center .dktable');
       case 'pair':
-        return $opt<HTMLElement>(`#center .dkpair[data-i="${dst.i}"]`);
+        // Die Angriffskarte, nicht das Paar: Das ist rechts um den Versatz der Abwehrkarte breiter
+        return $opt<HTMLElement>(`#center .dkpair[data-i="${dst.i}"] .dka`);
       case 'transfer':
         return transferField();
       default:
@@ -86,5 +97,6 @@ export const adapter: DragAdapter = {
   },
   end() {
     for (const el of document.querySelectorAll(`#table .${FIELD}`)) el.remove();
+    $opt<HTMLElement>('#center .dktable > .cnt')?.style.removeProperty('visibility');
   },
 };

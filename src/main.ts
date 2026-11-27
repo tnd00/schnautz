@@ -26,6 +26,7 @@ import { initStart } from './ui/start';
 import { initBackMark, initUpdateCheck, reloadApp, showUpdate, takeBackMark, updateText } from './ui/update';
 import { LS, SS } from './ui/storage';
 import { initDevLog } from './ui/devlog';
+import { bootStart } from './ui/loading';
 import { applyLook, lookLoading } from './ui/look';
 import { applyCalm } from './ui/prefs';
 import './ui/dialog'; // Fenster: Rolle, Fokus und Rückweg, richtet sich beim Laden selbst ein
@@ -83,7 +84,8 @@ showScreen('start');
 initUpdateCheck();
 // Nach dem Neuladen am Tisch (auch wegen einer neuen Version) ohne Tippen zurück
 const back = takeBackMark();
-if (back) void resumeBack(back);
+if (back) void resumeBack(back).finally(bootStart);
+else bootStart();
 if (cleanCode(location.hash.slice(1)) && LS.get('name', '')) $('#btn-join').focus();
 // Zugang für die Ende-zu-Ende-Tests, nur beim Entwickeln oder mit lokalem PeerServer (Testparameter)
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('peerhost')) {

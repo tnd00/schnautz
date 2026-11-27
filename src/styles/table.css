@@ -140,6 +140,7 @@
   border-radius: 999px;
   background: var(--tb-tag-bg);
   color: var(--tb-muted);
+  white-space: nowrap;
 }
 .tag.turn {
   background: var(--brass);

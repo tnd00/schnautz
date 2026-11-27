@@ -1,4 +1,7 @@
-/* Bogen „Design“ (src/ui/render/design.ts). Nur dort importieren, sonst landet er im Einstiegsstück. */
+/*
+ * Bogen „Design“ (src/ui/render/design.ts). Nur dort importieren, sonst landet er im Einstiegsstück. Jedes Deck in
+ * `decks` bekommt im Bogen eine Wahl mit Vorschau, mehr braucht der Bogen für ein neues Deck nicht.
+ */
 
 export const DESIGN_TEXT = {
   title: 'Design',
@@ -12,6 +15,7 @@ export const DESIGN_TEXT = {
   deck: 'Kartendeck',
   decks: [
     ['vinyl', 'Vinyl', 'Dicke Zeichen, lesbar auch aus der Sofaecke.'],
+    ['vinyl-dark', 'Vinyl dunkel', 'Vinyl mit gedimmtem Papier. Blendet nicht, auch nicht um drei Uhr nachts.'],
     ['classic', 'Klassisch', 'Das gute alte Blatt mit Bildkarten.'],
   ],
   legacyFail: 'Legacy will gerade nicht laden. Der Tisch bleibt Sticker, probier es gleich nochmal.',

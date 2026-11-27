@@ -134,7 +134,7 @@ function legendCabo(rules: Rules): LegendItem[] {
     ['K', 'König 13 oder 0', 'Schwarz zählt 13, Rot zählt 0 und ist Gold wert.', 'r'],
     ['7/8', 'Ansehen', 'Vom Stapel ziehen, ablegen und eine eigene Karte ansehen.'],
     ['9/10', 'Spionieren', 'Ablegen und eine Karte von jemand anderem ansehen.'],
-    ['B/D', 'Blindtausch', 'Ablegen und eine eigene Karte ungesehen gegen eine fremde tauschen.'],
+    ['J/Q', 'Blindtausch', 'Ablegen und eine eigene Karte ungesehen gegen eine fremde tauschen.'],
     ['2×', 'Gleiche eintauschen', 'Gleiche Werte auf einmal eintauschen. Daneben kostet eine Strafkarte.', 'e'],
     [
       '📣',

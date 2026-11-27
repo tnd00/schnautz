@@ -7,14 +7,25 @@
   font-weight: 700;
   color: var(--st-ink-soft);
 }
-#modal .gset.dsg .rs-h {
-  margin-top: 12px;
+/* Zwei Reiter als Schalter in Tinte, der offene gefüllt */
+#modal .gset.dsg .dsg-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 4px;
 }
-/* Am kurzen Handy (375x548) passen drei Designs und zwei Decks nur mit engeren Titeln ohne Scrollen */
-@media (max-height: 600px) {
-  #modal .gset.dsg .rs-h {
-    margin-top: 6px;
-  }
+#modal .gset.dsg .dsg-t {
+  flex: 1;
+  min-height: 40px;
+  border: 2px solid var(--st-ink);
+  border-radius: 999px;
+  background: none;
+  color: var(--st-ink);
+  font: inherit;
+  font-weight: 800;
+}
+#modal .gset.dsg .dsg-t[aria-selected='true'] {
+  background: var(--st-ink);
+  color: #fff;
 }
 #modal .gset.dsg .dsg-o {
   width: 100%;
