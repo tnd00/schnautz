@@ -115,6 +115,8 @@ async function myMove(page: Page, v: View, me: string): Promise<boolean> {
       position: { x: 8, y: 18 },
       timeout: 5000,
     });
+    // Taucht „Alle n wählen“ auf, rückt Ausspielen nach rechts und barGuard schluckt Tipps so lange
+    await page.waitForTimeout(BAR_GUARD_MS + 100);
     await page.click(`#me [data-act=shplay]${LIVE}`, { timeout: 5000 });
   } catch {
     return false;
