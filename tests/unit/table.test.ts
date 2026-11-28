@@ -250,6 +250,16 @@ describe('Knopfleiste', () => {
     vi.advanceTimersByTime(BAR_GUARD_MS + 1);
     expect(barGuard(B.btns[1].act)).toBe(false);
   });
+  it('kommt in der Mitte einer dazu, bleibt der letzte am rechten Rand gültig', () => {
+    const [P, Q] = B.btns;
+    const M = { ...P, act: 'shselall' };
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    barHTML({ btns: [P, Q] });
+    vi.advanceTimersByTime(BAR_GUARD_MS + 1);
+    barHTML({ btns: [P, M, Q] });
+    expect(barGuard(Q.act)).toBe(false);
+    expect(barGuard(M.act)).toBe(true);
+  });
 });
 
 describe('Tischmitte', () => {

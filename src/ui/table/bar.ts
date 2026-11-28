@@ -59,7 +59,9 @@ export function barHTML(b: BarModel | null, quick = ''): string {
  * true, wenn der Tipp wohl dem vorigen Knopf galt: Die Zeile hat sich gerade geändert und an der Stelle von `act`
  * stand vorher ein anderer Knopf oder keiner. Ändert sich nur die Zahl der Knöpfe, rücken am Handy alle außer dem
  * ersten (der leere Platz fällt dort weg, damit die Beschriftungen nicht umbrechen), also bleibt nur der erste
- * gültig. Ohne `act` zählt jede Änderung.
+ * gültig. Der letzte Knopf bleibt gültig, wenn er schon vorher der letzte war: Er bleibt am rechten Rand, auch wenn
+ * davor einer dazukommt (Shithead: Ausspielen rechts, „Alle n wählen“ taucht in der Mitte auf). Ohne `act` zählt jede
+ * Änderung.
  */
 export function barGuard(act?: string): boolean {
   if (Date.now() - BAR.at >= BAR_GUARD_MS) return false;
@@ -67,5 +69,6 @@ export function barGuard(act?: string): boolean {
   const now = BAR.sig.split(',');
   const prev = BAR.prev.split(',');
   const i = now.indexOf(act);
+  if (i >= 0 && i === now.length - 1 && prev[prev.length - 1] === act) return false;
   return i < 0 || prev[i] !== act || (i > 0 && prev.length !== now.length);
 }

@@ -2,7 +2,6 @@
 import { expect, test } from '@playwright/test';
 import { rankOf } from '../../src/game/cards';
 import { shCanBomb, shCanPlay, shCanThrow } from '../../src/game/shithead';
-import { BAR_GUARD_MS } from '../../src/ui/table/consts';
 import {
   quickBots,
   closeAll,
@@ -118,8 +117,6 @@ test('Shithead gegen eine KI bis zum Ende', async ({ browser }) => {
             position: { x: 8, y: 18 },
             timeout: 5000,
           });
-          // Taucht „Alle n wählen“ auf, rückt Ausspielen nach rechts und barGuard schluckt Tipps so lange
-          await host.waitForTimeout(BAR_GUARD_MS + 100);
           await host.click('[data-act=shplay]', { timeout: 5000 });
         }
       }
