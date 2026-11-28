@@ -11,7 +11,7 @@ export interface Release {
 export const CHANGELOG: readonly Release[] = [
   {
     v: '2.8',
-    date: '2026-11-26',
+    date: '2026-11-28',
     title: 'Neuer Tisch',
     groups: [
       {
