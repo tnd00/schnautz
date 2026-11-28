@@ -647,7 +647,8 @@ test(
     const r5 = await myRow(host);
     await drag(host, host.locator(SLOT(r5[0].id)), { x: 20, y: 300 });
     await dragIdle(host);
-    expect(await logSince(host, n)).toEqual([]);
+    // Nur eigene Einträge zählen, eine KI darf in der Zeit reagieren (😂)
+    expect((await logSince(host, n)).filter((e) => 'p' in e && e.p === me)).toEqual([]);
 
     // Schalter aus: kein Geist, Tippen geht wie vorher
     await setDragPref(host, false);

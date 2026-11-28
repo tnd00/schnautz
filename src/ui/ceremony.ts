@@ -88,6 +88,20 @@ export function zerSlow(on: boolean, games?: number): void {
 }
 
 /** Ring um den Platz des Shitheads, folgt der Kachel, solange sie gleitet. */
+/** Kanten der Kachel samt Pille, Etikett und Aufkleber, die über ihren Rand ragen, damit der Ring nichts davon deckt */
+function outline(el: HTMLElement, r: DOMRect): { l: number; t: number; r: number; b: number } {
+  const b = { l: r.left, t: r.top, r: r.right, b: r.bottom };
+  for (const k of el.querySelectorAll<HTMLElement>(':scope > .val, :scope > .tag, :scope > .rmark')) {
+    const q = k.getBoundingClientRect();
+    if (!q.width || getComputedStyle(k).visibility === 'hidden') continue;
+    b.l = Math.min(b.l, q.left);
+    b.t = Math.min(b.t, q.top);
+    b.r = Math.max(b.r, q.right);
+    b.b = Math.max(b.b, q.bottom);
+  }
+  return b;
+}
+
 function track(): void {
   cancelAnimationFrame(ZER.raf);
   const z = stage();
@@ -107,11 +121,12 @@ function track(): void {
   z.classList.toggle('hole', visible);
   z.classList.toggle('nohole', !visible);
   if (visible && r) {
+    const b = outline(el, r);
     // translate statt transform, damit das Heranzoomen über scale um die Mitte des Rings läuft
-    const t = `${Math.round(r.left - 6)}px ${Math.round(r.top - 6)}px`;
+    const t = `${Math.round(b.l - 6)}px ${Math.round(b.t - 6)}px`;
     if (ring.style.translate !== t) ring.style.translate = t;
-    const w = `${Math.round(r.width + 12)}px`;
-    const h = `${Math.round(r.height + 12)}px`;
+    const w = `${Math.round(b.r - b.l + 12)}px`;
+    const h = `${Math.round(b.b - b.t + 12)}px`;
     if (ring.style.width !== w) ring.style.width = w;
     if (ring.style.height !== h) ring.style.height = h;
   }

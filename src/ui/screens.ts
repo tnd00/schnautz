@@ -10,6 +10,7 @@ import { LS } from './storage';
 import { themeColorOf } from './look';
 import { prefs } from './prefs';
 import { GAME_NAME } from '../game/games';
+import { deviations } from './render/gamesettings';
 
 export type Screen = 'start' | 'wait' | 'lobby' | 'game';
 
@@ -39,6 +40,12 @@ export function showScreen(name: Screen): void {
   // Das Menü gibt es ab der Lobby, die Startseite hat keine Kopfzeile
   $('#btn-menu').hidden = name === 'wait';
   $('#netchip').hidden = name === 'start';
+  // Sonderregeln an: Punkt in der Spielfarbe am Regel-Knopf wie an der Spielkarte (.lgc-dot), das Regelfenster zeigt sie
+  const v = App.view;
+  const special = inTable && !!v && deviations(v.rules, v.game).length > 0;
+  const rb = $('#btn-rules');
+  rb.className = `iconbtn rulesbtn${special ? ` special g-${v.game}` : ''}`;
+  rb.setAttribute('aria-label', special ? 'Regeln, mit Sonderregeln' : 'Regeln');
   if (!inTable) {
     $('#brand-name').textContent = 'Schnautz';
     // Das Abzeichen 31 gibt es nur noch am Schnautz-Tisch

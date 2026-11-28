@@ -48,13 +48,19 @@
   align-content: center;
   gap: 8px 10px;
   max-width: calc(var(--pw) * 1.22 * 6 + 50px);
-  min-width: calc(var(--pw) * 1.22 * 2 + 10px);
-  min-height: calc(var(--pw) * 1.72);
+  /* Zweieinhalb Paare (je 1,22): Neben einem einzelnen Angriff passt das Schiebefeld noch vor Bito (src/ui/durak/drag.ts) */
+  min-width: calc(var(--pw) * 3.05 + 10px);
+  min-height: calc(var(--pw) * 1.4);
 }
+/* So hoch wie die Karten darin, der gedrehte Schlag reicht bis 1,79: Dann steht die Zeile darunter immer gleich weit
+ * von der untersten Karte */
 .dkpair {
   position: relative;
   width: calc(var(--pw) * 1.22);
-  height: calc(var(--pw) * 1.72);
+  height: calc(var(--pw) * 1.79);
+}
+.dkpair.open {
+  height: calc(var(--pw) * 1.4);
 }
 .dkpair .card {
   --cw: var(--pw);
@@ -102,7 +108,8 @@
   line-height: 1.3;
 }
 .dktable > .cnt {
-  bottom: -27px;
+  top: calc(100% + 8px);
+  bottom: auto;
 }
 /* Bito so breit wie Stapel samt Trumpf: Dann steht der Angriff und seine Zeile darunter genau in der Mitte */
 #table[data-game='durak'] .burned {
@@ -172,20 +179,24 @@
     margin-left: calc(var(--tw) * -0.72);
   }
   #table[data-game='durak'] .center {
+    /* Die Mitte wächst hier nicht mit (fit.css), drei Spalten brauchen schon die ganze Breite. Auf hohen Handys
+     * stehen die Paare dafür weiter auseinander */
+    --u: var(--u0);
     --pw: calc(var(--u) * 13);
     gap: calc(var(--u) * 3);
     padding-left: 14px;
     padding-right: 14px;
   }
+  /* Der Stapel gibt keine Breite ab, sonst steht der Angriff nicht mehr mittig zwischen Stapel und Bito */
   #table[data-game='durak'] .deck {
     --mw: calc(var(--u) * 15.5);
+    flex-shrink: 0;
   }
   .dktable {
-    gap: 6px 6px;
+    /* Größere Lücken gibt es nur, wo ohnehin nur zwei Paare in eine Reihe passen */
+    gap: clamp(6px, (100dvh - 190vw) * 0.08 + 6px, 16px);
+    min-width: calc(var(--pw) * 2.44 + 10px);
     max-width: calc(var(--pw) * 1.22 * 3 + 14px);
-  }
-  .dktable > .cnt {
-    bottom: -25px;
   }
   #table[data-game='durak'] .burned {
     min-width: calc(var(--u) * 22);

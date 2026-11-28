@@ -150,6 +150,34 @@ button {
   padding: 1px 5px;
   transform: translateY(-3px);
 }
+/* Fläche des Spielnamens am Tisch, malen tut sie nur der Sticker-Look (look-sticker.css) */
+body.ingame .top .brand {
+  position: relative;
+  isolation: isolate;
+}
+body.ingame .top .brand::before {
+  content: '';
+  position: absolute;
+  inset: 0 -7px;
+  z-index: -1;
+}
+/* Sonderregeln an (screens.ts): Punkt in der Spielfarbe am Regel-Knopf wie .lgc-dot an der Spielkarte */
+#btn-rules.special {
+  position: relative;
+}
+#btn-rules.special::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--g);
+  box-shadow:
+    0 0 0 2px var(--st-ink),
+    0 0 0 4px var(--st-paper);
+}
 .top .grow {
   flex: 1;
   min-width: 0;

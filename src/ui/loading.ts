@@ -6,14 +6,40 @@
  */
 const BOOT_CAP_MS = 5000;
 const FONT_WAIT_MS = 1500;
+/** So lange warten Start und Ladebildschirm höchstens auf das Haupt-CSS, danach geht es ungestylt weiter wie früher */
+const CSS_CAP_MS = 10_000;
+/** So lange wartet der Ladebildschirm höchstens auf das dunkle Stück (wie LEGACY_WAIT_MS in look.ts) */
+const DARK_CAP_MS = 3000;
 
 let first = true;
 let timer = 0;
 const boot = (): HTMLElement | null => document.getElementById('boot');
 
+/** Wartet, bis test() stimmt, höchstens capMs lang. */
+function until(test: () => boolean, capMs: number): Promise<void> {
+  const t0 = Date.now();
+  return new Promise((done) => {
+    const tick = (): void => void (test() || Date.now() - t0 > capMs ? done() : setTimeout(tick, 30));
+    tick();
+  });
+}
+const rootVar = (name: string): string => getComputedStyle(document.documentElement).getPropertyValue(name);
+
+/**
+ * Haupt-CSS angekommen? Es lädt ohne zu blockieren (vite.config.ts), bis dahin deckt der Ladebildschirm ab. main.ts
+ * wartet darauf, damit nichts ungestylt gezeichnet oder vermessen wird. --tb-cut steht im Haupt-CSS auf :root.
+ */
+export const cssReady = (): Promise<void> => until(() => !!rootVar('--tb-cut'), CSS_CAP_MS);
+
+/** Sticker dunkel: erst weg, wenn das dunkle Stück da ist (--sn-ground gibt es nur dort), sonst blitzt es hell auf */
+const themeReady = (): Promise<void> =>
+  until(() => document.documentElement.dataset.theme !== 'dark' || !!rootVar('--sn-ground'), DARK_CAP_MS);
+
 function set(on: boolean): void {
-  boot()?.classList.toggle('off', !on);
-  boot()?.setAttribute('aria-hidden', String(!on));
+  void themeReady().then(() => {
+    boot()?.classList.toggle('off', !on);
+    boot()?.setAttribute('aria-hidden', String(!on));
+  });
 }
 
 /**

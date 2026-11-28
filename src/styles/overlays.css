@@ -883,6 +883,20 @@ body.peeking #emotes {
 #modal .dlg .rsec.glance + .rsec {
   margin-top: 0;
 }
+/* Sonderregeln: eigene Karte unter dem ersten Text, nur wenn etwas vom Standard abweicht (render/rules.ts) */
+#modal .dlg .rsec.rsonder {
+  padding: 14px 16px;
+  border: 3px solid var(--g);
+  border-radius: 20px;
+  background: var(--st-paper);
+}
+#modal .dlg .rsonder ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--st-ink-soft);
+  font-size: 15.5px;
+  line-height: 1.5;
+}
 #modal .dlg .lg {
   margin: 12px 0 0;
   gap: 10px 13px;
@@ -1358,6 +1372,11 @@ body:not(.ingame) #updbar :focus-visible {
 
 /* Tippfenster als Sticker-Bogen: Wahlkarten weiß auf dem Trägerpapier, gewählt mit Umriss in der
  * Farbe des Spiels */
+/* Spielname im Titel in Tinte mit Leuchtstift in der Farbe des Spiels, Gold auf dem hellen Bogen war kaum lesbar */
+#modal .paper.bets h2 .r {
+  color: inherit;
+  background: linear-gradient(transparent 55%, var(--g) 0);
+}
 #modal .paper.bets .betc {
   display: flex;
   flex-direction: column;

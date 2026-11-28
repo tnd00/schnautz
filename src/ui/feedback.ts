@@ -121,10 +121,13 @@ function fieldRect(min = FIELD_MIN): Box | null {
   return f && f.height >= min ? f : null;
 }
 
-/** Unterkante der Mitte samt Stapel, Ablage und Regelzeile, soweit sie über dem eigenen Platz liegt. */
+/**
+ * Unterkante des Inhalts der Mitte (Stapel, Ablage, Regelzeile), soweit er über dem eigenen Platz liegt. Der leere
+ * untere Rand der Mitte zählt nicht: Auf hohen Handys wächst sie (fit.css), dort ist Platz für das Band.
+ */
 function pileBottom(limit: number): number | null {
   let bottom: number | null = null;
-  for (const el of document.querySelectorAll<HTMLElement>('#center, #center *')) {
+  for (const el of document.querySelectorAll<HTMLElement>('#center *')) {
     const r = el.getBoundingClientRect();
     if (r.width > 0 && r.height > 0 && r.bottom <= limit) bottom = Math.max(bottom ?? 0, r.bottom);
   }
@@ -721,20 +724,25 @@ export function chatBubble(pid: string | undefined, text: string): void {
   if (!el || !pid) return;
   for (const old of document.querySelectorAll<HTMLElement>('#fly .bubble')) if (old.dataset.pid === pid) old.remove();
   const r = el.getBoundingClientRect();
-  const below = el.classList.contains('opp');
   const b = document.createElement('div');
-  b.className = below ? 'bubble down' : 'bubble';
+  b.className = 'bubble';
   b.dataset.pid = pid;
   b.textContent = text;
+  // Links am Rand gemessen und die Breite festgehalten, sonst bricht sie an ihrer Stelle anders um und ragt aus dem Bild
+  b.style.left = '0px';
   $('#fly').appendChild(b);
+  // offsetWidth ohne die Skalierung der Einblendung, ein Pixel mehr gegen Rundung
+  const w = b.offsetWidth + 1;
+  b.style.width = `${w}px`;
+  const h = b.offsetHeight;
   say(SAY_TEXT.chat(App.view?.players.find((p) => p.id === pid)?.name ?? '', text), 'info');
+  const below = el.classList.contains('opp');
+  b.classList.toggle('down', below);
   // Seitlich im Bild halten, der Zipfel zeigt trotzdem auf den Platz
   const cx = r.left + r.width / 2;
-  const half = b.offsetWidth / 2;
+  const half = w / 2;
   const x = Math.min(Math.max(cx, 8 + half), innerWidth - 8 - half);
   // Reden mehrere gleichzeitig, rückt die neue Blase unter (oder über) die schon sichtbaren
-  const w = b.offsetWidth;
-  const h = b.offsetHeight;
   let top = below ? r.bottom + 8 : r.top - 8;
   let stacked = false;
   const others = [...document.querySelectorAll<HTMLElement>('#fly .bubble:not(.out)')].filter((o) => o !== b);
@@ -751,6 +759,9 @@ export function chatBubble(pid: string | undefined, text: string): void {
     if (!moved) break;
   }
   if (stacked) b.classList.add('stacked');
+  // Im Bild und über dem eigenen Platz samt Uhr bleiben: Ist darunter zu wenig Platz (Tauschrunde, kurze Handys),
+  // rückt sie auf die eigene Kachel statt auf Uhr, Kopf und runde Knöpfe
+  top = below ? Math.min(top, (meTop() ?? innerHeight - 8) - h) : Math.max(top, h + 8);
   b.style.left = `${Math.round(x)}px`;
   b.style.top = `${Math.round(top)}px`;
   b.style.setProperty('--ax', `${Math.round(cx - x)}px`);

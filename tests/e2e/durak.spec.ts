@@ -105,7 +105,9 @@ async function dkMove(page: Page, v: View, me: string): Promise<boolean> {
     if (!D.table.length) {
       // Nur wählen, wenn die Karte noch nicht gewählt ist, ein zweiter Tipp hebt die Auswahl wieder auf
       const card = page.locator('#me [data-act=dkh][data-i="0"]');
-      if (!(await card.evaluate((el) => el.classList.contains('sel')))) await card.click({ timeout: 5000 });
+      // Links oben antippen: Im Fächer deckt die Nachbarkarte die Mitte (390x844 mit 8 Karten)
+      if (!(await card.evaluate((el) => el.classList.contains('sel'))))
+        await card.click({ timeout: 5000, position: { x: 12, y: 20 } });
       return await button(page, 'dkgo');
     }
     if (me === D.def) {
@@ -117,7 +119,7 @@ async function dkMove(page: Page, v: View, me: string): Promise<boolean> {
         if (j < 0) break;
         // Erst den Angriff wählen, dann die Karte: das schlägt sofort
         await page.click(`#center .dkpair[data-i="${i}"]`, { timeout: 5000 });
-        await page.click(`#me [data-act=dkh][data-i="${j}"]`, { timeout: 5000 });
+        await page.click(`#me [data-act=dkh][data-i="${j}"]`, { timeout: 5000, position: { x: 12, y: 20 } });
         return true;
       }
       return await button(page, 'dktake');

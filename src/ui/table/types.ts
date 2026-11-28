@@ -68,8 +68,8 @@ export interface SeatModel {
   /** Klartext */
   name: string;
   /**
-   * Eckaufkleber (Krone, 💩, 🤡) als fertiges HTML, etwa reignHTML. seatHTML klebt ihn als `.rmark` auf die obere
-   * rechte Ecke, leer ohne. Bis zur Enthüllung (App.zerHide) bleibt er leer, auch im Satz `say`.
+   * Eckaufkleber (Krone, 💩, 🤡) als fertiges HTML, etwa reignHTML. seatHTML klebt ihn als `.rmark` unten links
+   * auf die Unterkante, leer ohne. Bis zur Enthüllung (App.zerHide) bleibt er leer, auch im Satz `say`.
    */
   marks: string;
   /** KI-Platz: Zeichen „KI“ vor dem Namen */

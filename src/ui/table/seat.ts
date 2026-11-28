@@ -27,7 +27,7 @@ export function tagHTML(t: TagModel | null): string {
 const BOT = `<i class="botb" title="${TABLE.bot}">KI</i>`;
 
 /**
- * Eine Gegnerkachel: Etikett oben, Eckaufkleber rechts oben, Karten, Namenszeile, Wert auf der Unterkante. Ist sie
+ * Eine Gegnerkachel: Etikett oben, Karten, Namenszeile, Wert und Eckaufkleber (unten links) auf der Unterkante. Ist sie
  * Wurfziel, öffnet ein Tipp die Wurfleiste wie heute über data-act="aim". Aufkleber und Wert nennt der Satz `say`.
  */
 export function seatHTML(m: SeatModel): string {

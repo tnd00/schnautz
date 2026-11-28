@@ -1094,12 +1094,13 @@ body:not(.intable) .menu .t-only {
 }
 
 /* Zeitlimit: Balken bei Gegnern, kleine Uhr am eigenen Platz (src/ui/clock.ts) */
-/* Oben in der Kachel, unten hängt der Wert (Pille) über den Rand */
+/* Unten in der Kachel über der Pille (oben verdecken ihn Etiketten, User 28.11.2026). Die Pille ragt 7 px in die
+ * Kachel, der Balken sitzt knapp darüber */
 .opp > .clk {
   position: absolute;
   left: 14px;
   right: 14px;
-  top: 4px;
+  bottom: 9px;
   height: 3px;
   border-radius: 2px;
   overflow: hidden;

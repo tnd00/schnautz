@@ -19,6 +19,7 @@ import { App } from '../app';
 import { num } from '../dom';
 import { CABO_KING_HTML, zuWord } from '../helpers';
 import { legendGrid, legendTitle } from './legend';
+import { deviationWords } from './gamesettings';
 import { sheetHTML } from '../dialog';
 import { GAME_NAME, GAMES, LOSER_MARK, unreachable } from '../../game/games';
 
@@ -56,7 +57,10 @@ export function rulesHTML(game?: GameKind): string {
         `<span class="rtn">${GAME_NAME[x]}</span>${v?.game === x ? '<span class="rtag">am Tisch</span>' : ''}</button>`,
     ).join('') +
     '</div>';
-  const glance = `<section class="rsec glance g-${g}"><h3>${legendTitle(g)} auf einen Blick</h3>${legendGrid(g, r)}</section>`;
+  // Sonderregeln stehen als eigene Karte direkt unter dem ersten Text, noch vor der Übersicht
+  const glance =
+    sonderHTML(r, g) +
+    `<section class="rsec glance g-${g}"><h3>${legendTitle(g)} auf einen Blick</h3>${legendGrid(g, r)}</section>`;
   JUMPS = [];
   const body = rulesOf(g, r, glance) + (r.turnSecs ? sec('Zeitlimit', timeText(g, r.turnSecs)) : '');
   const jumps = JUMPS.length
@@ -65,6 +69,16 @@ export function rulesHTML(game?: GameKind): string {
       '</nav>'
     : '';
   return sheetHTML({ kind: `rules g-${g}`, title: 'Regeln', head: tabs + jumps, body });
+}
+
+/** Karte „Sonderregeln“: was am Tisch vom Standard abweicht, als Liste. Leer, wenn nach Standard gespielt wird. */
+export function sonderHTML(r: Rules, g: GameKind): string {
+  const words = deviationWords(r, g);
+  return words.length
+    ? `<section class="rsec rsonder g-${g}"><h3>Sonderregeln</h3><ul>` +
+        words.map((w) => `<li>${w.charAt(0).toUpperCase()}${w.slice(1)}</li>`).join('') +
+        '</ul></section>'
+    : '';
 }
 
 /**

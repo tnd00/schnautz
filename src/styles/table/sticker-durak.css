@@ -37,13 +37,13 @@
   background: var(--tb-seat-bg);
 }
 
-/* Mehrere zugleich dran (Verteidigen und Nachlegen): jeder Ring nur 2 px, ein einzelner Zug behält den vollen Ring.
- * Spielfarbe wie der volle Ring (--tb-accent) */
-:root[data-look='sticker'] body.ingame #opps:has(.opp.turn ~ .opp.turn) .opp.dk.turn {
+/* Mehrere zugleich dran (Verteidigen und Nachlegen, bei Cabo das Ansehen): Ring nach innen, sonst berühren sich die
+ * Ringe der Nachbarn. Ein einzelner Zug behält den vollen Ring außen. Spielfarbe wie der volle Ring (--tb-accent) */
+:root[data-look='sticker'] body.ingame #opps:has(.opp.turn ~ .opp.turn) .opp.turn:is(.dk, .cb) {
   box-shadow:
     var(--tb-edge),
-    0 0 0 2px var(--tb-accent),
-    var(--tb-shadow-lift-sm);
+    inset 0 0 0 2px var(--tb-accent),
+    var(--tb-shadow-flat);
 }
 
 /* Ende: die offenen Karten des Durak in seiner Kachel */

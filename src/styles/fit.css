@@ -36,22 +36,37 @@
   }
   body.ingame .table {
     /* Eine Maßeinheit, die mit Breite und Höhe schrumpft, damit kurze Handys auch passen */
-    --u: min(1vw, 0.5dvh, 6px);
+    --u0: min(1vw, 0.5dvh, 6px);
+    --u: var(--u0);
     height: 100%;
     min-height: 0;
     overflow: hidden;
     gap: 6px;
     padding: 0 10px max(8px, env(safe-area-inset-bottom));
   }
-  body.ingame .table > .center {
-    margin-top: auto;
-  }
   body.ingame .table > .seat {
     margin-top: auto;
+    order: 1;
+  }
+  /* Hohe Handys: Freie Höhe geht zu einem Drittel an die Mitte, der Rest bleibt als ruhiger Abstand über und unter
+   * ihr (Basis 24 px, die Ränder heben die Lücke des Tischs auf, .opps und .seat ordnen sich um sie). Auf kurzen
+   * Handys bleibt es wie mit auto */
+  .table:not(.swap)::before,
+  .table:not(.swap)::after {
+    content: '';
+    flex: 1 1 24px;
+    margin: -3px 0;
+  }
+  .table:not(.swap) > .center {
+    flex: 1 0 auto;
+    align-items: center;
+    /* Karten der Mitte wachsen mit der freien Höhe, höchstens um 8 % */
+    --u: clamp(var(--u0), calc(var(--u0) + (100dvh - 190vw) * 0.006), calc(var(--u0) * 1.08));
   }
 
   /* Gegner nebeneinander in einer Zeile */
   .opps {
+    order: -1;
     flex: none;
     flex-wrap: nowrap;
     gap: 6px;
@@ -60,21 +75,30 @@
     /* Platz für die Beschriftung, die oben aus dem Stapelkasten ragt, und den Wert auf der Unterkante der Kacheln */
     margin-bottom: 6px;
   }
-  .opps:has(> .opp > .val) {
+  .opps:has(> .opp > :is(.val, .rmark)) {
     margin-bottom: 12px;
   }
   .opp > .val {
     bottom: -11px;
   }
-  /* Am Handy sind die Kacheln so schmal, dass lange Etiketten („noch einmal“, „🏅 beste Hand“) über die ganze
-   * Oberkante reichen. Der Eckaufkleber sitzt deshalb unter dem Etikett auf der rechten Kante, immer an derselben
-   * Stelle, mit Luft für beide Stanzränder (je 2,5 px im Sticker-Look) */
+  /* Leben sind flacher als Zahlen: so hoch wie die Pille bei Shithead, sonst hängen sie fast ganz unter der Kachel */
+  .opp > .val[data-k='lives'] {
+    min-height: 18px;
+  }
+  /* Eckaufkleber unten links auf Höhe des Werts, der Wert rückt dafür ein Stück nach rechts */
   .opp > .rmark {
-    top: 17px;
-    right: 3px;
-    width: 20px;
-    height: 20px;
+    bottom: -12px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
     font-size: 12px;
+  }
+  .opp:has(> .rmark) > .val {
+    left: calc(50% + 10px);
+  }
+  /* Neben dem Aufkleber reicht die Welle, „schwimmt“ ausgeschrieben passt nicht mehr in die Kachel */
+  body.ingame .opp:has(> .rmark) > .val .swim .swt {
+    display: none;
   }
   .opp .ometa .botb {
     flex: none;
@@ -91,9 +115,9 @@
     background: var(--tb-seat-bg);
     border-radius: 14px;
   }
-  /* Der Wert ragt halb in die Kachel, die Namenszeile bleibt darüber frei */
-  .opp:has(> .val),
-  .opp.sh:has(> .val) {
+  /* Wert und Aufkleber ragen halb in die Kachel, die Namenszeile bleibt darüber frei */
+  .opp:has(> :is(.val, .rmark)),
+  .opp.sh:has(> :is(.val, .rmark)) {
     padding-bottom: 13px;
   }
   /* Muss nach der Regel oben stehen, sonst verliert die Hervorhebung gegen den neutralen Rahmen */
@@ -316,7 +340,8 @@
     font-size: 14px;
   }
   .outmsg {
-    padding: 10px 0;
+    padding: 8px 0;
+    font-size: 15px;
   }
 
   /* Shithead: Tischkarten klein über der Hand, bei leerer Hand groß im Fokus */
@@ -691,9 +716,13 @@
     padding: 10px 4px 4px;
     gap: 2px;
   }
-  .opp:has(> .val),
-  .opp.sh:has(> .val) {
+  .opp:has(> :is(.val, .rmark)),
+  .opp.sh:has(> :is(.val, .rmark)) {
     padding-bottom: 9px;
+  }
+  /* Leben sind so hoch wie die Pille bei Shithead (oben), die Namenszeile braucht darüber etwas mehr Luft */
+  .opp:has(> .val[data-k='lives']) {
+    padding-bottom: 11px;
   }
   .center {
     padding: 16px 10px 30px;

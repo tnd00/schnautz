@@ -491,7 +491,7 @@ export function shBtnTap(v: View | null, act: 'shplay' | 'shpickup' | 'skip', sh
 }
 
 /**
- * Knöpfe am eigenen Platz im Spiel. Feste Plätze: Ausspielen links und Aufnehmen rechts stehen im ganzen eigenen Zug
+ * Knöpfe am eigenen Platz im Spiel. Feste Plätze: Aufnehmen links und Ausspielen rechts (User 28.11.2026) stehen im ganzen eigenen Zug
  * an derselben Stelle und sind nur gesperrt (aria-disabled mit Grund). „Alle n wählen“ (oder 4er und Bombe) kommt bei
  * Bedarf auf den mittleren Platz, der sonst frei bleibt, damit niemand dort aus Versehen aufnimmt. Wer fertig ist,
  * bekommt den Tipp-Knopf.
@@ -506,10 +506,22 @@ function shBar(v: View, mine: OwnCards, src: Source | null, canAny: boolean): Ba
     const label = selRank
       ? `${selIdx.length > 1 ? `${selIdx.length}× ` : ''}${shRankLabel(selRank)} ausspielen`
       : 'Ausspielen';
+    const sameN = selRank && !shQuick(v) ? arr.filter((c) => rankOf(c) === selRank).length : 0;
+    const all = sameN > selIdx.length;
     const playWhy = shBarWhy(v, 'shplay');
     const pickWhy = shBarWhy(v, 'shpickup');
     const calm = canAny || !!pickWhy;
     const btns: BarButton[] = [
+      {
+        act: 'shpickup',
+        // Die Zahl fällt bei leerem Stapel und neben „Alle n wählen“ weg, sonst bricht die Beschriftung um
+        label: S.pile.length && !all ? `Aufnehmen (${S.pile.length})` : 'Aufnehmen',
+        intent: 'take',
+        cls: calm ? 'ghost' : 'wood',
+        ok: !pickWhy,
+        pulse: !calm,
+        why: pickWhy,
+      },
       {
         act: 'shplay',
         label: esc(locked ? 'Moment…' : label),
@@ -519,23 +531,11 @@ function shBar(v: View, mine: OwnCards, src: Source | null, canAny: boolean): Ba
         pulse: !playWhy,
         why: playWhy,
       },
-      {
-        act: 'shpickup',
-        label: `Aufnehmen (${S.pile.length})`,
-        intent: 'take',
-        cls: calm ? 'ghost' : 'wood',
-        ok: !pickWhy,
-        pulse: !calm,
-        why: pickWhy,
-      },
     ];
     // Den mittleren Platz nimmt sonst der 4er- oder Bombe-Knopf aus dem Status (shQuick, barHTML setzt ihn dorthin)
-    if (selRank && !shQuick(v)) {
-      const sameN = arr.filter((c) => rankOf(c) === selRank).length;
-      if (sameN > selIdx.length)
-        btns.splice(1, 0, { act: 'shselall', label: `Alle ${sameN} wählen`, intent: 'alt', cls: 'ghost', ok: true });
-    }
-    // Der mittlere Platz bleibt frei, bis „Alle n wählen“ kommt, sonst rutschen Ausspielen und Aufnehmen
+    if (all)
+      btns.splice(1, 0, { act: 'shselall', label: `Alle ${sameN} wählen`, intent: 'alt', cls: 'ghost', ok: true });
+    // Der mittlere Platz bleibt frei, bis „Alle n wählen“ kommt, sonst rutschen Aufnehmen und Ausspielen
     return { btns, slots: 3, hole: 1 };
   }
   return { btns: [], extra: S?.finished.includes(App.me) ? betActionHTML(v) : '' };

@@ -17,3 +17,23 @@
   /* rgba wie bis 2.7: mit color-mix verliefe der Verlauf in Oklab und sähe anders aus */
   background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
 }
+
+/* Gegner am Zug am Handy: das Leuchten nach außen knapper, sonst endet es unter der Kopfzeile hart an der Kante der
+ * Tischfläche (#table schneidet dort ab, am PC nicht) */
+@media (max-width: 960px) {
+  :root[data-look='legacy'] #scr-game .opp.turn {
+    box-shadow:
+      inset 0 0 18px color-mix(in srgb, var(--tb-accent) 16%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--tb-accent) 35%, transparent),
+      0 2px 16px color-mix(in srgb, var(--tb-accent) 30%, transparent);
+    animation-name: turnGlowL;
+  }
+}
+@keyframes turnGlowL {
+  50% {
+    box-shadow:
+      inset 0 0 26px color-mix(in srgb, var(--tb-accent) 28%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--tb-accent) 45%, transparent),
+      0 3px 18px color-mix(in srgb, var(--tb-accent) 40%, transparent);
+  }
+}

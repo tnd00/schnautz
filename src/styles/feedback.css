@@ -1000,11 +1000,10 @@ body.logopen #fly .bubble {
   left: 0;
   top: 0;
   display: none;
+  /* Größe setzt src/ui/ceremony.ts (track): Kachel samt Etikett, Pille und Aufkleber, die über den Rand ragen */
   border: 5px solid var(--tb-zer-ring);
-  /* Etwas weiter als die Kachel, damit Etikett oben und Pille unten (sie ragen über den Rand) im Loch frei bleiben */
   box-sizing: content-box;
-  padding: 9px;
-  margin: -9px;
+  margin: -5px;
   border-radius: 22px;
   box-shadow:
     0 0 0 200vmax var(--tb-zer-dim),

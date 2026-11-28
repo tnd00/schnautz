@@ -34,24 +34,25 @@
 }
 
 /* ---------- Kopfzeile ---------- */
-/* Wortmarke als Sticker in Spielfarbe. Der seitliche Innenabstand und der Stanzrand kommen aus Schatten neben dem
- * Kasten, damit die Maße beider Looks gleich bleiben */
+/* Wortmarke als Sticker in Spielfarbe. Die Fläche ist ::before, breiter als der Kasten (Lage in base.css), damit die
+ * Maße beider Looks gleich bleiben und der Glanz die ganze Fläche deckt. Verschoben um Überstand und Stanzrand, so
+ * hat der Sticker denselben Abstand zum Rand wie die Knöpfe rechts */
 :root[data-look='sticker'] body.ingame .top .brand {
   color: var(--tb-brand-text);
-  background: var(--tb-gloss), var(--tb-brand-bg);
-  border-radius: 10px;
   font-family: var(--tb-display);
   font-style: var(--tb-display-style);
   font-weight: var(--tb-display-weight);
   font-variation-settings: var(--tb-display-axes);
   text-shadow: none;
-  box-shadow:
-    -7px 0 0 0 var(--tb-brand-bg),
-    7px 0 0 0 var(--tb-brand-bg),
-    -7px 0 0 var(--tb-cut) var(--tb-brand-line),
-    7px 0 0 var(--tb-cut) var(--tb-brand-line),
-    0 6px 10px 0 color-mix(in srgb, var(--tb-shade) 28%, transparent);
+  translate: calc(7px + var(--tb-cut)) 0;
   rotate: calc(var(--tb-tilt) * -1.5deg);
+}
+:root[data-look='sticker'] body.ingame .top .brand::before {
+  background: var(--tb-gloss), var(--tb-brand-bg);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 var(--tb-cut) var(--tb-brand-line),
+    0 6px 10px 0 color-mix(in srgb, var(--tb-shade) 28%, transparent);
 }
 :root[data-look='sticker'] body.ingame .top .brand small {
   color: var(--tb-brand-bg);

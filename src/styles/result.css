@@ -101,8 +101,10 @@
   line-height: 1.1;
   text-align: right;
 }
+/* Fläche nur innerhalb des Rands, sonst ragt sie unter dem Rahmen der eigenen Zeile (Innenschatten) hervor */
 #overlay .paper.result.rs .row.rr.mine {
   box-shadow: inset 3px 0 0 var(--tb-accent);
+  background-clip: padding-box;
 }
 /* Ohne Plätze (Schnautz am Rundenende) bleibt die Platzspalte leer und schmal, die Namen bekommen ihre Breite */
 #overlay .paper.result.rs .rows.noplace .row.rr {
@@ -147,6 +149,10 @@
 }
 #overlay .paper.result.rs .row.rr.key .rnm {
   font-size: 16px;
+}
+/* Die Karten der eigenen Zeile berühren ihren Rahmen unten nicht */
+#overlay .paper.result.rs .row.rr.key.mine {
+  padding-bottom: 9px;
 }
 #overlay .paper.result.rs .row.rr.key .rnm {
   grid-column: 2 / -1;
@@ -288,6 +294,9 @@
   }
   #overlay .paper.result.rs .row.rr.key {
     padding: 4px 10px;
+  }
+  #overlay .paper.result.rs .row.rr.key.mine {
+    padding-bottom: 7px;
   }
   #overlay .paper.result.rs .row.rr .rcards {
     margin-top: 2px;

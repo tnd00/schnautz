@@ -109,3 +109,23 @@ test('Regeln und Updates laden nach: Sticker auf der Startseite, Menü in der Lo
   await expect(page.locator('#modal .devm')).toBeVisible();
   expect(errors.list).toEqual([]);
 });
+
+test('Langsames Netz: der Ladebildschirm steht sofort und geht erst mit dem Haupt-CSS', async ({ browser }) => {
+  const page = await (await phone(browser)).newPage();
+  const tbCut = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tb-cut'));
+  // CSS kommt nach 2 s, Skripte nach 3 s
+  await page.route(/\.(css|js)$/, async (r) => {
+    await new Promise((ok) => setTimeout(ok, r.request().url().endsWith('.css') ? 2000 : 3000));
+    await r.continue();
+  });
+  await page.goto(START, { waitUntil: 'commit' });
+  // Das Haupt-CSS blockiert das erste Bild nicht (vite.config.ts): Der Ladebildschirm ist gezeichnet, bevor es da ist
+  await expect
+    .poll(() => page.evaluate(() => performance.getEntriesByType('paint').length), { timeout: 1500 })
+    .toBeGreaterThan(0);
+  expect(await tbCut()).toBe('');
+  await expect(page.locator('#boot')).toHaveClass(/^(?!.*\boff\b)/);
+  // Weg geht er erst mit dem Haupt-CSS, die Startseite blitzt also nie ungestylt auf
+  await expect(page.locator('#boot')).toHaveClass(/\boff\b/, { timeout: 15_000 });
+  expect(await tbCut()).not.toBe('');
+});

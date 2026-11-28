@@ -76,10 +76,6 @@
   border-color: transparent;
   box-shadow: var(--tb-edge), var(--tb-shadow-flat);
 }
-:root[data-look='sticker'] body.ingame .pile .wincd b {
-  color: var(--tb-tag-text);
-  background: var(--tb-clock-bg);
-}
 
 /* Große Hand: Zahl der Karten */
 :root[data-look='sticker'] body.ingame .bhn {
@@ -121,11 +117,19 @@
   font-weight: 800;
 }
 
-/* 4er-Fenster: Ring um den Stapel in Tinte, Etikett „4er“ wie die anderen Etiketten */
+/* 4er-Fenster: weiße Scheibe mit Bogen in der Spielfarbe, so liest er sich nicht wie die Kartenzahl in Tinte */
+:root[data-look='sticker'] body.ingame .pile .wincd {
+  background: var(--tb-cnt-bg);
+  box-shadow: var(--tb-cnt-shadow);
+}
+:root[data-look='sticker'] body.ingame .pile .wincd b {
+  color: var(--tb-cnt-text);
+  background: none;
+}
 :root[data-look='sticker'] body.ingame .pile .wincd::before {
   background: conic-gradient(
     in srgb,
-    var(--tb-turn-line) calc(var(--p, 1) * 360deg),
+    var(--tb-accent) calc(var(--p, 1) * 360deg),
     color-mix(in srgb, var(--tb-shade) 14%, transparent) 0
   );
 }

@@ -110,3 +110,9 @@
     min-width: 40px;
   }
 }
+/* Schmale Handys: Spielname am Tisch etwas kleiner, sonst stößt der Sticker an den ersten Knopf */
+@media (max-width: 370px) {
+  body.ingame .top .brand {
+    font-size: 18px;
+  }
+}

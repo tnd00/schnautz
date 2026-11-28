@@ -558,7 +558,7 @@ describe('Shithead nach Runde 3', () => {
     const five = qsa(doc, '[data-act=shh].dim')[0].attrs;
     expect(five['aria-disabled']).toBe('true');
     expect(five['aria-description']).toBeTruthy();
-    // „Alle wählen“ kommt in die Mitte, Aufnehmen bleibt rechts (User 27.11.2026)
+    // „Alle wählen“ kommt in die Mitte, Aufnehmen links und Ausspielen rechts (User 28.11.2026)
     const sel = shModels(
       shTable(true, (st) => {
         if (!st.sh) return;
@@ -568,6 +568,6 @@ describe('Shithead nach Runde 3', () => {
       { src: 'hand', idx: [0] },
     );
     const acts = qsa(parseHTML(meHTML(sel.me)), '.actions .btn').map((b) => b.attrs['data-act']);
-    expect(acts).toEqual(['shplay', 'shselall', 'shpickup']);
+    expect(acts).toEqual(['shpickup', 'shselall', 'shplay']);
   });
 });

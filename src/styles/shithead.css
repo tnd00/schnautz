@@ -223,15 +223,10 @@
 .shme {
   width: min(760px, 100%);
 }
+/* Schmaler Innenrand: Auch drei Knöpfe nebeneinander bleiben einzeilig */
 .shme .actions .btn {
   white-space: nowrap;
-}
-.mini.shleft {
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-.mini.shleft .card {
-  --cw: 30px;
+  padding-inline: 4px;
 }
 .mini .more {
   align-self: center;
